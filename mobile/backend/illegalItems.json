@@ -1,0 +1,184 @@
+{
+  "illegal_items": [
+    {
+      "category": "Art & Antiques",
+      "products": [
+        "Antiques (Unregistered or unauthorized antiques)",
+        "Arts and Antique Objects (Especially those that are stolen, smuggled, or culturally sensitive)",
+        "Cultural Heritage Objects (Items illegally removed from archaeological sites or that belong to Tunisia's cultural heritage)",
+        "Objects of Religious Significance (Artifacts or religious items considered sacred or culturally important, especially those illegally exported)",
+        "Fossils and Rare Artifacts (Stolen fossils or items of prehistoric importance)"
+      ]
+    },
+    {
+      "category": "Animal & Plant Products",
+      "products": [
+        "Animal skins",
+        "Ivory",
+        "Palm trees, branch of palm trees, and their derivatives",
+        "Henna",
+        "Animals and plants threatened with extinction (under the 'CITES' convention), such as the sea turtle and chameleon"
+      ]
+    },
+    {
+      "category": "Military & Security Equipment",
+      "products": [
+        "Military Equipment",
+        "Radar Equipment",
+        "Weapons (except authorized hunting weapons)",
+        "Explosives",
+        "Gunpowder salt",
+        "Ammunition"
+      ]
+    },
+    {
+      "category": "Financial Items & Documents",
+      "products": [
+        "Passports",
+        "All Bank Cards",
+        "The Tunisian Dinar",
+        "Counterfeit currency",
+        "Fake financial documents"
+      ]
+    },
+    {
+      "category": "Health & Pharmaceuticals",
+      "products": [
+        "Body Building Health Supplements (Proteins)",
+        "Narcotic drugs and other psychotropic products",
+        "Unregistered medications",
+        "Expired pharmaceutical products",
+        "Unapproved medical devices",
+        "Tramadol",
+        "Codeine-based medications (e.g., Codoliprane, Dafalgan Codeine)",
+        "Morphine",
+        "Fentanyl",
+        "Methadone",
+        "Oxycodone (OxyContin, Percocet)",
+        "Alprazolam (Xanax)",
+        "Clonazepam (Rivotril)",
+        "Diazepam (Valium)",
+        "Lorazepam (Ativan)",
+        "Midazolam",
+        "Buprenorphine (Subutex, Suboxone)",
+        "Ketamine",
+        "Unregistered weight loss pills (e.g., certain herbal slimming products)",
+        "Fake erectile dysfunction drugs (e.g., counterfeit Viagra, Cialis)",
+        "Unapproved steroids and performance-enhancing drugs",
+        "Unregistered antibiotics",
+        "Hydrocodone (Vicodin)",
+        "Pethidine (Demerol)",
+        "Tapentadol (Nucynta)",
+        "Pentazocine",
+        "Zolpidem (Ambien)",
+        "Eszopiclone (Lunesta)",
+        "Phenobarbital",
+        "Clonidine",
+        "Methylphenidate (Ritalin, Concerta)",
+        "Amphetamine-based medications (Adderall, Vyvanse)",
+        "Dextromethorphan (in high doses, found in some cough syrups)",
+        "Pseudoephedrine (found in some cold and flu medications)"
+      ]
+    },
+    {
+      "category": "Jewelry & Valuables",
+      "products": [
+        "Jewelry",
+        "Precious stones",
+        "Precious metals"
+      ]
+    },
+    {
+      "category": "Tobacco & Related Products",
+      "products": [
+        "Tobacco",
+        "Cigarettes",
+        "Electronic cigarettes"
+      ]
+    },
+    {
+      "category": "Counterfeit & Restricted Commercial Goods",
+      "products": [
+        "Counterfeit items",
+        "Thrift stores (old and used clothes for commercial purposes)",
+        "Fake designer brands",
+        "Pirated software and media"
+      ]
+    },
+    {
+      "category": "Drones & Technology",
+      "products": [
+        "Drone",
+        "Unregistered telecommunication equipment",
+        "Illegal surveillance devices"
+      ]
+    },
+    {
+      "category": "Culturally Sensitive Items",
+      "products": [
+        "Any item offensive to the Muslim culture",
+        "Pornographic material",
+        "Items promoting religious hatred",
+        "Obscene literature or media"
+      ]
+    },
+    {
+      "category": "Firearms & Explosives",
+      "products": [
+        "Firearms (without authorization)",
+        "Explosives",
+        "Firecrackers and fireworks"
+      ]
+    },
+    {
+      "category": "Illegal Substances",
+      "products": [
+        "Drugs and narcotics",
+        "Unauthorized chemicals",
+        "Poisonous substances",
+        "Hazardous Industrial Chemicals (Chemicals used in manufacturing processes without proper regulation or approval)",
+        "Banned Pesticides (Chemicals used in agriculture that have been banned due to their harmful effects on human health or the environment)",
+        "Toxic Chemicals (Substances with harmful or lethal effects that are not properly regulated)",
+        "Illegal Drugs & Narcotics (Substances like synthetic drugs that are chemically altered and fall under the category of illegal narcotics)",
+        "Unapproved Cosmetics Ingredients (Chemicals used in cosmetic products that have not been authorized for use, such as certain preservatives or colorants)",
+        "Chemical Weapons or Precursor Chemicals (Chemicals that could be used in the creation of chemical weapons)",
+        "Pollutants & Contaminants (Chemicals that are not approved and could contaminate water or air)"
+      ]
+    },
+    {
+      "category": "Restricted Agricultural Products",
+      "products": [
+        "Genetically modified seeds (without approval)",
+        "Invasive plant species",
+        "Unapproved pesticides and fertilizers"
+      ]
+    },
+    {
+      "category": "Endangered Wildlife Products",
+      "products": [
+        "Animal trophies",
+        "Endangered species products (under 'CITES')",
+        "Shark fins",
+        "Rhino horns"
+      ]
+    },
+    {
+      "category": "Food & Beverages",
+      "products": [
+        "Unapproved food additives",
+        "Alcoholic beverages (without proper license)",
+        "Expired food products"
+      ]
+    },
+    {
+      "category": "Miscellaneous",
+      "products": [
+        "Playing cards",
+        "Used mattresses",
+        "Used tires",
+        "Radioactive materials",
+        "Toxic industrial waste"
+      ]
+    }
+  ]
+}
