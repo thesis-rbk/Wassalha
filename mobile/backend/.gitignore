@@ -4,3 +4,5 @@ node_modules/
 
 # prisma
 prisma/migrations
+
+illegal_items.json
