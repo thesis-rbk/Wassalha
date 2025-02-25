@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID; // Add to .env
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
+const salt=process.env.SALT_ROUNDS | 10;
 // Signup controller
 const signup = async (req, res) => {
   const { name, email, password } = req.body;
@@ -25,8 +26,7 @@ const signup = async (req, res) => {
     }
 
     // Hash the password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create the new user
     const newUser = await prisma.user.create({
