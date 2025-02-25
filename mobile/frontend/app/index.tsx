@@ -1,4 +1,4 @@
-import { View, StyleSheet, Platform, ScrollView, Switch } from "react-native";
+import { View, Text, StyleSheet, Platform, ScrollView, Switch } from "react-native";
 import { SmallButton, MediumButton, BigButton, LoginButton } from '@/components/ui/buttons';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -11,6 +11,7 @@ import { StatusIndicator } from '@/components/StatusIndicator';
 import { useTheme } from '@/context/ThemeContext';
 import { useState } from 'react';
 
+import { User, Category, GoodsPost, GoodsProcess, Notification, Order, ProcessEvent, PromoPost, Reputation, ServiceProvider, Sponsorship, Subscription } from "../types/index";
 export default function Index() {
   const { theme, toggleTheme } = useTheme();
 

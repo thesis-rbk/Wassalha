@@ -2,12 +2,14 @@ const express = require("express");
 const cors = require("cors");
 const requestRoutes = require("./routes/requestRoutes");
 
+// const userRoutes = require("./routes/userRoutes");
+const productRoutes = require("./routes/productRoutes");
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-
+app.use("/api/products", productRoutes);
 // Routes
 app.use("/api/requests", requestRoutes);
 
