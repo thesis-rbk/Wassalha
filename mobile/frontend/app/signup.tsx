@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router';
 WebBrowser.maybeCompleteAuthSession();
 
 const Signup = () => {
+    const API=process.env.API_URL
     const router = useRouter(); // For navigation
   // State for email/password signup
   const [name, setName] = useState('');
@@ -40,7 +41,7 @@ const Signup = () => {
     }
       console.log("hello",name,email,password)
     try {
-      const res = await fetch('http://192.168.104.14:4000/api/users/register', {
+      const res = await fetch(`${API}/api/users/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
