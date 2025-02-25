@@ -1,0 +1,600 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ------------------ ENUMS ------------------ //
+
+// Existing enums
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  CANCELLED
+  REJECTED
+}
+
+enum OrderStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+}
+
+enum PaymentStatus {
+  ON_HOLD
+  PAYED
+  REFUNDED
+}
+
+enum PaymentCurrency {
+  DOLLAR
+  EURO
+  TND
+}
+
+enum PaymentState {
+  PENDING
+  COMPLETED
+  REFUND
+  FAILED
+  PROCCESSING
+}
+
+enum PaymentMethod {
+  CREDITCARD
+  D17
+  STRIPE
+  PAYPAL
+  BANKTRANSFER
+}
+
+enum PickupType {
+  AIRPORT
+  IN_PERSON
+  PICKUPPOINT
+  DELIVERY
+}
+
+enum PickupStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DELAYED
+  DELIVERED
+}
+
+enum NotificationType {
+  REQUEST
+  ACCEPTED
+  REJECTED
+  ORDER_CREATED
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  PICKUP_SCHEDULE
+  DELIVERY_COMPLETED
+  SYSTEM_ALERT
+}
+
+enum NotificationStatus {
+  READ
+  UNREAD
+}
+
+enum ReviewType {
+  USER_REVIEW
+  EXPERIENCE_REVIEW
+  DELIVERYMAN_REVIEW
+  PICKUPPOINT_REVIEW
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EDITED
+}
+
+enum SubscriptionType {
+  STREAMING
+  SOFTWARE
+  GAMING
+  EDUCATION
+  OTHER
+}
+
+enum SponsorshipPlatform {
+  FACEBOOK
+  INSTAGRAM
+  YOUTUBE
+  TWITTER
+  TIKTOK
+  OTHER
+}
+
+// Existing Profile Gender enum
+enum Gender {
+  MALE
+  FEMALE
+}
+
+// ------------------ NEW ENUMS ------------------ //
+
+// Distinguish sponsor vs. subscriber, etc.
+enum ServiceProviderType {
+  SPONSOR
+  SUBSCRIBER
+  // Possibly add more if needed: AGENCY, PARTNER, etc.
+}
+
+// Commonly used file extensions
+enum FileExtension {
+  JPG
+  JPEG
+  PNG
+  GIF
+  SVG
+  PDF
+  DOC
+  DOCX
+  XLS
+  XLSX
+  MP4
+  MOV
+  AVI
+  MP3
+  WAV
+  OTHER
+}
+
+// Broad media categories
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  OTHER
+}
+
+// Process statuses for the overall goods process
+enum ProcessStatus {
+  INITIALIZED
+  CONFIRMED
+  PAID
+  IN_TRANSIT
+  PICKUP_MEET
+  FINALIZED
+  CANCELLED
+}
+
+// ------------------ MODELS ------------------ //
+
+// ========== USER ==========
+model User {
+  id          Int     @id @default(autoincrement())
+  name        String
+  email       String  @unique
+  phoneNumber String?
+  googleId    String?
+  password    String?
+
+  profile         Profile?
+  requests        Request[]
+  notifications   Notification[]
+  reviewsGiven    Review[]       @relation("ReviewsGiven")
+  reviewsReceived Review[]       @relation("ReviewsReceived")
+  chatsRequested  Chat[]         @relation("ChatsRequested")
+  chatsProvided   Chat[]         @relation("ChatsProvided")
+  messagesSent    Message[]      @relation("MessagesSent")
+  ordersTraveling Order[]        @relation("TravelerOrders")
+
+  // Subscriptions / Sponsorships
+  subscriptions Subscription[] @relation("UserSubscriptions")
+  sponsorships  Sponsorship[]  @relation("UserSponsorships")
+
+  // Reputation
+  reputation Reputation?
+
+  // Posts
+  goodsPosts GoodsPost[]
+  promoPosts PromoPost[]
+
+  // If you want to track who changed the process state
+  processEvents   ProcessEvent[]   @relation("UserChangedProcessState")
+  serviceProvider ServiceProvider?
+}
+
+// ========== PROFILE ==========
+model Profile {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  firstName String
+  lastName  String
+  bio       String?
+
+  // Profile image stored as Media
+  imageId Int?   @unique
+  image   Media? @relation("ProfileImage", fields: [imageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  gender Gender?
+
+  review              String?
+  isAnonymous         Boolean? @default(false)
+  isBanned            Boolean  @default(false)
+  isVerified          Boolean  @default(false)
+  isOnline            Boolean  @default(false)
+  preferredCategories String?
+}
+
+// ========== SERVICE PROVIDER ==========
+model ServiceProvider {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  type ServiceProviderType
+
+  // Example attributes
+  brandName         String?
+  subscriptionLevel String?
+
+  // Criteria fields
+  isEligible    Boolean @default(false)
+  followerCount Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ========== GOODS ==========
+model Goods {
+  id          Int     @id @default(autoincrement())
+  name        String
+  size        String?
+  weight      Float?
+  price       Float
+  description String?
+
+  // Media reference
+  imageId    Int?
+  image      Media?  @relation("GoodsImage", fields: [imageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  goodsUrl   String?
+  isVerified Boolean @default(false)
+
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  requests Request[]
+  chats    Chat[]
+}
+
+// ========== REQUEST ==========
+model Request {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  goodsId Int
+  goods   Goods @relation(fields: [goodsId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  quantity         Int
+  goodsLocation    String
+  goodsDestination String
+  pickupId         Int?
+  pickup           Pickup? @relation(fields: [pickupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  date   DateTime
+  status RequestStatus @default(PENDING)
+
+  withBox Boolean @default(false)
+
+  order         Order?         @relation
+  notifications Notification[]
+}
+
+// ========== ORDER ==========
+model Order {
+  id        Int     @id @default(autoincrement())
+  requestId Int     @unique
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  travelerId Int
+  traveler   User @relation("TravelerOrders", fields: [travelerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  departureDate  DateTime?
+  arrivalDate    DateTime?
+  trackingNumber String?
+  totalAmount    Float?
+
+  paymentStatus PaymentStatus @default(ON_HOLD)
+  orderStatus   OrderStatus   @default(PENDING)
+
+  payment       Payment[]
+  pickup        Pickup?
+  reviews       Review[]
+  notifications Notification[]
+
+  // Link to the high-level goods process
+  goodsProcess GoodsProcess?
+}
+
+// ========== PAYMENT ==========
+model Payment {
+  id      Int   @id @default(autoincrement())
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  amount        Float
+  currency      PaymentCurrency
+  status        PaymentState
+  paymentMethod PaymentMethod
+  transactionId String?
+  qrCode        String?
+  paymentUrl    String?
+}
+
+// ========== PICKUP ==========
+model Pickup {
+  id      Int   @id @default(autoincrement())
+  orderId Int   @unique
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  pickupType         PickupType
+  location           String?
+  address            String?
+  qrCode             String?
+  coordinates        String?
+  contactPhoneNumber String?
+  status             PickupStatus @default(SCHEDULED)
+  scheduledTime      DateTime?
+
+  requests      Request[]
+  notifications Notification[]
+}
+
+// ========== NOTIFICATION ==========
+model Notification {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  type    NotificationType
+  title   String?
+  message String?
+  status  NotificationStatus @default(UNREAD)
+
+  requestId Int?
+  request   Request? @relation(fields: [requestId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  orderId Int?
+  order   Order? @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  pickupId Int?
+  pickup   Pickup? @relation(fields: [pickupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+// ========== REVIEW ==========
+model Review {
+  id Int @id @default(autoincrement())
+
+  reviewerId Int
+  reviewer   User @relation("ReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  reviewedId Int
+  reviewed   User @relation("ReviewsReceived", fields: [reviewedId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  orderId Int?
+  order   Order? @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  rating     Int
+  title      String?
+  comment    String?
+  reviewType ReviewType
+  status     ReviewStatus @default(PENDING)
+}
+
+// ========== CHAT ==========
+model Chat {
+  id Int @id @default(autoincrement())
+
+  requesterId Int
+  requester   User @relation("ChatsRequested", fields: [requesterId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  providerId Int
+  provider   User @relation("ChatsProvided", fields: [providerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  productId Int
+  goods     Goods @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  messages Message[]
+}
+
+// ========== MESSAGE ==========
+model Message {
+  id     Int  @id @default(autoincrement())
+  chatId Int
+  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  senderId Int
+  sender   User @relation("MessagesSent", fields: [senderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  type    String
+  content String?
+  mediaId Int?
+  media   Media?  @relation(fields: [mediaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  isRead  Boolean @default(false)
+}
+
+// ========== MEDIA ==========
+model Media {
+  id       Int       @id @default(autoincrement())
+  url      String
+  type     MediaType
+  mimeType String?
+
+  extension FileExtension?
+  filename  String?
+  size      Float?
+  width     Int?
+  height    Int?
+  duration  Int?
+
+  messages Message[]
+  profile  Profile?  @relation("ProfileImage")
+  goods    Goods[]   @relation("GoodsImage")
+}
+
+// ========== CATEGORY ==========
+model Category {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  isDisabled  Boolean @default(false)
+
+  goods         Goods[]
+  goodsPosts    GoodsPost[]
+  promoPosts    PromoPost[]
+  subscriptions Subscription[]
+  sponsorships  Sponsorship[]
+}
+
+// ========== SUBSCRIPTION ==========
+model Subscription {
+  id          Int              @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  duration    Int
+  type        SubscriptionType
+  categoryId  Int
+  category    Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  isActive    Boolean          @default(true)
+
+  users User[] @relation("UserSubscriptions")
+}
+
+// ========== SPONSORSHIP ==========
+model Sponsorship {
+  id          Int                 @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  duration    Int
+  platform    SponsorshipPlatform
+  categoryId  Int
+  category    Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  isActive    Boolean             @default(true)
+
+  users User[] @relation("UserSponsorships")
+}
+
+// ========== GOODS POSTS ==========
+model GoodsPost {
+  id Int @id @default(autoincrement())
+
+  title   String?
+  content String?
+
+  travelerId Int
+  traveler   User @relation(fields: [travelerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  arrivalDate     DateTime?
+  availableKg     Float?
+  phoneNumber     String?
+  airportLocation String?
+
+  categoryId Int?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  isPublished Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ========== PROMO POSTS ==========
+model PromoPost {
+  id Int @id @default(autoincrement())
+
+  title   String
+  content String
+
+  publisherId Int
+  publisher   User @relation(fields: [publisherId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  categoryId Int?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  isPublished Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ------------------ REPUTATION MODELS ------------------ //
+
+model Reputation {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique
+  score           Float    @default(0)
+  totalRatings    Int      @default(0)
+  positiveRatings Int      @default(0)
+  negativeRatings Int      @default(0)
+  level           Int      @default(1)
+  lastUpdated     DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  transactions ReputationTransaction[]
+
+  @@index([score])
+  @@index([userId])
+}
+
+model ReputationTransaction {
+  id           Int      @id @default(autoincrement())
+  reputationId Int
+  change       Float
+  eventType    String // e.g., "REVIEW", "FEEDBACK", "ADMIN_ACTION"
+  comment      String?  @db.Text
+  createdAt    DateTime @default(now())
+
+  reputation Reputation @relation(fields: [reputationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+// ------------------ GOODS PROCESS MODELS ------------------ //
+
+// Main process manager for an Order's lifecycle
+model GoodsProcess {
+  id      Int   @id @default(autoincrement())
+  orderId Int   @unique
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  status    ProcessStatus @default(INITIALIZED)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  events ProcessEvent[]
+}
+
+// Optional audit log for transitions
+model ProcessEvent {
+  id             Int          @id @default(autoincrement())
+  goodsProcessId Int
+  goodsProcess   GoodsProcess @relation(fields: [goodsProcessId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  fromStatus ProcessStatus
+  toStatus   ProcessStatus
+
+  // If you want to record who changed the status
+  changedByUserId Int?
+  changedByUser   User? @relation("UserChangedProcessState", fields: [changedByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  note      String?
+  createdAt DateTime @default(now())
+}
