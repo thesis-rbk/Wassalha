@@ -1,4 +1,4 @@
-const prisma = require('../lib/prisma');
+const prisma = require('../../prisma');
 
 class RequestController {
     // Create Request
