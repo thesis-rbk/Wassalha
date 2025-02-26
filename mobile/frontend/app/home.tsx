@@ -8,10 +8,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function Home() {
   const router = useRouter();
   const { user, token } = useSelector((state: RootState) => state.auth);
-
+console.log('User:', user);
   const handleLogout = async () => {
     await AsyncStorage.removeItem('jwtToken');
-    router.push('/login');
+    router.push('/auth/login');
   };
 
   return (
