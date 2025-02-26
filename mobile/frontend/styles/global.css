@@ -1,0 +1,90 @@
+/* Base styles and CSS variables */
+:root {
+  /* Colors - Light theme */
+  --color-background: #ffffff;
+  --color-text: #000000;
+  --color-primary: #008098;
+  --color-secondary: #2BB3CD;
+  --color-dark: #01013D;
+  --color-success: #00C500;
+  --color-danger: #F70000;
+  --color-warning: #F77900;
+  
+  /* Border Radius */
+  --radius-full: 100%;
+  --radius-large: 12px;
+  --radius-medium: 8px;
+  --radius-small: 4px;
+  
+  /* Spacing */
+  --space-362: 362px;
+  --space-50: 50px;
+}
+
+/* Dark theme */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #000000;
+    --color-text: #ffffff;
+  }
+}
+
+/* Typography */
+@font-face {
+  font-family: 'Inter';
+  src: url('../assets/fonts/Inter-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'SF Pro';
+  src: url('../assets/fonts/SF-Pro.ttf') format('truetype');
+}
+
+/* Typography classes */
+.title-large {
+  font-size: 32px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.title-section {
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.title-sub {
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.body-large {
+  font-size: 18px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.body-medium {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.body-small {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.caption {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+.footnote {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 400;
+} 
