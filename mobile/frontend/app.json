@@ -40,6 +40,80 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "assetBundlePatterns": [
+      "**/*",
+      "assets/fonts/*"
+    ],
+    "fonts": [
+      {
+        "asset": "assets/fonts/android/inter/Inter_28pt-Light.ttf",
+        "family": "Inter_28pt-Light"
+      },
+      {
+        "asset": "assets/fonts/android/inter/Inter_28pt-Italic.ttf",
+        "family": "Inter_28pt-Italic"
+      },
+      {
+        "asset": "assets/fonts/android/inter/Inter_28pt-MediumItalic.ttf",
+        "family": "Inter_28pt-MediumItalic"
+      },
+      {
+        "asset": "assets/fonts/android/inter/Inter_28pt-Thin.ttf",
+        "family": "Inter_28pt-Thin"
+      },
+      {
+        "asset": "assets/fonts/android/inter/Inter_28pt-Black.ttf",
+        "family": "Inter_28pt-Black"
+      },
+      {
+        "asset": "assets/fonts/android/inter/Inter_28pt-Bold.ttf",
+        "family": "Inter_28pt-Bold"
+      },
+      {
+        "asset": "assets/fonts/android/inter/Inter_28pt-Medium.ttf",
+        "family": "Inter_28pt-Medium"
+      },
+      {
+        "asset": "assets/fonts/android/inter/Inter_28pt-Regular.ttf",
+        "family": "Inter_28pt-Regular"
+      },
+      {
+        "asset": "assets/fonts/ios/sf-pro/SFPro-Display-Bold.otf",
+        "family": "SFPro-Display-Bold"
+      },
+      {
+        "asset": "assets/fonts/ios/sf-pro/SFPro-Display-Black.otf",
+        "family": "SFPro-Display-Black"
+      },
+      {
+        "asset": "assets/fonts/ios/sf-pro/SFPro-Display-Heavy.otf",
+        "family": "SFPro-Display-Heavy"
+      },
+      {
+        "asset": "assets/fonts/ios/sf-pro/SFPro-Display-Light.otf",
+        "family": "SFPro-Display-Light"
+      },
+      {
+        "asset": "assets/fonts/ios/sf-pro/SFPro-Display-Medium.otf",
+        "family": "SFPro-Display-Medium"
+      },
+      {
+        "asset": "assets/fonts/ios/sf-pro/SFPro-Display-MediumItalic.otf",
+        "family": "SFPro-Display-MediumItalic"
+      },
+      {
+        "asset": "assets/fonts/ios/sf-pro/SFPro-Display-Regular.otf",
+        "family": "SFPro-Display-Regular"
+      },
+      {
+        "asset": "assets/fonts/ios/sf-pro/SFPro-Display-Semibold.otf",
+        "family": "SFPro-Display-Semibold"
+      },
+      {
+        "asset": "assets/fonts/ios/sf-pro/SFPro-Display-Thin.otf",
+        "family": "SFPro-Display-Thin"
+      }
+    ]
   }
 }

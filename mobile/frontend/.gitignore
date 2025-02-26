@@ -37,3 +37,4 @@ config.ts
 *.tsbuildinfo
 
 app-example
+config.ts
