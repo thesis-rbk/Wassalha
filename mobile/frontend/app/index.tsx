@@ -1,7 +1,7 @@
 import { HomeScreen } from '@/screens/HomeScreen';
 import { Grid } from '@/constants/Grid';
 import { Colors } from '@/constants/Colors';
-
+import { StyleSheet } from 'react-native';
 // Example usage in styles
 const styles = StyleSheet.create({
   container: {

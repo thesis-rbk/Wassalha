@@ -72,7 +72,7 @@ export function HomeScreen() {
               <Card 
                 key={service.title} 
                 style={styles.serviceCard}
-                onPress={() => router.push(service.route)}
+                // onPress={() => router.push(service.route)}
               >
                 <View style={styles.serviceContent}>
                   {service.icon}
