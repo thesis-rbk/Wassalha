@@ -1,13 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { FontFamily } from '@/assets/fonts';
+import { StatusIndicatorProps, StatusType } from '@/types/StatusIndicator';
 
-type StatusType = 'success' | 'danger' | 'warning';
 
-interface StatusIndicatorProps {
-  status: StatusType;
-  label: string;
-}
+
 
 export function StatusIndicator({ status, label }: StatusIndicatorProps) {
   const getStatusColor = (status: StatusType) => {
