@@ -2,11 +2,9 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import { CardProps } from '@/types/CardProps';
 
-interface CardProps {
-  children: React.ReactNode;
-  style?: any;
-}
+
 
 export function Card({ children, style }: CardProps) {
   const colorScheme = useColorScheme() ?? 'light';

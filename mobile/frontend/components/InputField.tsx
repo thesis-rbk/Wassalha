@@ -3,14 +3,8 @@ import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { FontFamily } from '@/assets/fonts';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { InputFieldProps } from '@/types/InputField';
 
-interface InputFieldProps {
-  label: string;
-  error?: string;
-  placeholder?: string;
-  value?: string;
-  onChangeText?: (text: string) => void;
-}
 
 export function InputField({ label, error, placeholder, value, onChangeText }: InputFieldProps) {
   const colorScheme = useColorScheme() ?? 'light';

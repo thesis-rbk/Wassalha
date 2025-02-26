@@ -4,11 +4,8 @@ import { Home, ShoppingBag, Plane, MapPin, MessageCircle } from 'lucide-react-na
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { ThemedText } from '@/components/ThemedText';
+import { TabItem } from '@/types/TabItem';
 
-interface TabItem {
-  name: string;
-  icon: React.ReactNode;
-}
 
 export function TabBar({ activeTab, onTabPress }: { 
   activeTab: string;

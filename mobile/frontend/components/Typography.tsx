@@ -2,11 +2,9 @@ import { Text, StyleSheet } from 'react-native';
 import { FontFamily } from '@/assets/fonts';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { TypographyProps } from '@/types/TypographyProps';
 
-interface TypographyProps {
-  children: React.ReactNode;
-  style?: any;
-}
+
 
 export function TitleLarge({ children, style }: TypographyProps) {
   const colorScheme = useColorScheme() ?? 'light';

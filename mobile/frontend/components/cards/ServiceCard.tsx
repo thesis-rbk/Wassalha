@@ -5,12 +5,8 @@ import { Card } from '@/components/Card';
 import { ChevronRight } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { ServiceCardProps } from '@/types/ServiveCardProps';
 
-interface ServiceCardProps {
-  title: string;
-  description: string;
-  onPress?: () => void;
-}
 
 export function ServiceCard({ title, description, onPress }: ServiceCardProps) {
   const colorScheme = useColorScheme() ?? 'light';

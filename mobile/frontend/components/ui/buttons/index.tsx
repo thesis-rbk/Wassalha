@@ -1,9 +1,5 @@
+import { ButtonProps } from '@/types/ButtonProps';
 import { BaseButton } from './BaseButton';
-import { TouchableOpacityProps } from 'react-native';
-
-interface ButtonProps extends TouchableOpacityProps {
-  children: React.ReactNode;
-}
 
 export function SmallButton(props: ButtonProps) {
   return <BaseButton size="small" {...props} />;
