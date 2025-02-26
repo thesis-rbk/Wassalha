@@ -10,7 +10,14 @@
 
 // type FormStep = 'initial' | 'product' | 'delivery' | 'summary';
 
-// interface FormData extends CreateRequestPayload {
+// interface FormData {
+//   userId: number;
+//   goodsId: number;
+//   quantity: number;
+//   goodsLocation: string;
+//   goodsDestination: string;
+//   date: string;
+//   withBox: boolean;
 //   productUrl: string;
 //   productName: string;
 //   price: string;
@@ -21,16 +28,17 @@
 //   const router = useRouter();
 //   const [currentStep, setCurrentStep] = useState<FormStep>('initial');
 //   const [formData, setFormData] = useState<FormData>({
-//     productUrl: '',
-//     productName: '',
-//     price: '',
+//     userId: 1, // Should come from auth context
+//     goodsId: 1, // Should come from product selection
 //     quantity: 1,
-//     details: '',
-//     withBox: false,
 //     goodsLocation: '',
 //     goodsDestination: '',
 //     date: new Date().toISOString(),
-//     goodsId: 1, // Default value, should come from product selection
+//     withBox: false,
+//     productUrl: '',
+//     productName: '',
+//     price: '',
+//     details: '',
 //   });
 
 //   // Calculate fees
@@ -43,20 +51,23 @@
 
 //   const handleSubmit = async () => {
 //     try {
+//       const requestPayload = {
+//         userId: formData.userId,
+//         goodsId: formData.goodsId,
+//         quantity: formData.quantity,
+//         goodsLocation: formData.goodsLocation,
+//         goodsDestination: formData.goodsDestination,
+//         date: new Date(formData.date), // Convert string to Date
+//         withBox: formData.withBox,
+//         status: 'PENDING' as const, // Add status as required by Request type
+//       };
+
 //       const response = await fetch('http://localhost:4000/api/requests', {
 //         method: 'POST',
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
-//         body: JSON.stringify({
-//           goodsId: formData.goodsId,
-//           userId: 1, // This should come from auth context
-//           quantity: formData.quantity,
-//           goodsLocation: formData.goodsLocation,
-//           goodsDestination: formData.goodsDestination,
-//           date: formData.date,
-//           withBox: formData.withBox,
-//         }),
+//         body: JSON.stringify(requestPayload),
 //       });
 
 //       const data = await response.json();
@@ -85,7 +96,7 @@
 //       <InputField
 //         label="Product URL"
 //         value={formData.productUrl}
-//         // onChangeText={(text) => setFormData(prev => ({ ...prev, productUrl: text }))}
+//         onChangeText={(text) => setFormData(prev => ({ ...prev, productUrl: text }))}
 //         placeholder="Enter product URL"
 //       />
 //       <InputField
