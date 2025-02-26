@@ -9,17 +9,18 @@
   "dependencies": {
     "@faker-js/faker": "^9.5.0",
     "@prisma/client": "^6.4.1",
-    "bcrypt": "^5.1.1",
     "axios": "^1.7.9",
+    "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
     "cheerio": "^1.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "google-auth-library": "^9.15.1",
-    "jsonwebtoken": "^9.0.2",
     "franc": "^6.2.0",
     "fuse.js": "^7.1.0",
+    "google-auth-library": "^9.15.1",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.10.0",
     "nodemon": "^3.1.9"
   },
   "devDependencies": {

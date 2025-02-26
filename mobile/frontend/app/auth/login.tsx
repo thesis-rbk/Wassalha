@@ -3,8 +3,9 @@ import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginStart, loginSuccess, loginFailure } from '../store/authSlice';
-import { RootState } from '../store';
+import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice';
+import { RootState } from '../../store';
+import axiosInstance from '../../config';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -21,15 +22,13 @@ export default function Login() {
 
     dispatch(loginStart());
     try {
-      const res = await fetch('http://192.168.104.14:4000/api/users/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      const res = await axiosInstance.post('/api/users/login', {
+        email,
+        password,
       });
-      const data = await res.json();
+      const data = res.data;
 
-      if (res.ok) {
-        // Store token in Redux and AsyncStorage, then navigate to home
+      if (res.status === 200) {
         dispatch(loginSuccess({
           token: data.token,
           user: { id: data.user.id, name: data.user.name, email: data.user.email },
@@ -71,9 +70,12 @@ export default function Login() {
         disabled={loading}
       />
       {error && <Text style={styles.errorText}>{error}</Text>}
-      <Text style={styles.signupText} onPress={() => router.push('/signup')}>
+      <Text style={styles.signupText} onPress={() => router.push('/auth/signup')}>
         Don’t have an account? Sign Up
       </Text>
+      <Text style={styles.signupLink} onPress={() => router.push('/auth/ResetPassword')}>
+    Forgot Password?
+  </Text>
     </View>
   );
 }
@@ -84,4 +86,5 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 10, borderRadius: 5 },
   signupText: { marginTop: 20, textAlign: 'center', color: 'blue' },
   errorText: { color: 'red', textAlign: 'center', marginTop: 10 },
+  signupLink: { marginTop: 10, textAlign: 'center', color: 'blue' },
 });
