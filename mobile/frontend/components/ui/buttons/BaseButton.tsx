@@ -2,12 +2,8 @@ import { TouchableOpacity, Text, StyleSheet, TouchableOpacityProps } from 'react
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { FontFamily } from '@/assets/fonts';
+import { BaseButtonProps } from '@/types/BaseButtonProps';
 
-interface BaseButtonProps extends TouchableOpacityProps {
-  children: React.ReactNode;
-  variant?: 'primary' | 'secondary';
-  size?: 'small' | 'medium' | 'large' | 'login';
-}
 
 export function BaseButton({ 
   children, 

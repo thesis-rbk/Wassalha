@@ -4,12 +4,9 @@ import { Bell, Menu } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { ThemedText } from '@/components/ThemedText';
+import { TopNavigationProps } from '@/types/TopNavigationProps';
 
-interface TopNavigationProps {
-  title: string;
-  onMenuPress?: () => void;
-  onNotificationPress?: () => void;
-}
+
 
 export function TopNavigation({ title, onMenuPress, onNotificationPress }: TopNavigationProps) {
   const colorScheme = useColorScheme() ?? 'light';
