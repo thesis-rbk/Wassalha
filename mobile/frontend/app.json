@@ -17,6 +17,10 @@
         "backgroundColor": "#ffffff"
       }
     },
+    "extra": {
+      "API_URL": "http://192.168.1.165:3000",
+      "GOOGLE_MAPS_KEY": "your-google-maps-key"
+    },
     "web": {
       "bundler": "metro",
       "output": "static",
@@ -37,10 +41,7 @@
     "experiments": {
       "typedRoutes": true
     },
-    "assetBundlePatterns": [
-      "**/*",
-      "assets/fonts/*"
-    ],
+    "assetBundlePatterns": ["**/*", "assets/fonts/*"],
     "fonts": [
       {
         "asset": "assets/fonts/android/inter/Inter_28pt-Light.ttf",
