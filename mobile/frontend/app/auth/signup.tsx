@@ -2,9 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Image } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { InputFieldPassword } from '@/components/InputFieldPassword';
 import { InputField } from '@/components/InputField';
-
 import { BaseButton } from '../../components/ui/buttons/BaseButton';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -16,6 +14,13 @@ import axiosInstance from '../../config';
 const Signup = () => {
   const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
+  const AP=process.env.EXPO_PUBLIC_API_URL
+  console.log(AP,"aaaap")
+  console.log(AP,"aaaap")
+
+  console.log(AP,"aaaap")
+
+  console.log(AP,"aaaap")
 
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -169,7 +174,7 @@ const Signup = () => {
         />
 
         {/* Email Input */}
-        <InputFieldPassword
+        <InputField
           label="Email"
           placeholder="Enter your email"
           value={email}
@@ -177,11 +182,10 @@ const Signup = () => {
           error={emailError || undefined}
           keyboardType="email-address"
           autoCapitalize="none"
-          secureTextEntry
         />
 
         {/* Password Input */}
-        <InputFieldPassword
+        <InputField
           label="Password"
           placeholder="Enter your password"
           value={password}
@@ -196,7 +200,7 @@ const Signup = () => {
         )}
 
         {/* Confirm Password Input */}
-        <InputFieldPassword
+        <InputField
           label="Confirm Password"
           placeholder="Confirm your password"
           value={confirmPassword}
