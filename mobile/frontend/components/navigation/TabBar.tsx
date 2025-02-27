@@ -15,6 +15,8 @@ export function TabBar({ activeTab, onTabPress }: {
   const iconColor = Colors[colorScheme].text;
   const router = useRouter();
 
+  const activeTabColor = Colors[colorScheme].primary; // Get the primary color for the active tab
+
   const tabs: TabItem[] = [
     { name: 'Home', icon: <Home size={24} color={iconColor} />, route: '/' },
     { name: 'Orders', icon: <ShoppingBag size={24} color={iconColor} />, route: '/orders' },
@@ -36,10 +38,10 @@ export function TabBar({ activeTab, onTabPress }: {
           style={styles.tab}
           onPress={() => handleTabPress(tab)}
         >
-          {tab.icon}
+          {React.cloneElement(tab.icon, { color: activeTab === tab.name ? activeTabColor : iconColor })}
           <ThemedText style={[
             styles.tabText,
-            activeTab === tab.name && styles.activeTabText
+            activeTab === tab.name && [styles.activeTabText, { color: activeTabColor }]
           ]}>
             {tab.name}
           </ThemedText>
@@ -67,5 +69,6 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     fontWeight: 'bold',
+    color: '#003366', // Dark blue color for active tab
   },
 }); 
