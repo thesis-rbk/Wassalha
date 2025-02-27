@@ -9,7 +9,7 @@ import { Search, Filter, Plane, ShoppingBag, MapPin, Crown, SlidersHorizontal } 
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
-
+import { Posts } from '@/components/posts';
 export function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Home');
   const colorScheme = useColorScheme() ?? 'light';
@@ -39,17 +39,18 @@ export function HomeScreen() {
   ];
 
   return (
+
     <ThemedView style={styles.container}>
-      <TopNavigation 
+      <TopNavigation
         title="Home"
-        onMenuPress={() => {}}
-        onNotificationPress={() => {}}
+        onMenuPress={() => { }}
+        onNotificationPress={() => { }}
       />
-      
+
       <ScrollView style={styles.content}>
         {/* Hero Image Card */}
         <View style={styles.heroCard}>
-          <Image 
+          <Image
             source={require('@/assets/images/11.jpeg')}
             style={styles.heroImage}
             resizeMode="cover"
@@ -69,10 +70,10 @@ export function HomeScreen() {
           <ThemedText style={styles.sectionTitle}>Our Services</ThemedText>
           <View style={styles.servicesGrid}>
             {services.map((service) => (
-              <Card 
-                key={service.title} 
+              <Card
+                key={service.title}
                 style={styles.serviceCard}
-                // onPress={() => router.push(service.route)}
+              // onPress={() => router.push(service.route)}
               >
                 <View style={styles.serviceContent}>
                   {service.icon}
@@ -100,10 +101,12 @@ export function HomeScreen() {
 
         {/* Orders List Section */}
         <View style={styles.ordersSection}>
-          <ThemedText style={styles.sectionTitle}>List of Orders</ThemedText>
+          <ThemedText style={styles.sectionTitle}>List of Orders
+          </ThemedText>
+          <Posts />
         </View>
       </ScrollView>
-      
+
       <TabBar
         activeTab={activeTab}
         onTabPress={setActiveTab}
