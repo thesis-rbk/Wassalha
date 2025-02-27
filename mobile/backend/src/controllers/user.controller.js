@@ -6,7 +6,7 @@ const { OAuth2Client } = require('google-auth-library');
 const crypto = require('crypto');
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
-const salt = process.env.SALT_ROUNDS || 10;
+const saltRounds = parseInt(process.env.SALT_ROUNDS, 10) || 10;
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
@@ -53,7 +53,7 @@ const signup = async (req, res) => {
       return res.status(409).json({ error: 'Email is already in use' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const newUser = await prisma.user.create({
       data: {
@@ -249,7 +249,7 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ error: 'Reset token has expired' });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
     await prisma.user.update({
       where: { email },

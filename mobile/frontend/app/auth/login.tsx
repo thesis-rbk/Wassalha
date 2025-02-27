@@ -1,31 +1,39 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, StyleSheet, ScrollView, Image } from 'react-native';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import { InputField } from '@/components/InputField';
+import { BaseButton } from '../../components/ui/buttons/BaseButton';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice';
 import { RootState } from '../../store';
 import axiosInstance from '../../config';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state: RootState) => state.auth);
 
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [emailError, setEmailError] = useState<string | undefined>(undefined);
+  const [passwordError, setPasswordError] = useState<string | undefined>(undefined);
+
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      if (!email) setEmailError('Email is required');
+      if (!password) setPasswordError('Password is required');
       return;
     }
 
     dispatch(loginStart());
     try {
-      const res = await axiosInstance.post('/api/users/login', {
-        email,
-        password,
-      });
+      const res = await axiosInstance.post('/api/users/login', { email, password });
       const data = res.data;
 
       if (res.status === 200) {
@@ -37,54 +45,133 @@ export default function Login() {
         router.push('/home');
       } else {
         dispatch(loginFailure(data.error || 'Login failed'));
-        Alert.alert('Error', data.error || 'Login failed');
+        setEmailError(data.error || 'Login failed');
       }
     } catch (error) {
-      dispatch(loginFailure('Something went wrong'));
       console.error('Login error:', error);
-      Alert.alert('Error', 'Something went wrong');
+      dispatch(loginFailure('Something went wrong'));
+      setEmailError('Something went wrong');
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Log In</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Button
-        title={loading ? 'Logging In...' : 'Log In'}
-        onPress={handleLogin}
-        disabled={loading}
-      />
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      <Text style={styles.signupText} onPress={() => router.push('/auth/signup')}>
-        Don’t have an account? Sign Up
-      </Text>
-      <Text style={styles.signupLink} onPress={() => router.push('/auth/ResetPassword')}>
-    Forgot Password?
-  </Text>
-    </View>
+    <ThemedView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Logo or Header Image */}
+        <Image
+          source={require('@/assets/images/11.jpeg')} // Use your logo
+          style={styles.logo}
+          resizeMode="contain"
+        />
+
+        {/* Welcome Text */}
+        <ThemedText style={styles.welcomeText}>Welcome Back!</ThemedText>
+        <ThemedText style={styles.subText}>Sign in to continue</ThemedText>
+
+        {/* Email Input */}
+        <InputField
+          label="Email"
+          placeholder="Enter your email"
+          value={email}
+          onChangeText={(text) => {
+            setEmail(text);
+            setEmailError(undefined); // Clear error on change
+          }}
+          error={emailError}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        {/* Password Input */}
+        <InputField
+          label="Password"
+          placeholder="Enter your password"
+          value={password}
+          onChangeText={(text) => {
+            setPassword(text);
+            setPasswordError(undefined); // Clear error on change
+          }}
+          error={passwordError || (error ?? undefined)} // Show Redux error if present
+          secureTextEntry
+        />
+
+        {/* Forgot Password Link */}
+        <ThemedText
+          style={styles.forgotPasswordText}
+          onPress={() => router.push('/auth/ResetPassword')}
+        >
+          Forgot Password?
+        </ThemedText>
+
+        {/* Login Button */}
+        <BaseButton
+          variant="primary"
+          size="login"
+          style={styles.loginButton}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? 'Logging In...' : 'Log In'}
+        </BaseButton>
+
+        {/* Sign Up Link */}
+        <ThemedText style={styles.signUpText}>
+          Don't have an account?{' '}
+          <ThemedText
+            style={styles.signUpLink}
+            onPress={() => router.push('/auth/signup')}
+          >
+            Sign Up
+          </ThemedText>
+        </ThemedText>
+      </ScrollView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 10, borderRadius: 5 },
-  signupText: { marginTop: 20, textAlign: 'center', color: 'blue' },
-  errorText: { color: 'red', textAlign: 'center', marginTop: 10 },
-  signupLink: { marginTop: 10, textAlign: 'center', color: 'blue' },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.light.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  logo: {
+    width: 150,
+    height: 150,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 32,
+    color: Colors.light.text + '80', // Slightly transparent
+  },
+  loginButton: {
+    marginTop: 20,
+  },
+  signUpText: {
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  signUpLink: {
+    color: Colors.light.primary,
+    fontWeight: 'bold',
+  },
+  forgotPasswordText: {
+    textAlign: 'right',
+    marginTop: 10,
+    color: Colors.light.primary,
+    fontSize: 14,
+  },
 });
