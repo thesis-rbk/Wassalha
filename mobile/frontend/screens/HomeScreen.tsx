@@ -9,7 +9,8 @@ import { Search, Filter, Plane, ShoppingBag, MapPin, Crown, SlidersHorizontal } 
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
-import { Posts } from '@/components/posts';
+// import { Posts } from '@/components/posts';
+import { AppTickets } from './AppTickets';
 export function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Home');
   const colorScheme = useColorScheme() ?? 'light';
@@ -100,13 +101,10 @@ export function HomeScreen() {
         </View>
 
         {/* Orders List Section */}
-        <View style={styles.ordersSection}>
-          <ThemedText style={styles.sectionTitle}>List of Orders
-          </ThemedText>
-          <Posts />
+        <View>
+          <AppTickets />
         </View>
       </ScrollView>
-
       <TabBar
         activeTab={activeTab}
         onTabPress={setActiveTab}
