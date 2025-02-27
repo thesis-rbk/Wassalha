@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView, Image } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { InputField } from '@/components/InputField';
-import { BaseButton } from '../../components/ui/buttons/BaseButton';
+import { BaseButton } from '../../components/ui/buttons/BaseButton'
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
@@ -21,8 +21,8 @@ export default function Login() {
 
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [emailError, setEmailError] = useState<string | undefined>(undefined);
-  const [passwordError, setPasswordError] = useState<string | undefined>(undefined);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -75,9 +75,9 @@ export default function Login() {
           value={email}
           onChangeText={(text) => {
             setEmail(text);
-            setEmailError(undefined); // Clear error on change
+            setEmailError(null); // Clear error on change
           }}
-          error={emailError}
+          error={emailError || undefined}
           keyboardType="email-address"
           autoCapitalize="none"
         />
@@ -89,9 +89,9 @@ export default function Login() {
           value={password}
           onChangeText={(text) => {
             setPassword(text);
-            setPasswordError(undefined); // Clear error on change
+            setPasswordError(null); // Clear error on change
           }}
-          error={passwordError || (error ?? undefined)} // Show Redux error if present
+          error={passwordError ?? error ?? undefined} // Show Redux error if present
           secureTextEntry
         />
 

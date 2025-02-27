@@ -3,29 +3,17 @@ import { View, StyleSheet, ScrollView, Image } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { InputField } from '@/components/InputField';
-import { BaseButton } from "../../components/ui/buttons/BaseButton";
+import { BaseButton } from '../../components/ui/buttons/BaseButton';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import axiosInstance from '../../config';
 
-// Define the parameter list (same as in App.tsx)
-type RootStackParamList = {
-  '/login': undefined;
-  'auth/signup': undefined;
-  '/': undefined;
-  'auth/ResetPassword': undefined;
-};
-
-// Type the navigation prop
-type SignupNavigationProp = StackNavigationProp<RootStackParamList, 'auth/signup'>;
-
 const Signup = () => {
   const colorScheme = useColorScheme() ?? 'light';
-  const navigation = useNavigation<SignupNavigationProp>(); // Typed navigation
+  const router = useRouter();
 
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -68,7 +56,7 @@ const Signup = () => {
 
   const checkPasswordRequirements = (pwd: string) => {
     if (pwd.length < 8) {
-    return 'Password must be at least 8 characters';
+      return 'Password must be at least 8 characters';
     }
     if (!/[A-Z]/.test(pwd)) {
       return 'Password must contain at least one uppercase letter';
@@ -160,7 +148,7 @@ const Signup = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Logo or Header Image */}
         <Image
-          source={require('@/assets/images/11.jpeg')}
+          source={require('@/assets/images/11.jpeg')} // Replace with your logo
           style={styles.logo}
           resizeMode="contain"
         />
@@ -169,6 +157,7 @@ const Signup = () => {
         <ThemedText style={styles.welcomeText}>Join Us!</ThemedText>
         <ThemedText style={styles.subText}>Sign up to get started</ThemedText>
 
+        {/* Name Input */}
         <InputField
           label="Name"
           placeholder="Enter your name"
@@ -176,6 +165,8 @@ const Signup = () => {
           onChangeText={handleNameChange}
           error={nameError || undefined}
         />
+
+        {/* Email Input */}
         <InputField
           label="Email"
           placeholder="Enter your email"
@@ -185,6 +176,8 @@ const Signup = () => {
           keyboardType="email-address"
           autoCapitalize="none"
         />
+
+        {/* Password Input */}
         <InputField
           label="Password"
           placeholder="Enter your password"
@@ -198,6 +191,8 @@ const Signup = () => {
             Password Strength: {passwordStrength}
           </ThemedText>
         )}
+
+        {/* Confirm Password Input */}
         <InputField
           label="Confirm Password"
           placeholder="Confirm your password"
@@ -206,6 +201,8 @@ const Signup = () => {
           error={confirmPasswordError || undefined}
           secureTextEntry
         />
+
+        {/* Signup Button */}
         <BaseButton
           variant="primary"
           size="login"
@@ -214,17 +211,20 @@ const Signup = () => {
         >
           Sign Up
         </BaseButton>
+
+        {/* Login Link */}
         <ThemedText style={styles.loginText}>
           Already have an account?{' '}
           <ThemedText
             style={styles.loginLink}
-            onPress={() => navigation.navigate('/login')} // Typed route
+            onPress={() => router.push('/auth/login')}
           >
             Log In
           </ThemedText>
         </ThemedText>
       </ScrollView>
 
+      {/* AwesomeAlert for Success */}
       <AwesomeAlert
         show={showSuccessAlert}
         showProgress={false}
@@ -237,7 +237,7 @@ const Signup = () => {
         confirmButtonColor="#00FF00"
         onConfirmPressed={() => {
           setShowSuccessAlert(false);
-          navigation.navigate('/login'); // Typed route
+          router.push('/auth/login');
         }}
       />
     </ThemedView>
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 32,
-    color: Colors.light.text + '80',
+    color: Colors.light.text + '80', // Slightly transparent
   },
   signupButton: {
     marginTop: 20,
