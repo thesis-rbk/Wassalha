@@ -10,11 +10,13 @@ import { Search, Filter, Plane, ShoppingBag, MapPin, Crown, SlidersHorizontal } 
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
+import { useTheme } from '@/context/ThemeContext'; // Import useTheme
 
-export function HomeScreen() {
+export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Home');
   const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
+  const { theme } = useTheme(); // Use the useTheme hook
 
   const services = [
     {

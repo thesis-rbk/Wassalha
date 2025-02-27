@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
 import axios from 'axios';
 import AwesomeAlert from 'react-native-awesome-alerts';
+import { useRouter } from 'expo-router';
 
 const ForgotPassword = () => {
   const API = "http://192.168.104.14:4000";
@@ -48,9 +48,9 @@ const ForgotPassword = () => {
         Back to{' '}
         <Text
           style={styles.backLink}
-          onPress={() => router.push('/auth/login')} // Adjust path if login is elsewhere
+          onPress={() => router.push('/auth/login')}
         >
-          Log In
+          Login
         </Text>
       </Text>
       <AwesomeAlert
