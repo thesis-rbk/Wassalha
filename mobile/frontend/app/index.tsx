@@ -1,15 +1,20 @@
-import { Text, View } from "react-native";
-import { User, Category, GoodsPost, GoodsProcess, Notification, Order, ProcessEvent, PromoPost, Reputation, ServiceProvider, Sponsorship, Subscription } from "../types/index";
+import { HomeScreen } from '@/screens/HomeScreen';
+import { Grid } from '@/constants/Grid';
+import { Colors } from '@/constants/Colors';
+import { StyleSheet } from 'react-native';
+// Example usage in styles
+const styles = StyleSheet.create({
+  container: {
+    padding: Grid.padding.horizontal,
+    backgroundColor: Colors.light.background,
+  },
+  card: {
+    borderRadius: Grid.card.borderRadius,
+    padding: Grid.card.padding,
+    marginBottom: Grid.spacing.md,
+  },
+});
+
 export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>hello .</Text>
-    </View>
-  );
+  return <HomeScreen />;
 }
