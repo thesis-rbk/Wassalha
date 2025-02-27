@@ -1,15 +1,18 @@
 const express = require("express");
 const cors = require("cors");
 const requestRoutes = require("./routes/requestRoutes");
+require('dotenv').config();
 
 // const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
+const all = require("./routes/alltravNpost");
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use("/api/products", productRoutes);
+app.use("/api", all);
 // Routes
 app.use("/api/requests", requestRoutes);
 
