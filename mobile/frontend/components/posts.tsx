@@ -16,5 +16,5 @@ export function Posts() {
     useEffect(() => {
         fetchPosts();
     }, []);
-    return <view>Posts</view>
+    return (<div>hello</div>)
 }
