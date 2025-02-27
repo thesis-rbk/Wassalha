@@ -12,6 +12,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice';
 import { RootState } from '../../store';
 import axiosInstance from '../../config';
+import { InputFieldPassword } from '@/components/InputFieldPassword';
+
 
 export default function Login() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -44,13 +46,15 @@ export default function Login() {
         await AsyncStorage.setItem('jwtToken', data.token);
         router.push('/home');
       } else {
-        dispatch(loginFailure(data.error || 'Login failed'));
-        setEmailError(data.error || 'Login failed');
+        dispatch(loginFailure('Wrong email or password'));
+        setEmailError(null);
+        setPasswordError(null);
       }
     } catch (error) {
       console.error('Login error:', error);
-      dispatch(loginFailure('Something went wrong'));
-      setEmailError('Something went wrong');
+      dispatch(loginFailure('Wrong email or password'));
+      setEmailError(null);
+      setPasswordError(null);
     }
   };
 
@@ -83,17 +87,24 @@ export default function Login() {
         />
 
         {/* Password Input */}
-        <InputField
+        <InputFieldPassword
           label="Password"
           placeholder="Enter your password"
           value={password}
           onChangeText={(text) => {
             setPassword(text);
-            setPasswordError(null); // Clear error on change
+            setPasswordError(null);
           }}
-          error={passwordError ?? error ?? undefined} // Show Redux error if present
+          error={passwordError || undefined}
           secureTextEntry
         />
+
+        {/* Add this error message display */}
+        {error && (
+          <ThemedText style={styles.errorText}>
+            Wrong email or password
+          </ThemedText>
+        )}
 
         {/* Forgot Password Link */}
         <ThemedText
@@ -172,6 +183,12 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginTop: 10,
     color: Colors.light.primary,
+    fontSize: 14,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 10,
     fontSize: 14,
   },
 });

@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Image } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
+import { InputFieldPassword } from '@/components/InputFieldPassword';
 import { InputField } from '@/components/InputField';
+
 import { BaseButton } from '../../components/ui/buttons/BaseButton';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -167,7 +169,7 @@ const Signup = () => {
         />
 
         {/* Email Input */}
-        <InputField
+        <InputFieldPassword
           label="Email"
           placeholder="Enter your email"
           value={email}
@@ -175,10 +177,11 @@ const Signup = () => {
           error={emailError || undefined}
           keyboardType="email-address"
           autoCapitalize="none"
+          secureTextEntry
         />
 
         {/* Password Input */}
-        <InputField
+        <InputFieldPassword
           label="Password"
           placeholder="Enter your password"
           value={password}
@@ -193,7 +196,7 @@ const Signup = () => {
         )}
 
         {/* Confirm Password Input */}
-        <InputField
+        <InputFieldPassword
           label="Confirm Password"
           placeholder="Confirm your password"
           value={confirmPassword}
