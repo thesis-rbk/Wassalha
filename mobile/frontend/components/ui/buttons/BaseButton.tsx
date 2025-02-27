@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     width: 181,
   },
   login: {
-    width: 400, // Reduced from 620 to 310
+    width: 350, // Reduced from 620 to 310
   },
   text: {
     fontFamily: FontFamily.semibold,
