@@ -12,7 +12,10 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <Stack />
+      <Stack>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="orders" />
+      </Stack>
     </ThemeProvider>
   );
 }

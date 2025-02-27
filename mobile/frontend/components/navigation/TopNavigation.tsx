@@ -31,7 +31,7 @@ export function TopNavigation({ title, onNotificationPress }: TopNavigationProps
     { icon: <Settings size={24} color={Colors[colorScheme].text} />, label: 'Settings' },
     { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders' },
     { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips' },
-    { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request' },
+    { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'my Requests' },
     { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out' },
   ];
 
