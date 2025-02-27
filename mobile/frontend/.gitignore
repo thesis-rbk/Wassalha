@@ -38,3 +38,4 @@ config.ts
 
 app-example
 config.ts
+expo-env.d.ts
