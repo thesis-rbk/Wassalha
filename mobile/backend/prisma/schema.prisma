@@ -512,7 +512,7 @@ model GoodsPost {
   content String?
 
   travelerId Int
-  traveler   User @relation(fields: [travelerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  traveler   User? @relation(fields: [travelerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   arrivalDate     DateTime?
   availableKg     Float?

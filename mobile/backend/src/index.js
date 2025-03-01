@@ -3,6 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
+require('dotenv').config();
+
 // const userRoutes = require("./routes/userRoutes");
 const http = require("http"); // Required for Socket.IO
 
@@ -13,6 +15,7 @@ const categoryRoutes = require("./routes/category.route");
 // Import tracking socket
 // const trackingSocket = require("./sockets/trackingSocket");
 
+const all = require("./routes/alltravNpost");
 const app = express();
 const server = http.createServer(app); // Create HTTP server (This is used by both Express and Socket.IO)
 
@@ -22,6 +25,8 @@ app.use(express.json());
 
 // Routes (REST API will still work)
 app.use("/api/products", productRoutes);
+app.use("/api", all);
+// Routes
 app.use("/api/requests", requestRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
@@ -50,7 +55,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 // server.listen() allows us to start the HTTP server and enable Socket.IO communication on the same port
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });
 
 // **Conflicting line (to be commented out):**
