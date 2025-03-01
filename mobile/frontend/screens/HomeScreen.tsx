@@ -5,18 +5,19 @@ import { TabBar } from '@/components/navigation/TabBar';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Card } from '@/components/Card';
-import { Button } from 'react-native'; // Import Button
+import { Button } from 'react-native';
 import { Search, Filter, Plane, ShoppingBag, MapPin, Crown, SlidersHorizontal } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@/context/ThemeContext'; // Import useTheme
+import { useTheme } from '@/context/ThemeContext';
+import { AppTickets } from './AppTickets';
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Home');
   const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
-  const { theme } = useTheme(); // Use the useTheme hook
+  const { theme } = useTheme();
 
   const services = [
     {
@@ -43,19 +44,16 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <TopNavigation 
-        title="Home"
-        onMenuPress={() => {}}
-        onNotificationPress={() => {}}
+      <TopNavigation
+        title="Wassalah" // Ensure the title is explicitly set to "Wassalah"
+        onMenuPress={() => { }}
+        onNotificationPress={() => { }}
       />
-         <Button
-            title="Log In"
-            onPress={() => router.push('/auth/login')} // Navigate to /login
-          />
+
       <ScrollView style={styles.content}>
         {/* Hero Image Card */}
         <View style={styles.heroCard}>
-          <Image 
+          <Image
             source={require('@/assets/images/11.jpeg')}
             style={styles.heroImage}
             resizeMode="cover"
@@ -75,9 +73,10 @@ export default function HomeScreen() {
           <ThemedText style={styles.sectionTitle}>Our Services</ThemedText>
           <View style={styles.servicesGrid}>
             {services.map((service) => (
-              <Card 
-                key={service.title} 
+              <Card
+                key={service.title}
                 style={styles.serviceCard}
+                onPress={() => router.push(service.route)} // Added navigation for services
               >
                 <View style={styles.serviceContent}>
                   {service.icon}
@@ -89,9 +88,6 @@ export default function HomeScreen() {
             ))}
           </View>
         </View>
-
-        {/* Login Button */}
-      
 
         {/* Search Section */}
         <View style={styles.searchSection}>
@@ -107,11 +103,10 @@ export default function HomeScreen() {
         </View>
 
         {/* Orders List Section */}
-        <View style={styles.ordersSection}>
-          <ThemedText style={styles.sectionTitle}>List of Orders</ThemedText>
+        <View>
+          <AppTickets />
         </View>
       </ScrollView>
-      
       <TabBar
         activeTab={activeTab}
         onTabPress={setActiveTab}
@@ -187,11 +182,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  buttonContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    alignItems: 'center', // Center the button horizontally
-  },
   searchSection: {
     padding: 16,
   },
@@ -206,8 +196,5 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
     fontSize: 16,
-  },
-  ordersSection: {
-    padding: 16,
   },
 });
