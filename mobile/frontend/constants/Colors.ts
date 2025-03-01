@@ -37,6 +37,7 @@ export const Colors = {
       ios: 'rgba(0, 0, 0, 0.1)',
       android: 'rgba(0, 0, 0, 0.15)',
     }),
+    googleButton: '#F5F5F5',
   },
   dark: {
     text: '#FFFFFF',
@@ -63,5 +64,6 @@ export const Colors = {
       android: '#242424',
     }),
     shadow: 'rgba(0, 0, 0, 0.3)',
+    googleButton: '#2D2D2D',
   },
 };

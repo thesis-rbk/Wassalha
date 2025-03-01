@@ -116,12 +116,14 @@ const loginUser = async (req, res) => {
 
 const googleLogin = async (req, res) => {
   const { idToken } = req.body;
+  console.log('google token id', idToken);
 
   if (!idToken) {
     return res.status(400).json({ error: 'Google ID token is required' });
   }
 
   try {
+    console.log('google client', GOOGLE_CLIENT_ID);
     const ticket = await googleClient.verifyIdToken({
       idToken,
       audience: GOOGLE_CLIENT_ID,
