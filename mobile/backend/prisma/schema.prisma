@@ -180,7 +180,8 @@ model User {
   phoneNumber String?
   googleId    String?
   password    String?
-
+  resetToken        String?
+  resetTokenExpiry  DateTime?
   profile         Profile?
   requests        Request[]
   notifications   Notification[]
