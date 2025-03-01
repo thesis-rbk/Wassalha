@@ -1,8 +1,11 @@
-import  HomeScreen  from '../screens/HomeScreen';
-import { Grid } from '@/constants/Grid';
-import { Colors } from '@/constants/Colors';
-import { StyleSheet } from 'react-native';
-import RootLayout from './_layout';
+import HomeScreen from "../screens/HomeScreen";
+import { Grid } from "@/constants/Grid";
+import { Colors } from "@/constants/Colors";
+import { StyleSheet } from "react-native";
+import RootLayout from "./_layout";
+import { HowYouHeardScreen } from "./onboarding/how-you-heard";
+import { SelectCategoriesScreen } from "./onboarding/select-categories";
+import { CustomScreen } from "./onboarding/custom-screen";
 
 // Example usage in styles
 const styles = StyleSheet.create({
@@ -18,5 +21,28 @@ const styles = StyleSheet.create({
 });
 
 export default function Index() {
-  return <><RootLayout /><HomeScreen /></>;
+  return (
+    <>
+      <RootLayout />
+      <HomeScreen />
+    </>
+  );
+
+  // return (
+  //   <>
+  //     <HowYouHeardScreen />
+  //   </>
+  // );
+
+  // return (
+  //   <>
+  //     <SelectCategoriesScreen />
+  //   </>
+  // );
+
+  // return (
+  //   <>
+  //     <CustomScreen />
+  //   </>
+  // );
 }

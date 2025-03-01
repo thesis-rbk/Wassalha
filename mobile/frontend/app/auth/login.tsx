@@ -1,58 +1,74 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Image } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { InputField } from '@/components/InputField';
-import { BaseButton } from '../../components/ui/buttons/BaseButton'
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
-import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice';
-import { RootState } from '../../store';
-import axiosInstance from '../../config';
-import { InputFieldPassword } from '@/components/InputFieldPassword';
-
+import React, { useState } from "react";
+import { View, StyleSheet, ScrollView, Image } from "react-native";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { InputField } from "@/components/InputField";
+import { BaseButton } from "../../components/ui/buttons/BaseButton";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
+import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useDispatch, useSelector } from "react-redux";
+import { loginStart, loginSuccess, loginFailure } from "../../store/authSlice";
+import { RootState } from "../../store";
+import axiosInstance from "../../config";
+import { InputFieldPassword } from "@/components/InputFieldPassword";
 
 export default function Login() {
-  const colorScheme = useColorScheme() ?? 'light';
+  const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state: RootState) => state.auth);
 
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      if (!email) setEmailError('Email is required');
-      if (!password) setPasswordError('Password is required');
+      if (!email) setEmailError("Email is required");
+      if (!password) setPasswordError("Password is required");
       return;
     }
 
     dispatch(loginStart());
     try {
-      const res = await axiosInstance.post('/api/users/login', { email, password });
+      const res = await axiosInstance.post("/api/users/login", {
+        email,
+        password,
+      });
       const data = res.data;
 
       if (res.status === 200) {
-        dispatch(loginSuccess({
-          token: data.token,
-          user: { id: data.user.id, name: data.user.name, email: data.user.email },
-        }));
-        await AsyncStorage.setItem('jwtToken', data.token);
-        router.push('/home');
+        // Save token and user data
+        await AsyncStorage.setItem("jwtToken", data.token);
+        dispatch(
+          loginSuccess({
+            token: data.token,
+            user: {
+              id: data.user.id,
+              name: data.user.name,
+              email: data.user.email,
+            },
+          })
+        );
+
+        // Check if onboarding is completed
+        const onboardingStatus = data.user.hasCompletedOnboarding; // Assuming the backend returns this field
+        if (!onboardingStatus) {
+          router.push("/onboarding/how-you-heard"); // Redirect to onboarding
+        } else {
+          router.push("/home"); // Redirect to home
+        }
       } else {
-        dispatch(loginFailure('Wrong email or password'));
+        dispatch(loginFailure("Wrong email or password"));
         setEmailError(null);
         setPasswordError(null);
       }
     } catch (error) {
-      console.error('Login error:', error);
-      dispatch(loginFailure('Wrong email or password'));
+      console.error("Login error:", error);
+      dispatch(loginFailure("Wrong email or password"));
       setEmailError(null);
       setPasswordError(null);
     }
@@ -63,7 +79,7 @@ export default function Login() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Logo or Header Image */}
         <Image
-          source={require('@/assets/images/11.jpeg')} // Use your logo
+          source={require("@/assets/images/11.jpeg")} // Use your logo
           style={styles.logo}
           resizeMode="contain"
         />
@@ -109,7 +125,7 @@ export default function Login() {
         {/* Forgot Password Link */}
         <ThemedText
           style={styles.forgotPasswordText}
-          onPress={() => router.push('/auth/ResetPassword')}
+          onPress={() => router.push("/auth/ResetPassword")}
         >
           Forgot Password?
         </ThemedText>
@@ -122,15 +138,15 @@ export default function Login() {
           onPress={handleLogin}
           disabled={loading}
         >
-          {loading ? 'Logging In...' : 'Log In'}
+          {loading ? "Logging In..." : "Log In"}
         </BaseButton>
 
         {/* Sign Up Link */}
         <ThemedText style={styles.signUpText}>
-          Don't have an account?{' '}
+          Don't have an account?{" "}
           <ThemedText
             style={styles.signUpLink}
-            onPress={() => router.push('/auth/signup')}
+            onPress={() => router.push("/auth/signup")}
           >
             Sign Up
           </ThemedText>
@@ -147,47 +163,47 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 20,
   },
   logo: {
     width: 150,
     height: 150,
-    alignSelf: 'center',
+    alignSelf: "center",
     marginBottom: 20,
   },
   welcomeText: {
     fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 8,
   },
   subText: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 32,
-    color: Colors.light.text + '80', // Slightly transparent
+    color: Colors.light.text + "80", // Slightly transparent
   },
   loginButton: {
     marginTop: 20,
   },
   signUpText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 20,
   },
   signUpLink: {
     color: Colors.light.primary,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   forgotPasswordText: {
-    textAlign: 'right',
+    textAlign: "right",
     marginTop: 10,
     color: Colors.light.primary,
     fontSize: 14,
   },
   errorText: {
-    color: 'red',
-    textAlign: 'center',
+    color: "red",
+    textAlign: "center",
     marginTop: 10,
     fontSize: 14,
   },
