@@ -5,15 +5,18 @@ import { TabBar } from '@/components/navigation/TabBar';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Card } from '@/components/Card';
+import { Button } from 'react-native'; // Import Button
 import { Search, Filter, Plane, ShoppingBag, MapPin, Crown, SlidersHorizontal } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
+import { useTheme } from '@/context/ThemeContext'; // Import useTheme
 
-export function HomeScreen() {
+export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Home');
   const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
+  const { theme } = useTheme(); // Use the useTheme hook
 
   const services = [
     {
@@ -45,7 +48,10 @@ export function HomeScreen() {
         onMenuPress={() => {}}
         onNotificationPress={() => {}}
       />
-      
+         <Button
+            title="Log In"
+            onPress={() => router.push('/auth/login')} // Navigate to /login
+          />
       <ScrollView style={styles.content}>
         {/* Hero Image Card */}
         <View style={styles.heroCard}>
@@ -72,7 +78,6 @@ export function HomeScreen() {
               <Card 
                 key={service.title} 
                 style={styles.serviceCard}
-                onPress={() => router.push(service.route)}
               >
                 <View style={styles.serviceContent}>
                   {service.icon}
@@ -84,6 +89,9 @@ export function HomeScreen() {
             ))}
           </View>
         </View>
+
+        {/* Login Button */}
+      
 
         {/* Search Section */}
         <View style={styles.searchSection}>
@@ -179,6 +187,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  buttonContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    alignItems: 'center', // Center the button horizontally
+  },
   searchSection: {
     padding: 16,
   },
@@ -197,4 +210,4 @@ const styles = StyleSheet.create({
   ordersSection: {
     padding: 16,
   },
-}); 
+});
