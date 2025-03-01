@@ -8,12 +8,18 @@ const http = require("http");
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
+require('dotenv').config();
+
+// const userRoutes = require("./routes/userRoutes");
+const http = require("http"); // Required for Socket.IO
+
+// Import routes
 const productRoutes = require("./routes/productRoutes");
 
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
 
-// Initialize app and server
+const all = require("./routes/alltravNpost");
 const app = express();
 const server = http.createServer(app);
 
@@ -23,6 +29,8 @@ app.use(express.json());
 
 // Routes
 app.use("/api/products", productRoutes);
+app.use("/api", all);
+// Routes
 app.use("/api/requests", requestRoutes);
 app.use("/api/users", userRoutes);
 

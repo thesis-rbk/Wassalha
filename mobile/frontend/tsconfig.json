@@ -1,12 +1,29 @@
 {
-    "extends": "expo/tsconfig.base",
-    "compilerOptions": {
-      "strict": true,
-      "paths": {
-        "@/*": ["./*"]
-      },
-      // "types": ["nativewind/types"],
-      "typeRoots": ["./node_modules/@types", "./types"]
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "allowJs": true,
+    "jsx": "react-native",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "strict": true,
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
     },
-    "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
-  }
+    // "types": ["nativewind/types"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ]
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "react-native-dotenv.d.ts"
+  ]
+}
