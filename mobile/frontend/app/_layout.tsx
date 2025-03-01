@@ -60,6 +60,8 @@ export default function RootLayout() {
           <Stack.Screen name="auth/login" options={{ title: 'Log In' }} />
           <Stack.Screen name="home" options={{ title: 'Home' }} />
           <Stack.Screen name="auth/ResetPassword" options={{ title: 'Reset Password' }} />
+          <Stack.Screen name="auth/NewPassword" options={{ title: 'New Password' }} />
+
         </Stack>
       </Provider>
     </ThemeProvider>
