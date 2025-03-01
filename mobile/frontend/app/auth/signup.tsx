@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import HomeScreen from '../../screens/HomeScreen';
 import { View, StyleSheet, ScrollView, Image } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -125,6 +126,7 @@ const Signup = () => {
       if (res.status === 201 || res.status === 200) {
         await AsyncStorage.setItem('jwtToken', data.token || '');
         setShowSuccessAlert(true);
+        // router.push('/home')
       } else {
         setEmailError(data.error || 'Signup failed');
       }
