@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import ProductDetails from '../productDetails';
+import TrackingApp from '../mapTrack';  // Import your existing map component
 
-export default function TestProductDetails() {
+export default function TestMap() {
   return (
     <View style={styles.container}>
-      <ProductDetails onNext={() => console.log('Next button clicked')} />
+      <TrackingApp />
     </View>
   );
 }
@@ -14,7 +14,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    padding: 16,
   },
 });
-

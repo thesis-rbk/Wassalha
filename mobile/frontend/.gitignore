@@ -32,12 +32,14 @@ yarn-error.*
 # local env files
 .env*.local
 .env
-
+config.ts
 # typescript
 *.tsbuildinfo
 
 app-example
 config.ts
+expo-env.d.ts
+env.d.ts
 config.ts
 
 
