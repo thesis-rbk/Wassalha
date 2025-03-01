@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-
+import WelcomeAnimation from '@/components/WelcomeAnimation';
 
 // Add this type definition
 
@@ -20,6 +20,7 @@ console.log('User:', user);
 
   return (
     <View style={styles.container}>
+      <WelcomeAnimation onAnimationComplete={() => {}} />
       <Text style={styles.title}>Welcome, {user?.name || 'User'}!</Text>
       <Text>Email: {user?.email}</Text>
       <Text>Token: {token}</Text>
