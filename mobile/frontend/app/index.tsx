@@ -1,7 +1,9 @@
-import { HomeScreen } from '@/screens/HomeScreen';
+import  HomeScreen  from '../screens/HomeScreen';
 import { Grid } from '@/constants/Grid';
 import { Colors } from '@/constants/Colors';
 import { StyleSheet } from 'react-native';
+import RootLayout from './_layout';
+
 // Example usage in styles
 const styles = StyleSheet.create({
   container: {
@@ -16,5 +18,5 @@ const styles = StyleSheet.create({
 });
 
 export default function Index() {
-  return <HomeScreen />;
+  return <><RootLayout /><HomeScreen /></>;
 }
