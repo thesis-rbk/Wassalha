@@ -20,7 +20,7 @@ export default function RootLayout() {
     'Inter-Bold': require('../assets/fonts/android/inter/Inter_28pt-Bold.ttf'),
     'Inter-Medium': require('../assets/fonts/android/inter/Inter_28pt-Medium.ttf'),
     'Inter-Regular': require('../assets/fonts/android/inter/Inter_28pt-Regular.ttf'),
-    
+
     // iOS fonts
     'SFPro-Bold': require('../assets/fonts/ios/sf-pro/SF-Pro-Display-Bold.otf'),
     'SFPro-Black': require('../assets/fonts/ios/sf-pro/SF-Pro-Display-Black.otf'),
@@ -49,20 +49,14 @@ export default function RootLayout() {
     <ThemeProvider>
       <Provider store={store}>
         <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: '#008098' },
-            headerTintColor: '#008098',
-            headerTitleStyle: { fontWeight: 'bold' },
-          }}
         >
           {/* Optionally define specific screens if needed */}
           <Stack.Screen name="auth/signup" options={{ title: 'Sign Up' }} />
           <Stack.Screen name="auth/login" options={{ title: 'Log In' }} />
-          <Stack.Screen name="home" options={{ title: 'Home' }} />
+          <Stack.Screen name="home" />
           <Stack.Screen name="auth/ResetPassword" options={{ title: 'Reset Password' }} />
         </Stack>
       </Provider>
     </ThemeProvider>
   );
 }
-
