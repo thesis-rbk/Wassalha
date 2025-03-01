@@ -12,11 +12,11 @@ import {
 } from "react-native";
 import MapView, { Marker, Callout } from "react-native-maps";
 import io from "socket.io-client";
+import { SOCKET_URL } from '../../config';
 
-const BACKEND_URL = "http://192.168.11.186:4000";
-console.log("🚀 Connecting to backend at:", BACKEND_URL);
+console.log("🚀 Connecting to backend at:", SOCKET_URL);
 
-const socket = io(BACKEND_URL, { transports: ["websocket"] });
+const socket = io(SOCKET_URL, { transports: ["websocket"] });
 
 socket.on("connect", () => console.log("✅ Connected to backend via Socket.IO"));
 socket.on("disconnect", () => console.log("❌ Disconnected from backend"));
@@ -100,9 +100,9 @@ export default function TrackingApp() {
         ref={mapRef}
         style={styles.map}
         initialRegion={{
-          latitude: 37.7749,
-          longitude: -122.4194,
-          latitudeDelta: 10,
+          latitude: 36.8065,    // Tunis coordinates
+          longitude: 10.1815,   // Tunis coordinates
+          latitudeDelta: 10,    // Zoom level
           longitudeDelta: 10,
         }}
       >

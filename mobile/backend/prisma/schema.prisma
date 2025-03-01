@@ -1,6 +1,6 @@
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
+  url      = "mysql://root:root@localhost:3306/wassalha"
 }
 
 generator client {
@@ -180,7 +180,8 @@ model User {
   phoneNumber String?
   googleId    String?
   password    String?
-
+  resetToken        String?
+  resetTokenExpiry  DateTime?
   profile         Profile?
   requests        Request[]
   notifications   Notification[]

@@ -12,10 +12,9 @@ import { BaseButton } from '@/components/ui/buttons/BaseButton';
 import { TitleLarge, TitleSection, TitleSub, BodyMedium } from '@/components/Typography';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { ProductDetailsProps } from '@/types/ProductDetails';
 
-interface ProductDetailsProps {
-  onNext: () => void;
-}
+
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const colorScheme = useColorScheme() ?? 'light';
