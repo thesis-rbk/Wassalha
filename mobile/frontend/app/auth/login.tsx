@@ -11,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice';
 import { RootState } from '../../store';
-import axiosInstance from '../../config';
+import axiosInstance from '../config';
 import { InputFieldPassword } from '@/components/InputFieldPassword';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';

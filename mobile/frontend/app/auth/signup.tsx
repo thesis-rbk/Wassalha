@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import HomeScreen from '../../screens/HomeScreen';
 import { View, StyleSheet, ScrollView, Image } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -9,18 +10,11 @@ import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AwesomeAlert from 'react-native-awesome-alerts';
-import axiosInstance from '../../config';
+import axiosInstance from '../config';
 
 const Signup = () => {
   const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
-  const AP=process.env.EXPO_PUBLIC_API_URL
-  console.log(AP,"aaaap")
-  console.log(AP,"aaaap")
-
-  console.log(AP,"aaaap")
-
-  console.log(AP,"aaaap")
 
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -132,6 +126,7 @@ const Signup = () => {
       if (res.status === 201 || res.status === 200) {
         await AsyncStorage.setItem('jwtToken', data.token || '');
         setShowSuccessAlert(true);
+        // router.push('/home')
       } else {
         setEmailError(data.error || 'Signup failed');
       }
