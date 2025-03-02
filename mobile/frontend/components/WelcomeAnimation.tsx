@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { WelcomeAnimationProps } from '@/types/WelcomeAnimationProps';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,9 +10,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-interface WelcomeAnimationProps {
-  onAnimationComplete: () => void;
-}
+
 
 const { width } = Dimensions.get('window');
 

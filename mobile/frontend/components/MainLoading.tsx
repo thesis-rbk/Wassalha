@@ -2,10 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, Animated } from 'react-native';
 import { useRef } from 'react';
 import loadingImage from '../assets/images/loading.png'; // Adjust the path as necessary
+import { MainLoadingProps } from '@/types/MainLoadingProps';
 
-interface MainLoadingProps {
-  onLoadingComplete: () => void; // New prop to handle loading completion
-}
 
 const MainLoading: React.FC<MainLoadingProps> = ({ onLoadingComplete }) => {
   const rotateAnim = useRef(new Animated.Value(0)).current;
