@@ -41,23 +41,29 @@ export default function RootLayout() {
         ) : (
         <Stack >
           {/* Optionally define specific screens if needed */}
-          <Stack.Screen name="auth/signup" options={{ title: 'Sign Up' }} />
-          <Stack.Screen name="auth/login" options={{ title: 'Log In' }} />
+          <Stack.Screen name="auth/signup" options={{ title: "Sign Up" }} />
+          <Stack.Screen name="auth/login" options={{ title: "Log In" }} />
           <Stack.Screen name="home" />
-          <Stack.Screen name="auth/ResetPassword" options={{ title: 'Reset Password' }} />
-          <Stack.Screen name="auth/NewPassword" options={{ title: 'New Password' }} />
-
-          <Stack.Screen 
-            name="productDetails/create-order" 
-            options={{ 
-              title: 'Create Order'
-            }} 
+          <Stack.Screen
+            name="auth/ResetPassword"
+            options={{ title: "Reset Password" }}
           />
-          <Stack.Screen 
-            name="productDetails" 
-            options={{ 
-              title: 'Product Details'
-            }} 
+          <Stack.Screen
+            name="auth/NewPassword"
+            options={{ title: "New Password" }}
+          />
+
+          <Stack.Screen
+            name="productDetails/create-order"
+            options={{
+              title: "Create Order",
+            }}
+          />
+          <Stack.Screen
+            name="productDetails"
+            options={{
+              title: "Product Details",
+            }}
           />
           <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
           <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
