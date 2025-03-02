@@ -29,22 +29,22 @@ export default function HomeScreen() {
     {
       title: 'Travel',
       icon: <Plane size={32} color={Colors[colorScheme].primary} />,
-      route: '/test/Travel' as const,
+      route: '../test/Travel' as const,
     },
     {
       title: 'Order',
       icon: <ShoppingBag size={32} color={Colors[colorScheme].primary} />,
-      route: '/productDetails/create-order' as const,
+      route: '../productDetails/create-order' as const,
     },
     {
       title: 'Pickup',
       icon: <MapPin size={32} color={Colors[colorScheme].primary} />,
-      route: '/test/Pickup' as const,
+      route: '../test/Pickup' as const,
     },
     {
       title: 'Subscription',
       icon: <Crown size={32} color={Colors[colorScheme].primary} />,
-      route: '/test/Subscription' as const,
+      route: '../test/Subscription' as const,
     },
   ];
 
