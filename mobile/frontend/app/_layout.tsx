@@ -36,6 +36,21 @@ export default function RootLayout() {
           <Stack.Screen name="auth/ResetPassword" options={{ title: 'Reset Password' }} />
           <Stack.Screen name="auth/NewPassword" options={{ title: 'New Password' }} />
 
+          <Stack.Screen 
+            name="productDetails/create-order" 
+            options={{ 
+              title: 'Create Order'
+            }} 
+          />
+          <Stack.Screen 
+            name="productDetails" 
+            options={{ 
+              title: 'Product Details'
+            }} 
+          />
+          <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
+          <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
+          <Stack.Screen name="test/Subscription" options={{ title: 'Subscription' }} />
         </Stack>
       </Provider>
     </ThemeProvider>
