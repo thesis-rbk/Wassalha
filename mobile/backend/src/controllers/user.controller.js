@@ -18,8 +18,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const generateRandomToken = () => {
-  return crypto.randomBytes(32).toString("hex");
+const generateRandomCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
 };
 
 const signup = async (req, res) => {
@@ -66,6 +66,15 @@ const signup = async (req, res) => {
         name,
         email,
         password: hashedPassword,
+      },
+    });
+
+    // Automatically create profile for new user
+    await prisma.profile.create({
+      data: {
+        firstName: newUser.name,
+        lastName: "",
+        user: { connect: { id: newUser.id } },
       },
     });
 
@@ -127,12 +136,14 @@ const loginUser = async (req, res) => {
 
 const googleLogin = async (req, res) => {
   const { idToken } = req.body;
+  console.log("google token id", idToken);
 
   if (!idToken) {
     return res.status(400).json({ error: "Google ID token is required" });
   }
 
   try {
+    console.log("google client", GOOGLE_CLIENT_ID);
     const ticket = await googleClient.verifyIdToken({
       idToken,
       audience: GOOGLE_CLIENT_ID,
@@ -204,7 +215,7 @@ const requestPasswordReset = async (req, res) => {
       return res.status(404).json({ error: "No user found with this email" });
     }
 
-    const resetToken = generateRandomToken();
+    const resetToken = generateRandomCode();
     const resetTokenExpiry = new Date(Date.now() + 3600000);
 
     await prisma.user.update({
@@ -215,17 +226,16 @@ const requestPasswordReset = async (req, res) => {
       },
     });
 
-    const resetUrl = `http://your-frontend-url/reset-password?token=${resetToken}&email=${email}`;
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Password Reset Request",
-      text: `You requested a password reset. Click this link to reset your password: ${resetUrl}. This link expires in 1 hour.`,
-      html: `<p>You requested a password reset. Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 1 hour.</p>`,
+      subject: "Password Reset Code",
+      text: `Your password reset code is: ${resetToken}. This code expires in 1 hour.`,
+      html: `<p>Your password reset code is: <strong>${resetToken}</strong>. This code expires in 1 hour.</p>`,
     };
 
     await transporter.sendMail(mailOptions);
-    res.status(200).json({ message: "Password reset link sent to your email" });
+    res.status(200).json({ message: "Password reset code sent to your email" });
   } catch (error) {
     console.error("Request password reset error:", error);
     res.status(500).json({ error: "Something went wrong" });
@@ -235,13 +245,13 @@ const requestPasswordReset = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
-  const { email, token, newPassword } = req.body;
+  const { email, code, newPassword } = req.body;
 
   try {
-    if (!email || !token || !newPassword) {
+    if (!email || !code || !newPassword) {
       return res
         .status(400)
-        .json({ error: "Email, token, and new password are required" });
+        .json({ error: "Email, code, and new password are required" });
     }
 
     if (newPassword.length < 8) {
@@ -264,12 +274,12 @@ const resetPassword = async (req, res) => {
       where: { email },
     });
 
-    if (!user || user.resetToken !== token || !user.resetTokenExpiry) {
-      return res.status(400).json({ error: "Invalid or expired reset token" });
+    if (!user || user.resetToken !== code || !user.resetTokenExpiry) {
+      return res.status(400).json({ error: "Invalid or expired code" });
     }
 
     if (new Date() > user.resetTokenExpiry) {
-      return res.status(400).json({ error: "Reset token has expired" });
+      return res.status(400).json({ error: "Reset code has expired" });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
