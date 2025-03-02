@@ -23,7 +23,6 @@ const trackingSocket = require("./sockets/trackingSocket");
 const all = require("./routes/alltravNpost");
 const app = express();
 const server = http.createServer(app);
-const server = http.createServer(app); // Create HTTP server (This is used by both Express and Socket.IO)
 
 // Middleware
 app.use(cors());
