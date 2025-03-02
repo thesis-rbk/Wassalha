@@ -9,6 +9,15 @@ generator client {
 
 // ------------------ ENUMS ------------------ //
 
+enum ReferralSource {
+  SOCIAL_MEDIA
+  FRIEND_RECOMMENDATION
+  APP_STORE
+  GOOGLE_SEARCH
+  ADVERTISEMENT
+  OTHER
+}
+
 // Existing enums
 enum RequestStatus {
   PENDING
@@ -174,14 +183,14 @@ enum ProcessStatus {
 
 // ========== USER ==========
 model User {
-  id          Int     @id @default(autoincrement())
-  name        String
-  email       String  @unique
-  phoneNumber String?
-  googleId    String?
-  password    String?
-  resetToken        String?
-  resetTokenExpiry  DateTime?
+  id                     Int     @id @default(autoincrement())
+  name                   String
+  email                  String  @unique
+  phoneNumber            String?
+  googleId               String?
+  password               String?
+  hasCompletedOnboarding Boolean @default(false)
+
   profile         Profile?
   requests        Request[]
   notifications   Notification[]
@@ -225,11 +234,12 @@ model Profile {
   gender Gender?
 
   review              String?
-  isAnonymous         Boolean? @default(false)
-  isBanned            Boolean  @default(false)
-  isVerified          Boolean  @default(false)
-  isOnline            Boolean  @default(false)
+  isAnonymous         Boolean?        @default(false)
+  isBanned            Boolean         @default(false)
+  isVerified          Boolean         @default(false)
+  isOnline            Boolean         @default(false)
   preferredCategories String?
+  referralSource      ReferralSource?
 }
 
 // ========== SERVICE PROVIDER ==========

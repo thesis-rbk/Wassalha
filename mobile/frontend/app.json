@@ -42,10 +42,7 @@
     "experiments": {
       "typedRoutes": true
     },
-    "assetBundlePatterns": [
-      "**/*",
-      "assets/fonts/*"
-    ],
+    "assetBundlePatterns": ["**/*", "assets/fonts/*"],
     "fonts": [
       {
         "asset": "assets/fonts/android/inter/Inter_28pt-Light.ttf",
