@@ -47,11 +47,9 @@ const signup = async (req, res) => {
         .status(400)
         .json({ error: "Password must contain at least one uppercase letter" });
     }
-    if (!/\d/.test(password)) {
-      return res
-        .status(400)
-        .json({ error: "Password must contain at least one number" });
-    }
+    /*if (!/\d/.test(password)) {
+      return res.status(400).json({ error: 'Password must contain at least one number' });
+    }*/
 
     const existingUser = await prisma.user.findUnique({
       where: { email },

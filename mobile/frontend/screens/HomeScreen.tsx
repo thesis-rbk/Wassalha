@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Image, TextInput } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TextInput,
+  TouchableOpacity,
+  Text,
+} from "react-native";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
 import { TabBar } from "@/components/navigation/TabBar";
 import { ThemedView } from "@/components/ThemedView";
@@ -26,28 +34,46 @@ export default function HomeScreen() {
   const router = useRouter();
   const { theme } = useTheme();
 
+  // Add debug log for initial render
+  console.log("HomeScreen rendered");
+
   const services = [
     {
       title: "Travel",
       icon: <Plane size={32} color={Colors[colorScheme].primary} />,
-      route: "/travel",
+      route: "/test/Travel" as const,
     },
     {
       title: "Order",
       icon: <ShoppingBag size={32} color={Colors[colorScheme].primary} />,
-      route: "/order",
+      route: "/productDetails/create-order" as const,
     },
     {
       title: "Pickup",
       icon: <MapPin size={32} color={Colors[colorScheme].primary} />,
-      route: "/pickup",
+      route: "/test/Pickup" as const,
     },
     {
       title: "Subscription",
       icon: <Crown size={32} color={Colors[colorScheme].primary} />,
-      route: "/subscription",
+      route: "/test/Subscription" as const,
     },
   ];
+
+  // Add debug log for services
+  console.log("Services configured:", services);
+
+  const handleCardPress = (service: (typeof services)[0]) => {
+    console.log(`✅ handleCardPress triggered for: ${service.title}`);
+
+    try {
+      router.push(service.route);
+      console.log(`✅ Navigation to ${service.route} attempted`);
+    } catch (error) {
+      const err = error as Error;
+      console.error(`❌ Navigation failed:`, err);
+    }
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -83,7 +109,7 @@ export default function HomeScreen() {
               <Card
                 key={service.title}
                 style={styles.serviceCard}
-                // onPress={() => router.push(service.route)} // Added navigation for services
+                onPress={() => handleCardPress(service)}
               >
                 <View style={styles.serviceContent}>
                   {service.icon}
