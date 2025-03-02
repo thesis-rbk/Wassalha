@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "wassalha",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -20,7 +20,6 @@
       }
     },
     "extra": {
-      "API_URL": "http://172.20.10.3:4000",
       "GOOGLE_MAPS_KEY": "your-google-maps-key"
     },
     "web": {

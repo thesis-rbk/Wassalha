@@ -27,7 +27,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <Provider store={store}>
-        <Stack
+        <Stack 
         >
           {/* Optionally define specific screens if needed */}
           <Stack.Screen name="auth/signup" options={{ title: 'Sign Up' }} />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, Platform } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { InputField } from '@/components/InputField';
@@ -11,12 +11,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice';
 import { RootState } from '../../store';
-import axiosInstance from '../config';
+import axiosInstance from '../../config';
 import { InputFieldPassword } from '@/components/InputFieldPassword';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { FontAwesome5 } from '@expo/vector-icons';
 
+WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -32,11 +33,21 @@ export default function Login() {
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId: '134362624823-ubti4j1rmd2ha6u4f3dfev4b1vu9eb76.apps.googleusercontent.com',
     scopes: ['profile', 'email'],
+    redirectUri: 'https://auth.expo.io/@mrsadok/wassalha',
+    
   });
 
   useEffect(() => {
+    console.log('Auth URL:', request?.url);
+  }, [request]);
+
+  
+  useEffect(() => {
+    console.log('Google response:', response);
     if (response?.type === 'success') {
+      
       const { id_token } = response.params;
+      console.log(id_token);
       handleGoogleLogin(id_token);
     }
   }, [response]);
@@ -74,6 +85,8 @@ export default function Login() {
   };
 
   const handleGoogleLogin = async (idToken: string) => {
+    console.log('Google response:', response);
+
     dispatch(loginStart());
     try {
       const res = await axiosInstance.post('/api/users/google-login', { idToken });
@@ -238,7 +251,7 @@ export default function Login() {
           variant="secondary"
           size="login"
           style={styles.googleButton}
-          onPress={() => promptAsync()}
+          onPress={() => promptAsync({showInRecents: true})}
           disabled={!request || loading}
         >
           <FontAwesome5 name="google" size={20} color={Colors[colorScheme as 'light' | 'dark'].text} />
