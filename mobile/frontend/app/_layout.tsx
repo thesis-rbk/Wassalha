@@ -54,10 +54,6 @@ export default function RootLayout() {
             options={{ title: "Subscription" }}
           />
           <Stack.Screen
-            name="auth/ResetPassword"
-            options={{ title: "Reset Password" }}
-          />
-          <Stack.Screen
             name="onboarding/howYouHeard"
             options={{ title: "How You Heard" }}
           />
