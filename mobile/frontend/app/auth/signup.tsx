@@ -1,59 +1,63 @@
-import React, { useState } from 'react';
-import HomeScreen from '../../screens/HomeScreen';
-import { View, StyleSheet, ScrollView, Image } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { InputField } from '@/components/InputField';
-import { BaseButton } from '../../components/ui/buttons/BaseButton';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
-import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import AwesomeAlert from 'react-native-awesome-alerts';
-import axiosInstance from '../../config';
-import { InputFieldPassword } from '@/components/InputFieldPassword';
+import React, { useState } from "react";
+import HomeScreen from "../../screens/HomeScreen";
+import { View, StyleSheet, ScrollView, Image } from "react-native";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { InputField } from "@/components/InputField";
+import { BaseButton } from "../../components/ui/buttons/BaseButton";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
+import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import AwesomeAlert from "react-native-awesome-alerts";
+import axiosInstance from "../../config";
+import { InputFieldPassword } from "@/components/InputFieldPassword";
 
 const Signup = () => {
-  const colorScheme = useColorScheme() ?? 'light';
+  const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
-  
 
- 
-
-  const [name, setName] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [passwordStrength, setPasswordStrength] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<
+    string | null
+  >(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
 
   // Password strength checker function
   const checkPasswordStrength = (pwd: string) => {
     if (pwd.length < 6) {
-      return 'weak';
+      return "weak";
     }
     const hasUpperCase = /[A-Z]/.test(pwd);
     const hasLowerCase = /[a-z]/.test(pwd);
     const hasNumbers = /\d/.test(pwd);
     const hasSpecialChars = /[!@#$%^&*(),.?":{}|<>]/.test(pwd);
 
-    const strengthScore = [hasUpperCase, hasLowerCase, hasNumbers, hasSpecialChars].filter(Boolean).length;
+    const strengthScore = [
+      hasUpperCase,
+      hasLowerCase,
+      hasNumbers,
+      hasSpecialChars,
+    ].filter(Boolean).length;
 
     if (pwd.length >= 12 && strengthScore >= 3) {
-      return 'strong';
+      return "strong";
     } else if (pwd.length >= 8 && strengthScore >= 2) {
-      return 'normal';
+      return "normal";
     } else {
-      return 'weak';
+      return "weak";
     }
   };
 
   // Validation functions
-  const isNameValid = (name: string) => name.trim() !== '';
+  const isNameValid = (name: string) => name.trim() !== "";
   const isEmailValid = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -61,13 +65,13 @@ const Signup = () => {
 
   const checkPasswordRequirements = (pwd: string) => {
     if (pwd.length < 8) {
-      return 'Password must be at least 8 characters';
+      return "Password must be at least 8 characters";
     }
     if (!/[A-Z]/.test(pwd)) {
-      return 'Password must contain at least one uppercase letter';
+      return "Password must contain at least one uppercase letter";
     }
     if (!/\d/.test(pwd)) {
-      return 'Password must contain at least one number';
+      return "Password must contain at least one number";
     }
     return null;
   };
@@ -75,12 +79,14 @@ const Signup = () => {
   // Handle input changes with validation
   const handleNameChange = (text: string) => {
     setName(text);
-    setNameError(isNameValid(text) ? null : 'Name cannot be empty');
+    setNameError(isNameValid(text) ? null : "Name cannot be empty");
   };
 
   const handleEmailChange = (text: string) => {
     setEmail(text);
-    setEmailError(text && !isEmailValid(text) ? 'Please enter a valid email address' : null);
+    setEmailError(
+      text && !isEmailValid(text) ? "Please enter a valid email address" : null
+    );
   };
 
   const handlePasswordChange = (text: string) => {
@@ -88,65 +94,80 @@ const Signup = () => {
     setPasswordStrength(checkPasswordStrength(text));
     setPasswordError(checkPasswordRequirements(text));
     if (confirmPassword) {
-      setConfirmPasswordError(text === confirmPassword ? null : 'Passwords do not match');
+      setConfirmPasswordError(
+        text === confirmPassword ? null : "Passwords do not match"
+      );
     }
   };
 
   const handleConfirmPasswordChange = (text: string) => {
     setConfirmPassword(text);
-    setConfirmPasswordError(text && text !== password ? 'Passwords do not match' : null);
+    setConfirmPasswordError(
+      text && text !== password ? "Passwords do not match" : null
+    );
   };
 
   const handleEmailSignup = async () => {
     if (!name || !email || !password || !confirmPassword) {
-      if (!name) setNameError('Name is required');
-      if (!email) setEmailError('Email is required');
-      if (!password) setPasswordError('Password is required');
-      if (!confirmPassword) setConfirmPasswordError('Confirm Password is required');
+      if (!name) setNameError("Name is required");
+      if (!email) setEmailError("Email is required");
+      if (!password) setPasswordError("Password is required");
+      if (!confirmPassword)
+        setConfirmPasswordError("Confirm Password is required");
       return;
     }
     if (!isNameValid(name)) {
-      setNameError('Name cannot be empty');
+      setNameError("Name cannot be empty");
       return;
     }
     if (!isEmailValid(email)) {
-      setEmailError('Please enter a valid email address');
+      setEmailError("Please enter a valid email address");
       return;
     }
-    if (passwordStrength === 'weak' || checkPasswordRequirements(password)) {
-      setPasswordError('Password must be at least 8 characters long and include an uppercase letter and a number');
+    if (passwordStrength === "weak" || checkPasswordRequirements(password)) {
+      setPasswordError(
+        "Password must be at least 8 characters long and include an uppercase letter and a number"
+      );
       return;
     }
     if (password !== confirmPassword) {
-      setConfirmPasswordError('Passwords do not match');
+      setConfirmPasswordError("Passwords do not match");
       return;
     }
 
-    console.log('Signup payload:', { name, email, password });
+    console.log("Signup payload:", { name, email, password });
     try {
-      console.log('url apii , ', axiosInstance.defaults.baseURL);
-      const res = await axiosInstance.post('/api/users/register', { name, email, password });
+      console.log("url apii , ", axiosInstance.defaults.baseURL);
+      const res = await axiosInstance.post("/api/users/register", {
+        name,
+        email,
+        password,
+      });
       const data = res.data;
 
       if (res.status === 201 || res.status === 200) {
-        await AsyncStorage.setItem('jwtToken', data.token || '');
+        await AsyncStorage.setItem("jwtToken", data.token || "");
         setShowSuccessAlert(true);
-        router.push('/auth/login')
+        router.push("/auth/login");
       } else {
-        setEmailError(data.error || 'Signup failed');
+        setEmailError(data.error || "Signup failed");
       }
     } catch (error) {
-      console.error('Signup error:', error);
-      setEmailError('Something went wrong');
+      console.error("Signup error:", error);
+      setEmailError("Something went wrong");
     }
   };
 
   const getStrengthColor = () => {
     switch (passwordStrength) {
-      case 'weak': return 'red';
-      case 'normal': return 'orange';
-      case 'strong': return 'green';
-      default: return 'gray';
+      case "weak":
+        return "red";
+      case "normal":
+        return "orange";
+      case "strong":
+        return "green";
+      default:
+        return "gray";
     }
   };
 
@@ -155,7 +176,7 @@ const Signup = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Logo or Header Image */}
         <Image
-          source={require('@/assets/images/11.jpeg')} // Replace with your logo
+          source={require("@/assets/images/11.jpeg")} // Replace with your logo
           style={styles.logo}
           resizeMode="contain"
         />
@@ -194,7 +215,9 @@ const Signup = () => {
           secureTextEntry
         />
         {passwordStrength && (
-          <ThemedText style={[styles.strengthText, { color: getStrengthColor() }]}>
+          <ThemedText
+            style={[styles.strengthText, { color: getStrengthColor() }]}
+          >
             Password Strength: {passwordStrength}
           </ThemedText>
         )}
@@ -221,10 +244,10 @@ const Signup = () => {
 
         {/* Login Link */}
         <ThemedText style={styles.loginText}>
-          Already have an account?{' '}
+          Already have an account?{" "}
           <ThemedText
             style={styles.loginLink}
-            onPress={() => router.push('/auth/login')}
+            onPress={() => router.push("/auth/login")}
           >
             Log In
           </ThemedText>
@@ -244,7 +267,7 @@ const Signup = () => {
         confirmButtonColor="#00FF00"
         onConfirmPressed={() => {
           setShowSuccessAlert(false);
-          router.push('/auth/login');
+          router.push("/auth/login");
         }}
       />
     </ThemedView>
@@ -258,42 +281,42 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 20,
   },
   logo: {
     width: 150,
     height: 150,
-    alignSelf: 'center',
+    alignSelf: "center",
     marginBottom: 20,
   },
   welcomeText: {
     fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 8,
   },
   subText: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 32,
-    color: Colors.light.text + '80', // Slightly transparent
+    color: Colors.light.text + "80", // Slightly transparent
   },
   signupButton: {
     marginTop: 20,
   },
   loginText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 20,
   },
   loginLink: {
     color: Colors.light.primary,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   strengthText: {
     fontSize: 14,
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 
