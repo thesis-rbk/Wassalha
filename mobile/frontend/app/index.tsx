@@ -19,10 +19,5 @@ const styles = StyleSheet.create({
 });
 export default function Index() {
   return <Login />;
-  return (
-    <>
-      <RootLayout />
-      <HomeScreen />
-    </>
-  );
+ 
 }

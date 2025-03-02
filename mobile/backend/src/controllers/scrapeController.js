@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../../prisma');
 
 // Use the stealth plugin to avoid bot detection
 puppeteer.use(StealthPlugin());
