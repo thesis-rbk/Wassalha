@@ -5,8 +5,6 @@ const prisma = require('../../prisma');
 // Use the stealth plugin to avoid bot detection
 puppeteer.use(StealthPlugin());
 
-const prisma = new PrismaClient();
-
 // Selectors for known websites
 const SELECTORS = {
     'aliexpress.com': {
