@@ -1,16 +1,18 @@
 {
   "expo": {
     "name": "frontend",
-    "slug": "frontend",
+    "slug": "wassalha",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "wassalha",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
+    "platforms": ["ios", "android", "web"],
+    "redirectUri": "https://auth.expo.io/@mrsadok/wassalha",
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
@@ -18,7 +20,6 @@
       }
     },
     "extra": {
-      "API_URL": "http://192.168.1.11:5000",
       "GOOGLE_MAPS_KEY": "your-google-maps-key"
     },
     "web": {
