@@ -1,3 +1,5 @@
+import React from 'react';
+import  HomeScreen  from '../screens/HomeScreen';
 import { Grid } from '../constants/Grid';
 import { Colors } from '../constants/Colors';
 import { StyleSheet } from 'react-native';
@@ -17,4 +19,5 @@ const styles = StyleSheet.create({
 });
 export default function Index() {
   return <Login />;
+ 
 }
