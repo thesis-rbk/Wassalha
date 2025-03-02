@@ -5,19 +5,21 @@ import { TabBar } from '@/components/navigation/TabBar';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Card } from '@/components/Card';
-import { Button } from 'react-native';
+import { Button } from 'react-native'; // Import Button
 import { Search, Filter, Plane, ShoppingBag, MapPin, Crown, SlidersHorizontal } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@/context/ThemeContext';
-import { AppTickets } from './AppTickets';
+import { useTheme } from '@/context/ThemeContext'; // Import useTheme
+
+
+
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Home');
   const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
-  const { theme } = useTheme();
+  const { theme } = useTheme(); // Use the useTheme hook
 
   const services = [
     {
@@ -43,12 +45,17 @@ export default function HomeScreen() {
   ];
 
   return (
+
     <ThemedView style={styles.container}>
       <TopNavigation
-        title="Wassalah" // Ensure the title is explicitly set to "Wassalah"
+        title="Wassalah"
         onMenuPress={() => { }}
         onNotificationPress={() => { }}
       />
+      {/* <Button
+        title="Log In"
+        onPress={() => router.push('/auth/login')} // Navigate to /login
+      /> */}
 
       <ScrollView style={styles.content}>
         {/* Hero Image Card */}
@@ -76,7 +83,7 @@ export default function HomeScreen() {
               <Card
                 key={service.title}
                 style={styles.serviceCard}
-                onPress={() => router.push(service.route)} // Added navigation for services
+              // onPress={() => router.push(service.route)}
               >
                 <View style={styles.serviceContent}>
                   {service.icon}
@@ -88,6 +95,9 @@ export default function HomeScreen() {
             ))}
           </View>
         </View>
+
+        {/* Login Button */}
+
 
         {/* Search Section */}
         <View style={styles.searchSection}>
@@ -103,9 +113,6 @@ export default function HomeScreen() {
         </View>
 
         {/* Orders List Section */}
-        <View>
-          <AppTickets />
-        </View>
       </ScrollView>
       <TabBar
         activeTab={activeTab}
@@ -182,6 +189,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  buttonContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    alignItems: 'center', // Center the button horizontally
+  },
   searchSection: {
     padding: 16,
   },
@@ -196,5 +208,8 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
     fontSize: 16,
+  },
+  ordersSection: {
+    padding: 16,
   },
 });

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import HomeScreen from '../../screens/HomeScreen';
 import { View, StyleSheet, ScrollView, Image } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
