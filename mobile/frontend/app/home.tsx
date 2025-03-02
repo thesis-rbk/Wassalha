@@ -6,20 +6,13 @@ import { RootState } from '../store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import HomeScreen from '@/screens/HomeScreen';
-
+import { Navigation } from 'lucide-react-native';
+import { Order } from './order';
 // Add this type definition
 
 export default function Home() {
-  const router = useRouter()
-  const { user, token } = useSelector((state: RootState) => state.auth);
-  console.log('User:', user);
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem('jwtToken');
-    router.push('/auth/signup');
-  };
-
   return (
-    <HomeScreen />
+    <Order />
   );
 }
 
