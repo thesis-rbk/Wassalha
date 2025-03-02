@@ -11,13 +11,11 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import AwesomeAlert from "react-native-awesome-alerts";
 import axiosInstance from "../../config";
+import { InputFieldPassword } from "@/components/InputFieldPassword";
 
 const Signup = () => {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
-  
-
- 
 
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -139,6 +137,7 @@ const Signup = () => {
 
     console.log("Signup payload:", { name, email, password });
     try {
+      console.log("url apii , ", axiosInstance.defaults.baseURL);
       const res = await axiosInstance.post("/api/users/register", {
         name,
         email,
@@ -149,7 +148,7 @@ const Signup = () => {
       if (res.status === 201 || res.status === 200) {
         await AsyncStorage.setItem("jwtToken", data.token || "");
         setShowSuccessAlert(true);
-        // router.push('/home')
+        router.push("/auth/login");
       } else {
         setEmailError(data.error || "Signup failed");
       }
@@ -207,7 +206,7 @@ const Signup = () => {
         />
 
         {/* Password Input */}
-        <InputField
+        <InputFieldPassword
           label="Password"
           placeholder="Enter your password"
           value={password}
@@ -224,7 +223,7 @@ const Signup = () => {
         )}
 
         {/* Confirm Password Input */}
-        <InputField
+        <InputFieldPassword
           label="Confirm Password"
           placeholder="Confirm your password"
           value={confirmPassword}

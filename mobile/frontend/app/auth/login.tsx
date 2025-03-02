@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, ScrollView, Image, Platform } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { InputField } from "@/components/InputField";
@@ -13,6 +13,11 @@ import { loginStart, loginSuccess, loginFailure } from "../../store/authSlice";
 import { RootState } from "../../store";
 import axiosInstance from "../../config";
 import { InputFieldPassword } from "@/components/InputFieldPassword";
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+import { FontAwesome5 } from "@expo/vector-icons";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
   const colorScheme = useColorScheme() ?? "light";
@@ -24,6 +29,26 @@ export default function Login() {
   const [password, setPassword] = useState<string>("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId:
+      "134362624823-ubti4j1rmd2ha6u4f3dfev4b1vu9eb76.apps.googleusercontent.com",
+    scopes: ["profile", "email"],
+    redirectUri: "https://auth.expo.io/@mrsadok/wassalha",
+  });
+
+  useEffect(() => {
+    console.log("Auth URL:", request?.url);
+  }, [request]);
+
+  useEffect(() => {
+    console.log("Google response:", response);
+    if (response?.type === "success") {
+      const { id_token } = response.params;
+      console.log(id_token);
+      handleGoogleLogin(id_token);
+    }
+  }, [response]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -73,6 +98,133 @@ export default function Login() {
       setPasswordError(null);
     }
   };
+
+  const handleGoogleLogin = async (idToken: string) => {
+    console.log("Google response:", response);
+
+    dispatch(loginStart());
+    try {
+      const res = await axiosInstance.post("/api/users/google-login", {
+        idToken,
+      });
+      const data = res.data;
+      if (res.status === 200) {
+        dispatch(
+          loginSuccess({
+            token: data.token,
+            user: {
+              id: data.user.id,
+              name: data.user.name,
+              email: data.user.email,
+            },
+          })
+        );
+        await AsyncStorage.setItem("jwtToken", data.token);
+        router.push("/home");
+      } else {
+        dispatch(loginFailure("Wrong email or password"));
+        setEmailError(null);
+        setPasswordError(null);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      dispatch(loginFailure("Wrong email or password"));
+      setEmailError(null);
+      setPasswordError(null);
+    }
+  };
+
+  const handleGoogleLogin = async (idToken: string) => {
+    console.log("Google response:", response);
+
+    dispatch(loginStart());
+    try {
+      const res = await axiosInstance.post("/api/users/google-login", {
+        idToken,
+      });
+      const data = res.data;
+      if (res.status === 200) {
+        dispatch(
+          loginSuccess({
+            token: data.token,
+            user: {
+              id: data.user.id,
+              name: data.user.name,
+              email: data.user.email,
+            },
+          })
+        );
+        await AsyncStorage.setItem("jwtToken", data.token);
+        router.push("/home");
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      dispatch(loginFailure("Google login failed"));
+    }
+  };
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: Colors.light.background,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      justifyContent: "center",
+      padding: 20,
+    },
+    logo: {
+      width: 150,
+      height: 150,
+      alignSelf: "center",
+      marginBottom: 20,
+    },
+    welcomeText: {
+      fontSize: 24,
+      fontWeight: "bold",
+      textAlign: "center",
+      marginBottom: 8,
+    },
+    subText: {
+      fontSize: 16,
+      textAlign: "center",
+      marginBottom: 32,
+      color: Colors.light.text + "80", // Slightly transparent
+    },
+    loginButton: {
+      marginTop: 20,
+    },
+    signUpText: {
+      textAlign: "center",
+      marginTop: 20,
+    },
+    signUpLink: {
+      color: Colors.light.primary,
+      fontWeight: "bold",
+    },
+    forgotPasswordText: {
+      textAlign: "right",
+      marginTop: 10,
+      color: Colors.light.primary,
+      fontSize: 14,
+    },
+    errorText: {
+      color: "red",
+      textAlign: "center",
+      marginTop: 10,
+      fontSize: 14,
+    },
+    googleButton: {
+      marginTop: 20,
+      flexDirection: "row",
+      gap: 10,
+      justifyContent: "center",
+      backgroundColor: Colors[colorScheme as "light" | "dark"].googleButton,
+    },
+    googleButtonText: {
+      color: Colors[colorScheme as "light" | "dark"].text,
+    },
+  });
 
   return (
     <ThemedView style={styles.container}>
@@ -151,60 +303,25 @@ export default function Login() {
             Sign Up
           </ThemedText>
         </ThemedText>
+
+        {/* Google Login Button */}
+        <BaseButton
+          variant="secondary"
+          size="login"
+          style={styles.googleButton}
+          onPress={() => promptAsync({ showInRecents: true })}
+          disabled={!request || loading}
+        >
+          <FontAwesome5
+            name="google"
+            size={20}
+            color={Colors[colorScheme as "light" | "dark"].text}
+          />
+          <ThemedText style={styles.googleButtonText}>
+            Continue with Google
+          </ThemedText>
+        </BaseButton>
       </ScrollView>
     </ThemedView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    padding: 20,
-  },
-  logo: {
-    width: 150,
-    height: 150,
-    alignSelf: "center",
-    marginBottom: 20,
-  },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subText: {
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 32,
-    color: Colors.light.text + "80", // Slightly transparent
-  },
-  loginButton: {
-    marginTop: 20,
-  },
-  signUpText: {
-    textAlign: "center",
-    marginTop: 20,
-  },
-  signUpLink: {
-    color: Colors.light.primary,
-    fontWeight: "bold",
-  },
-  forgotPasswordText: {
-    textAlign: "right",
-    marginTop: 10,
-    color: Colors.light.primary,
-    fontSize: 14,
-  },
-  errorText: {
-    color: "red",
-    textAlign: "center",
-    marginTop: 10,
-    fontSize: 14,
-  },
-});
