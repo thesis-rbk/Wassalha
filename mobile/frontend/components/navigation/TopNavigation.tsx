@@ -6,7 +6,10 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { ThemedText } from '@/components/ThemedText';
 import { useTheme } from '@/context/ThemeContext';
 import { TopNavigationProps } from '@/types/TopNavigationProps';
-
+import { useSelector } from 'react-redux';
+import { useRouter } from 'expo-router';
+import { RootState } from '@/store'; // Add this import
+import AsyncStorage from '@react-native-async-storage/async-storage'
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const MENU_WIDTH = SCREEN_WIDTH * 0.8;
 
@@ -15,7 +18,13 @@ export function TopNavigation({ title, onNotificationPress }: TopNavigationProps
   const { toggleTheme } = useTheme();
   const [menuAnimation] = useState(new Animated.Value(-MENU_WIDTH));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+  const router = useRouter()
+  const { user, token } = useSelector((state: RootState) => state.auth);
+  console.log('User:', user);
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem('jwtToken');
+    router.push('/auth/login');
+  };
   const toggleMenu = () => {
     const toValue = isMenuOpen ? -MENU_WIDTH : 0;
     Animated.timing(menuAnimation, {
@@ -31,8 +40,8 @@ export function TopNavigation({ title, onNotificationPress }: TopNavigationProps
     { icon: <Settings size={24} color={Colors[colorScheme].text} />, label: 'Settings' },
     { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders' },
     { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips' },
-    { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'my Requests' },
-    { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out' },
+    { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request' },
+    { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out', onPress: handleLogout },
   ];
 
   return (
@@ -41,11 +50,11 @@ export function TopNavigation({ title, onNotificationPress }: TopNavigationProps
         <TouchableOpacity onPress={toggleMenu}>
           <Menu color={Colors[colorScheme].background} size={24} />
         </TouchableOpacity>
-        
+
         <ThemedText style={[styles.title, { color: Colors[colorScheme].background }]}>
           {title}
         </ThemedText>
-        
+
         <TouchableOpacity onPress={onNotificationPress}>
           <Bell color={Colors[colorScheme].background} size={24} />
         </TouchableOpacity>
@@ -91,7 +100,7 @@ export function TopNavigation({ title, onNotificationPress }: TopNavigationProps
               key={index}
               style={styles.menuItem}
               onPress={() => {
-                // Handle menu item press
+                item.onPress && item.onPress();
                 toggleMenu();
               }}
             >
@@ -212,4 +221,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 15,
   },
-}); 
+});
