@@ -12,17 +12,26 @@ import { BaseButton } from '@/components/ui/buttons/BaseButton';
 import { TitleLarge, TitleSection, TitleSub, BodyMedium } from '@/components/Typography';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useLocalSearchParams } from 'expo-router';
 import { ProductDetailsProps } from '@/types/ProductDetails';
-
-
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const colorScheme = useColorScheme() ?? 'light';
-  const [productName, setProductName] = useState('');
-  const [productImage, setProductImage] = useState('');
-  const [price, setPrice] = useState('');
+
+  // Retrieve scrapedData from the query parameters (if available)
+  const { scrapedData } = useLocalSearchParams();
+  const parsedData = scrapedData ? JSON.parse(scrapedData as string) : null;
+
+  // Initialize form fields with scraped data if available
+  const [productName, setProductName] = useState(parsedData ? parsedData.name : '');
+  const [productImage, setProductImage] = useState(
+    parsedData && parsedData.imageId
+      ? `http://localhost:5000/api/media/${parsedData.imageId}`
+      : ''
+  );
+  const [price, setPrice] = useState(parsedData ? parsedData.price.toString() : '');
   const [quantity, setQuantity] = useState('1');
-  const [productDetails, setProductDetails] = useState('');
+  const [productDetails, setProductDetails] = useState(parsedData ? parsedData.description : '');
   const [withBox, setWithBox] = useState(false);
 
   const clearProductImage = () => setProductImage('');
@@ -64,7 +73,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
           ) : null}
           
           <View style={styles.uploadCard}>
-            <BaseButton size="medium" onPress={() => console.log('Upload Image')} style={styles.uploadButton}> 
+            <BaseButton size="medium" onPress={() => console.log('Upload Image')} style={styles.uploadButton}>
               <Camera size={20} color={Colors[colorScheme].primary} />
               <BodyMedium style={styles.uploadText}>Upload image</BodyMedium>
             </BaseButton>
@@ -72,7 +81,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
         </View>
         
         <InputField
-          label="Price "
+          label="Price"
           value={price}
           onChangeText={setPrice}
           placeholder="Enter product price"
@@ -90,8 +99,8 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
             style={[styles.input, styles.quantityInput]}
           />
           <View style={styles.quantityControls}>
-            <BaseButton 
-              size="small" 
+            <BaseButton
+              size="small"
               onPress={decrementQuantity}
               style={styles.quantityButton}
             >
@@ -99,8 +108,8 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
                 <Minus size={16} color={Colors[colorScheme].primary} />
               </View>
             </BaseButton>
-            <BaseButton 
-              size="small" 
+            <BaseButton
+              size="small"
               onPress={incrementQuantity}
               style={styles.quantityButton}
             >
@@ -149,10 +158,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 8,
@@ -164,18 +170,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  mainTitle: {
-    marginBottom: 16,
-    fontSize: 20,
-  },
-  sectionTitle: {
-    marginTop: 12,
-    marginBottom: 8,
-    fontSize: 16,
-  },
-  input: {
-    marginBottom: 12,
-  },
+  mainTitle: { marginBottom: 16, fontSize: 20 },
+  sectionTitle: { marginTop: 12, marginBottom: 8, fontSize: 16 },
+  input: { marginBottom: 12 },
   imageContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -183,9 +180,7 @@ const styles = StyleSheet.create({
     gap: 8,
     justifyContent: 'flex-start',
   },
-  imageWrapper: {
-    position: 'relative',
-  },
+  imageWrapper: { position: 'relative' },
   productImage: {
     width: 120,
     height: 120,
@@ -202,7 +197,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   uploadCard: {
-    width:160,
+    width: 160,
     height: 110,
     borderWidth: 2,
     borderStyle: 'dashed',
@@ -218,9 +213,7 @@ const styles = StyleSheet.create({
     elevation: 0,
     shadowOpacity: 0,
   },
-  uploadText: {
-    fontSize: 12,
-  },
+  uploadText: { fontSize: 12 },
   textArea: {
     height: 80,
     textAlignVertical: 'top',
@@ -234,38 +227,23 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     marginVertical: 12,
   },
-  switchTextContainer: {
-    flex: 1,
-  },
+  switchTextContainer: { flex: 1 },
   switchHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 4,
   },
-  switchDescription: {
-    fontSize: 12,
-    color: '#666666',
-    lineHeight: 16,
-  },
+  switchDescription: { fontSize: 12, color: '#666666', lineHeight: 16 },
   buttonContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
     marginTop: 12,
   },
-  buttonText: {
-    color: '#ffffff',
-  },
-  quantityContainer: {
-    position: 'relative',
-    marginBottom: 12,
-  },
-  quantityInput: {
-    paddingRight: 90,
-    height: 40,
-    zIndex: 1,
-  },
+  buttonText: { color: '#ffffff' },
+  quantityContainer: { position: 'relative', marginBottom: 12 },
+  quantityInput: { paddingRight: 90, height: 40, zIndex: 1 },
   quantityControls: {
     position: 'absolute',
     right: 8,
@@ -288,11 +266,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     shadowRadius: 0,
   },
-  iconContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  iconContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });
 
 export default ProductDetails;

@@ -1,5 +1,3 @@
-import { Grid } from '../constants/Grid';
-import { Colors } from '../constants/Colors';
 import React from 'react';
 import  HomeScreen  from '../screens/HomeScreen';
 import { Grid } from '../constants/Grid';

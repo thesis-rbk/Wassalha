@@ -11,10 +11,11 @@ const userRoutes = require("./routes/user.route");
 require('dotenv').config();
 
 // const userRoutes = require("./routes/userRoutes");
-const http = require("http"); // Required for Socket.IO
+
 
 // Import routes
 const productRoutes = require("./routes/productRoutes");
+const scrapeRoutes = require("./routes/scrapeRoutes");
 
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
@@ -29,6 +30,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/products", productRoutes);
+app.use("/api/scrape", scrapeRoutes);
 app.use("/api", all);
 // Routes
 app.use("/api/requests", requestRoutes);

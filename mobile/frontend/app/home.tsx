@@ -21,10 +21,24 @@ export default function Home() {
   };
 
   return (
+    <>
     <HomeScreen />
-    <View style={styles.container}>
+    
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+});
+
+
+
+/**
+ * <View style={styles.container}>
       <Text style={styles.title}>Welcome, {user?.name || 'User'}!</Text>
-      <Text>Email: {user?.email}</Text>
+     <Text>Email: {user?.email}</Text>
       <Text>Token: {token}</Text>
       <BaseButton 
         onPress={() => router.push('/test/TestProductDetails')}
@@ -42,10 +56,4 @@ export default function Home() {
       </BaseButton>
       <Button title="Log Out" onPress={handleLogout} />
     </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-});
+ */
