@@ -40,3 +40,8 @@ app-example
 config.ts
 expo-env.d.ts
 env.d.ts
+config.ts
+
+
+# vscode
+.vscode
