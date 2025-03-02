@@ -4,7 +4,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { CardProps } from '@/types/CardProps';
 
-export function Card({ children, style, onPress }: CardProps) {
+export function Card({ onPress, children, style }: CardProps) {
   const colorScheme = useColorScheme() ?? 'light';
 
   if (onPress) {
@@ -29,7 +29,8 @@ export function Card({ children, style, onPress }: CardProps) {
   }
 
   return (
-    <View
+    <TouchableOpacity
+      onPress={onPress}
       style={[
         styles.card,
         {
@@ -37,11 +38,23 @@ export function Card({ children, style, onPress }: CardProps) {
           shadowColor: colorScheme === 'dark' ? '#000' : '#000',
           shadowOpacity: colorScheme === 'dark' ? 0.5 : 0.25,
         },
-        style,
+        style
       ]}
     >
-      {children}
-    </View>
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: Colors[colorScheme].secondary,
+            shadowColor: colorScheme === 'dark' ? '#000' : '#000',
+            shadowOpacity: colorScheme === 'dark' ? 0.5 : 0.25,
+          },
+          style,
+        ]}
+      >
+        {children}
+      </View>
+    </TouchableOpacity>
   );
 }
 
