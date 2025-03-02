@@ -1,30 +1,39 @@
-require("dotenv").config(); // Load environment variables
+require("dotenv").config();
+
+// Import dependencies
 const express = require("express");
 const cors = require("cors");
+const http = require("http");
+
+// Import routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
-require('dotenv').config();
+require("dotenv").config();
 
 // const userRoutes = require("./routes/userRoutes");
-const http = require("http"); // Required for Socket.IO
 
 // Import routes
 const productRoutes = require("./routes/productRoutes");
+const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
 
-// Import tracking socket
-// const trackingSocket = require("./sockets/trackingSocket");
+// Import socket
+const trackingSocket = require("./sockets/trackingSocket");
 
 const all = require("./routes/alltravNpost");
 const app = express();
+const server = http.createServer(app);
 const server = http.createServer(app); // Create HTTP server (This is used by both Express and Socket.IO)
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
+// Routes
+
 // Routes (REST API will still work)
 app.use("/api/products", productRoutes);
+app.use("/api/scrape", scrapeRoutes);
 app.use("/api", all);
 // Routes
 app.use("/api/requests", requestRoutes);
@@ -40,9 +49,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Initialize sockets
-// trackingSocket(server); // Initialize the Socket.IO server with the same HTTP server
+// Initialize socket
+trackingSocket(server);
 
+// Start server
 // Use `server.listen()` instead of `app.listen()`
 // **Why:**
 // The reason we need to use `server.listen()` here is because Express (`app`) is now being handled
@@ -53,13 +63,6 @@ app.use((err, req, res, next) => {
 // which will result in an error.
 
 const PORT = process.env.PORT || 5000;
-// server.listen() allows us to start the HTTP server and enable Socket.IO communication on the same port
 server.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
-
-// **Conflicting line (to be commented out):**
-// app.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
-// });
-// This line is unnecessary since `server.listen()` is already serving both Express and Socket.IO.

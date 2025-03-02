@@ -15,6 +15,9 @@ import axiosInstance from "../../config";
 const Signup = () => {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
+  
+
+ 
 
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
