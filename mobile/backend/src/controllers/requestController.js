@@ -1,12 +1,16 @@
 const prisma = require('../../prisma');
+const { authenticateUser } = require('../middleware/middleware');
 
 class RequestController {
     // Create Request
     async createRequest(req, res) {
         try {
+            // Get user ID from authenticated user
+            const userId = req.user.id;
+            
             const request = await prisma.request.create({
                 data: {
-                    userId: req.body.userId,
+                    userId, // Now using authenticated user's ID
                     goodsId: req.body.goodsId,
                     quantity: req.body.quantity,
                     goodsLocation: req.body.goodsLocation,
