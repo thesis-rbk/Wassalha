@@ -35,6 +35,18 @@ export default function RootLayout() {
             name="auth/ResetPassword"
             options={{ title: "Reset Password" }}
           />
+          <Stack.Screen
+            name="onboarding/howYouHeard"
+            options={{ title: "How You Heard" }}
+          />
+          <Stack.Screen
+            name="onboarding/selectCategories"
+            options={{ title: "Select Categories" }}
+          />
+          <Stack.Screen
+            name="onboarding/customScreen"
+            options={{ title: "Custom Screen" }}
+          />
         </Stack>
       </Provider>
     </ThemeProvider>

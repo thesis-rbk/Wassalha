@@ -7,6 +7,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { useRouter } from "expo-router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import axiosInstance from "@/config";
 
 enum ReferralSource {
   SOCIAL_MEDIA = "SOCIAL_MEDIA",
@@ -29,7 +30,7 @@ const options = [
   { label: "Other", value: ReferralSource.OTHER },
 ];
 
-export function HowYouHeardScreen() {
+export default function HowYouHeardScreen() {
   const [selectedOption, setSelectedOption] = useState<ReferralSource | null>(
     null
   );
@@ -49,26 +50,19 @@ export function HowYouHeardScreen() {
       const userId = 1; // Temporary user ID for testing
 
       // Send a POST request to update the referral source
-      const response = await fetch(
+      const response = await axiosInstance.post(
         process.env.EXPO_PUBLIC_FRONTEND_URL +
           "/api/users/update-referral-source",
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
             userId,
             referralSource: selectedOption,
-          }),
-        }
+          },
       );
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (response.ok) {
-        console.log("Referral source updated successfully:", data);
-        router.push("../onboarding/select-categories");
+      if (response.status === 200 || response.status === 201) {
+        router.push("/onboarding/selectCategories");
       } else {
         console.error("Failed to update referral source:", data.message);
         alert("Failed to update referral source. Please try again.");
@@ -80,7 +74,7 @@ export function HowYouHeardScreen() {
   };
 
   const handleSkip = () => {
-    router.push("../onboarding/select-categories");
+    router.push("/onboarding/selectCategories");
   };
 
   return (

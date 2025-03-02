@@ -6,6 +6,9 @@ import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useRouter } from "expo-router";
 import { Bell, Mail, Tag, Truck } from "lucide-react-native";
+import { RootState } from "@/store";
+import { useSelector } from "react-redux";
+import axiosInstance from "@/config";
 
 interface NotificationOption {
   id: string;
@@ -14,7 +17,7 @@ interface NotificationOption {
   icon: React.ReactNode;
 }
 
-export function CustomScreen() {
+export default function CustomScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
 
@@ -52,13 +55,25 @@ export function CustomScreen() {
     },
   ];
 
-  const handleFinish = () => {
-    // Save preferences and navigate to main app
-    router.push("/");
-  };
+  const handleFinish = async () => {
+    try {
+      // const { user, token } = useSelector((state: RootState) => state.auth);
+      // const userId = user?.id;
+      const userId = 1; // Temporary user ID for testing
 
-  const handleSkip = () => {
-    router.push("/");
+      // Mark onboarding as completed
+      await axiosInstance.post(
+        process.env.EXPO_PUBLIC_FRONTEND_URL + "/api/users/complete-onboarding",
+        {
+          // userId: user?.id,
+          userId,
+        }
+      );
+      router.push("/home"); // Redirect to home after onboarding
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      alert("An error occurred. Please try again.");
+    }
   };
 
   return (
@@ -97,7 +112,7 @@ export function CustomScreen() {
       <View style={styles.footer}>
         <TouchableOpacity
           style={[styles.button, styles.skipButton]}
-          onPress={handleSkip}
+          onPress={handleFinish}
         >
           <ThemedText style={styles.buttonText}>Skip</ThemedText>
         </TouchableOpacity>
