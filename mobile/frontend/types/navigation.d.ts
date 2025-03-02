@@ -7,5 +7,6 @@ declare module '@react-navigation/native-stack' {
         headerBackTitleVisible?: boolean;
         title?: string,
         headerShown?: boolean,
+
     }
 }
