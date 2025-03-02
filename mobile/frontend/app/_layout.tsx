@@ -35,21 +35,20 @@ export default function RootLayout() {
           <Stack.Screen name="home" />
           <Stack.Screen name="auth/ResetPassword" options={{ title: 'Reset Password' }} />
           <Stack.Screen 
-            name="test/TestProductDetails" 
+            name="productDetails/create-order" 
             options={{ 
-              title: 'Product Details',
-              headerStyle: { backgroundColor: '#008098' },
-              headerTintColor: '#fff'
+              title: 'Create Order'
             }} 
           />
           <Stack.Screen 
-            name="test/TestMap" 
+            name="productDetails" 
             options={{ 
-              title: 'Test Map',
-              headerStyle: { backgroundColor: '#008098' },
-              headerTintColor: '#fff'
+              title: 'Product Details'
             }} 
           />
+          <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
+          <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
+          <Stack.Screen name="test/Subscription" options={{ title: 'Subscription' }} />
         </Stack>
       </Provider>
     </ThemeProvider>
