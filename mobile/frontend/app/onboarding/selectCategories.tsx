@@ -17,6 +17,10 @@ export default function SelectCategoriesScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
 
+  // Get user and token from Redux store
+  const { user, token } = useSelector((state: RootState) => state.auth);
+  const userId = user?.id;
+
   // Fetch categories from the backend
   useEffect(() => {
     const fetchCategories = async () => {
@@ -49,19 +53,25 @@ export default function SelectCategoriesScreen() {
 
   const handleNext = async () => {
     try {
-      // const { user, token } = useSelector((state: RootState) => state.auth);
-      // const userId = user?.id;
-
-      const userId = 1; // Temporary user ID for testing
+      if (!userId) {
+        console.error("User ID is missing");
+        alert("User ID is missing. Please log in again.");
+        return;
+      }
 
       // Send a POST request to update preferred categories
       const response = await axiosInstance.post(
         process.env.EXPO_PUBLIC_FRONTEND_URL +
           "/api/users/update-preferred-categories",
         {
-            userId,
-            preferredCategories: selectedCategories.join(","), // Convert array of IDs to comma-separated string
-          }
+          userId,
+          preferredCategories: selectedCategories.join(","), // Convert array of IDs to comma-separated string
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the token in the request headers
+          },
+        }
       );
 
       const data = await response.data;

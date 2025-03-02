@@ -121,41 +121,6 @@ export default function Login() {
         );
         await AsyncStorage.setItem("jwtToken", data.token);
         router.push("/home");
-      } else {
-        dispatch(loginFailure("Wrong email or password"));
-        setEmailError(null);
-        setPasswordError(null);
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      dispatch(loginFailure("Wrong email or password"));
-      setEmailError(null);
-      setPasswordError(null);
-    }
-  };
-
-  const handleGoogleLogin = async (idToken: string) => {
-    console.log("Google response:", response);
-
-    dispatch(loginStart());
-    try {
-      const res = await axiosInstance.post("/api/users/google-login", {
-        idToken,
-      });
-      const data = res.data;
-      if (res.status === 200) {
-        dispatch(
-          loginSuccess({
-            token: data.token,
-            user: {
-              id: data.user.id,
-              name: data.user.name,
-              email: data.user.email,
-            },
-          })
-        );
-        await AsyncStorage.setItem("jwtToken", data.token);
-        router.push("/home");
       }
     } catch (error) {
       console.error("Google login error:", error);

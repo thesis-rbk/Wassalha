@@ -37,6 +37,10 @@ export default function HowYouHeardScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
 
+  // Get user and token from Redux store
+  const { user, token } = useSelector((state: RootState) => state.auth);
+  const userId = user?.id;
+
   const handleNext = async () => {
     if (!selectedOption) {
       alert("Please select an option before proceeding.");
@@ -44,19 +48,25 @@ export default function HowYouHeardScreen() {
     }
 
     try {
-      // const { user, token } = useSelector((state: RootState) => state.auth);
-      // const userId = user?.id;
-
-      const userId = 1; // Temporary user ID for testing
+      if (!userId) {
+        console.error("User ID is missing");
+        alert("User ID is missing. Please log in again.");
+        return;
+      }
 
       // Send a POST request to update the referral source
       const response = await axiosInstance.post(
         process.env.EXPO_PUBLIC_FRONTEND_URL +
           "/api/users/update-referral-source",
         {
-            userId,
-            referralSource: selectedOption,
+          userId,
+          referralSource: selectedOption,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the token in the request headers
           },
+        }
       );
 
       const data = response.data;
