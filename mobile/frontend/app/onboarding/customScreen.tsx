@@ -21,6 +21,10 @@ export default function CustomScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
 
+  // Get user and token from Redux store
+  const { user, token } = useSelector((state: RootState) => state.auth);
+  const userId = user?.id;
+
   const [preferences, setPreferences] = useState({
     orderUpdates: true,
     promotions: false,
@@ -57,18 +61,25 @@ export default function CustomScreen() {
 
   const handleFinish = async () => {
     try {
-      // const { user, token } = useSelector((state: RootState) => state.auth);
-      // const userId = user?.id;
-      const userId = 1; // Temporary user ID for testing
+      if (!userId) {
+        console.error("User ID is missing");
+        alert("User ID is missing. Please log in again.");
+        return;
+      }
 
       // Mark onboarding as completed
       await axiosInstance.post(
         process.env.EXPO_PUBLIC_FRONTEND_URL + "/api/users/complete-onboarding",
         {
-          // userId: user?.id,
           userId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the token in the request headers
+          },
         }
       );
+
       router.push("/home"); // Redirect to home after onboarding
     } catch (error) {
       console.error("Error completing onboarding:", error);
