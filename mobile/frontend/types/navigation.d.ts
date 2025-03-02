@@ -5,6 +5,5 @@ declare module '@react-navigation/native-stack' {
     interface NativeStackNavigationOptions {
         headerBackTitleVisible?: boolean;
         title?: string,
-        backgroundColor: string;
     }
 }
