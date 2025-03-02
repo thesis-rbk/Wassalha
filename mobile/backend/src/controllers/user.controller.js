@@ -1,9 +1,9 @@
-const prisma = require('../../prisma/index');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-const { OAuth2Client } = require('google-auth-library');
-const crypto = require('crypto');
+const prisma = require("../../prisma/index");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+const { OAuth2Client } = require("google-auth-library");
+const crypto = require("crypto");
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 const saltRounds = parseInt(process.env.SALT_ROUNDS, 10) || 10;
@@ -27,19 +27,25 @@ const signup = async (req, res) => {
 
   try {
     if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Name, email, and password are required' });
+      return res
+        .status(400)
+        .json({ error: "Name, email, and password are required" });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: 'Invalid email format' });
+      return res.status(400).json({ error: "Invalid email format" });
     }
 
     if (password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 8 characters long" });
     }
     if (!/[A-Z]/.test(password)) {
-      return res.status(400).json({ error: 'Password must contain at least one uppercase letter' });
+      return res
+        .status(400)
+        .json({ error: "Password must contain at least one uppercase letter" });
     }
     /*if (!/\d/.test(password)) {
       return res.status(400).json({ error: 'Password must contain at least one number' });
@@ -50,7 +56,7 @@ const signup = async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(409).json({ error: 'Email is already in use' });
+      return res.status(409).json({ error: "Email is already in use" });
     }
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -67,13 +73,13 @@ const signup = async (req, res) => {
     await prisma.profile.create({
       data: {
         firstName: newUser.name,
-        lastName: '',
-        user: { connect: { id: newUser.id } }
-      }
+        lastName: "",
+        user: { connect: { id: newUser.id } },
+      },
     });
 
     res.status(201).json({
-      message: 'User registered successfully',
+      message: "User registered successfully",
       user: {
         id: newUser.id,
         name: newUser.name,
@@ -81,8 +87,8 @@ const signup = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Signup error:', error);
-    res.status(500).json({ error: 'Something went wrong during signup' });
+    console.error("Signup error:", error);
+    res.status(500).json({ error: "Something went wrong during signup" });
   } finally {
     await prisma.$disconnect();
   }
@@ -92,7 +98,7 @@ const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
+    return res.status(400).json({ error: "Email and password are required" });
   }
 
   try {
@@ -101,23 +107,28 @@ const loginUser = async (req, res) => {
     });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET || "secretkey",
-      { expiresIn: '1h' }
+      { expiresIn: "1h" }
     );
 
     res.status(200).json({
-      message: 'Login successful',
+      message: "Login successful",
       token,
-      user: { id: user.id, name: user.name, email: user.email },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        hasCompletedOnboarding: user.hasCompletedOnboarding,
+      },
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Something went wrong during login' });
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Something went wrong during login" });
   } finally {
     await prisma.$disconnect();
   }
@@ -125,23 +136,23 @@ const loginUser = async (req, res) => {
 
 const googleLogin = async (req, res) => {
   const { idToken } = req.body;
-  console.log('google token id', idToken);
+  console.log("google token id", idToken);
 
   if (!idToken) {
-    return res.status(400).json({ error: 'Google ID token is required' });
+    return res.status(400).json({ error: "Google ID token is required" });
   }
 
   try {
-    console.log('google client', GOOGLE_CLIENT_ID);
+    console.log("google client", GOOGLE_CLIENT_ID);
     const ticket = await googleClient.verifyIdToken({
       idToken,
       audience: GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
 
-    const googleId = payload['sub'];
-    const email = payload['email'];
-    const name = payload['name'];
+    const googleId = payload["sub"];
+    const email = payload["email"];
+    const name = payload["name"];
 
     let user = await prisma.user.findFirst({
       where: {
@@ -164,18 +175,22 @@ const googleLogin = async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
 
     res.status(200).json({
-      message: 'Google login successful',
+      message: "Google login successful",
       token,
       user: { id: user.id, name: user.name, email: user.email },
     });
   } catch (error) {
-    console.error('Google login error:', error);
-    res.status(401).json({ error: 'Invalid Google token' });
+    console.error("Google login error:", error);
+    res.status(401).json({ error: "Invalid Google token" });
   } finally {
     await prisma.$disconnect();
   }
@@ -186,18 +201,18 @@ const requestPasswordReset = async (req, res) => {
 
   try {
     if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+      return res.status(400).json({ error: "Email is required" });
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: 'Invalid email format' });
+      return res.status(400).json({ error: "Invalid email format" });
     }
 
     const user = await prisma.user.findUnique({
       where: { email },
     });
     if (!user) {
-      return res.status(404).json({ error: 'No user found with this email' });
+      return res.status(404).json({ error: "No user found with this email" });
     }
 
     const resetToken = generateRandomCode();
@@ -214,16 +229,16 @@ const requestPasswordReset = async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Password Reset Code',
+      subject: "Password Reset Code",
       text: `Your password reset code is: ${resetToken}. This code expires in 1 hour.`,
       html: `<p>Your password reset code is: <strong>${resetToken}</strong>. This code expires in 1 hour.</p>`,
     };
 
     await transporter.sendMail(mailOptions);
-    res.status(200).json({ message: 'Password reset code sent to your email' });
+    res.status(200).json({ message: "Password reset code sent to your email" });
   } catch (error) {
-    console.error('Request password reset error:', error);
-    res.status(500).json({ error: 'Something went wrong' });
+    console.error("Request password reset error:", error);
+    res.status(500).json({ error: "Something went wrong" });
   } finally {
     await prisma.$disconnect();
   }
@@ -234,17 +249,25 @@ const resetPassword = async (req, res) => {
 
   try {
     if (!email || !code || !newPassword) {
-      return res.status(400).json({ error: 'Email, code, and new password are required' });
+      return res
+        .status(400)
+        .json({ error: "Email, code, and new password are required" });
     }
 
     if (newPassword.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 8 characters long" });
     }
     if (!/[A-Z]/.test(newPassword)) {
-      return res.status(400).json({ error: 'Password must contain at least one uppercase letter' });
+      return res
+        .status(400)
+        .json({ error: "Password must contain at least one uppercase letter" });
     }
     if (!/\d/.test(newPassword)) {
-      return res.status(400).json({ error: 'Password must contain at least one number' });
+      return res
+        .status(400)
+        .json({ error: "Password must contain at least one number" });
     }
 
     const user = await prisma.user.findUnique({
@@ -252,11 +275,11 @@ const resetPassword = async (req, res) => {
     });
 
     if (!user || user.resetToken !== code || !user.resetTokenExpiry) {
-      return res.status(400).json({ error: 'Invalid or expired code' });
+      return res.status(400).json({ error: "Invalid or expired code" });
     }
 
     if (new Date() > user.resetTokenExpiry) {
-      return res.status(400).json({ error: 'Reset code has expired' });
+      return res.status(400).json({ error: "Reset code has expired" });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
@@ -270,13 +293,97 @@ const resetPassword = async (req, res) => {
       },
     });
 
-    res.status(200).json({ message: 'Password reset successfully' });
+    res.status(200).json({ message: "Password reset successfully" });
   } catch (error) {
-    console.error('Reset password error:', error);
-    res.status(500).json({ error: 'Something went wrong' });
+    console.error("Reset password error:", error);
+    res.status(500).json({ error: "Something went wrong" });
   } finally {
     await prisma.$disconnect();
   }
 };
 
-module.exports = { signup, loginUser, googleLogin, requestPasswordReset, resetPassword };
+const updateReferralSource = async (req, res) => {
+  const { userId, referralSource } = req.body;
+
+  try {
+    // Update the referralSource for the user's profile
+    const updatedProfile = await prisma.profile.update({
+      where: { userId },
+      data: { referralSource },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Referral source updated successfully",
+      data: updatedProfile,
+    });
+  } catch (error) {
+    console.error("Error updating referral source:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update referral source",
+      error: error.message,
+    });
+  }
+};
+
+// Update preferred categories
+const updatePreferredCategories = async (req, res) => {
+  const { userId, preferredCategories } = req.body;
+
+  try {
+    const updatedProfile = await prisma.profile.update({
+      where: { userId },
+      data: { preferredCategories },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Preferred categories updated successfully",
+      data: updatedProfile,
+    });
+  } catch (error) {
+    console.error("Error updating preferred categories:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update preferred categories",
+      error: error.message,
+    });
+  }
+};
+
+// Mark onboarding as completed
+const completeOnboarding = async (req, res) => {
+  const { userId } = req.body;
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { hasCompletedOnboarding: true },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Onboarding completed successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error completing onboarding:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to complete onboarding",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  signup,
+  loginUser,
+  googleLogin,
+  requestPasswordReset,
+  resetPassword,
+  updateReferralSource,
+  updatePreferredCategories,
+  completeOnboarding,
+};
