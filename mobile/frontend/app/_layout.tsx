@@ -48,13 +48,15 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <Provider store={store}>
-        <Stack
+        <Stack 
         >
           {/* Optionally define specific screens if needed */}
           <Stack.Screen name="auth/signup" options={{ title: 'Sign Up' }} />
           <Stack.Screen name="auth/login" options={{ title: 'Log In' }} />
           <Stack.Screen name="home" options={{ title: 'Home' }} />
           <Stack.Screen name="auth/ResetPassword" options={{ title: 'Reset Password' }} />
+          <Stack.Screen name="auth/NewPassword" options={{ title: 'New Password' }} />
+
           <Stack.Screen 
             name="productDetails/create-order" 
             options={{ 
