@@ -10,7 +10,7 @@ import { Colors } from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import AwesomeAlert from "react-native-awesome-alerts";
-import axiosInstance from "../config";
+import axiosInstance from "../../config";
 
 const Signup = () => {
   const colorScheme = useColorScheme() ?? "light";

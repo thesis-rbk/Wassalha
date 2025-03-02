@@ -9,8 +9,9 @@ import { Card } from "@/components/Card";
 import { Category } from "@/types";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import axiosInstance from "@/config";
 
-export function SelectCategoriesScreen() {
+export default function SelectCategoriesScreen() {
   const [categories, setCategories] = useState<Category[]>([]); // Use the Category type
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]); // Store selected category IDs
   const colorScheme = useColorScheme() ?? "light";
@@ -20,11 +21,11 @@ export function SelectCategoriesScreen() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(
+        const response = await axiosInstance.get(
           process.env.EXPO_PUBLIC_FRONTEND_URL + "/api/categories"
         );
-        const data = await response.json();
-        if (response.ok) {
+        const data = await response.data;
+        if (response.status === 200) {
           setCategories(data.data); // Assuming the response contains a `data` array of category objects
         } else {
           console.error("Failed to fetch categories:", data.message);
@@ -49,31 +50,25 @@ export function SelectCategoriesScreen() {
   const handleNext = async () => {
     try {
       // const { user, token } = useSelector((state: RootState) => state.auth);
-      // const userId = user?.id;*
+      // const userId = user?.id;
 
       const userId = 1; // Temporary user ID for testing
 
       // Send a POST request to update preferred categories
-      const response = await fetch(
+      const response = await axiosInstance.post(
         process.env.EXPO_PUBLIC_FRONTEND_URL +
           "/api/users/update-preferred-categories",
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
             userId,
             preferredCategories: selectedCategories.join(","), // Convert array of IDs to comma-separated string
-          }),
-        }
+          }
       );
 
-      const data = await response.json();
+      const data = await response.data;
 
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         console.log("Preferred categories updated successfully:", data);
-        router.push("./custom-screen");
+        router.push("/onboarding/customScreen");
       } else {
         console.error("Failed to update preferred categories:", data.message);
         alert("Failed to update preferred categories. Please try again.");
@@ -85,7 +80,7 @@ export function SelectCategoriesScreen() {
   };
 
   const handleSkip = () => {
-    router.push("./custom-screen");
+    router.push("/onboarding/customScreen");
   };
 
   return (

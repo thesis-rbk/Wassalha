@@ -1,7 +1,6 @@
 import { Grid } from "../constants/Grid";
 import { Colors } from "../constants/Colors";
 import { StyleSheet } from "react-native";
-import RootLayout from "./_layout";
 import Login from "./auth/login";
 // Example usage in styles
 const styles = StyleSheet.create({

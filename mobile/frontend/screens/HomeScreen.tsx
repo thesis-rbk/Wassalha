@@ -19,7 +19,6 @@ import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/context/ThemeContext";
-import { AppTickets } from "./AppTickets";
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home");
@@ -53,7 +52,7 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <TopNavigation
-        title="Wassalah" // Ensure the title is explicitly set to "Wassalah"
+        title="Wassalha" // Ensure the title is explicitly set to "Wassalah"
         onMenuPress={() => {}}
         onNotificationPress={() => {}}
       />
@@ -84,7 +83,7 @@ export default function HomeScreen() {
               <Card
                 key={service.title}
                 style={styles.serviceCard}
-                onPress={() => router.push(service.route)} // Added navigation for services
+                // onPress={() => router.push(service.route)} // Added navigation for services
               >
                 <View style={styles.serviceContent}>
                   {service.icon}
@@ -113,11 +112,6 @@ export default function HomeScreen() {
             />
             <SlidersHorizontal color={Colors[colorScheme].text} size={20} />
           </View>
-        </View>
-
-        {/* Orders List Section */}
-        <View>
-          <AppTickets />
         </View>
       </ScrollView>
       <TabBar activeTab={activeTab} onTabPress={setActiveTab} />
