@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FlightData } from "../../types/FlightData"; 
+import { FlightData } from "../../types/FlightData";
 
 import {
   View,
@@ -12,16 +12,16 @@ import {
 } from "react-native";
 import MapView, { Marker, Callout } from "react-native-maps";
 import io from "socket.io-client";
-import { SOCKET_URL } from '../../config';
+import { SOCKET_URL } from "../../config";
 
 console.log("🚀 Connecting to backend at:", SOCKET_URL);
 
 const socket = io(SOCKET_URL, { transports: ["websocket"] });
 
-socket.on("connect", () => console.log("✅ Connected to backend via Socket.IO"));
+socket.on("connect", () =>
+  console.log("✅ Connected to backend via Socket.IO")
+);
 socket.on("disconnect", () => console.log("❌ Disconnected from backend"));
-
-
 
 export default function TrackingApp() {
   const [identifier, setIdentifier] = useState("");
@@ -84,14 +84,24 @@ export default function TrackingApp() {
               <Text style={styles.closeButton}>❌</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.flightText}>🛫 Airline: {flightData.airline}</Text>
-          <Text style={styles.flightText}>📍 Departure: {flightData.departure}</Text>
-          <Text style={styles.flightText}>📍 Arrival: {flightData.arrival}</Text>
+          <Text style={styles.flightText}>
+            🛫 Airline: {flightData.airline}
+          </Text>
+          <Text style={styles.flightText}>
+            📍 Departure: {flightData.departure}
+          </Text>
+          <Text style={styles.flightText}>
+            📍 Arrival: {flightData.arrival}
+          </Text>
           <Text style={styles.flightText}>
             ⏳ Estimated Arrival: {flightData.estimatedArrival}
           </Text>
-          <Text style={styles.flightText}>🚀 Altitude: {flightData.altitude}m</Text>
-          <Text style={styles.flightText}>💨 Speed: {flightData.speed} km/h</Text>
+          <Text style={styles.flightText}>
+            🚀 Altitude: {flightData.altitude}m
+          </Text>
+          <Text style={styles.flightText}>
+            💨 Speed: {flightData.speed} km/h
+          </Text>
         </View>
       )}
 
@@ -100,17 +110,21 @@ export default function TrackingApp() {
         ref={mapRef}
         style={styles.map}
         initialRegion={{
-          latitude: 36.8065,    // Tunis coordinates
-          longitude: 10.1815,   // Tunis coordinates
-          latitudeDelta: 10,    // Zoom level
+          latitude: 36.8065, // Tunis coordinates
+          longitude: 10.1815, // Tunis coordinates
+          latitudeDelta: 10, // Zoom level
           longitudeDelta: 10,
         }}
       >
         {flightData && (
-          <Marker coordinate={{ latitude: flightData.lat, longitude: flightData.lon }}>
+          <Marker
+            coordinate={{ latitude: flightData.lat, longitude: flightData.lon }}
+          >
             <Callout>
               <Text style={styles.markerText}>{flightData.airline}</Text>
-              <Text style={styles.markerText}>{flightData.departure} ➝ {flightData.arrival}</Text>
+              <Text style={styles.markerText}>
+                {flightData.departure} ➝ {flightData.arrival}
+              </Text>
             </Callout>
           </Marker>
         )}
