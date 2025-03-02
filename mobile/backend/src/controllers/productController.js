@@ -51,23 +51,23 @@ async function checkIllegalItems(req, res) {
                 'Referer': 'https://www.example.com' // Replace with a valid referer
             }
         })
-        .then(response => {
-            console.log(response.data); // Log the entire HTML response
-            const $ = cheerio.load(response.data);
-            let title = $('title').text(); // Extract title
-            let description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content'); // Extract description
+            .then(response => {
+                console.log(response.data); // Log the entire HTML response
+                const $ = cheerio.load(response.data);
+                let title = $('title').text(); // Extract title
+                let description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content'); // Extract description
 
-            // Handle empty title
-            if (!title || title.trim() === "") {
-                title = "No title found"; // Default title if none is found
-            }
+                // Handle empty title
+                if (!title || title.trim() === "") {
+                    title = "No title found"; // Default title if none is found
+                }
 
-            // Return the product details
-            return res.status(200).json({ title, description });
-        })
-        .catch(err => {
-            return res.status(500).json({ message: "Error fetching product details.", error: err.message });
-        });
+                // Return the product details
+                return res.status(200).json({ title, description });
+            })
+            .catch(err => {
+                return res.status(500).json({ message: "Error fetching product details.", error: err.message });
+            });
     });
 }
 

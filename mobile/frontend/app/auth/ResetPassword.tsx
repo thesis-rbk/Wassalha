@@ -5,7 +5,7 @@ import AwesomeAlert from 'react-native-awesome-alerts';
 import { useRouter } from 'expo-router';
 
 const ForgotPassword = () => {
-  const API = "http://192.168.104.14:4000";
+  const API = "http://192.168.104.14:5000";
   const router = useRouter();
   const [email, setEmail] = useState<string>('');
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);

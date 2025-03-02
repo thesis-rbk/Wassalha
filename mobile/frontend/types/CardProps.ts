@@ -1,6 +1,7 @@
 import { ViewProps } from "react-native";
 
- export interface CardProps extends ViewProps {
-    children: React.ReactNode;
-    style?: any;
-  }
+export interface CardProps extends ViewProps {
+  children: React.ReactNode;
+  style?: any;
+  onPress?: any;
+}
