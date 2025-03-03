@@ -9,21 +9,18 @@ const path = require("path");
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
-require("dotenv").config();
-
-// const userRoutes = require("./routes/userRoutes");
-
-// Import routes
 const productRoutes = require("./routes/productRoutes");
 const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
 const profileRoutes = require("./routes/profileRoutes");
 const mediaRoutes = require("./routes/media.route");
-
+const all = require("./routes/alltravNpost");
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
 
-const all = require("./routes/alltravNpost");
+
+
+// Create Express app and HTTP server
 const app = express();
 const server = http.createServer(app);
 
@@ -31,22 +28,21 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from uploads directory
+
+
+
+// Set up uploads directory
+const createUploadsDir = require('./utils/createUploadsDir');
+createUploadsDir();
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Import createUploadsDir utility
-const createUploadsDir = require('./utils/createUploadsDir');
-
-// Add this before your routes
-createUploadsDir();
 
 // Routes
 
-// Routes (REST API will still work)
+// API Routes
 app.use("/api/products", productRoutes);
 app.use("/api/scrape", scrapeRoutes);
 app.use("/api", all);
-// Routes
 app.use("/api/requests", requestRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
@@ -61,6 +57,8 @@ app.use((err, req, res, next) => {
     error: "Something went wrong!",
   });
 });
+
+
 
 // Initialize socket
 trackingSocket(server);

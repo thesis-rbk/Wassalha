@@ -1,9 +1,9 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../../prisma');
+const path = require('path');
 
 const uploadMedia = async (req, res) => {
   try {
-    // Check if file exists
+    // Check if file exists (Multer adds the file to req.file)
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -11,30 +11,31 @@ const uploadMedia = async (req, res) => {
       });
     }
 
-    // Create media record in database
+    // Get file extension without the dot
+    const extension = path.extname(req.file.filename).substring(1).toUpperCase();
+
+    // Create media record in database matching your schema
     const media = await prisma.media.create({
       data: {
         url: `/uploads/${req.file.filename}`,
-        type: 'IMAGE',
+        type: 'IMAGE', // This matches your MediaType enum
         mimeType: req.file.mimetype,
+        extension: extension === 'JPG' ? 'JPEG' : extension, // Convert to match FileExtension enum
         filename: req.file.filename,
-        size: req.file.size,
-        // Add optional fields if available
-        width: req.file.width,
-        height: req.file.height
+        size: parseFloat(req.file.size) // Convert to Float as per schema
       }
     });
 
-    // Return success response
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
       data: {
-        mediaId: media.id,
+        id: media.id,
         url: media.url,
-        filename: media.filename
+        type: media.type,
+        filename: media.filename,
+        size: media.size
       }
     });
-
   } catch (error) {
     console.error('Upload error:', error);
     return res.status(500).json({
