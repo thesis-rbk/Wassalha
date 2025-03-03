@@ -4,6 +4,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
+const path = require("path");
 
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
@@ -16,6 +17,7 @@ require("dotenv").config();
 const productRoutes = require("./routes/productRoutes");
 const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
+const mediaRoutes = require("./routes/media.route");
 
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
@@ -28,6 +30,9 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Routes
 
 // Routes (REST API will still work)
@@ -38,6 +43,7 @@ app.use("/api", all);
 app.use("/api/requests", requestRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/media", mediaRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

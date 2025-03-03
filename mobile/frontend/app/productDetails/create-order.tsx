@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import {
   Link,
@@ -39,6 +40,26 @@ export default function Page() {
     if (entryMethod === "manual") {
       console.log("Manual entry - navigating...");
       router.push("/productDetails");
+      return;
+    }
+
+    if (entryMethod === "url" && !productUrl) {
+      Alert.alert(
+        "No URL Provided",
+        "Would you like to proceed with manual entry?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Yes, proceed manually",
+            onPress: () => {
+              router.push('/productDetails');
+            }
+          }
+        ]
+      );
       return;
     }
 
