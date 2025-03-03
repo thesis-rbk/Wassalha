@@ -40,7 +40,7 @@ const ProfilePage = () => {
           await AsyncStorage.setItem('firstName', response.data.data.firstName);
           await AsyncStorage.setItem('lastName', response.data.data.lastName);
           await AsyncStorage.setItem('bio', response.data.data.bio);
-          
+
           // Log the stored values for debugging
           const storedFirstName = await AsyncStorage.getItem('firstName');
           console.log('Stored first name:', storedFirstName);
@@ -64,10 +64,10 @@ const ProfilePage = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-      <TopNavigation 
-        title="Profile" 
-        onNotificationPress={() => {}} 
-        onProfilePress={() => router.push('/profile/edit')} 
+      <TopNavigation
+        title="Profile"
+        onNotificationPress={() => { }}
+        onProfilePress={() => router.push('/profile/edit')}
       />
       <View style={styles.header}>
         <View style={styles.avatar}>
@@ -85,13 +85,13 @@ const ProfilePage = () => {
         <BodyMedium>Traveler: {profile.travelerRating} ★</BodyMedium>
       </View>
       <View style={styles.verifiedInfo}>
-       
-        <BaseButton variant="primary" size="login" onPress={() => {}}>Verify Phone Number</BaseButton>
+
+        <BaseButton variant="primary" size="login" onPress={() => { }}>Verify Phone Number</BaseButton>
       </View>
       <View style={styles.verifiedInfo}>
-      <BaseButton variant="primary" size="login" onPress={() => router.push('/profile/edit')}>
-        Edit Profile
-      </BaseButton>
+        <BaseButton variant="primary" size="login" onPress={() => router.push('/profile/edit')}>
+          Edit Profile
+        </BaseButton>
       </View>
       <View style={styles.verifiedInfo}>
         <BaseButton variant="primary" size="login" onPress={() => router.push('/profile/change')}>Change Password</BaseButton>
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-   
+
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,

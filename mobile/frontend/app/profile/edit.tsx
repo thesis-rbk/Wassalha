@@ -5,6 +5,9 @@ import axios from 'axios';
 import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
 import { BaseButton } from '@/components/ui/buttons/BaseButton';
+import { TopNavigation } from '@/components/navigation/TopNavigation';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { jwtDecode } from 'jwt-decode';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '@/config';
@@ -48,7 +51,7 @@ export default function EditProfile() {
 
     const handleUpdateProfile = async () => {
         try {
-            const token = await AsyncStorage.getItem('jwtToken');       
+            const token = await AsyncStorage.getItem('jwtToken');
             if (token) {
                 const decoded: any = jwtDecode(token);
                 console.log('Making PUT request to:', `hi/api/users/profile/${decoded.id}`);

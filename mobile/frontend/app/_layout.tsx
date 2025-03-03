@@ -29,7 +29,7 @@ export default function RootLayout() {
 
 
   console.log('Store:', store);
-  
+
   return (
     <ThemeProvider>
       <Provider store={store}>
@@ -38,58 +38,58 @@ export default function RootLayout() {
         ) : !animationComplete ? (
           <WelcomeAnimation onAnimationComplete={() => setAnimationComplete(true)} />
         ) : (
-        <Stack >
-          {/* Optionally define specific screens if needed */}
-          <Stack.Screen 
-            name="auth/signup" 
-            options={{ headerShown: false } as any} 
-          />
-          <Stack.Screen name="auth/login" options={{ headerShown: false } as any}  />
-          <Stack.Screen name="home" options={{ headerShown: false } as any} />
-          <Stack.Screen
-            name="auth/ResetPassword"
-            options={{ headerShown: false } as any} 
-          />
-          <Stack.Screen
-            name="auth/NewPassword"
-            options={{ headerShown: false } as any} 
-          />
+          <Stack >
+            {/* Optionally define specific screens if needed */}
+            <Stack.Screen name="auth/signup" options={{ title: "Sign Up" }} />
+            <Stack.Screen name="auth/login" options={{ title: "Log In" }} />
+            <Stack.Screen name="home" />
+            <Stack.Screen
+              name="auth/ResetPassword"
+              options={{ title: "Reset Password" }}
+            />
+            <Stack.Screen
+              name="auth/NewPassword"
+              options={{ title: "New Password" }}
+            />
 
-          <Stack.Screen
-            name="productDetails/create-order"
-            options={{ headerShown: false } as any} 
-          />
-          <Stack.Screen
-            name="productDetails"
-            options={{ headerShown: false } as any} 
-          />
-          <Stack.Screen name="test/Travel" options={{ headerShown: false } as any}  />
-          <Stack.Screen name="test/Pickup" options={{ headerShown: false } as any} />
-          <Stack.Screen
-            name="test/Subscription"
-            options={{ headerShown: false } as any} 
-          />
-          <Stack.Screen
-            name="onboarding/howYouHeard"
-            options={{ headerShown: false } as any} 
-          />
-          <Stack.Screen
-            name="onboarding/selectCategories"
-            options={{ headerShown: false } as any} 
-          />
-          <Stack.Screen
-            name="onboarding/customScreen"
-            options={{ headerShown: false } as any} 
-          />
-          <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
-          <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
-          <Stack.Screen name="profile/change" options={{ title: 'Change Password' }} />
-          <Stack.Screen name="profile/edit" options={{ title: 'Edit Profile' }} />
-          <Stack.Screen name="profile/index" options={{ title: 'Profile' }} />
+            <Stack.Screen
+              name="productDetails/create-order"
+              options={{
+                title: "Create Order",
+              }}
+            />
+            <Stack.Screen
+              name="productDetails"
+              options={{
+                title: "Product Details",
+              }}
+            />
+            <Stack.Screen
+              name="test/Subscription"
+              options={{ title: "Subscription" }}
+            />
+            <Stack.Screen
+              name="onboarding/howYouHeard"
+              options={{ title: "How You Heard" }}
+            />
+            <Stack.Screen
+              name="onboarding/selectCategories"
+              options={{ title: "Select Categories" }}
+            />
+            <Stack.Screen
+              name="onboarding/customScreen"
+              options={{ title: "Custom Screen" }}
+            />
+            <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
+            <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
+            <Stack.Screen name="profile/change" options={{ title: 'Change Password' }} />
+            <Stack.Screen name="profile/edit" options={{ title: 'Edit Profile' }} />
+            <Stack.Screen name="profile/index" options={{ title: 'Profile' }} />
+            <Stack.Screen name="test/chat" options={{ title: 'Chat' }} />
           </Stack>
         )}
       </Provider>
     </ThemeProvider>
   );
-} 
-   
+}
+

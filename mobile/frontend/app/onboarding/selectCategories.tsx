@@ -106,7 +106,7 @@ export default function SelectCategoriesScreen() {
               style={[
                 styles.categoryCard,
                 selectedCategories.includes(category.id) &&
-                  styles.selectedCategoryCard,
+                styles.selectedCategoryCard,
               ]}
             >
               <TouchableOpacity
@@ -117,7 +117,7 @@ export default function SelectCategoriesScreen() {
                   style={[
                     styles.categoryText,
                     selectedCategories.includes(category.id) &&
-                      styles.selectedCategoryText,
+                    styles.selectedCategoryText,
                   ]}
                 >
                   {category.name} {/* Render the category name */}
