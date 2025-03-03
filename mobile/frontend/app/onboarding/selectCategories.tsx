@@ -25,8 +25,7 @@ export default function SelectCategoriesScreen() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axiosInstance.get(
-          process.env.EXPO_PUBLIC_FRONTEND_URL + "/api/categories"
+        const response = await axiosInstance.get("/api/categories"
         );
         const data = await response.data;
         if (response.status === 200) {
@@ -61,8 +60,7 @@ export default function SelectCategoriesScreen() {
 
       // Send a POST request to update preferred categories
       const response = await axiosInstance.post(
-        process.env.EXPO_PUBLIC_FRONTEND_URL +
-          "/api/users/update-preferred-categories",
+        "/api/users/update-preferred-categories",
         {
           userId,
           preferredCategories: selectedCategories.join(","), // Convert array of IDs to comma-separated string
@@ -110,7 +108,7 @@ export default function SelectCategoriesScreen() {
               style={[
                 styles.categoryCard,
                 selectedCategories.includes(category.id) &&
-                  styles.selectedCategoryCard,
+                styles.selectedCategoryCard,
               ]}
             >
               <TouchableOpacity
@@ -121,7 +119,7 @@ export default function SelectCategoriesScreen() {
                   style={[
                     styles.categoryText,
                     selectedCategories.includes(category.id) &&
-                      styles.selectedCategoryText,
+                    styles.selectedCategoryText,
                   ]}
                 >
                   {category.name} {/* Render the category name */}
