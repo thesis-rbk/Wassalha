@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Switch,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { Camera, X, Minus, Plus } from 'lucide-react-native';
 import { InputField } from '@/components/InputField';
@@ -15,6 +16,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { useLocalSearchParams } from 'expo-router';
 import { ProductDetailsProps } from '@/types/ProductDetails';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const colorScheme = useColorScheme() ?? 'light';
@@ -28,7 +30,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const [productName, setProductName] = useState(parsedData ? parsedData.name : '');
   const [productImage, setProductImage] = useState(
     parsedData && parsedData.imageId
-      ? `http://localhost:5000/api/media/${parsedData.imageId}`
+      ? `${process.env.EXPO_PUBLIC_MEDIA_VIEW_URL}/${parsedData.imageId}`
       : ''
   );
   const [price, setPrice] = useState(parsedData ? parsedData.price.toString() : '');
@@ -49,7 +51,63 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
       setQuantity((currentQuantity - 1).toString());
     }
   };
-/******************************* */
+
+  const pickImage = async () => {
+    try {
+      // Request permission
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Sorry, we need camera roll permissions to upload images!');
+        return;
+      }
+
+      // Pick the image
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: "images",
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        // Create form data
+        const formData = new FormData();
+        formData.append('file', {
+          uri: result.assets[0].uri,
+          type: 'image/jpeg',
+          name: 'upload.jpg',
+        } as any);
+
+        try {
+          // Upload image
+          const response = await fetch(process.env.EXPO_PUBLIC_MEDIA_UPLOAD_URL!, {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+
+          const data = await response.json();
+          console.log('Upload response:', data);
+          
+          if (data.success) {
+            setProductImage(data.data.url);
+          } else {
+            Alert.alert('Upload failed', data.message);
+          }
+        } catch (error) {
+          console.error('Upload error:', error);
+          Alert.alert('Error', 'Failed to upload image');
+        }
+      }
+    } catch (error) {
+      console.error('Image picker error:', error);
+      Alert.alert('Error', 'Failed to pick image');
+    }
+  };
+
   const handleNext = () => {
     const productData = {
       name: productName,
@@ -92,7 +150,11 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
           ) : null}
           
           <View style={styles.uploadCard}>
-            <BaseButton size="medium" onPress={() => console.log('Upload Image')} style={styles.uploadButton}>
+            <BaseButton 
+              size="medium" 
+              onPress={pickImage} 
+              style={styles.uploadButton}
+            >
               <Camera size={20} color={Colors[colorScheme].primary} />
               <BodyMedium style={styles.uploadText}>Upload image</BodyMedium>
             </BaseButton>

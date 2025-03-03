@@ -59,30 +59,37 @@ const AdditionalDetails: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      const productData = {
-        ...productDetails,
-        categoryId,
+      // Combine data from both forms
+      const goodsData = {
+        name: productDetails.name,
+        price: productDetails.price,
+        description: productDetails.details,
+        withBox: productDetails.withBox,
+        quantity: productDetails.quantity,
+        imageId: productDetails.imageUrl ? parseInt(productDetails.imageUrl.split('/').pop() || '0') : null,
+        categoryId: categoryId,
         size: size || null,
         weight: weight ? parseFloat(weight) : null,
-      }
+        isVerified: false
+      };
 
-      console.log('Submitting product data:', productData)
+      console.log('Submitting complete goods data:', goodsData);
 
       const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/goods`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(productData),
-      })
+        body: JSON.stringify(goodsData),
+      });
 
-      const data = await response.json()
-      console.log('Product created:', data)
-      router.push('/home')
+      const data = await response.json();
+      console.log('Goods created:', data);
+      router.push('/home');
     } catch (error) {
-      console.error('Error creating product:', error)
+      console.error('Error creating goods:', error);
     }
-  }
+  };
 
   return (
     <ScrollView style={styles.container}>
