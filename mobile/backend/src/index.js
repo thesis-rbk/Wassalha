@@ -34,6 +34,12 @@ app.use(express.json());
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Import createUploadsDir utility
+const createUploadsDir = require('./utils/createUploadsDir');
+
+// Add this before your routes
+createUploadsDir();
+
 // Routes
 
 // Routes (REST API will still work)
