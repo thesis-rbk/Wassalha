@@ -9,7 +9,7 @@ import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '@/navigation/types';
-import { API_URL } from '@/config';
+import axiosInstance, { API_URL } from '@/config';
 import { BaseButton } from '@/components/ui/buttons/BaseButton';
 import { TitleLarge, BodyMedium } from '@/components/Typography'; // Import Typography components
 
@@ -35,7 +35,7 @@ const ProfilePage = () => {
         const token = await AsyncStorage.getItem('jwtToken');
         if (token) {
           const decoded: any = jwtDecode(token);
-          const response = await axios.get(`${API_URL}/api/users/profile/${decoded.id}`, {
+          const response = await axiosInstance.get(`/api/users/profile/${decoded.id}`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
