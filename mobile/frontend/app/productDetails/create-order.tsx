@@ -38,7 +38,7 @@ export default function Page() {
 
     if (entryMethod === "manual") {
       console.log("Manual entry - navigating...");
-      router.push("./productDetails");
+      router.push("/productDetails");
       return;
     }
 

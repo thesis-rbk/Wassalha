@@ -68,8 +68,7 @@ export default function CustomScreen() {
       }
 
       // Mark onboarding as completed
-      await axiosInstance.post(
-        process.env.EXPO_PUBLIC_FRONTEND_URL + "/api/users/complete-onboarding",
+      await axiosInstance.post("/api/users/complete-onboarding",
         {
           userId,
         },

@@ -25,8 +25,7 @@ export default function SelectCategoriesScreen() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axiosInstance.get(
-          process.env.EXPO_PUBLIC_FRONTEND_URL + "/api/categories"
+        const response = await axiosInstance.get("/api/categories"
         );
         const data = await response.data;
         if (response.status === 200) {
@@ -60,9 +59,7 @@ export default function SelectCategoriesScreen() {
       }
 
       // Send a POST request to update preferred categories
-      const response = await axiosInstance.post(
-        process.env.EXPO_PUBLIC_FRONTEND_URL +
-          "/api/users/update-preferred-categories",
+      const response = await axiosInstance.post("/api/users/update-preferred-categories",
         {
           userId,
           preferredCategories: selectedCategories.join(","), // Convert array of IDs to comma-separated string
