@@ -79,8 +79,8 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       <TopNavigation
         title="Wassalha" // Ensure the title is explicitly set to "Wassalah"
-        onMenuPress={() => {}}
-        onNotificationPress={() => {}}
+        onMenuPress={() => { }}
+        onNotificationPress={() => { }}
       />
 
       <ScrollView style={styles.content}>
