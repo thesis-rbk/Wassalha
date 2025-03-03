@@ -1,10 +1,10 @@
-import React from 'react';
-import  HomeScreen  from '../screens/HomeScreen';
-import { Grid } from '../constants/Grid';
-import { Colors } from '../constants/Colors';
-import { StyleSheet } from 'react-native';
-import RootLayout from './_layout';
-import Login from "./auth/login"
+import React from "react";
+import HomeScreen from "../screens/HomeScreen";
+import { Grid } from "../constants/Grid";
+import { Colors } from "../constants/Colors";
+import { StyleSheet } from "react-native";
+import RootLayout from "./_layout";
+import Login from "./auth/login";
 
 // Example usage in styles
 const styles = StyleSheet.create({
@@ -20,5 +20,4 @@ const styles = StyleSheet.create({
 });
 export default function Index() {
   return <Login />;
- 
 }

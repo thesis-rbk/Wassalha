@@ -1,57 +1,69 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Image, TextInput, TouchableOpacity, Text } from 'react-native';
-import { TopNavigation } from '@/components/navigation/TopNavigation';
-import { TabBar } from '@/components/navigation/TabBar';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { Card } from '@/components/Card';
-import { Button } from 'react-native'; // Import Button
-import { Search, Filter, Plane, ShoppingBag, MapPin, Crown, SlidersHorizontal } from 'lucide-react-native';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { useRouter } from 'expo-router';
-import { useTheme } from '@/context/ThemeContext';
-
-
-
+import React, { useState } from "react";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TextInput,
+  TouchableOpacity,
+  Text,
+} from "react-native";
+import { TopNavigation } from "@/components/navigation/TopNavigation";
+import { TabBar } from "@/components/navigation/TabBar";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { Card } from "@/components/Card";
+import { Button } from "react-native";
+import {
+  Search,
+  Filter,
+  Plane,
+  ShoppingBag,
+  MapPin,
+  Crown,
+  SlidersHorizontal,
+} from "lucide-react-native";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { useRouter } from "expo-router";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function HomeScreen() {
-  const [activeTab, setActiveTab] = useState('Home');
-  const colorScheme = useColorScheme() ?? 'light';
+  const [activeTab, setActiveTab] = useState("Home");
+  const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
   const { theme } = useTheme();
 
   // Add debug log for initial render
-  console.log('HomeScreen rendered');
-  // Use the useTheme hook
+  console.log("HomeScreen rendered");
 
   const services = [
     {
-      title: 'Travel',
+      title: "Travel",
       icon: <Plane size={32} color={Colors[colorScheme].primary} />,
-      route: '../test/Travel' as const,
+      route: "../test/Travel" as const,
     },
     {
-      title: 'Order',
+      title: "Order",
       icon: <ShoppingBag size={32} color={Colors[colorScheme].primary} />,
-      route: '../productDetails/create-order' as const,
+      route: "../productDetails/create-order" as const,
     },
     {
-      title: 'Pickup',
+      title: "Pickup",
       icon: <MapPin size={32} color={Colors[colorScheme].primary} />,
-      route: '../test/Pickup' as const,
+      route: "../test/Pickup" as const,
     },
     {
-      title: 'Subscription',
+      title: "Subscription",
       icon: <Crown size={32} color={Colors[colorScheme].primary} />,
-      route: '../test/Subscription' as const,
+      route: "../test/Subscription" as const,
     },
   ];
 
   // Add debug log for services
-  console.log('Services configured:', services);
+  console.log("Services configured:", services);
 
-  const handleCardPress = (service: typeof services[0]) => {
+  const handleCardPress = (service: (typeof services)[0]) => {
     console.log(`✅ handleCardPress triggered for: ${service.title}`);
 
     try {
@@ -63,13 +75,11 @@ export default function HomeScreen() {
     }
   };
 
-
-
   return (
 
     <ThemedView style={styles.container}>
       <TopNavigation
-        title="Wassalah"
+        title="Wassalha" // Ensure the title is explicitly set to "Wassalah"
         onMenuPress={() => { }}
         onNotificationPress={() => { }}
       />
@@ -82,7 +92,7 @@ export default function HomeScreen() {
         {/* Hero Image Card */}
         <View style={styles.heroCard}>
           <Image
-            source={require('@/assets/images/11.jpeg')}
+            source={require("@/assets/images/11.jpeg")}
             style={styles.heroImage}
             resizeMode="cover"
           />
@@ -123,11 +133,16 @@ export default function HomeScreen() {
 
         {/* Search Section */}
         <View style={styles.searchSection}>
-          <View style={[styles.searchContainer, { backgroundColor: Colors[colorScheme].secondary }]}>
+          <View
+            style={[
+              styles.searchContainer,
+              { backgroundColor: Colors[colorScheme].secondary },
+            ]}
+          >
             <Search color={Colors[colorScheme].text} size={20} />
             <TextInput
               placeholder="Search orders..."
-              placeholderTextColor={Colors[colorScheme].text + '80'}
+              placeholderTextColor={Colors[colorScheme].text + "80"}
               style={[styles.searchInput, { color: Colors[colorScheme].text }]}
             />
             <SlidersHorizontal color={Colors[colorScheme].text} size={20} />
@@ -136,10 +151,7 @@ export default function HomeScreen() {
 
         {/* Orders List Section */}
       </ScrollView>
-      <TabBar
-        activeTab={activeTab}
-        onTabPress={setActiveTab}
-      />
+      <TabBar activeTab={activeTab} onTabPress={setActiveTab} />
     </ThemedView>
   );
 }
@@ -155,73 +167,68 @@ const styles = StyleSheet.create({
     height: 200,
     margin: 16,
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   heroImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 16,
   },
   heroText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    width: '100%',
+    fontWeight: "bold",
+    textAlign: "center",
+    width: "100%",
   },
   heroSubtext: {
     marginTop: 8,
     fontSize: 20,
-    textAlign: 'center',
-    width: '100%',
+    textAlign: "center",
+    width: "100%",
   },
   servicesSection: {
     padding: 16,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 16,
   },
   servicesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 16,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   serviceCard: {
-    width: '47%',
+    width: "47%",
     aspectRatio: 1,
     padding: 16,
   },
   serviceContent: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     gap: 12,
   },
   serviceTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  buttonContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    alignItems: 'center', // Center the button horizontally
+    fontWeight: "bold",
+    textAlign: "center",
   },
   searchSection: {
     padding: 16,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 8,
     borderRadius: 8,
     gap: 8,
