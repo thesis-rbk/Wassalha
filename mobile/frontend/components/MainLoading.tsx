@@ -54,7 +54,9 @@ const MainLoading: React.FC<MainLoadingProps> = ({ onLoadingComplete }) => {
         source={loadingImage}
         style={[styles.image, { transform: [{ rotate: rotateInterpolate }] }]}
       />
-      <Text style={styles.percentageText}>{percentage}</Text> {/* Displaying the percentage dynamically */}
+      <View style={styles.textContainer}>
+        <Text style={styles.percentageText}>{percentage}</Text>
+      </View>
     </View>
   );
 };
@@ -66,12 +68,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#008098', // Primary blue background
   },
+  textContainer: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   image: {
     width: 120, // Increased size by 20px
     height: 120, // Increased size by 20px
   },
   percentageText: {
-    position: 'absolute',
     color: 'white',
     fontSize: 24,
     fontWeight: 'normal', // Changed to normal weight

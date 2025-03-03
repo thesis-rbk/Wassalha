@@ -27,7 +27,7 @@ export default function RootLayout() {
     return null;
   }
 
-  console.log('Layout loading...');
+
   console.log('Store:', store);
   
   return (
