@@ -55,9 +55,7 @@ export default function HowYouHeardScreen() {
       }
 
       // Send a POST request to update the referral source
-      const response = await axiosInstance.post(
-        process.env.EXPO_PUBLIC_FRONTEND_URL +
-          "/api/users/update-referral-source",
+      const response = await axiosInstance.post("/api/users/update-referral-source",
         {
           userId,
           referralSource: selectedOption,
