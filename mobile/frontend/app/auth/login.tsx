@@ -42,11 +42,12 @@ export default function Login() {
   }, [request]);
 
   useEffect(() => {
-    console.log("Google response:", response);
     if (response?.type === "success") {
       const { id_token } = response.params;
-      console.log(id_token);
       handleGoogleLogin(id_token);
+    } else if (response?.type === "error") {
+      console.error("Google login error:", response);
+      alert("An error occurred during Google login. Please try again.");
     }
   }, [response]);
 
