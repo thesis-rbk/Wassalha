@@ -20,19 +20,26 @@ export function TabBar({ activeTab, onTabPress }: {
 
   const tabs: TabItem[] = [
     { name: 'Home', icon: <Home size={24} color={iconColor} />, route: "home" as const },
-    { name: 'Orders', icon: <ShoppingBag size={24} color={iconColor} />, route: "../../productDetails/create-order" as const },
+    { name: 'Orders', icon: <ShoppingBag size={24} color={iconColor} />, route: "/productDetails/create-order" as const },
     { name: 'Trips', icon: <Plane size={24} color={iconColor} />, route: "../test/Travel" as const },
-    { name: 'Pick-up', icon: <MapPin size={24} color={iconColor} />, route: "../mapTrack" as const },
-    { name: 'Messages', icon: <MessageCircle size={24} color={iconColor} />, route: "/chat.tsx" as const },
+    { name: 'Pick-up', icon: <MapPin size={24} color={iconColor} />, route: "/mapTrack" as const },
+    { name: 'Messages', icon: <MessageCircle size={24} color={iconColor} />, route: "test/chat" as const },
   ];
-
+  const handleRoutes = (tab: (typeof tabs)[0]) => {
+    try {
+      onTabPress(tab.name); // Call the parent callback
+      // router.push(tab.route)
+    } catch (err) {
+      console.error("errrrrr from tab", err)
+    }
+  }
   return (
     <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab.name}
           style={styles.tab}
-          onPress={() => router.push(tab.route)}
+          onPress={() => handleRoutes(tab)}
         >
           {tab.icon}
           <ThemedText style={[
