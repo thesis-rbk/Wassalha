@@ -7,7 +7,6 @@ import { Colors } from '@/constants/Colors';
 import { BaseButton } from '@/components/ui/buttons/BaseButton';
 import { TopNavigation } from '@/components/navigation/TopNavigation';
 import { useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '@/navigation/types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { jwtDecode } from 'jwt-decode';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,7 +15,6 @@ import { TitleLarge, BodyMedium } from '@/components/Typography';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-type EditProfileNavigationProp = StackNavigationProp<RootStackParamList, 'profile/edit'>;
 
 export default function EditProfile() {
     const { theme } = useTheme();
@@ -26,7 +24,6 @@ export default function EditProfile() {
         bio: '',
     });
     const [loading, setLoading] = useState(true);
-    const navigation = useNavigation<EditProfileNavigationProp>();
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -101,7 +98,7 @@ export default function EditProfile() {
                 profileName={profile.firstName}
                 onProfilePress={() => {
                     console.log('Navigating to profile');
-                    navigation.navigate('profile/edit');
+                    router.push('/profile/edit');
                 }}
             />
             <TitleLarge>Edit Profile</TitleLarge>
