@@ -2,51 +2,103 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px;
-    padding-left: 50px;
+    padding: 10px;
+    padding-left: 35px;
     padding-right: 50px;
-    background-color: white;
-    color: black;
+    background-color: var(--color-primary);
+    color: white;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    /* margin-left: 20px;
-    margin-right: 20px; */
+   
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   }
-  
-  .navItems {
-    display: flex;
-    gap: 40px;
-    color: black;
-  }
-  
-  .navItems a {
-    color: black;
-    text-decoration: none;
-  }
-  
-  .navItems a:hover {
-    color: var(--color-primary);
-  }
-  
-  .auth {
-    display: flex;
-    gap: 10px;
-  }
-
-  .auth a {
-    color: var(--color-primary);
-    text-decoration: none;
-  }
-
-  .auth a:hover {
-    color: #01013D;
-  }
-
   .logo {
     font-weight: bold;
-    color: var(--color-primary);
+    color: white;
     font-size: 25px;
   }
+
+  .bellIcon {
+    color: white;
+    margin-right: 20px;
+  }
+
+  .userIcon {
+    color: white;
+    margin-left: 10px;
+  }
+
+.navItems {
+    display: flex;
+    align-items: center;
+}
+
+.dropdown {
+    position: relative;
+}
+
+.dropdownMenu {
+    position: absolute;
+    background-color: white;
+    color: black;
+    right: 0;
+    padding: 50px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    margin-top: 5px;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.dropdownMenu.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.dropdownItem {
+    color: black;
+    text-decoration: none;
+    padding: 5px 10px;
+    display: block;
+}
+
+.dropdownItem:hover {
+    color: var(--color-primary);
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.sidebar {
+    width: 200px;
+    background-color: var(--color-primary);
+    color: white;
+    position: fixed;
+    top: 49px;
+    left: 0;
+    bottom: 0;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebarItem {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    color: white;
+    text-decoration: none;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.sidebarItem svg {
+    margin-right: 10px;
+}
+
+.sidebarItem:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+

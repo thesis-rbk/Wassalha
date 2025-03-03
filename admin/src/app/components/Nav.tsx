@@ -1,21 +1,73 @@
+"use client"
 import Link from "next/link";
+import { useState, useEffect } from "react"; // Import useEffect for managing timeout
 import styles from "../styles/Nav.module.css"; // Import the updated CSS module
+import { User, Bell, Home, ShoppingCart, List } from 'lucide-react'; // Import icons from Lucide
 
 export default function Nav() {
+  const [dropdownOpen, setDropdownOpen] = useState(false); // State for dropdown visibility
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null); // State for timeout
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+    if (dropdownOpen) {
+      // If closing, clear any existing timeout
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        setTimeoutId(null);
+      }
+    }
+  };
+
+  const handleMouseEnter = () => {
+    setDropdownOpen(true);
+    // Clear any existing timeout
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      setTimeoutId(null);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    // Set a timeout to close the dropdown after 1 second
+    const id = setTimeout(() => {
+      setDropdownOpen(false);
+    }, 1000);
+    setTimeoutId(id);
+  };
+
   return (
-    <nav className={styles.nav}>
-      <div className={styles.logo}>Wasslha</div>
-      <div className={styles.navItems}>
-        <Link href="/">Home</Link>
-        <Link href="/orders">Orders</Link>
-        <Link href="/travel">Travel</Link>
-        <Link href="/pickup">Pickup</Link>
-        
+    <div style={{ display: 'flex' }}>
+      <div className={styles.sidebar}>
+        <Link href="/dashboard" className={styles.sidebarItem}>
+          <Home size={20} /> Dashboard
+        </Link>
+        <Link href="/user" className={styles.sidebarItem}>
+          <User size={20} /> User
+        </Link>
+        <Link href="/orders" className={styles.sidebarItem}>
+          <ShoppingCart size={20} /> Orders
+        </Link>
+        <Link href="/requests" className={styles.sidebarItem}>
+          <List size={20} /> Requests
+        </Link>
+        <Link href="/categories" className={styles.sidebarItem}>
+          <List size={20} /> Categories
+        </Link>
       </div>
-      <div className={styles.auth}>
-        <Link href="/login">Login / </Link>
-        <Link href="/register">Register</Link>
-      </div>
-    </nav>
+      <nav className={styles.nav}>
+        <div className={styles.logo}>Admin Dashboard</div>
+        <div className={styles.navItems}>
+          <Bell className={styles.bellIcon} />
+          <div className={styles.dropdown} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+            <User className={styles.userIcon} />
+            <div className={`${styles.dropdownMenu} ${dropdownOpen ? styles.visible : ''}`}>
+              <Link href="/login" className={styles.dropdownItem}>Log In</Link>
+              <Link href="/change-password" className={styles.dropdownItem}>Change Password</Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </div>
   );
 } 
