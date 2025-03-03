@@ -8,7 +8,7 @@ import { TabItem } from '@/types/TabItem';
 import { useRouter } from 'expo-router';
 import { Route } from 'expo-router';
 
-export function TabBar({ activeTab, onTabPress }: { 
+export function TabBar({ activeTab, onTabPress }: {
   activeTab: string;
   onTabPress: (tabName: string) => void;
 }) {
@@ -19,30 +19,32 @@ export function TabBar({ activeTab, onTabPress }: {
   const activeTabColor = Colors[colorScheme].primary; // Get the primary color for the active tab
 
   const tabs: TabItem[] = [
-    { name: 'Home', icon: <Home size={24} color={iconColor} />, route: '/' as Route },
-    { name: 'Orders', icon: <ShoppingBag size={24} color={iconColor} />, route: '/orders' as Route },
-    { name: 'Trips', icon: <Plane size={24} color={iconColor} />, route: '/trips' as Route },
-    { name: 'Pick-up', icon: <MapPin size={24} color={iconColor} />, route: '/pickup' as Route },
-    { name: 'Messages', icon: <MessageCircle size={24} color={iconColor} />, route: '/messages' as Route },
+    { name: 'Home', icon: <Home size={24} color={iconColor} />, route: "home" as const },
+    { name: 'Orders', icon: <ShoppingBag size={24} color={iconColor} />, route: "/productDetails/create-order" as const },
+    { name: 'Trips', icon: <Plane size={24} color={iconColor} />, route: "../test/Travel" as const },
+    { name: 'Pick-up', icon: <MapPin size={24} color={iconColor} />, route: "/mapTrack" as const },
+    { name: 'Messages', icon: <MessageCircle size={24} color={iconColor} />, route: "test/chat" as const },
   ];
-
-  const handleTabPress = (tab: TabItem) => {
-    onTabPress(tab.name);
-    router.push(tab.route);
-  };
-
+  const handleRoutes = (tab: (typeof tabs)[0]) => {
+    try {
+      onTabPress(tab.name); // Call the parent callback
+      router.push(tab.route)
+    } catch (err) {
+      console.error("errrrrr from tab", err)
+    }
+  }
   return (
     <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab.name}
           style={styles.tab}
-          onPress={() => handleTabPress(tab)}
+          onPress={() => handleRoutes(tab)}
         >
-          {tab.icon ? React.cloneElement(tab.icon, { color: activeTab === tab.name ? activeTabColor : iconColor }) : null}
+          {tab.icon}
           <ThemedText style={[
             styles.tabText,
-            activeTab === tab.name && [styles.activeTabText, { color: activeTabColor }]
+            activeTab === tab.name && styles.activeTabText
           ]}>
             {tab.name}
           </ThemedText>
@@ -70,6 +72,5 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     fontWeight: 'bold',
-    color: '#003366', // Dark blue color for active tab
   },
 }); 
