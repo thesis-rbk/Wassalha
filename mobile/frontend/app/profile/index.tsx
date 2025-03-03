@@ -6,7 +6,7 @@ import { TopNavigation } from '@/components/navigation/TopNavigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode'
 import axios from 'axios';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '@/navigation/types';
 import axiosInstance, { API_URL } from '@/config';
@@ -27,7 +27,7 @@ const ProfilePage = () => {
     travelerRating: 0,
   });
   const [loading, setLoading] = useState(true);
-  const navigation = useNavigation<ProfilePageNavigationProp>();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -71,7 +71,7 @@ const ProfilePage = () => {
       <TopNavigation 
         title="Profile" 
         onNotificationPress={() => {}} 
-        onProfilePress={() => navigation.navigate('profile/edit')} 
+        onProfilePress={() => router.push('/profile/edit')} 
       />
       <View style={styles.header}>
         <View style={styles.avatar}>
@@ -92,13 +92,13 @@ const ProfilePage = () => {
        
         <BaseButton variant="primary" size="login" onPress={() => {}}>Verify Phone Number</BaseButton>
       </View>
-
-      <BaseButton variant="primary" size="login" onPress={() => navigation.navigate('profile/edit')}>
+      <View style={styles.verifiedInfo}>
+      <BaseButton variant="primary" size="login" onPress={() => router.push('/profile/edit')}>
         Edit Profile
       </BaseButton>
-      
+      </View>
       <View style={styles.verifiedInfo}>
-        <BaseButton variant="primary" size="login" onPress={() => navigation.navigate('profile/change')}>Change Password</BaseButton>
+        <BaseButton variant="primary" size="login" onPress={() => router.push('/profile/change')}>Change Password</BaseButton>
       </View>
     </View>
   );
