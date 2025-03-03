@@ -57,7 +57,7 @@ export default function Page() {
         const data = await response.json();
         if (data.success) {
           console.log("URL success - navigating...");
-          router.push("./productDetails");
+          router.push("/productDetails");
         } else {
           setError(data.message || "Failed to scrape product");
         }
