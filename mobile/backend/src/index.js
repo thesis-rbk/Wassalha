@@ -16,6 +16,7 @@ require("dotenv").config();
 const productRoutes = require("./routes/productRoutes");
 const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
+const profileRoutes = require("./routes/profileRoutes");
 
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
@@ -38,6 +39,7 @@ app.use("/api", all);
 app.use("/api/requests", requestRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/users/profile", profileRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
