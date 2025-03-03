@@ -14,9 +14,11 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useLocalSearchParams } from 'expo-router';
 import { ProductDetailsProps } from '@/types/ProductDetails';
+import { useRouter } from 'expo-router';
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const colorScheme = useColorScheme() ?? 'light';
+  const router = useRouter();
 
   // Retrieve scrapedData from the query parameters (if available)
   const { scrapedData } = useLocalSearchParams();
@@ -46,6 +48,23 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
     if (currentQuantity > 1) {
       setQuantity((currentQuantity - 1).toString());
     }
+  };
+/******************************* */
+  const handleNext = () => {
+    const productData = {
+      name: productName,
+      price: price.toString(),
+      details: productDetails,
+      withBox: withBox.toString(),
+      quantity: quantity.toString(),
+      imageUrl: productImage,
+    };
+
+    console.log('Sending data:', productData);
+    router.push({
+      pathname: '/productDetails/additional-details',
+      params: productData
+    });
   };
 
   return (
@@ -148,7 +167,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
         </View>
         
         <View style={styles.buttonContainer}>
-          <BaseButton size="large" onPress={onNext}>
+          <BaseButton size="large" onPress={handleNext}>
             <BodyMedium style={styles.buttonText}>Next</BodyMedium>
           </BaseButton>
         </View>

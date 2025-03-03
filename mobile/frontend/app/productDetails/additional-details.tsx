@@ -11,11 +11,24 @@ import { Colors } from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { Category } from '@/types/Category'
+import axiosInstance from "@/config"
 
 const AdditionalDetails: React.FC = () => {
   const colorScheme = useColorScheme() ?? "light"
   const router = useRouter()
   const params = useLocalSearchParams()
+
+  // Convert back to proper types
+  const productDetails = {
+    name: params.name as string,
+    price: parseFloat(params.price as string),
+    details: params.details as string,
+    withBox: params.withBox === 'true',
+    quantity: parseInt(params.quantity as string),
+    imageUrl: params.imageUrl as string,
+  }
+
+  console.log('Received and converted data:', productDetails)
 
   const [categoryId, setCategoryId] = useState<number | null>(null)
   const [size, setSize] = useState("")
@@ -27,11 +40,12 @@ const AdditionalDetails: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/categories`)
-        const data = await response.json()
-        setCategories(data)
+        const response = await axiosInstance.get("/api/categories")
+        if (response.status === 200) {
+          setCategories(response.data.data)
+        }
       } catch (error) {
-        console.error('Error fetching categories:', error)
+        console.error("Error fetching categories:", error)
       }
     }
 
@@ -46,7 +60,7 @@ const AdditionalDetails: React.FC = () => {
   const handleSubmit = async () => {
     try {
       const productData = {
-        ...params,
+        ...productDetails,
         categoryId,
         size: size || null,
         weight: weight ? parseFloat(weight) : null,
