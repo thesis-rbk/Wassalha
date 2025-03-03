@@ -8,13 +8,9 @@ import { jwtDecode } from 'jwt-decode'
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '@/navigation/types';
-import axiosInstance, { API_URL } from '@/config';
+import axiosInstance from '@/config';
 import { BaseButton } from '@/components/ui/buttons/BaseButton';
 import { TitleLarge, BodyMedium } from '@/components/Typography'; // Import Typography components
-
-// Define the navigation prop type
-type ProfilePageNavigationProp = StackNavigationProp<RootStackParamList, 'Profile'>;
 
 const ProfilePage = () => {
   const { theme } = useTheme();

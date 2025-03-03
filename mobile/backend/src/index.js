@@ -17,7 +17,7 @@ const productRoutes = require("./routes/productRoutes");
 const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
 const profileRoutes = require("./routes/profileRoutes");
-
+const orderRoutes = require("./routes/order.route");
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
 
@@ -35,6 +35,8 @@ app.use(express.json());
 app.use("/api/products", productRoutes);
 app.use("/api/scrape", scrapeRoutes);
 app.use("/api", all);
+app.use("/api/orders", orderRoutes);
+
 // Routes
 app.use("/api/requests", requestRoutes);
 app.use("/api/users", userRoutes);
