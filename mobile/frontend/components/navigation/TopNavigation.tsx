@@ -13,7 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const MENU_WIDTH = SCREEN_WIDTH * 0.8;
 
-export function TopNavigation({ title, onNotificationPress }: TopNavigationProps) {
+export function TopNavigation({ title, onNotificationPress, onProfilePress }: TopNavigationProps) {
   const colorScheme = useColorScheme() ?? 'light';
   const { toggleTheme } = useTheme();
   const [menuAnimation] = useState(new Animated.Value(-MENU_WIDTH));
@@ -82,11 +82,11 @@ export function TopNavigation({ title, onNotificationPress }: TopNavigationProps
         {/* User Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.profileImage}>
-            <ThemedText style={styles.profileInitial}>L</ThemedText>
+            <ThemedText style={styles.profileInitial}>{user?.name?.charAt(0)}</ThemedText>
           </View>
           <View style={styles.profileInfo}>
-            <ThemedText style={styles.profileName}>Lilia Ghezaiel</ThemedText>
-            <TouchableOpacity style={styles.viewProfile}>
+            <ThemedText style={styles.profileName}>{user?.name}</ThemedText>
+            <TouchableOpacity style={styles.viewProfile} onPress={() => router.push('/profile')}>
               <ThemedText style={styles.viewProfileText}>View and edit profile</ThemedText>
               <ChevronRight size={16} color={Colors[colorScheme].text} />
             </TouchableOpacity>
