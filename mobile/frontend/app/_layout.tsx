@@ -82,6 +82,39 @@ export default function RootLayout() {
             />
             <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
             <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
+            <Stack.Screen name="profile/change" options={{ title: 'Change Password' }} />
+            <Stack.Screen name="profile/edit" options={{ title: 'Edit Profile' }} />
+            <Stack.Screen name="profile/index" options={{ title: 'Profile' }} />
+            <Stack.Screen
+              name="productDetails/create-order"
+              options={{
+                title: "Create Order",
+              }}
+            />
+            <Stack.Screen
+              name="productDetails"
+              options={{
+                title: "Product Details",
+              }}
+            />
+            <Stack.Screen
+              name="test/Subscription"
+              options={{ title: "Subscription" }}
+            />
+            <Stack.Screen
+              name="onboarding/howYouHeard"
+              options={{ title: "How You Heard" }}
+            />
+            <Stack.Screen
+              name="onboarding/selectCategories"
+              options={{ title: "Select Categories" }}
+            />
+            <Stack.Screen
+              name="onboarding/customScreen"
+              options={{ title: "Custom Screen" }}
+            />
+            <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
+            <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
             <Stack.Screen name="test/chat" options={{ title: 'Chat' }} />
           </Stack>
         )}
