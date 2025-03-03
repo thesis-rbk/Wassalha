@@ -59,6 +59,7 @@ export default function Login() {
 
     dispatch(loginStart());
     try {
+      console.log("Logging in...",process.env.EXPO_PUBLIC_API_URL);
       const res = await axiosInstance.post("/api/users/login", {
         email,
         password,

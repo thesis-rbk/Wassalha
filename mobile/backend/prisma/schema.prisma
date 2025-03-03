@@ -190,7 +190,8 @@ model User {
   googleId               String?
   password               String?
   hasCompletedOnboarding Boolean @default(false)
-
+  resetToken              String?
+  resetTokenExpiry          DateTime?
   profile         Profile?
   requests        Request[]
   notifications   Notification[]
