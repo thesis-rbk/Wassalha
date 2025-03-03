@@ -59,8 +59,7 @@ export default function SelectCategoriesScreen() {
       }
 
       // Send a POST request to update preferred categories
-      const response = await axiosInstance.post(
-        "/api/users/update-preferred-categories",
+      const response = await axiosInstance.post("/api/users/update-preferred-categories",
         {
           userId,
           preferredCategories: selectedCategories.join(","), // Convert array of IDs to comma-separated string
