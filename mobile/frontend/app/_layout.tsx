@@ -12,8 +12,7 @@ import MainLoading from '@/components/MainLoading';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-  });
+  const [fontsLoaded] = useFonts({});
 
   const [animationComplete, setAnimationComplete] = useState(false);
   const [loadingComplete, setLoadingComplete] = useState(false);
@@ -65,12 +64,28 @@ export default function RootLayout() {
               title: "Product Details",
             }}
           />
+          <Stack.Screen
+            name="test/Subscription"
+            options={{ title: "Subscription" }}
+          />
+          <Stack.Screen
+            name="onboarding/howYouHeard"
+            options={{ title: "How You Heard" }}
+          />
+          <Stack.Screen
+            name="onboarding/selectCategories"
+            options={{ title: "Select Categories" }}
+          />
+          <Stack.Screen
+            name="onboarding/customScreen"
+            options={{ title: "Custom Screen" }}
+          />
           <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
           <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
-          <Stack.Screen name="test/Subscription" options={{ title: 'Subscription' }} />
           </Stack>
         )}
       </Provider>
     </ThemeProvider>
   );
 } 
+   
