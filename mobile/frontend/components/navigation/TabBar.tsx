@@ -28,7 +28,7 @@ export function TabBar({ activeTab, onTabPress }: {
   const handleRoutes = (tab: (typeof tabs)[0]) => {
     try {
       onTabPress(tab.name); // Call the parent callback
-      // router.push(tab.route)
+      router.push(tab.route)
     } catch (err) {
       console.error("errrrrr from tab", err)
     }
