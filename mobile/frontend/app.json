@@ -19,7 +19,8 @@
         "backgroundColor": "#ffffff"
       }
     },
-    "extra": {
+"extra": {
+      "API_URL": "http://192.168.11.180:5000/",
       "GOOGLE_MAPS_KEY": "your-google-maps-key"
     },
     "web": {
