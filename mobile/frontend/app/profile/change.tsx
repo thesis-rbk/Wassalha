@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { API_URL } from '@/config';
+import axiosInstance, { API_URL } from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Colors } from '@/constants/Colors';
@@ -23,7 +23,7 @@ const ChangePassword = () => {
     const token = await AsyncStorage.getItem('jwtToken');
 
     try {
-      const response = await axios.put(`${API_URL}/api/users/change-password`, {
+      const response = await axiosInstance.put(`/api/users/change-password`, {
         currentPassword,
         newPassword,
       }, {
