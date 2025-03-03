@@ -19,8 +19,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axiosInstance from "@/config";
 import { TitleLarge, BodyMedium } from "@/components/Typography";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
 export default function EditProfile() {
   const { theme } = useTheme();
   const [profile, setProfile] = useState({

@@ -31,35 +31,37 @@ export function TabBar({
     {
       name: "Home",
       icon: <Home size={24} color={iconColor} />,
-      route: "/" as Route,
+      route: "home" as const,
     },
     {
       name: "Orders",
       icon: <ShoppingBag size={24} color={iconColor} />,
-      route: "/orders" as Route,
+      route: "/productDetails/create-order" as const,
     },
     {
       name: "Trips",
       icon: <Plane size={24} color={iconColor} />,
-      route: "/trips" as Route,
+      route: "../test/Travel" as const,
     },
     {
       name: "Pick-up",
       icon: <MapPin size={24} color={iconColor} />,
-      route: "/pickup" as Route,
+      route: "/mapTrack" as const,
     },
     {
       name: "Messages",
       icon: <MessageCircle size={24} color={iconColor} />,
-      route: "/messages" as Route,
+      route: "test/chat" as const,
     },
   ];
-
-  const handleTabPress = (tab: TabItem) => {
-    onTabPress(tab.name);
-    router.push(tab.route);
+  const handleRoutes = (tab: (typeof tabs)[0]) => {
+    try {
+      onTabPress(tab.name); // Call the parent callback
+      router.push(tab.route);
+    } catch (err) {
+      console.error("errrrrr from tab", err);
+    }
   };
-
   return (
     <View
       style={[
@@ -71,20 +73,13 @@ export function TabBar({
         <TouchableOpacity
           key={tab.name}
           style={styles.tab}
-          onPress={() => handleTabPress(tab)}
+          onPress={() => handleRoutes(tab)}
         >
-          {tab.icon
-            ? React.cloneElement(tab.icon, {
-                color: activeTab === tab.name ? activeTabColor : iconColor,
-              })
-            : null}
+          {tab.icon}
           <ThemedText
             style={[
               styles.tabText,
-              activeTab === tab.name && [
-                styles.activeTabText,
-                { color: activeTabColor },
-              ],
+              activeTab === tab.name && styles.activeTabText,
             ]}
           >
             {tab.name}
@@ -113,6 +108,5 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     fontWeight: "bold",
-    color: "#003366", // Dark blue color for active tab
   },
 });
