@@ -51,7 +51,7 @@ export default function HomeScreen() {
     {
       title: "Pickup",
       icon: <MapPin size={32} color={Colors[colorScheme].primary} />,
-      route: "../test/Pickup" as const,
+      route: "../mapTrack" as const,
     },
     {
       title: "Subscription",
@@ -76,17 +76,12 @@ export default function HomeScreen() {
   };
 
   return (
-
     <ThemedView style={styles.container}>
       <TopNavigation
         title="Wassalha" // Ensure the title is explicitly set to "Wassalah"
         onMenuPress={() => { }}
         onNotificationPress={() => { }}
       />
-      {/* <Button
-        title="Log In"
-        onPress={() => router.push('/auth/login')} // Navigate to /login
-      /> */}
 
       <ScrollView style={styles.content}>
         {/* Hero Image Card */}
@@ -115,7 +110,6 @@ export default function HomeScreen() {
                 key={service.title}
                 style={styles.serviceCard}
                 onPress={() => handleCardPress(service)}
-              // onPress={() => router.push(service.route)}
               >
                 <View style={styles.serviceContent}>
                   {service.icon}
@@ -127,9 +121,6 @@ export default function HomeScreen() {
             ))}
           </View>
         </View>
-
-        {/* Login Button */}
-
 
         {/* Search Section */}
         <View style={styles.searchSection}>
@@ -148,8 +139,6 @@ export default function HomeScreen() {
             <SlidersHorizontal color={Colors[colorScheme].text} size={20} />
           </View>
         </View>
-
-        {/* Orders List Section */}
       </ScrollView>
       <TabBar activeTab={activeTab} onTabPress={setActiveTab} />
     </ThemedView>
@@ -237,8 +226,5 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
     fontSize: 16,
-  },
-  ordersSection: {
-    padding: 16,
   },
 });

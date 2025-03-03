@@ -42,7 +42,7 @@ export function Order() {
                         style={styles.loginButton}
                         onPress={handleUrl}
                     >
-                        enter manuel
+                        Fill manuel
                     </BaseButton>
                 </View>
             </ScrollView>
