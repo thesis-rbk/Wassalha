@@ -82,10 +82,10 @@ export function TopNavigation({ title, onNotificationPress, onProfilePress }: To
         {/* User Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.profileImage}>
-            <ThemedText style={styles.profileInitial}>L</ThemedText>
+            <ThemedText style={styles.profileInitial}>{user?.name?.charAt(0)}</ThemedText>
           </View>
           <View style={styles.profileInfo}>
-            <ThemedText style={styles.profileName}>Lilia Ghezaiel</ThemedText>
+            <ThemedText style={styles.profileName}>{user?.name}</ThemedText>
             <TouchableOpacity style={styles.viewProfile} onPress={() => router.push('/profile')}>
               <ThemedText style={styles.viewProfileText}>View and edit profile</ThemedText>
               <ChevronRight size={16} color={Colors[colorScheme].text} />
