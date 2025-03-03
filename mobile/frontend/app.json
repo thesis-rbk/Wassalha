@@ -11,7 +11,11 @@
     "ios": {
       "supportsTablet": true
     },
-    "platforms": ["ios", "android", "web"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "redirectUri": "https://auth.expo.io/@mrsadok/wassalha",
     "android": {
       "adaptiveIcon": {
@@ -19,8 +23,8 @@
         "backgroundColor": "#ffffff"
       }
     },
-"extra": {
-  "GOOGLE_MAPS_KEY": "your-google-maps-key"
+    "extra": {
+      "GOOGLE_MAPS_KEY": "your-google-maps-key"
     },
     "web": {
       "bundler": "metro",
@@ -42,7 +46,10 @@
     "experiments": {
       "typedRoutes": true
     },
-    "assetBundlePatterns": ["**/*", "assets/fonts/*"],
+    "assetBundlePatterns": [
+      "**/*",
+      "assets/fonts/*"
+    ],
     "fonts": [
       {
         "asset": "assets/fonts/android/inter/Inter_28pt-Light.ttf",

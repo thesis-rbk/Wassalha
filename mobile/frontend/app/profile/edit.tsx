@@ -13,7 +13,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '@/config';
 import { TitleLarge, BodyMedium } from '@/components/Typography';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 
 export default function EditProfile() {
@@ -52,7 +51,7 @@ export default function EditProfile() {
 
     const handleUpdateProfile = async () => {
         try {
-            const token = await AsyncStorage.getItem('jwtToken');       
+            const token = await AsyncStorage.getItem('jwtToken');
             if (token) {
                 const decoded: any = jwtDecode(token);
                 console.log('Making PUT request to:', `hi/api/users/profile/${decoded.id}`);

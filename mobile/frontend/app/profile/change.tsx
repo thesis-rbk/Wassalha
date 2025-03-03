@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import axiosInstance, { API_URL } from '@/config';
+import axiosInstance from "../../config";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Colors } from '@/constants/Colors';
@@ -34,7 +34,7 @@ const ChangePassword = () => {
 
       Alert.alert('Success', response.data.message);
       navigation.goBack();
-    } catch (error:any) {
+    } catch (error: any) {
       Alert.alert('Error', error.response.data.message || 'Failed to change password');
     }
   };
