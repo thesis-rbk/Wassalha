@@ -1,0 +1,131 @@
+/* Footer.module.css */
+
+.footer {
+    background-color: #008098; /* Primary color */
+    color: white; /* Text color */
+  
+    text-align: center;
+    position: fixed; /* Fix the footer to the bottom */
+    left: 0; /* Align to the left */
+    right: 0; /* Align to the right */
+    bottom: 0; /* Stick to the bottom */
+    margin: 0; /* Remove any margin */
+    
+}
+
+.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    max-width: 1200px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+/* Logo Section */
+.logoSection {
+    flex: 1;
+    text-align: left;
+}
+
+.logo {
+    font-size: 40px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Contact Us */
+.contactText {
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.contactText a {
+    color: #01013D;
+    text-decoration: none;
+}
+
+.contactText a:hover {
+    text-decoration: underline;
+}
+
+/* Center - Links Section */
+.linksContainer {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.linkList {
+    margin-right:10px;
+}
+
+.linkList h3 {
+    margin-bottom: 20px;
+    color: white; /* Ensure section titles are white */
+}
+
+.linkList ul {
+    list-style: none;
+    padding: 0;
+}
+
+.linkList ul li {
+    margin-bottom: 10px;
+}
+
+.linkList ul li a {
+    color: white; /* Ensure link text is white */
+    text-decoration: none; /* Remove underline */
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.linkList ul li a:hover {
+    text-decoration: underline; /* Optional: underline on hover */
+}
+
+/* Social Media Icons */
+.socialContainer {
+    display: flex;
+    justify-content: center; /* Center social media icons */
+    gap: 20px; /* Space between icons */
+  
+}
+
+.icon {
+    font-size: 30px; /* Set icon size */
+    color: white; /* Icon color */
+    transition: color 0.3s ease;
+}
+
+.icon:hover {
+    color: #01013D; /* Hover color */
+}
+
+/* Divider and Copyright */
+.divider {
+    margin: 10px 30px; /* Space around divider */
+}
+
+.copyright {
+    margin-top: 15px; /* Space above copyright */
+}
+
+.button {
+    background-color: white;
+    color: #008098; /* Primary color */
+    padding: 10px 20px;
+    margin: 10px 0; /* Space between buttons */
+    text-decoration: none;
+    border-radius: 5px;
+    display: block; /* Stack buttons */
+}
+
+.language {
+    margin-top: 10px; /* Space above dropdown */
+    background-color: white; /* Dropdown background */
+    color: #008098; /* Dropdown text color */
+}
+  
