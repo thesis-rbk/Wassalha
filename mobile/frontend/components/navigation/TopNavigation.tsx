@@ -86,7 +86,7 @@ export function TopNavigation({ title, onNotificationPress, onProfilePress }: To
           </View>
           <View style={styles.profileInfo}>
             <ThemedText style={styles.profileName}>{user?.name}</ThemedText>
-            <TouchableOpacity style={styles.viewProfile} onPress={() => router.push('/profile')}>
+            <TouchableOpacity style={styles.viewProfile} onPress={() => router.push('./profile')}>
               <ThemedText style={styles.viewProfileText}>View and edit profile</ThemedText>
               <ChevronRight size={16} color={Colors[colorScheme].text} />
             </TouchableOpacity>
