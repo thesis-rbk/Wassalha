@@ -63,9 +63,10 @@ const getUserProfile = async (userId) => {
 };
 
 // Call the function with the user ID
-getUserProfile(11); // Replace 11 with the actual user ID
+// Replace 11 with the actual user ID
 
 module.exports = {
     getProfile,
     updateProfile,
+    getUserProfile,
 }; 
