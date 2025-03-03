@@ -7,16 +7,13 @@ import { Colors } from '@/constants/Colors';
 import { BaseButton } from '@/components/ui/buttons/BaseButton';
 import { TopNavigation } from '@/components/navigation/TopNavigation';
 import { useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '@/navigation/types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { jwtDecode } from 'jwt-decode';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '@/config';
 import { TitleLarge, BodyMedium } from '@/components/Typography';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-type EditProfileNavigationProp = StackNavigationProp<RootStackParamList, 'profile/edit'>;
 
 export default function EditProfile() {
     const { theme } = useTheme();
@@ -26,7 +23,6 @@ export default function EditProfile() {
         bio: '',
     });
     const [loading, setLoading] = useState(true);
-    const navigation = useNavigation<EditProfileNavigationProp>();
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -55,7 +51,7 @@ export default function EditProfile() {
 
     const handleUpdateProfile = async () => {
         try {
-            const token = await AsyncStorage.getItem('jwtToken');       
+            const token = await AsyncStorage.getItem('jwtToken');
             if (token) {
                 const decoded: any = jwtDecode(token);
                 console.log('Making PUT request to:', `hi/api/users/profile/${decoded.id}`);
@@ -95,15 +91,6 @@ export default function EditProfile() {
 
     return (
         <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-            <TopNavigation 
-                title="Edit Profile"
-                onNotificationPress={() => {}} 
-                profileName={profile.firstName}
-                onProfilePress={() => {
-                    console.log('Navigating to profile');
-                    navigation.navigate('profile/edit');
-                }}
-            />
             <TitleLarge>Edit Profile</TitleLarge>
             <View style={styles.photoSection}>
                 <View style={styles.avatar}>

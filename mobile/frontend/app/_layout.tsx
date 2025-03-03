@@ -27,7 +27,6 @@ export default function RootLayout() {
     return null;
   }
 
-
   console.log('Store:', store);
 
   return (
@@ -38,83 +37,38 @@ export default function RootLayout() {
         ) : !animationComplete ? (
           <WelcomeAnimation onAnimationComplete={() => setAnimationComplete(true)} />
         ) : (
-          <Stack >
-            {/* Optionally define specific screens if needed */}
+          <Stack>
+            {/* Unique screen names */}
             <Stack.Screen name="auth/signup" options={{ title: "Sign Up" }} />
             <Stack.Screen name="auth/login" options={{ title: "Log In" }} />
             <Stack.Screen name="home" />
-            <Stack.Screen
-              name="auth/ResetPassword"
-              options={{ title: "Reset Password" }}
-            />
-            <Stack.Screen
-              name="auth/NewPassword"
-              options={{ title: "New Password" }}
-            />
+            <Stack.Screen name="auth/ResetPassword" options={{ title: "Reset Password" }} />
+            <Stack.Screen name="auth/NewPassword" options={{ title: "New Password" }} />
 
-            <Stack.Screen
-              name="productDetails/create-order"
-              options={{
-                title: "Create Order",
-              }}
-            />
-            <Stack.Screen
-              name="productDetails"
-              options={{
-                title: "Product Details",
-              }}
-            />
-            <Stack.Screen
-              name="test/Subscription"
-              options={{ title: "Subscription" }}
-            />
-            <Stack.Screen
-              name="onboarding/howYouHeard"
-              options={{ title: "How You Heard" }}
-            />
-            <Stack.Screen
-              name="onboarding/selectCategories"
-              options={{ title: "Select Categories" }}
-            />
-            <Stack.Screen
-              name="onboarding/customScreen"
-              options={{ title: "Custom Screen" }}
-            />
+            {/* Make sure create-order is unique */}
+            <Stack.Screen name="productDetails/create-order-1" options={{ title: "Create Order" }} />
+            <Stack.Screen name="productDetails/overview" options={{ title: "Product Details" }} />
+
+            {/* Unique names for other repeated routes */}
+            <Stack.Screen name="test/Subscription-1" options={{ title: "Subscription" }} />
+            <Stack.Screen name="onboarding/howYouHeard-1" options={{ title: "How You Heard" }} />
+            <Stack.Screen name="onboarding/selectCategories-1" options={{ title: "Select Categories" }} />
+            <Stack.Screen name="onboarding/customScreen-1" options={{ title: "Custom Screen" }} />
             <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
             <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
             <Stack.Screen name="profile/change" options={{ title: 'Change Password' }} />
             <Stack.Screen name="profile/edit" options={{ title: 'Edit Profile' }} />
             <Stack.Screen name="profile/index" options={{ title: 'Profile' }} />
-            <Stack.Screen
-              name="productDetails/create-order"
-              options={{
-                title: "Create Order",
-              }}
-            />
-            <Stack.Screen
-              name="productDetails"
-              options={{
-                title: "Product Details",
-              }}
-            />
-            <Stack.Screen
-              name="test/Subscription"
-              options={{ title: "Subscription" }}
-            />
-            <Stack.Screen
-              name="onboarding/howYouHeard"
-              options={{ title: "How You Heard" }}
-            />
-            <Stack.Screen
-              name="onboarding/selectCategories"
-              options={{ title: "Select Categories" }}
-            />
-            <Stack.Screen
-              name="onboarding/customScreen"
-              options={{ title: "Custom Screen" }}
-            />
-            <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
-            <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
+
+            {/* Unique name for the second create-order */}
+            <Stack.Screen name="productDetails/create-order-2" options={{ title: "Create Order" }} />
+            <Stack.Screen name="productDetails/overview-2" options={{ title: "Product Details" }} />
+
+            {/* Another unique name for subscription */}
+            <Stack.Screen name="test/Subscription-2" options={{ title: "Subscription" }} />
+            <Stack.Screen name="onboarding/howYouHeard-2" options={{ title: "How You Heard" }} />
+            <Stack.Screen name="onboarding/selectCategories-2" options={{ title: "Select Categories" }} />
+            <Stack.Screen name="onboarding/customScreen-2" options={{ title: "Custom Screen" }} />
             <Stack.Screen name="test/chat" options={{ title: 'Chat' }} />
           </Stack>
         )}
@@ -122,4 +76,3 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
-
