@@ -12,23 +12,6 @@ import {
 import { Message } from '../../types';
 import { ChatScreenProps } from "../../types/ChatScreenProps"
 import { Ionicons } from '@expo/vector-icons';
-// Message type definition
-// interface Message {
-//     id: string;
-//     text: string;
-//     time: string;
-//     isSender: boolean;
-// }
-
-// Props for the ChatScreen component
-// interface ChatScreenProps {
-//     contactName: string;
-//     contactStatus?: string;
-//     contactAvatar?: string;
-//     onBackPress?: () => void;
-//     onCallPress?: () => void;
-//     onMorePress?: () => void;
-// }
 
 const ChatScreen: React.FC<ChatScreenProps> = ({
     contactName = 'name',
