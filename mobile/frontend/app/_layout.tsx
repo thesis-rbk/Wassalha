@@ -52,6 +52,13 @@ export default function RootLayout() {
               title: "Product Details",
             }}
           />
+          <Stack.Screen
+            name="mapTrack/index"
+            options={{
+              title: "Track Location",
+         
+            }}
+          />
           <Stack.Screen name="test/Travel" options={{ title: "Travel" }} />
           <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
           <Stack.Screen
