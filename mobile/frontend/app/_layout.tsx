@@ -1,15 +1,21 @@
 import { Stack } from "expo-router";
-import { Provider } from "react-redux";
-import { store } from "../store";
-import "../styles/global.css";
-import { useFonts } from "expo-font";
-import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
-import { ThemeProvider } from "@/context/ThemeContext";
+import { Provider } from 'react-redux';
+import { store } from '../store';
+import '../styles/global.css';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useState } from 'react';
+import { ThemeProvider } from '@/context/ThemeContext';
+import WelcomeAnimation from '@/components/WelcomeAnimation';
+import MainLoading from '@/components/MainLoading';
+
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({});
+
+  const [animationComplete, setAnimationComplete] = useState(false);
+  const [loadingComplete, setLoadingComplete] = useState(false);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -21,11 +27,17 @@ export default function RootLayout() {
     return null;
   }
 
-  console.log("Layout loading...");
-  console.log("Store:", store);
+
+  console.log('Store:', store);
+  
   return (
     <ThemeProvider>
       <Provider store={store}>
+        {!loadingComplete ? (
+          <MainLoading onLoadingComplete={() => setLoadingComplete(true)} />
+        ) : !animationComplete ? (
+          <WelcomeAnimation onAnimationComplete={() => setAnimationComplete(true)} />
+        ) : (
         <Stack >
           {/* Optionally define specific screens if needed */}
           <Stack.Screen 
@@ -69,8 +81,12 @@ export default function RootLayout() {
             name="onboarding/customScreen"
             options={{ headerShown: false } as any} 
           />
-        </Stack>
+          <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
+          <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
+          </Stack>
+        )}
       </Provider>
     </ThemeProvider>
   );
-}
+} 
+   
