@@ -35,7 +35,7 @@ export function TabBar({
     {
       name: "Orders",
       icon: <ShoppingBag size={24} color={iconColor} />,
-      route: "/productDetails/create-order" as Route,
+      route: "/test/order" as Route,
     },
     {
       name: "Trips",
