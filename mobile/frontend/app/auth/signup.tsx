@@ -176,7 +176,7 @@ const Signup = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Logo or Header Image */}
         <Image
-          source={require("@/assets/images/11.jpeg")} // Replace with your logo
+          source={require("../pngImage/navigation(1).png")} // Replace with your logo
           style={styles.logo}
           resizeMode="contain"
         />

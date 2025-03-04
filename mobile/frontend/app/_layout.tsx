@@ -54,12 +54,6 @@ export default function RootLayout() {
             />
 
             <Stack.Screen
-              name="productDetails/create-order"
-              options={{
-                title: "Create Order",
-              }}
-            />
-            <Stack.Screen
               name="productDetails"
               options={{
                 title: "Product Details",
@@ -81,8 +75,6 @@ export default function RootLayout() {
               name="onboarding/customScreen"
               options={{ title: "Custom Screen" }}
             />
-            <Stack.Screen name="test/Travel" options={{ title: "Travel" }} />
-            <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
             <Stack.Screen
               name="profile/change"
               options={{ title: "Change Password" }}
@@ -96,6 +88,14 @@ export default function RootLayout() {
               name="messages/messages"
               options={{ title: "Messages" }}
             />
+            <Stack.Screen
+              name="test/Terms&&Conditions"
+              options={{ title: "terms n conditions" }}
+            />
+            <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
+            <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
+            <Stack.Screen name="test/chat" options={{ title: 'Chat' }} />
+            <Stack.Screen name="test/order" options={{ title: 'order' }} />
           </Stack>
         )}
       </Provider>
