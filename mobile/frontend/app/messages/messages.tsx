@@ -19,7 +19,7 @@ export default function MessagesScreen() {
   const [error, setError] = useState<string | null>(null);
 
   // For demo purposes, we'll assume current user is user1
-  const currentUserId = 1;
+  const currentUserId = 1; // TO BE CHANGED !!
 
   useEffect(() => {
     const fetchData = async () => {
