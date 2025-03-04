@@ -190,17 +190,17 @@ model User {
   googleId               String?
   password               String?
   hasCompletedOnboarding Boolean @default(false)
-  resetToken              String?
-  resetTokenExpiry          DateTime?
-  profile         Profile?
-  requests        Request[]
-  notifications   Notification[]
-  reviewsGiven    Review[]       @relation("ReviewsGiven")
-  reviewsReceived Review[]       @relation("ReviewsReceived")
-  chatsRequested  Chat[]         @relation("ChatsRequested")
-  chatsProvided   Chat[]         @relation("ChatsProvided")
-  messagesSent    Message[]      @relation("MessagesSent")
-  ordersTraveling Order[]        @relation("TravelerOrders")
+
+  profile          Profile?
+  requests         Request[]
+  notifications    Notification[]
+  reviewsGiven     Review[]       @relation("ReviewsGiven")
+  reviewsReceived  Review[]       @relation("ReviewsReceived")
+  chatsRequested   Chat[]         @relation("ChatsRequested")
+  chatsProvided    Chat[]         @relation("ChatsProvided")
+  messagesSent     Message[]      @relation("MessagesSent")
+  messagesRecieved Message[]      @relation("MessagesRecieved")
+  ordersTraveling  Order[]        @relation("TravelerOrders")
 
   // Subscriptions / Sponsorships
   subscriptions Subscription[] @relation("UserSubscriptions")
@@ -435,11 +435,16 @@ model Message {
   senderId Int
   sender   User @relation("MessagesSent", fields: [senderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  receiverId Int
+  receiver   User @relation("MessagesRecieved", fields: [receiverId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
   type    String
   content String?
   mediaId Int?
   media   Media?  @relation(fields: [mediaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   isRead  Boolean @default(false)
+
+  time DateTime @default(now()) // Add the time field, defaulting to the current timestamp
 }
 
 // ========== MEDIA ==========

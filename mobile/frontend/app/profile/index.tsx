@@ -1,24 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { useTheme } from '@/context/ThemeContext';
-import { Colors } from '@/constants/Colors';
-import { TopNavigation } from '@/components/navigation/TopNavigation';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { jwtDecode } from 'jwt-decode'
-import axios from 'axios';
-import { useRouter } from 'expo-router';
-import { StackNavigationProp } from '@react-navigation/stack';
-import axiosInstance from '@/config';
-import { BaseButton } from '@/components/ui/buttons/BaseButton';
-import { TitleLarge, BodyMedium } from '@/components/Typography'; // Import Typography components
+import React, { useEffect, useState } from "react";
+import { View, StyleSheet, ActivityIndicator } from "react-native";
+import { useTheme } from "@/context/ThemeContext";
+import { Colors } from "@/constants/Colors";
+import { TopNavigation } from "@/components/navigation/TopNavigation";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { jwtDecode } from "jwt-decode";
+import axios from "axios";
+import { useRouter } from "expo-router";
+import { StackNavigationProp } from "@react-navigation/stack";
+import axiosInstance from "@/config";
+import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import { TitleLarge, BodyMedium } from "@/components/Typography"; // Import Typography components
 
 const ProfilePage = () => {
   const { theme } = useTheme();
   const [profile, setProfile] = useState({
-    firstName: '',
-    lastName: '',
-    bio: '',
-    joinedDate: '',
+    firstName: "",
+    lastName: "",
+    bio: "",
+    joinedDate: "",
     shopperRating: 0,
     travelerRating: 0,
   });
@@ -28,28 +28,31 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = await AsyncStorage.getItem('jwtToken');
+        const token = await AsyncStorage.getItem("jwtToken");
         if (token) {
           const decoded: any = jwtDecode(token);
-          const response = await axiosInstance.get(`/api/users/profile/${decoded.id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const response = await axiosInstance.get(
+            `/api/users/profile/${decoded.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
           setProfile(response.data.data);
-          await AsyncStorage.setItem('firstName', response.data.data.firstName);
-          await AsyncStorage.setItem('lastName', response.data.data.lastName);
-          await AsyncStorage.setItem('bio', response.data.data.bio);
+          await AsyncStorage.setItem("firstName", response.data.data.firstName);
+          await AsyncStorage.setItem("lastName", response.data.data.lastName);
+          await AsyncStorage.setItem("bio", response.data.data.bio);
 
           // Log the stored values for debugging
-          const storedFirstName = await AsyncStorage.getItem('firstName');
-          console.log('Stored first name:', storedFirstName);
-          console.log('Profile:', response.data.data);
+          const storedFirstName = await AsyncStorage.getItem("firstName");
+          console.log("Stored first name:", storedFirstName);
+          console.log("Profile:", response.data.data);
         } else {
-          console.error('No token found');
+          console.error("No token found");
         }
       } catch (error) {
-        console.error('Error retrieving profile:', error);
+        console.error("Error retrieving profile:", error);
       } finally {
         setLoading(false);
       }
@@ -63,16 +66,20 @@ const ProfilePage = () => {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
+    <View
+      style={[styles.container, { backgroundColor: Colors[theme].background }]}
+    >
       <TopNavigation
         title="Profile"
-        onNotificationPress={() => { }}
-        onProfilePress={() => router.push('/profile/edit')}
+        onNotificationPress={() => {}}
+        onProfilePress={() => router.push("/profile/edit")}
       />
       <View style={styles.header}>
         <View style={styles.avatar}>
           {/* <Text style={styles.avatarText}>{profile.firstName ? profile.firstName[0] : ''}</Text> */}
-          <TitleLarge>{profile.firstName ? profile.firstName[0] : ''}</TitleLarge>
+          <TitleLarge>
+            {profile.firstName ? profile.firstName[0] : ""}
+          </TitleLarge>
         </View>
         <TitleLarge>{`${profile.firstName} ${profile.lastName}`}</TitleLarge>
         <BodyMedium>Joined in {profile.joinedDate}</BodyMedium>
@@ -85,16 +92,27 @@ const ProfilePage = () => {
         <BodyMedium>Traveler: {profile.travelerRating} ★</BodyMedium>
       </View>
       <View style={styles.verifiedInfo}>
-
-        <BaseButton variant="primary" size="login" onPress={() => { }}>Verify Phone Number</BaseButton>
+        <BaseButton variant="primary" size="login" onPress={() => {}}>
+          Verify Phone Number
+        </BaseButton>
       </View>
       <View style={styles.verifiedInfo}>
-        <BaseButton variant="primary" size="login" onPress={() => router.push('/profile/edit')}>
+        <BaseButton
+          variant="primary"
+          size="login"
+          onPress={() => router.push("/profile/edit")}
+        >
           Edit Profile
         </BaseButton>
       </View>
       <View style={styles.verifiedInfo}>
-        <BaseButton variant="primary" size="login" onPress={() => router.push('/profile/change')}>Change Password</BaseButton>
+        <BaseButton
+          variant="primary"
+          size="login"
+          onPress={() => router.push("/profile/change")}
+        >
+          Change Password
+        </BaseButton>
       </View>
     </View>
   );
@@ -106,7 +124,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   avatar: {
@@ -114,14 +132,14 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
 
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 8,
   },
   avatarText: {
-    color: 'white',
+    color: "white",
     fontSize: 36,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   ratings: {
     marginVertical: 20,
@@ -133,7 +151,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   verifiedText: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
   },
   verifiedDetail: {
@@ -141,4 +159,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfilePage; 
+export default ProfilePage;
