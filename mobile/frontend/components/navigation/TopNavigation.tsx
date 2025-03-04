@@ -1,29 +1,50 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated, Dimensions } from 'react-native';
-import { Bell, Menu, ChevronRight, Settings, ShoppingBag, Plane, LogOut, Moon, Sun, PenSquare } from 'lucide-react-native';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { ThemedText } from '@/components/ThemedText';
-import { useTheme } from '@/context/ThemeContext';
-import { TopNavigationProps } from '@/types/TopNavigationProps';
-import { useSelector } from 'react-redux';
-import { useRouter } from 'expo-router';
-import { RootState } from '@/store'; // Add this import
-import AsyncStorage from '@react-native-async-storage/async-storage'
-const SCREEN_WIDTH = Dimensions.get('window').width;
+import React, { useState } from "react";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  Dimensions,
+} from "react-native";
+import {
+  Bell,
+  Menu,
+  ChevronRight,
+  Settings,
+  ShoppingBag,
+  Plane,
+  LogOut,
+  Moon,
+  Sun,
+  PenSquare,
+} from "lucide-react-native";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { ThemedText } from "@/components/ThemedText";
+import { useTheme } from "@/context/ThemeContext";
+import { TopNavigationProps } from "@/types/TopNavigationProps";
+import { useSelector } from "react-redux";
+import { useRouter } from "expo-router";
+import { RootState } from "@/store"; // Add this import
+import AsyncStorage from "@react-native-async-storage/async-storage";
+const SCREEN_WIDTH = Dimensions.get("window").width;
 const MENU_WIDTH = SCREEN_WIDTH * 0.8;
 
-export function TopNavigation({ title, onNotificationPress, onProfilePress }: TopNavigationProps) {
-  const colorScheme = useColorScheme() ?? 'light';
+export function TopNavigation({
+  title,
+  onNotificationPress,
+  onProfilePress,
+}: TopNavigationProps) {
+  const colorScheme = useColorScheme() ?? "light";
   const { toggleTheme } = useTheme();
   const [menuAnimation] = useState(new Animated.Value(-MENU_WIDTH));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const router = useRouter()
+  const router = useRouter();
   const { user, token } = useSelector((state: RootState) => state.auth);
-  console.log('User:', user);
+  console.log("User:", user);
   const handleLogout = async () => {
-    await AsyncStorage.removeItem('jwtToken');
-    router.push('/auth/login');
+    await AsyncStorage.removeItem("jwtToken");
+    router.push("/auth/login");
   };
   const toggleMenu = () => {
     const toValue = isMenuOpen ? -MENU_WIDTH : 0;
@@ -36,22 +57,48 @@ export function TopNavigation({ title, onNotificationPress, onProfilePress }: To
   };
 
   const menuItems = [
-    { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications' },
-    { icon: <Settings size={24} color={Colors[colorScheme].text} />, label: 'Settings' },
-    { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders' },
-    { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips' },
-    { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request' },
-    { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out', onPress: handleLogout },
+    {
+      icon: <Bell size={24} color={Colors[colorScheme].text} />,
+      label: "Notifications",
+    },
+    {
+      icon: <Settings size={24} color={Colors[colorScheme].text} />,
+      label: "Settings",
+    },
+    {
+      icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />,
+      label: "Orders",
+    },
+    {
+      icon: <Plane size={24} color={Colors[colorScheme].text} />,
+      label: "Trips",
+    },
+    {
+      icon: <PenSquare size={24} color={Colors[colorScheme].text} />,
+      label: "Make a Request",
+    },
+    {
+      icon: <LogOut size={24} color={Colors[colorScheme].text} />,
+      label: "Log Out",
+      onPress: handleLogout,
+    },
   ];
 
   return (
     <>
-      <View style={[styles.container, { backgroundColor: Colors[colorScheme].primary }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: Colors[colorScheme].primary },
+        ]}
+      >
         <TouchableOpacity onPress={toggleMenu}>
           <Menu color={Colors[colorScheme].background} size={24} />
         </TouchableOpacity>
 
-        <ThemedText style={[styles.title, { color: Colors[colorScheme].background }]}>
+        <ThemedText
+          style={[styles.title, { color: Colors[colorScheme].background }]}
+        >
           {title}
         </ThemedText>
 
@@ -82,12 +129,19 @@ export function TopNavigation({ title, onNotificationPress, onProfilePress }: To
         {/* User Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.profileImage}>
-            <ThemedText style={styles.profileInitial}>{user?.name?.charAt(0)}</ThemedText>
+            <ThemedText style={styles.profileInitial}>
+              {user?.name?.charAt(0)}
+            </ThemedText>
           </View>
           <View style={styles.profileInfo}>
             <ThemedText style={styles.profileName}>{user?.name}</ThemedText>
-            <TouchableOpacity style={styles.viewProfile} onPress={() => router.push('./profile')}>
-              <ThemedText style={styles.viewProfileText}>View and edit profile</ThemedText>
+            <TouchableOpacity
+              style={styles.viewProfile}
+              onPress={() => router.push("./profile")}
+            >
+              <ThemedText style={styles.viewProfileText}>
+                View and edit profile
+              </ThemedText>
               <ChevronRight size={16} color={Colors[colorScheme].text} />
             </TouchableOpacity>
           </View>
@@ -111,17 +165,14 @@ export function TopNavigation({ title, onNotificationPress, onProfilePress }: To
         </View>
 
         {/* Dark Mode Toggle */}
-        <TouchableOpacity
-          style={styles.darkModeToggle}
-          onPress={toggleTheme}
-        >
-          {colorScheme === 'dark' ? (
+        <TouchableOpacity style={styles.darkModeToggle} onPress={toggleTheme}>
+          {colorScheme === "dark" ? (
             <Sun size={24} color={Colors[colorScheme].text} />
           ) : (
             <Moon size={24} color={Colors[colorScheme].text} />
           )}
           <ThemedText style={styles.darkModeText}>
-            {colorScheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            {colorScheme === "dark" ? "Light Mode" : "Dark Mode"}
           </ThemedText>
         </TouchableOpacity>
       </Animated.View>
@@ -131,27 +182,27 @@ export function TopNavigation({ title, onNotificationPress, onProfilePress }: To
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: 16,
     height: 60,
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: "rgba(0,0,0,0.5)",
     zIndex: 1,
   },
   menu: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     bottom: 0,
@@ -161,61 +212,61 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 30,
   },
   profileImage: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#E91E63',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#E91E63",
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 15,
   },
   profileInitial: {
     fontSize: 24,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
   profileInfo: {
     flex: 1,
   },
   profileName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
   },
   viewProfile: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   viewProfileText: {
     fontSize: 14,
     marginRight: 5,
-    color: '#2196F3',
+    color: "#2196F3",
   },
   menuItems: {
     flex: 1,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
+    borderBottomColor: "rgba(0,0,0,0.1)",
   },
   menuItemText: {
     fontSize: 16,
     marginLeft: 15,
   },
   darkModeToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 20,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
+    borderTopColor: "rgba(0,0,0,0.1)",
   },
   darkModeText: {
     fontSize: 16,

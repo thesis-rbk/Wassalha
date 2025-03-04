@@ -430,12 +430,12 @@ const changePassword = async (req, res) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      return res.status(400).json({ error: 'Current password is incorrect' });
+      return res.status(400).json({ error: "Current password is incorrect" });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
@@ -444,10 +444,33 @@ const changePassword = async (req, res) => {
       data: { password: hashedPassword },
     });
 
-    res.status(200).json({ message: 'Password changed successfully' });
+    res.status(200).json({ message: "Password changed successfully" });
   } catch (error) {
-    console.error('Error changing password:', error);
-    res.status(500).json({ error: 'Failed to change password' });
+    console.error("Error changing password:", error);
+    res.status(500).json({ error: "Failed to change password" });
+  }
+};
+
+// Fetch users and their profiles
+const getUsers = async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      include: {
+        profile: true, // Include the profile in the response
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch users",
+      error: error.message,
+    });
   }
 };
 
@@ -535,6 +558,7 @@ module.exports = {
   updatePreferredCategories,
   completeOnboarding,
   changePassword,
+  getUsers,
   getAllUsers,
   getUserById,
   updateUser,

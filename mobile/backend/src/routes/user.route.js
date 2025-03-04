@@ -14,7 +14,9 @@ const {
   getUserById,
   updateUser,
   deleteUser,
+  getUsers,
 } = require("../controllers/user.controller");
+const { getMessages } = require("../controllers/message.controller");
 const { authenticateUser, authenticateAdmin } = require("../middleware/middleware");
 
 const router = express.Router();
@@ -30,7 +32,9 @@ router.post("/reset-password", resetPassword);
 router.post("/update-referral-source", updateReferralSource);
 router.post("/update-preferred-categories", updatePreferredCategories);
 router.post("/complete-onboarding", completeOnboarding);
-router.put('/change-password', authenticateUser, changePassword);
+router.put("/change-password", authenticateUser, changePassword);
+router.get("/", getUsers);
+router.get("/messages", getMessages);
 
 // User CRUD routes
 router.get("/users", authenticateUser, getAllUsers); // Get all users
