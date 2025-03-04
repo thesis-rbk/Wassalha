@@ -9,6 +9,12 @@ const path = require("path"); // Import path module
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
+const fetchRoute = require("./routes/fetchAll")
+require("dotenv").config();
+
+// const userRoutes = require("./routes/userRoutes");
+
+// Import routes
 const productRoutes = require("./routes/productRoutes");
 const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
@@ -18,10 +24,7 @@ const all = require("./routes/alltravNpost");
 const goodsRoutes = require("./routes/goods.route");
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
-
-
-
-// Create Express app and HTTP server
+const all = require("./routes/alltravNpost");
 const app = express();
 const server = http.createServer(app);
 
@@ -31,8 +34,8 @@ app.use(express.json());
 
 // Serve static files from the "uploads" directory
 app.use('/api/uploads', express.static(path.join(__dirname, '/uploads'))); // Serve static files
-console.log("pathsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss",   path.join(__dirname, 'src/uploads'));
-
+// console.log("pathsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", path.join(__dirname, 'src/uploads'));
+app.use("/api/fecth", fetchRoute)
 // Routes
 
 // API Routes
