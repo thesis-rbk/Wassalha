@@ -1,26 +1,79 @@
-import React, { useEffect, useState } from "react";
-import { View, StyleSheet, ActivityIndicator } from "react-native";
-import { useTheme } from "@/context/ThemeContext";
-import { Colors } from "@/constants/Colors";
-import { TopNavigation } from "@/components/navigation/TopNavigation";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { jwtDecode } from "jwt-decode";
-import axios from "axios";
-import { useRouter } from "expo-router";
-import { StackNavigationProp } from "@react-navigation/stack";
-import axiosInstance from "@/config";
-import { BaseButton } from "@/components/ui/buttons/BaseButton";
-import { TitleLarge, BodyMedium } from "@/components/Typography"; // Import Typography components
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ActivityIndicator, Image, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { useTheme } from '@/context/ThemeContext';
+import { Colors } from '@/constants/Colors';
+import { TopNavigation } from '@/components/navigation/TopNavigation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from 'jwt-decode';
+import axiosInstance from '@/config';
+import { useRouter } from 'expo-router';
+import { BaseButton } from '@/components/ui/buttons/BaseButton';
+import { TitleLarge, BodyMedium } from '@/components/Typography';
+import { Ionicons } from '@expo/vector-icons';
+import CountryFlag from "react-native-country-flag";
+
+const { width } = Dimensions.get('window');
+
+const countryToCode = {
+  "USA": "US",
+  "FRANCE": "FR", 
+  "SPAIN": "ES",
+  "GERMANY": "DE",
+  "ITALY": "IT",
+  "UK": "GB",
+  "CANADA": "CA",
+  "AUSTRALIA": "AU",
+  "JAPAN": "JP",
+  "CHINA": "CN",
+  "BRAZIL": "BR",
+  "INDIA": "IN",
+  "RUSSIA": "RU",
+  "MEXICO": "MX",
+  "BOLIVIA": "BO",
+  "MOROCCO": "MA",
+  "TUNISIA": "TN", 
+  "ALGERIA": "DZ",
+  "TURKEY": "TR",
+  "PORTUGAL": "PT",
+  "NETHERLANDS": "NL",
+  "BELGIUM": "BE",
+  "SWEDEN": "SE",
+  "NORWAY": "NO",
+  "DENMARK": "DK",
+  "FINLAND": "FI",
+  "ICELAND": "IS",
+  "AUSTRIA": "AT",
+  "SWITZERLAND": "CH",
+  "BELARUS": "BY",
+  "ARGENTINA": "AR",
+  "CHILE": "CL",
+  "COLOMBIA": "CO",
+  "PERU": "PE",
+  "VENEZUELA": "VE",
+  "ECUADOR": "EC",
+  "PARAGUAY": "PY",
+  "URUGUAY": "UY",
+  "OTHER": "XX"
+};
 
 const ProfilePage = () => {
   const { theme } = useTheme();
   const [profile, setProfile] = useState({
-    firstName: "",
-    lastName: "",
-    bio: "",
-    joinedDate: "",
-    shopperRating: 0,
-    travelerRating: 0,
+    firstName: '',
+    lastName: '',
+    bio: '',
+    country: '',
+    phoneNumber: '',
+    imageId: null,
+    image: null,
+    gender: '',
+    review: '',
+    isAnonymous: false,
+    isBanned: false,
+    isVerified: false,
+    isOnline: false,
+    preferredCategories: '',
+    referralSource: '',
   });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -31,23 +84,14 @@ const ProfilePage = () => {
         const token = await AsyncStorage.getItem("jwtToken");
         if (token) {
           const decoded: any = jwtDecode(token);
-          const response = await axiosInstance.get(
-            `/api/users/profile/${decoded.id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          const response = await axiosInstance.get(`/api/users/profile/${decoded.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          console.log('Profile response:', response.data.data);
           setProfile(response.data.data);
-          await AsyncStorage.setItem("firstName", response.data.data.firstName);
-          await AsyncStorage.setItem("lastName", response.data.data.lastName);
-          await AsyncStorage.setItem("bio", response.data.data.bio);
-
-          // Log the stored values for debugging
-          const storedFirstName = await AsyncStorage.getItem("firstName");
-          console.log("Stored first name:", storedFirstName);
-          console.log("Profile:", response.data.data);
+          await AsyncStorage.setItem('firstName', response.data.data.firstName);
+          await AsyncStorage.setItem('lastName', response.data.data.lastName);
+          await AsyncStorage.setItem('bio', response.data.data.bio);
         } else {
           console.error("No token found");
         }
@@ -66,97 +110,269 @@ const ProfilePage = () => {
   }
 
   return (
-    <View
+    <ScrollView 
       style={[styles.container, { backgroundColor: Colors[theme].background }]}
+      showsVerticalScrollIndicator={false}
     >
-      <TopNavigation
-        title="Profile"
-        onNotificationPress={() => {}}
-        onProfilePress={() => router.push("/profile/edit")}
-      />
-      <View style={styles.header}>
-        <View style={styles.avatar}>
-          {/* <Text style={styles.avatarText}>{profile.firstName ? profile.firstName[0] : ''}</Text> */}
-          <TitleLarge>
-            {profile.firstName ? profile.firstName[0] : ""}
-          </TitleLarge>
+      <View style={[styles.headerBackground, { backgroundColor: Colors[theme].primary }]} />
+      
+      {/* Profile Image Section */}
+      <View style={styles.profileImageContainer}>
+        <View style={styles.imageWrapper}>
+          {profile.image?.filename ? (
+            <>
+              <Image 
+                source={{ uri: `${process.env.EXPO_PUBLIC_API_URL}/api/uploads/${profile.image.filename}` }}
+                style={styles.profileImage} 
+              />
+              <View 
+                style={[
+                  styles.onlineIndicator, 
+                  { backgroundColor: profile.isOnline ? "#22c55e" : "#64748b" }
+                ]} 
+              />
+            </>
+          ) : (
+            <>
+              <View style={[styles.profileImage, { backgroundColor: Colors[theme].secondary }]}>
+                <Text style={[styles.avatarText, { color: Colors[theme].text }]}>
+                  {profile.firstName?.[0]}{profile.lastName?.[0]}
+                </Text>
+              </View>
+              <View 
+                style={[
+                  styles.onlineIndicator, 
+                  { backgroundColor: profile.isOnline ? "#22c55e" : "#64748b" }
+                ]} 
+              />
+            </>
+          )}
         </View>
-        <TitleLarge>{`${profile.firstName} ${profile.lastName}`}</TitleLarge>
-        <BodyMedium>Joined in {profile.joinedDate}</BodyMedium>
       </View>
-      <BodyMedium>shopperRating: {profile.shopperRating},</BodyMedium>
-      <BodyMedium>travelerRating: {profile.travelerRating},</BodyMedium>
-      <BodyMedium>Bio: {profile.bio}</BodyMedium>
-      <View style={styles.ratings}>
-        <BodyMedium>Shopper: {profile.shopperRating} ★</BodyMedium>
-        <BodyMedium>Traveler: {profile.travelerRating} ★</BodyMedium>
+
+      {/* Profile Info Card */}
+      <View style={[styles.card, { backgroundColor: Colors[theme].card }]}>
+        {/* Name and Verification */}
+        <View style={styles.nameSection}>
+          <Text style={[styles.userName, { color: Colors[theme].text }]}>
+            {`${profile.firstName} ${profile.lastName}`}
+          </Text>
+          {profile.isVerified ? (
+            <View style={[styles.badge, { backgroundColor: '#dcfce7', borderColor: '#86efac' }]}>
+              <Ionicons name="checkmark" size={12} color="#16a34a" />
+              <Text style={{ color: '#16a34a', fontSize: 12 }}>Verified</Text>
+            </View>
+          ) : (
+            <View style={[styles.badge, { backgroundColor: '#fee2e2', borderColor: '#fca5a5' }]}>
+              <Ionicons name="close" size={12} color="#dc2626" />
+              <Text style={{ color: '#dc2626', fontSize: 12 }}>Unverified</Text>
+            </View>
+          )}
+        </View>
+
+        <Text style={[styles.onlineStatus, { color: Colors[theme].text }]}>
+          {profile.isOnline ? "Online now" : "Currently offline"}
+        </Text>
+
+        <View style={[styles.divider, { backgroundColor: Colors[theme].border }]} />
+
+        {/* Info Grid */}
+        <View style={styles.infoGrid}>
+          <InfoItem
+            icon="document-text-outline"
+            label="Bio"
+            value={profile.bio || "No bio provided"}
+            theme={theme}
+          />
+          <InfoItem
+            icon="location-outline"
+            label="Country"
+            value={profile.country || "Not specified"}
+            theme={theme}
+            isCountry={true}
+          />
+          <InfoItem
+            icon="call-outline"
+            label="Phone"
+            value={profile.phoneNumber || "Not provided"}
+            theme={theme}
+          />
+          <InfoItem
+            icon="person-outline"
+            label="Gender"
+            value={profile.gender || "Not specified"}
+            theme={theme}
+          />
+          <InfoItem
+            icon="star-outline"
+            label="Review"
+            value={profile.review || "No reviews yet"}
+            theme={theme}
+          />
+          <InfoItem
+            icon="pricetags-outline"
+            label="Preferred Categories"
+            value={profile.preferredCategories || "None selected"}
+            theme={theme}
+          />
+        </View>
+
+        <View style={[styles.divider, { backgroundColor: Colors[theme].border }]} />
+
+        {/* Action Buttons */}
+        <View style={styles.buttonsContainer}>
+          <BaseButton 
+            onPress={() => router.push('/profile/edit')}
+            size="login"
+          >
+            Edit Profile
+          </BaseButton>
+          
+          <BaseButton 
+            onPress={() => router.push('/profile/change')}
+            size="login"
+            variant="secondary"
+          >
+            Change Password
+          </BaseButton>
+        </View>
       </View>
-      <View style={styles.verifiedInfo}>
-        <BaseButton variant="primary" size="login" onPress={() => {}}>
-          Verify Phone Number
-        </BaseButton>
-      </View>
-      <View style={styles.verifiedInfo}>
-        <BaseButton
-          variant="primary"
-          size="login"
-          onPress={() => router.push("/profile/edit")}
-        >
-          Edit Profile
-        </BaseButton>
-      </View>
-      <View style={styles.verifiedInfo}>
-        <BaseButton
-          variant="primary"
-          size="login"
-          onPress={() => router.push("/profile/change")}
-        >
-          Change Password
-        </BaseButton>
-      </View>
-    </View>
+    </ScrollView>
   );
 };
+
+// InfoItem component
+const InfoItem = ({ icon, label, value, theme, isCountry = false }) => (
+  <View style={styles.infoItem}>
+    <Ionicons name={icon} size={20} color={Colors[theme].text} style={styles.infoIcon} />
+    <View style={styles.infoContent}>
+      <Text style={[styles.infoLabel, { color: Colors[theme].text }]}>{label}</Text>
+      <View style={styles.valueContainer}>
+        {isCountry && value !== "Not specified" && (
+          <CountryFlag
+            isoCode={countryToCode[value?.toUpperCase()] || value}
+            size={20}
+            style={styles.flag}
+          />
+        )}
+        <Text style={[styles.infoValue, { color: Colors[theme].text }]}>{value}</Text>
+      </View>
+    </View>
+  </View>
+);
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
   },
-  header: {
-    alignItems: "center",
-    marginBottom: 20,
+  headerBackground: {
+    height: 180,
+    width: '100%',
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
+  profileImageContainer: {
+    alignItems: 'center',
+    marginTop: -60,
+  },
+  imageWrapper: {
+    position: 'relative',
+    width: 100,
+    height: 100,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   avatarText: {
-    color: "white",
-    fontSize: 36,
-    fontWeight: "bold",
+    fontSize: 32,
+    fontWeight: 'bold',
   },
-  ratings: {
+  onlineIndicator: {
+    position: 'absolute',
+    top: 70,
+    bottom: 0,
+    right: 0,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 3,
+    borderColor: '#ffffff',
+    zIndex: 1,
+  },
+  card: {
+    margin: 16,
+    borderRadius: 16,
+    padding: 20,
+    marginTop: -30,
+  },
+  nameSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 4,
+  },
+  onlineStatus: {
+    textAlign: 'center',
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  divider: {
+    height: 1,
     marginVertical: 20,
   },
-  verifiedInfo: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: Colors.light.background,
-    borderRadius: 8,
+  infoGrid: {
+    gap: 16,
   },
-  verifiedText: {
-    fontWeight: "bold",
-    marginBottom: 8,
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
   },
-  verifiedDetail: {
-    marginBottom: 8,
+  infoIcon: {
+    marginTop: 2,
+  },
+  infoLabel: {
+    fontSize: 14,
+    marginBottom: 2,
+    opacity: 0.7,
+  },
+  infoValue: {
+    fontSize: 16,
+  },
+  buttonsContainer: {
+    gap: 12,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  valueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  flag: {
+    borderRadius: 4,
   },
 });
+
+export default ProfilePage;
 
 export default ProfilePage;
