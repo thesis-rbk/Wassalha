@@ -1,7 +1,6 @@
-import { RelativePathString } from 'expo-router';
-
+import { Route } from 'expo-router';
 export interface TabItem {
   name: string;
   icon: React.ReactNode;
-  route: string
+  route: Route;
 }

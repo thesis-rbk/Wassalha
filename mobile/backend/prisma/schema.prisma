@@ -18,6 +18,49 @@ enum ReferralSource {
   OTHER
 }
 
+// Add this new enum for countries
+enum Country {
+  USA
+  CANADA
+  UK
+  AUSTRALIA
+  GERMANY
+  FRANCE
+  INDIA
+  JAPAN
+  TUNISIA
+  MOROCCO
+  ALGERIA
+  TURKEY
+  SPAIN
+  ITALY
+  PORTUGAL
+  NETHERLANDS
+  BELGIUM
+  SWEDEN
+  NORWAY
+  DENMARK
+  FINLAND
+  ICELAND
+  AUSTRIA
+  SWITZERLAND
+  BELARUS
+  RUSSIA
+  CHINA
+  BRAZIL
+  ARGENTINA
+  CHILE
+  MEXICO
+  COLOMBIA
+  PERU
+  VENEZUELA
+  ECUADOR
+  PARAGUAY
+  URUGUAY
+  BOLIVIA
+  OTHER // Optional for unspecified countries
+}
+
 // Existing enums
 enum RequestStatus {
   PENDING
@@ -226,6 +269,8 @@ model Profile {
   firstName String
   lastName  String
   bio       String?
+  country   Country? // Optional field for country
+  phoneNumber String?
 
   // Profile image stored as Media
   imageId Int?   @unique
