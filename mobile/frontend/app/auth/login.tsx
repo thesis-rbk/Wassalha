@@ -16,7 +16,6 @@ import { InputFieldPassword } from "@/components/InputFieldPassword";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { FontAwesome5 } from "@expo/vector-icons";
-
 WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
@@ -197,7 +196,7 @@ export default function Login() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Logo or Header Image */}
         <Image
-          source={require("@/assets/images/11.jpeg")} // Use your logo
+          source={require("../pngImage/navigation(1).png")} // Use your logo
           style={styles.logo}
           resizeMode="contain"
         />

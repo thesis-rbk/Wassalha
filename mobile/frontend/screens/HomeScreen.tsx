@@ -198,6 +198,8 @@ const styles = StyleSheet.create({
   },
   serviceCard: {
     width: "47%",
+    alignItems: "center",
+    justifyContent: "center",
     aspectRatio: 1,
     padding: 16,
   },
