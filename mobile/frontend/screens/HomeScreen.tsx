@@ -200,6 +200,8 @@ const styles = StyleSheet.create({
     width: "47%",
     aspectRatio: 1,
     padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   serviceContent: {
     flex: 1,
@@ -211,6 +213,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
+    color: 'black',
   },
   searchSection: {
     padding: 16,

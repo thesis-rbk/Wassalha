@@ -43,17 +43,27 @@ export default function Nav() {
           <Home size={20} /> Dashboard
         </Link>
         <Link href="/user" className={styles.sidebarItem}>
-          <User size={20} /> User
+          <User size={20} /> List of Users
         </Link>
         <Link href="/orders" className={styles.sidebarItem}>
-          <ShoppingCart size={20} /> Orders
+          <ShoppingCart size={20} /> List of Orders
         </Link>
         <Link href="/requests" className={styles.sidebarItem}>
-          <List size={20} /> Requests
+          <List size={20} /> List of Requests
         </Link>
-        <Link href="/categories" className={styles.sidebarItem}>
-          <List size={20} /> Categories
+        <Link href="/" className={styles.sidebarItem}>
+          <List size={20} /> List of goods
         </Link>
+        <Link href="/" className={styles.sidebarItem}>
+          <List size={20} /> List of goods posts
+        </Link>
+        <Link href="/" className={styles.sidebarItem}>
+          <List size={20} /> List of PromoPosts
+        </Link>
+        <Link href="/" className={styles.sidebarItem}>
+          <List size={20} /> List of Categories
+        </Link>
+      
       </div>
       <nav className={styles.nav}>
         <div className={styles.logo}>Admin Dashboard</div>
@@ -63,7 +73,7 @@ export default function Nav() {
             <User className={styles.userIcon} />
             <div className={`${styles.dropdownMenu} ${dropdownOpen ? styles.visible : ''}`}>
               <Link href="/login" className={styles.dropdownItem}>Log In</Link>
-              <Link href="/change-password" className={styles.dropdownItem}>Change Password</Link>
+              {/* <Link href="/change-password" className={styles.dropdownItem}>Change Password</Link> */}
             </div>
           </div>
         </div>

@@ -23,7 +23,7 @@ const generateRandomCode = () => {
 };
 
 const signup = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, role } = req.body;
 
   try {
     if (!name || !email || !password) {
@@ -66,6 +66,7 @@ const signup = async (req, res) => {
         name,
         email,
         password: hashedPassword,
+        role: role || 'USER',
       },
     });
 
@@ -84,6 +85,7 @@ const signup = async (req, res) => {
         id: newUser.id,
         name: newUser.name,
         email: newUser.email,
+        role: newUser.role,
       },
     });
   } catch (error) {
@@ -111,7 +113,7 @@ const loginUser = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || "secretkey",
       { expiresIn: "1h" }
     );
@@ -123,7 +125,7 @@ const loginUser = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        hasCompletedOnboarding: user.hasCompletedOnboarding,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -131,6 +133,49 @@ const loginUser = async (req, res) => {
     res.status(500).json({ error: "Something went wrong during login" });
   } finally {
     await prisma.$disconnect();
+  }
+};
+
+const loginAdmin = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required" });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    // Check if the user is an admin
+    if (user.role !== 'ADMIN') {
+      return res.status(403).json({ error: "Access denied. Admins only." });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || "secretkey",
+      { expiresIn: "1h" }
+    );
+
+    res.status(200).json({
+      message: "Admin login successful",
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Admin login error:", error);
+    res.status(500).json({ error: "Something went wrong during admin login" });
   }
 };
 
@@ -406,9 +451,83 @@ const changePassword = async (req, res) => {
   }
 };
 
+// Get all users
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await prisma.user.findMany();
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+};
+
+// Get a single user by ID
+const getUserById = async (req, res) => {
+  const { id } = req.params; // Get user ID from request parameters
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ error: "Failed to fetch user" });
+  }
+};
+
+// Update a user
+const updateUser = async (req, res) => {
+  const { id } = req.params; // Get user ID from request parameters
+  const { name, email, role, banned } = req.body; // Get updated fields from request body
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: {
+        name,
+        email,
+        role,
+        banned,
+      },
+    });
+
+    res.status(200).json({
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+};
+
+// Delete a user
+const deleteUser = async (req, res) => {
+  const { id } = req.params; // Get user ID from request parameters
+
+  try {
+    await prisma.user.delete({
+      where: { id: parseInt(id) },
+    });
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+};
+
 module.exports = {
   signup,
   loginUser,
+  loginAdmin,
   googleLogin,
   requestPasswordReset,
   resetPassword,
@@ -416,4 +535,8 @@ module.exports = {
   updatePreferredCategories,
   completeOnboarding,
   changePassword,
+  getAllUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
 };
