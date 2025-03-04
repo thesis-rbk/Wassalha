@@ -4,7 +4,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
-const path = require("path");
+const path = require("path"); // Import path module
 
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
@@ -29,14 +29,9 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json());
 
-
-
-
-// Set up uploads directory
-const createUploadsDir = require('./utils/createUploadsDir');
-createUploadsDir();
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
+// Serve static files from the "uploads" directory
+app.use('/api/uploads', express.static(path.join(__dirname, '/uploads'))); // Serve static files
+console.log("pathsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss",   path.join(__dirname, 'src/uploads'));
 
 // Routes
 
