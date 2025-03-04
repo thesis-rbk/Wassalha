@@ -1,13 +1,13 @@
 import { Stack } from "expo-router";
-import { Provider } from 'react-redux';
-import { store } from '../store';
-import '../styles/global.css';
-import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
-import { ThemeProvider } from '@/context/ThemeContext';
-import WelcomeAnimation from '@/components/WelcomeAnimation';
-import MainLoading from '@/components/MainLoading';
+import { Provider } from "react-redux";
+import { store } from "../store";
+import "../styles/global.css";
+import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect, useState } from "react";
+import { ThemeProvider } from "@/context/ThemeContext";
+import WelcomeAnimation from "@/components/WelcomeAnimation";
+import MainLoading from "@/components/MainLoading";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,8 +27,7 @@ export default function RootLayout() {
     return null;
   }
 
-
-  console.log('Store:', store);
+  console.log("Store:", store);
 
   return (
     <ThemeProvider>
@@ -36,9 +35,11 @@ export default function RootLayout() {
         {!loadingComplete ? (
           <MainLoading onLoadingComplete={() => setLoadingComplete(true)} />
         ) : !animationComplete ? (
-          <WelcomeAnimation onAnimationComplete={() => setAnimationComplete(true)} />
+          <WelcomeAnimation
+            onAnimationComplete={() => setAnimationComplete(true)}
+          />
         ) : (
-          <Stack >
+          <Stack>
             {/* Optionally define specific screens if needed */}
             <Stack.Screen name="auth/signup" options={{ title: "Sign Up" }} />
             <Stack.Screen name="auth/login" options={{ title: "Log In" }} />
@@ -80,16 +81,24 @@ export default function RootLayout() {
               name="onboarding/customScreen"
               options={{ title: "Custom Screen" }}
             />
-            <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
-            <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
-            <Stack.Screen name="profile/change" options={{ title: 'Change Password' }} />
-            <Stack.Screen name="profile/edit" options={{ title: 'Edit Profile' }} />
-            <Stack.Screen name="profile/index" options={{ title: 'Profile' }} />
-            <Stack.Screen name="test/chat" options={{ title: 'Chat' }} />
+            <Stack.Screen name="test/Travel" options={{ title: "Travel" }} />
+            <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
+            <Stack.Screen
+              name="profile/change"
+              options={{ title: "Change Password" }}
+            />
+            <Stack.Screen
+              name="profile/edit"
+              options={{ title: "Edit Profile" }}
+            />
+            <Stack.Screen name="profile/index" options={{ title: "Profile" }} />
+            <Stack.Screen
+              name="messages/messages"
+              options={{ title: "Messages" }}
+            />
           </Stack>
         )}
       </Provider>
     </ThemeProvider>
   );
 }
-

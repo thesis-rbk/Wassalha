@@ -24,34 +24,33 @@ export function TabBar({
   const colorScheme = useColorScheme() ?? "light";
   const iconColor = Colors[colorScheme].text;
   const router = useRouter();
-
   const activeTabColor = Colors[colorScheme].primary; // Get the primary color for the active tab
 
   const tabs: TabItem[] = [
     {
       name: "Home",
       icon: <Home size={24} color={iconColor} />,
-      route: "home" as const,
+      route: "home" as Route,
     },
     {
       name: "Orders",
       icon: <ShoppingBag size={24} color={iconColor} />,
-      route: "/productDetails/create-order" as const,
+      route: "/productDetails/create-order" as Route,
     },
     {
       name: "Trips",
       icon: <Plane size={24} color={iconColor} />,
-      route: "../test/Travel" as const,
+      route: "../test/Travel" as Route,
     },
     {
       name: "Pick-up",
       icon: <MapPin size={24} color={iconColor} />,
-      route: "/mapTrack" as const,
+      route: "/mapTrack" as Route,
     },
     {
       name: "Messages",
       icon: <MessageCircle size={24} color={iconColor} />,
-      route: "test/chat" as const,
+      route: "/messages/messages" as Route,
     },
   ];
   const handleRoutes = (tab: (typeof tabs)[0]) => {
@@ -89,7 +88,6 @@ export function TabBar({
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
