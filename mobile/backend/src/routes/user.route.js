@@ -9,8 +9,10 @@ const {
   updatePreferredCategories,
   completeOnboarding,
   changePassword,
+  getUsers,
 } = require("../controllers/user.controller");
 const { authenticateUser } = require("../middleware/middleware");
+const { getMessages } = require("../controllers/message.controller");
 
 const router = express.Router();
 
@@ -24,6 +26,8 @@ router.post("/reset-password", resetPassword);
 router.post("/update-referral-source", updateReferralSource);
 router.post("/update-preferred-categories", updatePreferredCategories);
 router.post("/complete-onboarding", completeOnboarding);
-router.put('/change-password', authenticateUser, changePassword);
+router.put("/change-password", authenticateUser, changePassword);
+router.get("/", getUsers);
+router.get("/messages", getMessages);
 
 module.exports = router;
