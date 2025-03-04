@@ -122,7 +122,7 @@ class RequestController {
                     order: {
                         select: {
                             id: true,
-                            status: true,
+                            orderStatus: true,
                             traveler: {
                                 select: {
                                     id: true,
