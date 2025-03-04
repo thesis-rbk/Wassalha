@@ -81,7 +81,7 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = await AsyncStorage.getItem('jwtToken');
+        const token = await AsyncStorage.getItem("jwtToken");
         if (token) {
           const decoded: any = jwtDecode(token);
           const response = await axiosInstance.get(`/api/users/profile/${decoded.id}`, {
@@ -93,10 +93,10 @@ const ProfilePage = () => {
           await AsyncStorage.setItem('lastName', response.data.data.lastName);
           await AsyncStorage.setItem('bio', response.data.data.bio);
         } else {
-          console.error('No token found');
+          console.error("No token found");
         }
       } catch (error) {
-        console.error('Error retrieving profile:', error);
+        console.error("Error retrieving profile:", error);
       } finally {
         setLoading(false);
       }
@@ -372,5 +372,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
 });
+
+export default ProfilePage;
 
 export default ProfilePage;

@@ -54,27 +54,30 @@ export default function EditProfile() {
         return `${profile.firstName?.charAt(0) || ''}${profile.lastName?.charAt(0) || ''}`.toUpperCase();
     };
 
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const token = await AsyncStorage.getItem('jwtToken');
-                if (token) {
-                    const decoded: any = jwtDecode(token);
-                    const response = await axiosInstance.get(`/api/users/profile/${decoded.id}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    });
-                    setProfile(response.data.data);
-                } else {
-                    console.error('No token found');
-                }
-            } catch (error) {
-                console.error('Error retrieving token:', error);
-            } finally {
-                setLoading(false);
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = await AsyncStorage.getItem("jwtToken");
+        if (token) {
+          const decoded: any = jwtDecode(token);
+          const response = await axiosInstance.get(
+            `/api/users/profile/${decoded.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
             }
-        };
+          );
+          setProfile(response.data.data);
+        } else {
+          console.error("No token found");
+        }
+      } catch (error) {
+        console.error("Error retrieving token:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
         fetchProfile();
     }, []);
@@ -185,9 +188,9 @@ export default function EditProfile() {
         }
     };
 
-    if (loading) {
-        return <ActivityIndicator size="large" color={Colors[theme].primary} />;
-    }
+  if (loading) {
+    return <ActivityIndicator size="large" color={Colors[theme].primary} />;
+  }
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: Colors[theme].background }} showsVerticalScrollIndicator={false}>
