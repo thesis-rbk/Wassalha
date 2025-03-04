@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native"
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native"
 import { ChevronDown } from "lucide-react-native"
 import { InputField } from "@/components/InputField"
 import { BaseButton } from "@/components/ui/buttons/BaseButton"
@@ -18,13 +18,12 @@ const AdditionalDetails: React.FC = () => {
   const router = useRouter()
   const params = useLocalSearchParams()
 
-  // Convert back to proper types
+  // Update the productDetails conversion to remove quantity
   const productDetails = {
     name: params.name as string,
     price: parseFloat(params.price as string),
     details: params.details as string,
     withBox: params.withBox === 'true',
-    quantity: parseInt(params.quantity as string),
     imageUrl: params.imageUrl as string,
   }
 
@@ -36,6 +35,7 @@ const AdditionalDetails: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([])
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const [notes, setNotes] = useState("")
+  const [categoryError, setCategoryError] = useState<string>("")
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -59,37 +59,66 @@ const AdditionalDetails: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      // Combine data from both forms
+      // Clear previous error
+      setCategoryError("")
+
+      // Validate categoryId
+      if (!categoryId) {
+        setCategoryError("Please select a category")
+        Alert.alert("Required Field", "Please select a category before submitting")
+        return
+      }
+
+      console.log('Starting submission with product details:', productDetails)
+      console.log('Image URL:', productDetails.imageUrl)
+      
+      let imageId = null
+      if (productDetails.imageUrl) {
+        const urlParts = productDetails.imageUrl.split('/')
+        imageId = parseInt(urlParts[urlParts.length - 1] || '0')
+        console.log('Extracted image ID:', imageId)
+      }
+
+      // Remove quantity from goodsData
       const goodsData = {
         name: productDetails.name,
-        price: productDetails.price,
+        price: productDetails.price.toString(),
         description: productDetails.details,
-        withBox: productDetails.withBox,
-        quantity: productDetails.quantity,
-        imageId: productDetails.imageUrl ? parseInt(productDetails.imageUrl.split('/').pop() || '0') : null,
+        imageId: imageId,
         categoryId: categoryId,
         size: size || null,
         weight: weight ? parseFloat(weight) : null,
         isVerified: false
-      };
+      }
 
-      console.log('Submitting complete goods data:', goodsData);
+      console.log('Constructed goods data:', goodsData)
+      console.log('API URL:', axiosInstance.defaults.baseURL)
 
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/goods`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(goodsData),
-      });
-
-      const data = await response.json();
-      console.log('Goods created:', data);
-      router.push('/home');
-    } catch (error) {
-      console.error('Error creating goods:', error);
+      // Attempt API call with logging
+      console.log('Attempting to post to /api/goods')
+      const response = await axiosInstance.post('/api/goods', goodsData)
+      console.log('API Response:', response.data)
+      
+      if (response.data.success) {
+        console.log('✅ Goods created successfully')
+        router.push('/home')
+      } else {
+        console.error('❌ API returned error:', response.data.message)
+        Alert.alert('Error', response.data.message || 'Failed to create goods')
+      }
+    } catch (error: any) {
+      console.error('❌ Submission error:', error)
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
+      Alert.alert(
+        'Error',
+        `Failed to create goods: ${error.response?.data?.message || error.message}`
+      )
     }
-  };
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -97,13 +126,28 @@ const AdditionalDetails: React.FC = () => {
         <TitleLarge style={styles.mainTitle}>2. Additional Details</TitleLarge>
 
         {/* Category Dropdown */}
-        <TitleSection style={styles.sectionTitle}>Category *</TitleSection>
-        <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}>
-          <BodyMedium style={categoryId ? styles.selectedText : styles.placeholderText}>
+        <TitleSection style={styles.sectionTitle}>
+          Category * {/* Asterisk indicates required field */}
+        </TitleSection>
+        <TouchableOpacity 
+          style={[
+            styles.dropdownTrigger,
+            categoryError ? styles.errorBorder : null
+          ]} 
+          onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
+        >
+          <BodyMedium 
+            style={categoryId ? styles.selectedText : styles.placeholderText}
+          >
             {categories.find(c => c.id === categoryId)?.name || "Select a category"}
           </BodyMedium>
           <ChevronDown size={20} color={Colors[colorScheme].primary} />
         </TouchableOpacity>
+        
+        {/* Error message */}
+        {categoryError ? (
+          <BodyMedium style={styles.errorText}>{categoryError}</BodyMedium>
+        ) : null}
 
         {showCategoryDropdown && (
           <View style={styles.dropdownMenu}>
@@ -147,7 +191,12 @@ const AdditionalDetails: React.FC = () => {
 
         {/* Submit Button */}
         <View style={styles.buttonContainer}>
-          <BaseButton size="large" onPress={handleSubmit} disabled={!categoryId}>
+          <BaseButton 
+            size="large" 
+            onPress={handleSubmit} 
+            disabled={!categoryId}
+            style={!categoryId ? styles.disabledButton : null}
+          >
             <BodyMedium style={styles.buttonText}>
               Submit Product
             </BodyMedium>
@@ -231,6 +280,20 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "#ffffff",
+  },
+  errorBorder: {
+    borderColor: '#FF3B30',
+    borderWidth: 1,
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginTop: -12,
+    marginBottom: 16,
+    marginLeft: 4,
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
 })
 

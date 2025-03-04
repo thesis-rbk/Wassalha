@@ -34,23 +34,10 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
       : ''
   );
   const [price, setPrice] = useState(parsedData ? parsedData.price.toString() : '');
-  const [quantity, setQuantity] = useState('1');
   const [productDetails, setProductDetails] = useState(parsedData ? parsedData.description : '');
   const [withBox, setWithBox] = useState(false);
 
   const clearProductImage = () => setProductImage('');
-
-  const incrementQuantity = () => {
-    const currentQuantity = parseInt(quantity) || 0;
-    setQuantity((currentQuantity + 1).toString());
-  };
-
-  const decrementQuantity = () => {
-    const currentQuantity = parseInt(quantity) || 0;
-    if (currentQuantity > 1) {
-      setQuantity((currentQuantity - 1).toString());
-    }
-  };
 
   const pickImage = async () => {
     try {
@@ -114,7 +101,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
       price: price.toString(),
       details: productDetails,
       withBox: withBox.toString(),
-      quantity: quantity.toString(),
       imageUrl: productImage,
     };
 
@@ -170,37 +156,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
           style={styles.input}
         />
         
-        <View style={styles.quantityContainer}>
-          <InputField
-            label="Quantity"
-            value={quantity}
-            onChangeText={setQuantity}
-            placeholder="1"
-            keyboardType="number-pad"
-            style={[styles.input, styles.quantityInput]}
-          />
-          <View style={styles.quantityControls}>
-            <BaseButton
-              size="small"
-              onPress={decrementQuantity}
-              style={styles.quantityButton}
-            >
-              <View style={styles.iconContainer}>
-                <Minus size={16} color={Colors[colorScheme].primary} />
-              </View>
-            </BaseButton>
-            <BaseButton
-              size="small"
-              onPress={incrementQuantity}
-              style={styles.quantityButton}
-            >
-              <View style={styles.iconContainer}>
-                <Plus size={16} color={Colors[colorScheme].primary} />
-              </View>
-            </BaseButton>
-          </View>
-        </View>
-
         <InputField
           label="Product details"
           value={productDetails}
@@ -323,31 +278,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   buttonText: { color: '#ffffff' },
-  quantityContainer: { position: 'relative', marginBottom: 12 },
-  quantityInput: { paddingRight: 90, height: 40, zIndex: 1 },
-  quantityControls: {
-    position: 'absolute',
-    right: 8,
-    top: 38,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'transparent',
-    zIndex: 2,
-    height: 28,
-  },
-  quantityButton: {
-    width: 28,
-    height: 28,
-    backgroundColor: 'rgba(0, 128, 152, 0.05)',
-    borderRadius: 4,
-    elevation: 0,
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-  },
-  iconContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });
 
 export default ProductDetails;
