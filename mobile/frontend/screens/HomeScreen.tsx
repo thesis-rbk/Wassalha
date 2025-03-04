@@ -79,8 +79,8 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       <TopNavigation
         title="Wassalha" // Ensure the title is explicitly set to "Wassalah"
-        onMenuPress={() => {}}
-        onNotificationPress={() => {}}
+        onMenuPress={() => { }}
+        onNotificationPress={() => { }}
       />
 
       <ScrollView style={styles.content}>
@@ -202,8 +202,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     aspectRatio: 1,
     padding: 16,
-    justifyContent: "center",
-    alignItems: "center",
   },
   serviceContent: {
     flex: 1,
