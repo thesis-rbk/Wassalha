@@ -1,14 +1,18 @@
-"use client"; // Ensure this is a client component
-import Nav from "./components/Nav"; // Adjust the import path as necessary
-import UserRoleChart from "./components/UserRoleChart"; // Adjust the import path as necessary
+"use client"; // ✅ Ensure it's a client component
+import { useEffect } from "react";
+import { useRouter } from "next/navigation"; // ✅ Use next/navigation in App Router
 
 export default function Home() {
-  return (
-    <div>
-      <h2>Welcome to the Admin Dashboard</h2>
-      <Nav />
-      <UserRoleChart />
-      {/* You can add any additional dashboard content here */}
-    </div>
-  );
+  const router = useRouter(); 
+
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      router.push('/AdminLogin'); // Redirect to login if not authenticated
+    } else {
+      router.push('/AdminDashboard'); // Redirect to dashboard if authenticated
+    }
+  }, [router]);
+
+  return null; // No content needed
 }
