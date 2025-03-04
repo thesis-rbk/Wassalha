@@ -19,11 +19,11 @@ export function TabBar({ activeTab, onTabPress }: {
   const activeTabColor = Colors[colorScheme].primary; // Get the primary color for the active tab
 
   const tabs: TabItem[] = [
-    { name: 'Home', icon: <Home size={24} color={iconColor} />, route: "home" as const },
+    { name: 'Home', icon: <Home size={24} color={iconColor} />, route: "/home" as const },
     { name: 'Orders', icon: <ShoppingBag size={24} color={iconColor} />, route: "/productDetails/create-order" as const },
-    { name: 'Trips', icon: <Plane size={24} color={iconColor} />, route: "../test/Travel" as const },
+    { name: 'Trips', icon: <Plane size={24} color={iconColor} />, route: "/test/Travel" as const },
     { name: 'Pick-up', icon: <MapPin size={24} color={iconColor} />, route: "/mapTrack" as const },
-    { name: 'Messages', icon: <MessageCircle size={24} color={iconColor} />, route: "test/chat" as const },
+    { name: 'Messages', icon: <MessageCircle size={24} color={iconColor} />, route: "/test/chat" as const },
   ];
   const handleRoutes = (tab: (typeof tabs)[0]) => {
     try {

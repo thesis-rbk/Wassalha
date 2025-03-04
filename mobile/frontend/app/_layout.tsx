@@ -80,6 +80,10 @@ export default function RootLayout() {
               name="onboarding/customScreen"
               options={{ title: "Custom Screen" }}
             />
+            <Stack.Screen
+              name="test/Terms&&Conditions"
+              options={{ title: "terms n conditions" }}
+            />
             <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
             <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
             <Stack.Screen name="profile/change" options={{ title: 'Change Password' }} />
