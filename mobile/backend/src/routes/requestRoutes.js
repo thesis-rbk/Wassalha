@@ -1,23 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const requestController = require('../controllers/requestController');
+const { authenticateUser } = require('../middleware/middleware');
 
-// Create a new request
-router.post('/', requestController.createRequest);
-
-// Get all requests
-router.get('/', requestController.getAllRequests);
-
-// Get user's requests (must be before /:id to avoid conflict)
-router.get('/user/:userId', requestController.getUserRequests);
-
-// Get request by ID
+// Public routes
+router.get('/', requestController.getAllRequests); // Anyone can view requests
 router.get('/:id', requestController.getRequestById);
 
-// Update request
-router.put('/:id', requestController.updateRequest);
-
-// Delete request
-router.delete('/:id', requestController.deleteRequest);
+// Protected routes - require authentication
+router.post('/', authenticateUser, requestController.createRequest);
+router.get('/user/:userId', authenticateUser, requestController.getUserRequests);
+router.put('/:id', authenticateUser, requestController.updateRequest);
+router.delete('/:id', authenticateUser, requestController.deleteRequest);
+router.patch('/:id/status', authenticateUser, requestController.updateRequestStatus);
 
 module.exports = router;

@@ -15,6 +15,7 @@ const categoryRoutes = require("./routes/category.route");
 const profileRoutes = require("./routes/profileRoutes");
 const mediaRoutes = require("./routes/media.route");
 const all = require("./routes/alltravNpost");
+const goodsRoutes = require("./routes/goods.route");
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
 
@@ -48,6 +49,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/users/profile", profileRoutes);
 app.use("/api/media", mediaRoutes);
+app.use("/api/goods", goodsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
