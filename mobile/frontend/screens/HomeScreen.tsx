@@ -46,7 +46,7 @@ export default function HomeScreen() {
     {
       title: "Order",
       icon: <ShoppingBag size={32} color={Colors[colorScheme].primary} />,
-      route: "../productDetails/create-order" as const,
+      route: "../test/order" as const,
     },
     {
       title: "Pickup",

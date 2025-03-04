@@ -234,7 +234,6 @@ model User {
   password               String?
   hasCompletedOnboarding Boolean @default(false)
 
-  profile          Profile?
   requests         Request[]
   notifications    Notification[]
   reviewsGiven     Review[]       @relation("ReviewsGiven")
@@ -259,18 +258,18 @@ model User {
   // If you want to track who changed the process state
   processEvents   ProcessEvent[]   @relation("UserChangedProcessState")
   serviceProvider ServiceProvider?
+  profile         Profile?
 }
 
 // ========== PROFILE ==========
 model Profile {
-  id     Int  @id @default(autoincrement())
-  userId Int  @unique
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id     Int @id @default(autoincrement())
+  userId Int @unique
 
-  firstName String
-  lastName  String
-  bio       String?
-  country   Country? // Optional field for country
+  firstName   String
+  lastName    String
+  bio         String?
+  country     Country? // Optional field for country
   phoneNumber String?
 
   // Profile image stored as Media
@@ -286,6 +285,7 @@ model Profile {
   isOnline            Boolean         @default(false)
   preferredCategories String?
   referralSource      ReferralSource?
+  User                User?           @relation(fields: [userId], references: [id])
 }
 
 // ========== SERVICE PROVIDER ==========
