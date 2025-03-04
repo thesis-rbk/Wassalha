@@ -56,7 +56,7 @@ export default function HomeScreen() {
     {
       title: "Subscription",
       icon: <Crown size={32} color={Colors[colorScheme].primary} />,
-      route: "../test/Subscription" as const,
+      route: "../pickup/pickup" as const,
     },
   ];
 
@@ -200,6 +200,8 @@ const styles = StyleSheet.create({
     width: "47%",
     aspectRatio: 1,
     padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   serviceContent: {
     flex: 1,

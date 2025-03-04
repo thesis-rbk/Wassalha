@@ -17,7 +17,8 @@ const productRoutes = require("./routes/productRoutes");
 const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
 const profileRoutes = require("./routes/profileRoutes");
-const orderRoutes = require("./routes/order.route");
+const pickupRoutes = require("./routes/pickup.route");
+
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
 
@@ -32,10 +33,10 @@ app.use(express.json());
 // Routes
 
 // Routes (REST API will still work)
+app.use("/api/pickup", pickupRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/scrape", scrapeRoutes);
 app.use("/api", all);
-app.use("/api/orders", orderRoutes);
 
 // Routes
 app.use("/api/requests", requestRoutes);

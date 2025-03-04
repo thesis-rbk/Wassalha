@@ -86,6 +86,9 @@ export default function RootLayout() {
             <Stack.Screen name="profile/edit" options={{ title: 'Edit Profile' }} />
             <Stack.Screen name="profile/index" options={{ title: 'Profile' }} />
             <Stack.Screen name="test/chat" options={{ title: 'Chat' }} />
+            <Stack.Screen name="/order" options={{ title: 'order' }} />
+            <Stack.Screen name="/pickup/pickup" options={{ title: 'Pickup' }} />
+
           </Stack>
         )}
       </Provider>
