@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
   TouchableOpacity,
   Animated,
   Dimensions,
-} from "react-native";
+} from 'react-native';
 import {
   Bell,
   Menu,
@@ -17,17 +18,25 @@ import {
   Moon,
   Sun,
   PenSquare,
-} from "lucide-react-native";
-import { Colors } from "@/constants/Colors";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { ThemedText } from "@/components/ThemedText";
-import { useTheme } from "@/context/ThemeContext";
-import { TopNavigationProps } from "@/types/TopNavigationProps";
-import { useSelector } from "react-redux";
-import { useRouter } from "expo-router";
-import { RootState } from "@/store"; // Add this import
-import AsyncStorage from "@react-native-async-storage/async-storage";
-const SCREEN_WIDTH = Dimensions.get("window").width;
+  Users
+} from 'lucide-react-native';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { ThemedText } from '@/components/ThemedText';
+import { useTheme } from '@/context/ThemeContext';
+import { TopNavigationProps } from '@/types/TopNavigationProps';
+import { useSelector } from 'react-redux';
+import { useRouter, Link } from 'expo-router';
+import { SideMenu } from '@/types/Sidemenu';
+import { RootState } from '@/store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Define valid app routes
+
+
+// Updated SideMenu interface
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 const MENU_WIDTH = SCREEN_WIDTH * 0.8;
 
 export function TopNavigation({
@@ -42,10 +51,18 @@ export function TopNavigation({
   const router = useRouter();
   const { user, token } = useSelector((state: RootState) => state.auth);
   console.log("User:", user);
+
   const handleLogout = async () => {
     await AsyncStorage.removeItem("jwtToken");
     router.push("/auth/login");
+    try {
+      await AsyncStorage.removeItem('jwtToken');
+      router.push('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
+
   const toggleMenu = () => {
     const toValue = isMenuOpen ? -MENU_WIDTH : 0;
     Animated.timing(menuAnimation, {
@@ -56,33 +73,52 @@ export function TopNavigation({
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const menuItems = [
-    {
-      icon: <Bell size={24} color={Colors[colorScheme].text} />,
-      label: "Notifications",
-    },
-    {
-      icon: <Settings size={24} color={Colors[colorScheme].text} />,
-      label: "Settings",
-    },
-    {
-      icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />,
-      label: "Orders",
-    },
-    {
-      icon: <Plane size={24} color={Colors[colorScheme].text} />,
-      label: "Trips",
-    },
-    {
-      icon: <PenSquare size={24} color={Colors[colorScheme].text} />,
-      label: "Make a Request",
-    },
-    {
-      icon: <LogOut size={24} color={Colors[colorScheme].text} />,
-      label: "Log Out",
-      onPress: handleLogout,
-    },
+  // const menuItems = [
+  //   {
+  //     icon: <Bell size={24} color={Colors[colorScheme].text} />,
+  //     label: "Notifications",
+  //   },
+  //   {
+  //     icon: <Settings size={24} color={Colors[colorScheme].text} />,
+  //     label: "Settings",
+  //   },
+  //   {
+  //     icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />,
+  //     label: "Orders",
+  //   },
+  //   {
+  //     icon: <Plane size={24} color={Colors[colorScheme].text} />,
+  //     label: "Trips",
+  //   },
+  //   {
+  //     icon: <PenSquare size={24} color={Colors[colorScheme].text} />,
+  //     label: "Make a Request",
+  //   },
+  //   {
+  //     icon: <LogOut size={24} color={Colors[colorScheme].text} />,
+  //     label: "Log Out",
+  //     onPress: handleLogout,
+  //   },
+  const menuItems: SideMenu[] = [
+    { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/' },
+    { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
+    { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips', route: '/test/Travel' },
+    { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request', route: '/productDetails/create-order' },
+    { icon: <Users size={24} color={Colors[colorScheme].text} />, label: 'Sponsorship', route: '/test/sponsorShip' },
+    { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out', onPress: handleLogout },
   ];
+
+  const handleRoutes = (item: SideMenu) => {
+    try {
+      if (item.onPress) {
+        item.onPress();
+      } else if (item.route) {
+        router.push(item.route);
+      }
+    } catch (err) {
+      console.error('Error from navigation:', err);
+    }
+  };
 
   return (
     <>
@@ -107,7 +143,6 @@ export function TopNavigation({
         </TouchableOpacity>
       </View>
 
-      {/* Overlay */}
       {isMenuOpen && (
         <TouchableOpacity
           style={styles.overlay}
@@ -116,7 +151,6 @@ export function TopNavigation({
         />
       )}
 
-      {/* Sliding Menu */}
       <Animated.View
         style={[
           styles.menu,
@@ -126,18 +160,19 @@ export function TopNavigation({
           },
         ]}
       >
-        {/* User Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.profileImage}>
             <ThemedText style={styles.profileInitial}>
-              {user?.name?.charAt(0)}
+              {user?.name?.charAt(0) || 'U'}
             </ThemedText>
           </View>
           <View style={styles.profileInfo}>
-            <ThemedText style={styles.profileName}>{user?.name}</ThemedText>
+            <ThemedText style={styles.profileName}>
+              {user?.name || 'User'}
+            </ThemedText>
             <TouchableOpacity
               style={styles.viewProfile}
-              onPress={() => router.push("./profile")}
+              onPress={() => router.push('/profile')}
             >
               <ThemedText style={styles.viewProfileText}>
                 View and edit profile
@@ -147,16 +182,12 @@ export function TopNavigation({
           </View>
         </View>
 
-        {/* Menu Items */}
         <View style={styles.menuItems}>
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
               style={styles.menuItem}
-              onPress={() => {
-                item.onPress && item.onPress();
-                toggleMenu();
-              }}
+              onPress={() => handleRoutes(item)}
             >
               {item.icon}
               <ThemedText style={styles.menuItemText}>{item.label}</ThemedText>
@@ -164,15 +195,14 @@ export function TopNavigation({
           ))}
         </View>
 
-        {/* Dark Mode Toggle */}
         <TouchableOpacity style={styles.darkModeToggle} onPress={toggleTheme}>
-          {colorScheme === "dark" ? (
+          {colorScheme === 'dark' ? (
             <Sun size={24} color={Colors[colorScheme].text} />
           ) : (
             <Moon size={24} color={Colors[colorScheme].text} />
           )}
           <ThemedText style={styles.darkModeText}>
-            {colorScheme === "dark" ? "Light Mode" : "Dark Mode"}
+            {colorScheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
           </ThemedText>
         </TouchableOpacity>
       </Animated.View>
@@ -180,6 +210,7 @@ export function TopNavigation({
   );
 }
 
+// Styles remain the same
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",

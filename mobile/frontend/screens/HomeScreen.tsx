@@ -46,7 +46,7 @@ export default function HomeScreen() {
     {
       title: "Order",
       icon: <ShoppingBag size={32} color={Colors[colorScheme].primary} />,
-      route: "../productDetails/create-order" as const,
+      route: "../test/order" as const,
     },
     {
       title: "Pickup",
@@ -79,8 +79,8 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       <TopNavigation
         title="Wassalha" // Ensure the title is explicitly set to "Wassalah"
-        onMenuPress={() => {}}
-        onNotificationPress={() => {}}
+        onMenuPress={() => { }}
+        onNotificationPress={() => { }}
       />
 
       <ScrollView style={styles.content}>
@@ -198,10 +198,10 @@ const styles = StyleSheet.create({
   },
   serviceCard: {
     width: "47%",
+    alignItems: "center",
+    justifyContent: "center",
     aspectRatio: 1,
     padding: 16,
-    justifyContent: "center",
-    alignItems: "center",
   },
   serviceContent: {
     flex: 1,
