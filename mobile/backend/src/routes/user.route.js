@@ -42,10 +42,4 @@ router.get("/users/:id", authenticateUser, getUserById); // Get a single user
 router.put("/users/:id", authenticateUser, updateUser); // Update a user
 router.delete("/users/:id", authenticateUser, deleteUser); // Delete a user
 
-// Admin CRUD routes
-router.get("/",getAllUsers); // Get all users (admin only)
-router.get("/:id",getUserById); // Get a single user (admin only)
-router.put("/:id",updateUser); // Update a user (admin only)
-router.delete("/:id",deleteUser); // Delete a user (admin only)
-
 module.exports = router;

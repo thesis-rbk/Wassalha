@@ -1,6 +1,7 @@
 "use client"; // ✅ Ensure it's a client component
 import React, { useState } from 'react';
 import { useRouter } from "next/navigation"; // ✅ Use next/navigation in App Router
+import axios from 'axios'; // Import Axios
 
 const AdminLogin = () => {
   const router = useRouter();
@@ -8,15 +9,15 @@ const AdminLogin = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simulate a successful login
-    if (email === "admin@example.com" && password === "password") {
-      localStorage.setItem('adminToken', 'your_token_here'); // Set a token
-      router.push('/AdminDashboard'); // Redirects to the Admin Dashboard
-    } else {
-      setError('Invalid email or password');
+    try {
+        const response = await axios.post('http://localhost:5000/api/users/admin/login', { email, password }); // Axios call to admin login
+        localStorage.setItem('adminToken', response.data.token); // Set the token from response
+        router.push('/AdminDashboard'); // Redirects to the Admin Dashboard
+    } catch (error) {
+        setError('Invalid email or password'); // Handle error
     }
   };
 
