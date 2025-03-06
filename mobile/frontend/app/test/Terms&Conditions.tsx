@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { useRouter } from 'expo-router';
 
 // Get screen width for responsive design
 const { width } = Dimensions.get('window');
 
 const TermsAndConditions: React.FC = () => {
     const [isAgreed, setIsAgreed] = useState<boolean>(false);
+    const router = useRouter();
 
     const toggleCheckbox = () => {
         setIsAgreed((prev) => !prev);
@@ -13,8 +15,10 @@ const TermsAndConditions: React.FC = () => {
 
     // Handle Next button press (you can replace this with your navigation logic)
     const handleNextPress = () => {
-        console.log('Next button pressed');
-        // Add your navigation or action here, e.g., navigation.navigate('NextScreen');
+        console.log("Next button pressed"); // Debug log
+        if (isAgreed) {
+            router.push('/verification/start' as any);
+        }
     };
 
     return (
@@ -26,13 +30,13 @@ const TermsAndConditions: React.FC = () => {
                 {/* Inner ScrollView for Terms Content */}
                 <ScrollView style={styles.innerScroll} contentContainerStyle={styles.innerContent}>
                     <Text style={styles.intro}>
-                        Welcome to [Your App Name]! These Terms and Conditions ("Terms") govern your use of our app, which connects shoppers seeking items from around the world ("Shoppers") with travelers willing to deliver them ("Travelers"). We facilitate these connections and handle monetary transactions through third-party payment processors. By using our app, you agree to these Terms. Please read them carefully.
+                        Welcome to wasslha ! These Terms and Conditions ("Terms") govern your use of our app, which connects shoppers seeking items from around the world ("Shoppers") with travelers willing to deliver them ("Travelers"). We facilitate these connections and handle monetary transactions through third-party payment processors. By using our app, you agree to these Terms. Please read them carefully.
                     </Text>
 
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>1. About Our Platform</Text>
                         <Text style={styles.sectionText}>
-                            [Your App Name] is a marketplace that enables Shoppers to request items unavailable in their location and Travelers to offer delivery services for a fee. We facilitate connections between users and manage payments via third-party processors, but we do not physically handle goods.
+                            wasslha is a marketplace that enables Shoppers to request items unavailable in their location and Travelers to offer delivery services for a fee. We facilitate connections between users and manage payments via third-party processors, but we do not physically handle goods.
                         </Text>
                     </View>
 
