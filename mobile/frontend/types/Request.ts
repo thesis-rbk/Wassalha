@@ -1,6 +1,8 @@
 import { User } from './User';
 import { Goods } from './Goods';
 
+export type RequestStatus = 'PENDING' | 'ACCEPTED' | 'CANCELLED' | 'REJECTED';
+
 export interface Request {
     id: number;
     userId: number;
@@ -12,6 +14,6 @@ export interface Request {
     goodsDestination: string;
     pickupId?: number;
     date: Date;
-    status: 'PENDING' | 'ACCEPTED' | 'CANCELLED' | 'REJECTED';
+    status: RequestStatus;
     withBox?: boolean;
 }
