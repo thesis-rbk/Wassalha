@@ -20,8 +20,8 @@ const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
 const profileRoutes = require("./routes/profileRoutes");
 const pickupRoutes = require("./routes/pickup.route");
-
 // Import socket
+const notifsocket= require("./sockets/notifsocket");
 const trackingSocket = require("./sockets/trackingSocket");
 const all = require("./routes/alltravNpost");
 const app = express();
@@ -59,8 +59,8 @@ app.use((err, req, res, next) => {
 });
 
 // Initialize socket
-trackingSocket(server);
-
+// trackingSocket(server);
+notifsocket(server);
 // Start server
 // Use `server.listen()` instead of `app.listen()`
 // **Why:**

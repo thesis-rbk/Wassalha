@@ -407,6 +407,8 @@ model Pickup {
   qrCode             String?
   coordinates        String?
   contactPhoneNumber String?
+  travelerconfirmed  Boolean @default(false)
+  userconfirmed      Boolean @default(false)
   status             PickupStatus @default(SCHEDULED)
   scheduledTime      DateTime?
 

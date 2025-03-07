@@ -28,13 +28,24 @@ export default function Login() {
   const [password, setPassword] = useState<string>("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-
+  const redirect= "https://auth.expo.io/@mrsadok/wassalha"
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId:
       "134362624823-ubti4j1rmd2ha6u4f3dfev4b1vu9eb76.apps.googleusercontent.com",
     scopes: ["profile", "email"],
-    redirectUri: "https://auth.expo.io/@mrsadok/wassalha",
+    redirectUri: redirect,
   });
+  React.useEffect(() => {
+    if (response) {
+      console.log("Response:", JSON.stringify(response, null, 2));
+      if (response?.type === "success") {
+        console.log("Access Token:", response.authentication.accessToken);
+      } else {
+        console.log("Error details:", response);
+      }
+    }
+  }, [response]);
+  console.log("redirecturi", redirect);
 
   useEffect(() => {
     console.log("Auth URL:", request?.url);
