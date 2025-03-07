@@ -92,14 +92,42 @@ export default function RootLayout() {
               name="test/Terms&&Conditions"
               options={{ title: "terms n conditions" }}
             />
-            <Stack.Screen name="test/Travel" options={{ title: 'Travel' }} />
-            <Stack.Screen name="test/Pickup" options={{ title: 'Pickup' }} />
-            <Stack.Screen name="test/chat" options={{ title: 'Chat' }} />
-            <Stack.Screen name="test/order" options={{ title: 'order' }} />
-            <Stack.Screen name="pickup/pickupTravel" options={{ title: 'order' }} />
-            <Stack.Screen name="pickup/pickupUser" options={{ title: 'order' }} />
-
-
+            <Stack.Screen name="test/Travel" options={{ title: "Travel" }} />
+            <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
+            <Stack.Screen name="test/chat" options={{ title: "Chat" }} />
+            <Stack.Screen name="test/order" options={{ title: "order" }} />
+            <Stack.Screen
+              name="processTrack/initializationSO"
+              options={{ title: "Initialization" }}
+            />
+            <Stack.Screen
+              name="processTrack/initializationSP"
+              options={{ title: "Initialization" }}
+            />
+            <Stack.Screen
+              name="processTrack/verificationSO"
+              options={{ title: "Verification" }}
+            />
+            <Stack.Screen
+              name="processTrack/verificationSP"
+              options={{ title: "Verification" }}
+            />
+            <Stack.Screen
+              name="processTrack/paymentSO"
+              options={{ title: "Payment" }}
+            />
+            <Stack.Screen
+              name="processTrack/paymentSP"
+              options={{ title: "Payment" }}
+            />
+            <Stack.Screen
+              name="processTrack/pickupSO"
+              options={{ title: "Pickup" }}
+            />
+            <Stack.Screen
+              name="processTrack/pickupSP"
+              options={{ title: "Pickup" }}
+            />
           </Stack>
         )}
       </Provider>
