@@ -17,6 +17,11 @@ import { useLocalSearchParams } from 'expo-router';
 import { ProductDetailsProps } from '@/types/ProductDetails';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import axiosInstance from "@/config";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+console.log('API URL:', process.env.EXPO_PUBLIC_API_URL);
+console.log('Upload URL:', process.env.EXPO_PUBLIC_MEDIA_UPLOAD_URL);
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const colorScheme = useColorScheme() ?? 'light';
@@ -33,82 +38,58 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
       ? `${process.env.EXPO_PUBLIC_MEDIA_VIEW_URL}/${parsedData.imageId}`
       : ''
   );
+  const [productImageId, setProductImageId] = useState(null);
   const [price, setPrice] = useState(parsedData ? parsedData.price.toString() : '');
   const [productDetails, setProductDetails] = useState(parsedData ? parsedData.description : '');
   const [withBox, setWithBox] = useState(false);
+  const [goodsId, setGoodsId] = useState(parsedData ? parsedData.goodsId : '');
 
   const clearProductImage = () => setProductImage('');
 
   const pickImage = async () => {
     try {
-      // Request permission
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Sorry, we need camera roll permissions to upload images!');
-        return;
-      }
-
-      // Pick the image
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: "images",
+        mediaTypes: 'images',
         allowsEditing: true,
-        aspect: [4, 3],
         quality: 1,
       });
-
-      if (!result.canceled) {
-        // Create form data
-        const formData = new FormData();
-        formData.append('file', {
-          uri: result.assets[0].uri,
-          type: 'image/jpeg',
-          name: 'upload.jpg',
-        } as any);
-
-        try {
-          // Upload image
-          const response = await fetch(process.env.EXPO_PUBLIC_MEDIA_UPLOAD_URL!, {
-            method: 'POST',
-            body: formData,
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          });
-
-          const data = await response.json();
-          console.log('Upload response:', data);
-          
-          if (data.success) {
-            setProductImage(data.data.url);
-          } else {
-            Alert.alert('Upload failed', data.message);
-          }
-        } catch (error) {
-          console.error('Upload error:', error);
-          Alert.alert('Error', 'Failed to upload image');
-        }
+  
+      if (!result.canceled && result.assets.length > 0) {
+        setProductImage(result.assets[0].uri);
       }
     } catch (error) {
       console.error('Image picker error:', error);
-      Alert.alert('Error', 'Failed to pick image');
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
     }
   };
-
+  
+  
   const handleNext = () => {
-    const productData = {
-      name: productName,
-      price: price.toString(),
-      details: productDetails,
-      withBox: withBox.toString(),
-      imageUrl: productImage,
-    };
+    try {
+      console.log('🚀 Starting navigation to additional details...');
+      console.log('📝 Product data being passed:', {
+        name: productName,
+        price,
+        details: productDetails,
+        withBox: withBox.toString(),
+        imageUri: productImage,
+      });
 
-    console.log('Sending data:', productData);
-    router.push({
-      pathname: '/productDetails/additional-details',
-      params: productData
-    });
+      router.push({
+        pathname: '/productDetails/additional-details',
+        params: {
+          name: productName,
+          price: price,
+          details: productDetails,
+          withBox: withBox.toString(),
+          imageUri: productImage,
+        }
+      });
+      console.log('✅ Navigation successful');
+    } catch (error) {
+      console.error('Navigation error:', error);
+      Alert.alert('Error', 'Failed to proceed to next step. Please try again.');
+    }
   };
 
   return (
@@ -129,22 +110,19 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
           {productImage ? (
             <View style={styles.imageWrapper}>
               <Image source={{ uri: productImage }} style={styles.productImage} />
-              <BaseButton size="small" onPress={clearProductImage} style={styles.clearImageButton}>
-                <X size={14} color="#999" />
+            </View>
+          ) : (
+            <View style={styles.uploadCard}>
+              <BaseButton 
+                size="medium" 
+                onPress={pickImage} 
+                style={styles.uploadButton}
+              >
+                <Camera size={20} color={Colors[colorScheme].primary} />
+                <BodyMedium style={styles.uploadText}>Upload image</BodyMedium>
               </BaseButton>
             </View>
-          ) : null}
-          
-          <View style={styles.uploadCard}>
-            <BaseButton 
-              size="medium" 
-              onPress={pickImage} 
-              style={styles.uploadButton}
-            >
-              <Camera size={20} color={Colors[colorScheme].primary} />
-              <BodyMedium style={styles.uploadText}>Upload image</BodyMedium>
-            </BaseButton>
-          </View>
+          )}
         </View>
         
         <InputField
@@ -155,7 +133,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
           keyboardType="decimal-pad"
           style={styles.input}
         />
-        
+
         <InputField
           label="Product details"
           value={productDetails}
@@ -169,13 +147,13 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
         <View style={styles.switchContainer}>
           <View style={styles.switchTextContainer}>
             <View style={styles.switchHeader}>
-              <TitleSub>With box</TitleSub>
-              <Switch
-                value={withBox}
-                onValueChange={setWithBox}
+          <TitleSub>With box</TitleSub>
+          <Switch
+            value={withBox}
+            onValueChange={setWithBox}
                 trackColor={{ false: '#e0e0e0', true: Colors[colorScheme].primary }}
-                thumbColor={withBox ? '#ffffff' : '#ffffff'}
-              />
+            thumbColor={withBox ? '#ffffff' : '#ffffff'}
+          />
             </View>
             <BodyMedium style={styles.switchDescription}>
               Requiring the box may reduce the number of offers you receive. Travelers generally prefer to deliver orders without the box to save space.
@@ -210,27 +188,18 @@ const styles = StyleSheet.create({
   sectionTitle: { marginTop: 12, marginBottom: 8, fontSize: 16 },
   input: { marginBottom: 12 },
   imageContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 16,
-    gap: 8,
-    justifyContent: 'flex-start',
   },
-  imageWrapper: { position: 'relative' },
-  productImage: {
+  imageWrapper: {
     width: 120,
     height: 120,
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#e0e0e0',
-  },
-  clearImageButton: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 4,
   },
   uploadCard: {
     width: 160,

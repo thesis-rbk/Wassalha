@@ -1,20 +1,17 @@
 require("dotenv").config();
-
+const morgan = require("morgan");
 // Import dependencies
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
 const path = require("path"); // Import path module
 
+
+
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
 const fetchRoute = require("./routes/fetchAll")
-require("dotenv").config();
-
-// const userRoutes = require("./routes/userRoutes");
-
-// Import routes
 const productRoutes = require("./routes/productRoutes");
 const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
@@ -24,9 +21,9 @@ const all = require("./routes/alltravNpost");
 const goodsRoutes = require("./routes/goods.route");
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
-const all = require("./routes/alltravNpost");
 const app = express();
 const server = http.createServer(app);
+app.use(morgan("dev"));
 
 // Middleware
 app.use(cors());
@@ -41,13 +38,13 @@ app.use("/api/fecth", fetchRoute)
 // API Routes
 app.use("/api/products", productRoutes);
 app.use("/api/scrape", scrapeRoutes);
-app.use("/api", all);
 app.use("/api/requests", requestRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/users/profile", profileRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/goods", goodsRoutes);
+app.use("/api", all);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

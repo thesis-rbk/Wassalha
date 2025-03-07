@@ -4,6 +4,10 @@ const { authenticateUser } = require('../middleware/middleware');
 class RequestController {
     // Create Request
     async createRequest(req, res) {
+        console.log('📥 Received request creation request');
+        console.log('👤 User ID:', req.user.id);
+        console.log('📦 Request body:', req.body);
+        
         try {
             // Get user ID from authenticated user
             const userId = req.user.id;
@@ -24,12 +28,14 @@ class RequestController {
                     goods: true,
                 },
             });
+            console.log('✅ Request created successfully:', request.id);
 
             res.status(201).json({
                 success: true,
                 data: request,
             });
         } catch (error) {
+            throw error;
             res.status(400).json({
                 success: false,
                 error: error.message,
@@ -52,12 +58,19 @@ class RequestController {
                                     image: true,
                                     isVerified: true
                                 }
+                            },
+                            reputation: {
+                                select: {
+                                    score: true,
+                                    totalRatings: true,
+                                    level: true
+                                }
                             }
                         }
                     },
                     goods: {
                         include: {
-                            image: true,
+                            image: true,  // This matches the Media relation in schema
                             category: true
                         }
                     },
@@ -65,7 +78,7 @@ class RequestController {
                     order: {
                         select: {
                             id: true,
-                            status: true
+                            orderStatus: true
                         }
                     }
                 },
@@ -74,16 +87,40 @@ class RequestController {
                 },
                 where: {
                     status: {
-                        in: ['PENDING', 'ACCEPTED'] // Only show active requests
+                        in: ['PENDING', 'ACCEPTED']
                     }
                 }
             });
 
+            console.log('Backend sending user data:', requests.map(r => ({
+                requestId: r.id,
+                userName: r.user?.name,
+                userId: r.user?.id,
+                userRating: r.user?.reputation?.score
+            })));
+
+            // Transform to include full image URLs
+            const transformedRequests = requests.map(request => ({
+                ...request,
+                goods: {
+                    ...request.goods,
+                    goodsUrl: request.goods.image ? `/api/uploads/${request.goods.image.filename}` : null
+                }
+            }));
+
+            console.log('First request debug:', {
+                goodsId: transformedRequests[0]?.goods?.id,
+                imageData: transformedRequests[0]?.goods?.image,
+                goodsUrl: transformedRequests[0]?.goods?.goodsUrl,
+                filename: transformedRequests[0]?.goods?.image?.filename
+            });
+
             res.status(200).json({
                 success: true,
-                data: requests
+                data: transformedRequests
             });
         } catch (error) {
+            console.error('Error in getAllRequests:', error);
             res.status(400).json({
                 success: false,
                 error: error.message
@@ -94,6 +131,7 @@ class RequestController {
     // Get Request by ID with complete information
     async getRequestById(req, res) {
         try {
+            console.log("hellooooooooooooooooooooooooo", hello);
             const request = await prisma.request.findUnique({
                 where: { 
                     id: parseInt(req.params.id) 
@@ -114,29 +152,18 @@ class RequestController {
                     },
                     goods: {
                         include: {
-                            image: true,
+                            image: {
+                                select: {
+                                    id: true,
+                                    url: true,
+                                    filename: true
+                                }
+                            },
                             category: true
                         }
                     },
                     pickup: true,
-                    order: {
-                        select: {
-                            id: true,
-                            orderStatus: true,
-                            traveler: {
-                                select: {
-                                    id: true,
-                                    name: true,
-                                    profile: {
-                                        select: {
-                                            image: true,
-                                            isVerified: true
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    order: true
                 }
             });
 
@@ -147,11 +174,24 @@ class RequestController {
                 });
             }
 
+            // Transform the response to include full image URL
+            const transformedRequest = {
+                ...request,
+                goods: {
+                    ...request.goods,
+                    image: request.goods.image ? {
+                        ...request.goods.image,
+                        url: `/api/uploads/${request.goods.image.filename}`
+                    } : null
+                }
+            };
+
             res.status(200).json({
                 success: true,
-                data: request
+                data: transformedRequest
             });
         } catch (error) {
+            console.error('Error in getRequestById:', error);
             res.status(400).json({
                 success: false,
                 error: error.message
@@ -237,20 +277,43 @@ class RequestController {
     async getUserRequests(req, res) {
         try {
             const requests = await prisma.request.findMany({
-                where: { userId: parseInt(req.params.userId) },
+                where: { userId: parseInt(req.user.id) },
                 include: {
-                    goods: true,
+                    goods: {
+                        include: {
+                            image: {
+                                select: {
+                                    id: true,
+                                    url: true,
+                                    filename: true
+                                }
+                            }
+                        }
+                    },
                     pickup: true,
                     order: true,
                 },
                 orderBy: { date: 'desc' },
             });
 
+            // Transform the responses to include full image URLs
+            const transformedRequests = requests.map(request => ({
+                ...request,
+                goods: {
+                    ...request.goods,
+                    image: request.goods.image ? {
+                        ...request.goods.image,
+                        url: `/api/uploads/${request.goods.image.filename}`
+                    } : null
+                }
+            }));
+
             res.status(200).json({
                 success: true,
-                data: requests,
+                data: transformedRequests,
             });
         } catch (error) {
+            console.error('Error in getUserRequests:', error);
             res.status(400).json({
                 success: false,
                 error: error.message,

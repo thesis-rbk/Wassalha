@@ -35,10 +35,11 @@ export default function Page() {
   const router = useRouter();
 
   const handleCreateOrder = async () => {
-    console.log("Starting navigation...");
+    console.log('🎯 Starting order creation process...');
+    console.log('📝 Entry method:', entryMethod);
 
     if (entryMethod === "manual") {
-      console.log("Manual entry - navigating...");
+      console.log('👉 Navigating to manual entry...');
       router.push("/productDetails");
       return;
     }
@@ -65,8 +66,10 @@ export default function Page() {
 
     // Only try to scrape if URL method is selected and URL is provided
     if (entryMethod === "url" && productUrl) {
+      console.log('🔗 Processing URL:', productUrl);
       setIsLoading(true);
       try {
+        console.log('📡 Making scrape request to:', SCRAPE_URL);
         const response = await fetch(SCRAPE_URL, {
           method: "POST",
           headers: {
@@ -74,7 +77,7 @@ export default function Page() {
           },
           body: JSON.stringify({ url: productUrl }),
         });
-
+        console.log('✅ Scrape response received');
         const data = await response.json();
         if (data.success) {
           console.log("URL success - navigating...");
