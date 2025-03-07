@@ -1,68 +1,97 @@
 /* admin/src/app/ListOfUsers/ListOfUsers.module.css */
 
 .container {
-   
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  
-  .title {
-    text-align: left;
-    margin-bottom: 10px;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-left: 20px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+.th {
+  background-color: #f8f9fa;
+  color: #333;
+  font-weight: 600;
+  padding: 12px;
+  text-align: left;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.td {
+  padding: 12px;
+  border-bottom: 1px solid #dee2e6;
+  color: #444;
+}
+
+.tr:hover {
+  background-color: #f8f9fa;
+}
+
+.button {
+  margin-right: 5px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.error {
+  color: #dc3545;
+  padding: 10px;
+  margin-bottom: 20px;
+  background-color: #fff;
+  border: 1px solid #dc3545;
+  border-radius: 4px;
+}
+
+.button_edit {
+  background-color: #ffc107;
+}
+
+.button_view {
+  background-color: #0d6efd;
+}
+
+.button_view:hover {
+  background-color: #0b5ed7;
+}
+
+.button_ban {
+  background-color: #dc3545;
+}
+
+/* Responsive table */
+@media (max-width: 1024px) {
+  .tableWrapper {
+    margin: 0 -20px;
   }
   
   .table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
+    min-width: 800px;
   }
-  .th{
-    text-align:center;
-  }
-
-  .td{
-    text-align: left;
-  }
-  .th, .td {
-    padding: 1px;
-    border: 1px solid #ddd;
-  }
-  
-  .th {
-    background-color: #f4f4f4;
-  }
-  
-  .tr:hover {
-    background-color: #f1f1f1;
-  }
-  
-  .button {
-    margin-right: 5px;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 4px;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .button:hover {
-    background-color: #0056b3;
-  }
-  
-  .error {
-    color:var(--color-danger);
-    text-align: center;
-  }
-
-  .button_edit {
-    background-color: var(--color-warning); /* Use warning color for edit button */
-  }
-
-  .button_view {
-    background-color: var(--color-primary); /* Use primary color for view profile button */
-  }
-
-  .button_ban {
-    background-color: var(--color-danger); /* Use danger color for ban button */
-  }
+}

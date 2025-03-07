@@ -1,7 +1,9 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-
+import Nav from "../components/Nav";
+import navStyles from '../styles/Nav.module.css';
+import tableStyles from '../styles/Table.module.css';
 // Define the type for a pickup
 interface Pickup {
     id: number;
@@ -50,9 +52,12 @@ const PickupList: React.FC = () => {
     if (error) return <div>Error: {error}</div>;
 
     return (
-        <div>
-            <h1>All Pickups</h1>
-            <table>
+        <div className={navStyles.layout}>
+            <Nav />
+            <div className={navStyles.mainContent}>
+                <div className={tableStyles.container}>
+                    <h1>All Pickups</h1>
+                    <table>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -84,6 +89,8 @@ const PickupList: React.FC = () => {
                     ))}
                 </tbody>
             </table>
+                        </div>
+            </div>  
         </div>
     );
 };

@@ -61,3 +61,28 @@ exports.disableCategory = async (req, res) => {
     });
   }
 };
+
+// Create a category
+exports.createCategory = async (req, res) => {
+  const { name, description } = req.body;
+  try {
+    const newCategory = await prisma.category.create({
+      data: {
+        name,
+        description,
+        isDisabled: false,
+      },
+    });
+    res.status(201).json({
+      success: true,
+      data: newCategory,
+    });
+  } catch (error) {
+    console.error("Error creating category:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create category",
+      error: error.message,
+    });
+  }
+};

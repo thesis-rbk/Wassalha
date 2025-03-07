@@ -1,8 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import axios from "axios";
 import styles from '../styles/Profile.module.css';
+import navStyles from '../styles/Nav.module.css';
+import Nav from "../components/Nav";
+import Image from 'next/image';
 
 interface UserProfile {
     id: number;
@@ -21,6 +25,11 @@ interface UserProfile {
     };
 }
 
+// Create a type for partial profile that makes nested properties optional
+type PartialUserProfile = Partial<Omit<UserProfile, 'profile'>> & {
+    profile?: Partial<UserProfile['profile']>;
+};
+
 const Profile: React.FC = () => {
     const searchParams = useSearchParams();
     const id = searchParams.get("id");
@@ -28,25 +37,41 @@ const Profile: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState<boolean>(false);
-    const [updatedProfile, setUpdatedProfile] = useState<Partial<UserProfile>>({});
+    const [mounted, setMounted] = useState<boolean>(false);
+    const [updatedProfile, setUpdatedProfile] = useState<PartialUserProfile>({
+        profile: {
+            firstName: '',
+            lastName: '',
+            isBanned: false,
+            verified: false
+        }
+    });
 
+    // Handle mounting to prevent hydration mismatch
     useEffect(() => {
-        if (id) {
+        setMounted(true);
+    }, []);
+
+    // Fetch user data
+    useEffect(() => {
+        if (id && mounted) {
             const fetchUserProfile = async () => {
                 try {
-                    const response = await fetch(`http://localhost:5000/api/users/${id}`);
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch user profile');
-                    }
-                    const data = await response.json();
+                    setLoading(true);
+                    const response = await axios.get(`http://localhost:5000/api/users/${id}`);
+                    const data = response.data;
                     setUserProfile(data);
-                    setUpdatedProfile(data);
-                } catch (err: unknown) {
-                    if (err instanceof Error) {
-                        setError(err.message);
+                    setUpdatedProfile({
+                        ...data,
+                        profile: { ...data.profile }
+                    });
+                } catch (err) {
+                    if (axios.isAxiosError(err)) {
+                        setError(err.response?.data?.error || err.message);
                     } else {
                         setError("An unknown error occurred");
                     }
+                    console.error("Error fetching user profile:", err);
                 } finally {
                     setLoading(false);
                 }
@@ -54,37 +79,64 @@ const Profile: React.FC = () => {
 
             fetchUserProfile();
         }
-    }, [id]);
+    }, [id, mounted]);
+
+    // Don't render anything until client-side hydration is complete
+    if (!mounted) {
+        return null;
+    }
 
     const handleBanUnban = async () => {
         if (userProfile && userProfile.profile) {
             const isBanned = userProfile.profile.isBanned;
-            const response = await fetch(`http://localhost:5000/api/users/${userProfile.id}/${isBanned ? 'unban' : 'ban'}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ banned: !isBanned }),
-            });
+            try {
+                const response = await axios.put(`http://localhost:5000/api/users/${userProfile.id}/${isBanned ? 'unban' : 'ban'}`, {
+                    isBanned: !isBanned
+                });
 
-            const data = await response.json();
-            if (response.ok) {
-                setUserProfile(data.profile);
-                alert(data.message);
-            } else {
-                alert(data.error);
+                const data = response.data;
+                // Update the local state with the new data
+                setUserProfile(prev => prev ? {
+                    ...prev,
+                    profile: {
+                        ...prev.profile,
+                        isBanned: !isBanned
+                    }
+                } : null);
+                alert(data.message || "User status updated successfully");
+            } catch (err) {
+                if (axios.isAxiosError(err)) {
+                    alert(err.response?.data?.error || "Failed to update user status");
+                } else {
+                    alert("Failed to update ban status");
+                }
+                console.error(err);
             }
         }
     };
 
     const handleEditToggle = () => {
+        if (isEditing) {
+            // Reset form when canceling edit
+            setUpdatedProfile(userProfile ? {
+                ...userProfile,
+                profile: { ...userProfile.profile }
+            } : {
+                profile: {
+                    firstName: '',
+                    lastName: '',
+                    isBanned: false,
+                    verified: false
+                }
+            });
+        }
         setIsEditing(!isEditing);
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
 
-        setUpdatedProfile((prev ) => {
+        setUpdatedProfile((prev) => {
             if (["firstName", "lastName", "country", "gender"].includes(name)) {
                 return {
                     ...prev,
@@ -99,126 +151,293 @@ const Profile: React.FC = () => {
     };
 
     const handleUpdateUser = async () => {
-        if (userProfile) {
-            const response = await fetch(`http://localhost:5000/api/users/${userProfile.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: updatedProfile.name || userProfile.name,
-                    email: updatedProfile.email || userProfile.email,
-                    role: updatedProfile.role || userProfile.role,
-                    phoneNumber: updatedProfile.phoneNumber || userProfile.phoneNumber,
-                    profile: {
-                        firstName: updatedProfile.profile?.firstName || userProfile.profile.firstName,
-                        lastName: updatedProfile.profile?.lastName || userProfile.profile.lastName,
-                        country: updatedProfile.profile?.country || userProfile.profile.country,
-                        gender: updatedProfile.profile?.gender || userProfile.profile.gender,
-                    },
-                }),
-            });
+        if (!userProfile) return;
 
-            const data = await response.json();
-            if (response.ok) {
-                setUserProfile(data.user);
-                setIsEditing(false);
-                alert("User profile updated successfully!");
+        try {
+            // Prepare the data to be sent to the API
+            const updateData: UserProfile = {
+                id: userProfile.id,
+                name: updatedProfile.name || userProfile.name,
+                email: updatedProfile.email || userProfile.email,
+                phoneNumber: updatedProfile.phoneNumber || userProfile.phoneNumber,
+                role: updatedProfile.role || userProfile.role,
+                profile: {
+                    firstName: updatedProfile.profile?.firstName || userProfile.profile.firstName,
+                    lastName: updatedProfile.profile?.lastName || userProfile.profile.lastName,
+                    country: updatedProfile.profile?.country || userProfile.profile.country,
+                    gender: updatedProfile.profile?.gender || userProfile.profile.gender,
+                    isBanned: userProfile.profile.isBanned,
+                    verified: userProfile.profile.verified,
+                    ...(userProfile.profile.image && { image: userProfile.profile.image })
+                }
+            };
+
+            console.log("Sending update with data:", updateData);
+
+            const response = await axios.put(`http://localhost:5000/api/users/${userProfile.id}`, updateData);
+            console.log("Response from server:", response.data);
+            
+            // If the API returns the updated user directly
+            if (response.data && (response.data.id || response.data.user?.id)) {
+                const updatedUser = response.data.user || response.data;
+                
+                // Update the userProfile state with the new data
+                setUserProfile(updatedUser);
+                
+                // Also update the updatedProfile state
+                setUpdatedProfile({
+                    ...updatedUser,
+                    profile: { ...updatedUser.profile }
+                });
+                
+                console.log("Updated user profile:", updatedUser);
             } else {
-                alert(data.error || "Failed to update profile");
+                // If the API doesn't return the updated user, fetch it again
+                console.log("Fetching updated profile after update");
+                const refreshResponse = await axios.get(`http://localhost:5000/api/users/${userProfile.id}`);
+                const refreshedUser = refreshResponse.data;
+                
+                setUserProfile(refreshedUser);
+                setUpdatedProfile({
+                    ...refreshedUser,
+                    profile: { ...refreshedUser.profile }
+                });
+                
+                console.log("Refreshed user profile:", refreshedUser);
             }
+            
+            setIsEditing(false);
+            alert("User profile updated successfully!");
+        } catch (err) {
+            let errorMessage = "Failed to update user profile";
+            if (axios.isAxiosError(err)) {
+                errorMessage = err.response?.data?.error || err.message;
+                console.error("API error response:", err.response?.data);
+            }
+            alert(errorMessage);
+            console.error("Error updating profile:", err);
         }
     };
 
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error}</div>;
+    if (loading) {
+        return (
+            <div className={navStyles.layout}>
+                <Nav />
+                <div className={navStyles.mainContent}>
+                    <div className={styles.loading}>Loading...</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className={navStyles.layout}>
+                <Nav />
+                <div className={navStyles.mainContent}>
+                    <div className={styles.error}>Error: {error}</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!userProfile) {
+        return (
+            <div className={navStyles.layout}>
+                <Nav />
+                <div className={navStyles.mainContent}>
+                    <div className={styles.error}>User not found</div>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className={styles.card}>
-            <div className={styles.leftsection}>
-                <img src={userProfile?.profile?.image?.url || "/default-profile.png"} alt="User" className={styles.img} />
-                <div className={styles.label}>ID: {userProfile?.id}</div>
-                <div className={styles.label}>Name: {userProfile?.name}</div>
-                <div className={styles.label}>Role: {userProfile?.role}</div>
-                {userProfile?.profile && userProfile.profile.isBanned ? (
-                    <div className={styles.banned}>User is banned</div>
-                ) : userProfile?.profile && userProfile.profile.verified ? (
-                    <div className={styles.verified}>Verified</div>
-                ) : (
-                    <div className={styles.unverified}>Not Verified</div>
-                )}
-                <button onClick={handleEditToggle} className={styles.button_edit}>
-                    {isEditing ? "Cancel" : "Edit"}
-                </button>
-            </div>
-            <div className={styles.rightsection}>
-                {isEditing ? (
-                    <>
-                        <div className={styles.label}>First Name:</div>
-                        <input
-                            type="text"
-                            name="firstName"
-                            value={updatedProfile.profile?.firstName || ""}
-                            onChange={handleInputChange}
-                        />
-                        <div className={styles.label}>Last Name:</div>
-                        <input
-                            type="text"
-                            name="lastName"
-                            value={updatedProfile.profile?.lastName || ""}
-                            onChange={handleInputChange}
-                        />
-                        <div className={styles.label}>Email:</div>
-                        <input
-                            type="email"
-                            name="email"
-                            value={updatedProfile.email || ""}
-                            onChange={handleInputChange}
-                        />
-                        <div className={styles.label}>Phone Number:</div>
-                        <input
-                            type="text"
-                            name="phoneNumber"
-                            value={updatedProfile.phoneNumber || ""}
-                            onChange={handleInputChange}
-                        />
-                        <div className={styles.label}>Country:</div>
-                        <input
-                            type="text"
-                            name="country"
-                            value={updatedProfile.profile?.country || ""}
-                            onChange={handleInputChange}
-                        />
-                        <div className={styles.label}>Gender:</div>
-                        <input
-                            type="text"
-                            name="gender"
-                            value={updatedProfile.profile?.gender || ""}
-                            onChange={handleInputChange}
-                        />
-                        <button onClick={handleUpdateUser} className={styles.button_submit}>
-                            Submit
-                        </button>
-                    </>
-                ) : (
-                    <>
-                        <div className={styles.label}>First Name:</div>
-                        <div className={styles.value}>{userProfile?.profile?.firstName || "N/A"}</div>
-                        <div className={styles.label}>Last Name:</div>
-                        <div className={styles.value}>{userProfile?.profile?.lastName || "N/A"}</div>
-                        <div className={styles.label}>Email:</div>
-                        <div className={styles.value}>{userProfile?.email}</div>
-                        <div className={styles.label}>Phone Number:</div>
-                        <div className={styles.value}>{userProfile?.phoneNumber || "N/A"}</div>
-                        <div className={styles.label}>Country:</div>
-                        <div className={styles.value}>{userProfile?.profile?.country || "N/A"}</div>
-                        <div className={styles.label}>Gender:</div>
-                        <div className={styles.value}>{userProfile?.profile?.gender || "N/A"}</div>
-                    </>
-                )}
-                <button className={styles.button_ban} onClick={handleBanUnban} style={{ backgroundColor: userProfile?.profile?.isBanned ? 'green' : 'red' }}>
-                    {userProfile?.profile?.isBanned ? "Unban" : "Ban"}
-                </button>
+        <div className={navStyles.layout}>
+            <Nav />
+            <div className={navStyles.mainContent}>
+                <div className={styles.container}>
+                    <div className={styles.card}>
+                        <div className={styles.leftsection}>
+                            <div className={styles.imageWrapper}>
+                                <img
+                                    src={userProfile.profile?.image?.url || "/default-profile.png"}
+                                    alt="Profile"
+                                    className={styles.img}
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = "/default-profile.png";
+                                    }}
+                                />
+                            </div>
+                            <div className={styles.label}>ID: {userProfile?.id}</div>
+                            
+                            {isEditing ? (
+                                <>
+                                    <div className={styles.label}>Name:</div>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={updatedProfile.name || userProfile?.name || ""}
+                                        onChange={handleInputChange}
+                                        className={styles.input}
+                                    />
+                                    <div className={styles.label}>Role:</div>
+                                    <select
+                                        name="role"
+                                        value={updatedProfile.role || userProfile?.role || ""}
+                                        onChange={handleInputChange}
+                                        className={styles.input}
+                                    >
+                                        <option value="USER">User</option>
+                                        <option value="ADMIN">Admin</option>
+                                     
+                                    </select>
+                                </>
+                            ) : (
+                                <>
+                                    <div className={styles.label}>Name: {userProfile?.name}</div>
+                                    <div className={styles.label}>Role: {userProfile?.role}</div>
+                                </>
+                            )}
+
+                            {userProfile?.profile && userProfile.profile.isBanned ? (
+                                <div className={styles.banned}>User is banned</div>
+                            ) : userProfile?.profile && userProfile.profile.verified ? (
+                                <div className={styles.verified}>Verified</div>
+                            ) : (
+                                <div className={styles.unverified}>Not Verified</div>
+                            )}
+                        </div>
+                        <div className={styles.rightsection}>
+                            {isEditing ? (
+                                <form onSubmit={(e) => e.preventDefault()}>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.label}>First Name:</label>
+                                        <input
+                                            type="text"
+                                            name="firstName"
+                                            value={updatedProfile.profile?.firstName || ''}
+                                            onChange={handleInputChange}
+                                            className={styles.input}
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.label}>Last Name:</label>
+                                        <input
+                                            type="text"
+                                            name="lastName"
+                                            value={updatedProfile.profile?.lastName || ''}
+                                            onChange={handleInputChange}
+                                            className={styles.input}
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.label}>Email:</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={updatedProfile.email || ''}
+                                            onChange={handleInputChange}
+                                            className={styles.input}
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.label}>Phone Number:</label>
+                                        <input
+                                            type="text"
+                                            name="phoneNumber"
+                                            value={updatedProfile.phoneNumber || ''}
+                                            onChange={handleInputChange}
+                                            className={styles.input}
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.label}>Country:</label>
+                                        <input
+                                            type="text"
+                                            name="country"
+                                            value={updatedProfile.profile?.country || ''}
+                                            onChange={handleInputChange}
+                                            className={styles.input}
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.label}>Gender:</label>
+                                        <select
+                                            name="gender"
+                                            value={updatedProfile.profile?.gender || ''}
+                                            onChange={handleInputChange}
+                                            className={styles.input}
+                                        >
+                                            <option value="">Select Gender</option>
+                                            <option value="male">Male</option>
+                                            <option value="female">Female</option>
+                                        </select>
+                                    </div>
+                                    <div className={styles.actionButtons}>
+                                        <button onClick={handleEditToggle} className={styles.buttoncancel}>
+                                            Cancel
+                                        </button>
+                                        <button onClick={handleUpdateUser} className={styles.buttonsubmit}>
+                                            Submit
+                                        </button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <>
+                                    <div className={styles.infoRow}>
+                                        <span className={styles.infoLabel}>First Name:</span>
+                                        <span className={styles.infoValue}>
+                                            {userProfile?.profile.firstName || 'N/A'}
+                                        </span>
+                                    </div>
+                                    <div className={styles.infoRow}>
+                                        <span className={styles.infoLabel}>Last Name:</span>
+                                        <span className={styles.infoValue}>
+                                            {userProfile?.profile.lastName || 'N/A'}
+                                        </span>
+                                    </div>
+                                    <div className={styles.infoRow}>
+                                        <span className={styles.infoLabel}>Email:</span>
+                                        <span className={styles.infoValue}>
+                                            {userProfile?.email || 'N/A'}
+                                        </span>
+                                    </div>
+                                    <div className={styles.infoRow}>
+                                        <span className={styles.infoLabel}>Phone Number:</span>
+                                        <span className={styles.infoValue}>
+                                            {userProfile?.phoneNumber || 'N/A'}
+                                        </span>
+                                    </div>
+                                    <div className={styles.infoRow}>
+                                        <span className={styles.infoLabel}>Country:</span>
+                                        <span className={styles.infoValue}>
+                                            {userProfile?.profile.country || 'N/A'}
+                                        </span>
+                                    </div>
+                                    <div className={styles.infoRow}>
+                                        <span className={styles.infoLabel}>Gender:</span>
+                                        <span className={styles.infoValue}>
+                                            {userProfile?.profile.gender || 'N/A'}
+                                        </span>
+                                    </div>
+                                    <div className={styles.actionButtons}>
+                                        <button onClick={handleEditToggle} className={styles.buttonedit}>
+                                            Edit
+                                        </button>
+                                        <button 
+                                            onClick={handleBanUnban}
+                                            className={`${styles.buttonban} ${userProfile?.profile?.isBanned ? styles.unban : ''}`}
+                                        >
+                                            {userProfile?.profile?.isBanned ? "Unban" : "Ban"}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

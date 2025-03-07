@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-
+import Nav from "../components/Nav";        
+import navStyles from '../styles/Nav.module.css';
+import tableStyles from '../styles/Table.module.css';
 // Define the type for a service provider
 interface User {
     id: number;
@@ -52,9 +54,12 @@ const ListOfServiceProviders: React.FC = () => {
     if (error) return <div>Error: {error}</div>;
 
     return (
-        <div>
-            <h1>List of Service Providers</h1>
-            <table>
+        <div className={navStyles.layout}>
+            <Nav />
+            <div className={navStyles.mainContent}>
+                <div className={tableStyles.container}>
+                    <h1>List of Service Providers</h1>
+                    <table>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -82,6 +87,8 @@ const ListOfServiceProviders: React.FC = () => {
                     ))}
                 </tbody>
             </table>
+                </div>
+            </div>
         </div>
     );
 };

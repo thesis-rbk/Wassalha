@@ -1,6 +1,8 @@
 'use client'
 import React, { useEffect, useState } from 'react';
-
+import Nav from "../components/Nav";
+import navStyles from '../styles/Nav.module.css';
+import tableStyles from '../styles/Table.module.css';
 // Define the type for a payment
 interface Payment {
     id: number;
@@ -27,9 +29,12 @@ const ListOfPayments: React.FC = () => {
     }, []);
 
     return (
-        <div>
-            <h1>List of Payments</h1>
-            <table>
+        <div className={navStyles.layout}>
+            <Nav />
+            <div className={navStyles.mainContent}>
+                <div className={tableStyles.container}>
+                    <h1>List of Payments</h1>
+                    <table>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -53,7 +58,9 @@ const ListOfPayments: React.FC = () => {
                     ))}
                 </tbody>
             </table>
-        </div>
+                            </div>
+            </div>
+        </div>  
     );
 };
 

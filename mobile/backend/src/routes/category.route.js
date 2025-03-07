@@ -1,5 +1,5 @@
 const express = require("express");
-const { getCategories, updateCategory, disableCategory } = require("../controllers/category.controller");
+const { getCategories, updateCategory, disableCategory, createCategory } = require("../controllers/category.controller");
 
 const router = express.Router();
 
@@ -11,5 +11,8 @@ router.put("/update", updateCategory);
 
 // Route to disable a category
 router.put("/disable", disableCategory);
+
+// Route to create a category
+router.post("/create", createCategory);
 
 module.exports = router;

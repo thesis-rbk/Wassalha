@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <Nav />
+      
         {children} {/* This will render the page content below the Nav */}
       </body>
     </html>

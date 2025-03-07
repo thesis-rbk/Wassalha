@@ -16,7 +16,7 @@ export default function AdminDashboard() {
 
   return (
     <div>
-     
+      <Nav />
       <UserRoleChart />
       {/* ... other dashboard content ... */}
     </div>

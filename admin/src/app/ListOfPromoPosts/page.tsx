@@ -2,7 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-
+import Nav from "../components/Nav";
+import navStyles from '../styles/Nav.module.css';
+import tableStyles from '../styles/Table.module.css';
 // Define the type for a promo post
 interface PromoPost {
   id: number;
@@ -34,9 +36,12 @@ const ListOfPromoPosts: React.FC = () => {
   }, []);
 
   return (
-    <div>
-      <h1>List of Promo Posts</h1>
-      <table>
+    <div className={navStyles.layout}>
+      <Nav />
+      <div className={navStyles.mainContent}>
+        <div className={tableStyles.container}>
+          <h1>List of Promo Posts</h1>
+          <table>
         <thead>
           <tr>
             <th>ID</th>
@@ -58,6 +63,8 @@ const ListOfPromoPosts: React.FC = () => {
           ))}
         </tbody>
       </table>
+        </div>
+      </div>
     </div>
   );
 };
