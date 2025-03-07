@@ -16,7 +16,7 @@ const { width } = Dimensions.get('window');
 
 const countryToCode = {
   "USA": "US",
-  "FRANCE": "FR", 
+  "FRANCE": "FR",
   "SPAIN": "ES",
   "GERMANY": "DE",
   "ITALY": "IT",
@@ -31,7 +31,7 @@ const countryToCode = {
   "MEXICO": "MX",
   "BOLIVIA": "BO",
   "MOROCCO": "MA",
-  "TUNISIA": "TN", 
+  "TUNISIA": "TN",
   "ALGERIA": "DZ",
   "TURKEY": "TR",
   "PORTUGAL": "PT",
@@ -110,26 +110,26 @@ const ProfilePage = () => {
   }
 
   return (
-    <ScrollView 
+    <ScrollView
       style={[styles.container, { backgroundColor: Colors[theme].background }]}
       showsVerticalScrollIndicator={false}
     >
       <View style={[styles.headerBackground, { backgroundColor: Colors[theme].primary }]} />
-      
+
       {/* Profile Image Section */}
       <View style={styles.profileImageContainer}>
         <View style={styles.imageWrapper}>
           {profile.image?.filename ? (
             <>
-              <Image 
+              <Image
                 source={{ uri: `${process.env.EXPO_PUBLIC_API_URL}/api/uploads/${profile.image.filename}` }}
-                style={styles.profileImage} 
+                style={styles.profileImage}
               />
-              <View 
+              <View
                 style={[
-                  styles.onlineIndicator, 
+                  styles.onlineIndicator,
                   { backgroundColor: profile.isOnline ? "#22c55e" : "#64748b" }
-                ]} 
+                ]}
               />
             </>
           ) : (
@@ -139,11 +139,11 @@ const ProfilePage = () => {
                   {profile.firstName?.[0]}{profile.lastName?.[0]}
                 </Text>
               </View>
-              <View 
+              <View
                 style={[
-                  styles.onlineIndicator, 
+                  styles.onlineIndicator,
                   { backgroundColor: profile.isOnline ? "#22c55e" : "#64748b" }
-                ]} 
+                ]}
               />
             </>
           )}
@@ -221,14 +221,14 @@ const ProfilePage = () => {
 
         {/* Action Buttons */}
         <View style={styles.buttonsContainer}>
-          <BaseButton 
+          <BaseButton
             onPress={() => router.push('/profile/edit')}
             size="login"
           >
             Edit Profile
           </BaseButton>
-          
-          <BaseButton 
+
+          <BaseButton
             onPress={() => router.push('/profile/change')}
             size="login"
             variant="secondary"
@@ -373,6 +373,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfilePage;
 
 export default ProfilePage;

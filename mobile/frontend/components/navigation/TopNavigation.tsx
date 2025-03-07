@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  TextInput,
 } from 'react-native';
 import {
   Bell,
@@ -30,7 +31,6 @@ import { useRouter, Link } from 'expo-router';
 import { SideMenu } from '@/types/Sidemenu';
 import { RootState } from '@/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 // Define valid app routes
 
 
@@ -73,32 +73,7 @@ export function TopNavigation({
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // const menuItems = [
-  //   {
-  //     icon: <Bell size={24} color={Colors[colorScheme].text} />,
-  //     label: "Notifications",
-  //   },
-  //   {
-  //     icon: <Settings size={24} color={Colors[colorScheme].text} />,
-  //     label: "Settings",
-  //   },
-  //   {
-  //     icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />,
-  //     label: "Orders",
-  //   },
-  //   {
-  //     icon: <Plane size={24} color={Colors[colorScheme].text} />,
-  //     label: "Trips",
-  //   },
-  //   {
-  //     icon: <PenSquare size={24} color={Colors[colorScheme].text} />,
-  //     label: "Make a Request",
-  //   },
-  //   {
-  //     icon: <LogOut size={24} color={Colors[colorScheme].text} />,
-  //     label: "Log Out",
-  //     onPress: handleLogout,
-  //   },
+
   const menuItems: SideMenu[] = [
     { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/' },
     { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
@@ -125,21 +100,18 @@ export function TopNavigation({
       <View
         style={[
           styles.container,
-          { backgroundColor: Colors[colorScheme].primary },
+          { backgroundColor: "white" },
         ]}
       >
         <TouchableOpacity onPress={toggleMenu}>
-          <Menu color={Colors[colorScheme].background} size={24} />
+          <Menu color="black" size={24} />
         </TouchableOpacity>
-
-        <ThemedText
-          style={[styles.title, { color: Colors[colorScheme].background }]}
-        >
-          {title}
-        </ThemedText>
-
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search"
+        />
         <TouchableOpacity onPress={onNotificationPress}>
-          <Bell color={Colors[colorScheme].background} size={24} />
+          <Bell color="black" size={24} />
         </TouchableOpacity>
       </View>
 
@@ -216,8 +188,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     height: 60,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E5E5",
+    zIndex: 1,
   },
   title: {
     fontSize: 20,
@@ -303,4 +279,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 15,
   },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    marginHorizontal: 8,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    backgroundColor: "#e0e0e0",
+  }
 });

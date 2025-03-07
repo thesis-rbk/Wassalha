@@ -1,6 +1,7 @@
 {
   "scripts": {
     "dev": "nodemon src/index.js",
+    "start": "nodemon src/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
@@ -16,6 +17,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "firebase": "^11.4.0",
+    "firebase-admin": "^13.2.0",
     "franc": "^6.2.0",
     "fuse.js": "^7.1.0",
     "google-auth-library": "^9.15.1",
