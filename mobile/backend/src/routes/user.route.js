@@ -10,11 +10,12 @@ const {
   updatePreferredCategories,
   completeOnboarding,
   changePassword,
-  getAllUsers,
   getUserById,
   updateUser,
   deleteUser,
   getUsers,
+  banUser,
+  unbanUser,
 } = require("../controllers/user.controller");
 const { getMessages } = require("../controllers/message.controller");
 const { authenticateUser, authenticateAdmin } = require("../middleware/middleware");
@@ -37,9 +38,11 @@ router.get("/", getUsers);
 router.get("/messages", getMessages);
 
 // User CRUD routes
-router.get("/users", authenticateUser, getAllUsers); // Get all users
-router.get("/users/:id", authenticateUser, getUserById); // Get a single user
-router.put("/users/:id", authenticateUser, updateUser); // Update a user
+router.get("/", authenticateUser, getUsers); // Get all users
+router.get("/:id",  getUserById); // Get a single user
+router.put("/:id", updateUser); // Update user
+router.put("/:id/ban",  banUser); // Ban/Unban a user
+router.put("/:id/unban", unbanUser); // Unban a user
 router.delete("/users/:id", authenticateUser, deleteUser); // Delete a user
 
 module.exports = router;

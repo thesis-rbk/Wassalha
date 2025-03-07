@@ -44,6 +44,8 @@ class RequestController {
                 include: {
                     user: true,
                     goods: true,
+                    pickup: true,
+                    order: true,
                 },
             });
 

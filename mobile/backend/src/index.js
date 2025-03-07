@@ -9,6 +9,7 @@ const path = require("path"); // Import path module
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
+const goodsRoutes = require("./routes/goods.route"); // Import goods routes
 const fetchRoute = require("./routes/fetchAll")
 require("dotenv").config();
 
@@ -19,6 +20,12 @@ const productRoutes = require("./routes/productRoutes");
 const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
 const profileRoutes = require("./routes/profileRoutes");
+const goodsPostRoutes = require("./routes/goodsPost.route"); // Import goods post routes
+const orderRoutes = require("./routes/order.route"); // Import order routes
+const promoPostRoutes = require("./routes/promoPost.route"); // Import promo post routes
+const paymentRoutes = require("./routes/payment.route"); // Import payment routes
+const pickupRoutes = require("./routes/pickup.route"); // Import pickup routes
+const serviceProviderRoutes = require("./routes/serviceProvider.route"); // Import service provider routes
 
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
@@ -43,8 +50,25 @@ app.use("/api", all);
 // Routes
 app.use("/api/requests", requestRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/goods", goodsRoutes); // Set up goods routes
+app.use("/api/goods-posts", goodsPostRoutes); // Set up goods post routes
 app.use("/api/categories", categoryRoutes);
-app.use("/api/users/profile", profileRoutes);
+app.use("/api/users/profile", profileRoutes); // Set up profile routes
+app.use("/api/orders", orderRoutes); // Set up order routes
+app.use("/api/promo-posts", promoPostRoutes); // Set up promo post routes
+app.use("/api/payments", paymentRoutes); // Set up payment routes
+app.use("/api/pickups", pickupRoutes); // Set up pickups route
+app.use("/api/service-providers", serviceProviderRoutes); // Set up service provider routes
+
+// Import sponsorship routes
+const sponsorshipRoutes = require("./routes/sponsorship.route");
+
+app.use("/api/sponsorships", sponsorshipRoutes); // Set up sponsorship routes
+
+// Import subscription routes
+const subscriptionRoutes = require("./routes/subscription.route"); // Import subscription routes
+
+app.use("/api/subscriptions", subscriptionRoutes); // Set up subscription routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {

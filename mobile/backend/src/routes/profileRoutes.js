@@ -9,6 +9,6 @@ const router = express.Router();
 router.get('/:id', authenticateUser, getProfile);
 
 // Update user profile
-router.put('/:id', authenticateUser, upload.single('image'), updateProfile); // Ensure this matches
+router.put('/:id', authenticateUser, upload.single('image'), updateProfile);
 
 module.exports = router; 

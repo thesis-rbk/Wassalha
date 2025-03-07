@@ -77,3 +77,10 @@
   line-height: 1.4;
   font-weight: 400;
 } 
+body {
+  margin: 0; /* Remove default margin */
+  padding-top: 40px; /* Adjust this value based on the height of your Nav */
+  padding-left: 255px; /* Ensure content starts after the sidebar */
+  height: 100vh; /* Full height to prevent overflow */
+  overflow: hidden; /* Prevent scrolling if content overflows */
+}

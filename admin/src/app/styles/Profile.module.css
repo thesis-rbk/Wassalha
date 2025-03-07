@@ -1,0 +1,81 @@
+.card {
+    display: flex; /* Use flexbox for layout */
+    background-color: #fff; /* Card background color */
+    border-radius: 12px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Shadow for depth */
+    padding: 20px; /* Padding inside the card */
+    margin: 20px; /* Margin around the card */
+}
+
+.leftsection {
+    display: flex;
+    flex-direction: column; /* Stack items vertically */
+    align-items: center; /* Center items horizontally */
+    margin-right: 20px; /* Space between sections */
+}
+
+.img {
+    width: 300px; /* Image width */
+    height: 300px; /* Image height */
+    border-radius: 50%; /* Circular image */
+    background-color: #ccc; /* Placeholder background color */
+    margin-bottom: 15px; /* Space below the image */
+}
+
+.label {
+    font-weight: bold; /* Bold labels */
+    margin: 10px 0; /* Space around labels */
+}
+
+.value {
+    margin: 5px 0; /* Space around values */
+    border-radius: 8px; /* Rounded corners */
+    padding: 8px; /* Padding inside the box */
+    width: 100%; /* Full width */
+    text-align: left; /* Left-align text */
+}
+
+.rightsection {
+    display: grid; /* Use grid layout */
+    grid-template-columns: repeat(2, 1fr); /* Two columns */
+    gap: 10px; /* Space between grid items */
+    flex-grow: 1; /* Allow this section to grow */
+}
+
+.button_ban {
+    background-color: red; /* Red background for ban button */
+    color: white; /* White text */
+    border: none; /* No border */
+    border-radius: 5px; /* Rounded corners */
+    padding: 10px 20px; /* Increase padding for a bigger button */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s; /* Smooth transition */
+    margin-top: 20px; /* Space above the button */
+    grid-column: span 2; /* Make the button span both columns */
+    font-size: 16px; /* Increase font size for better visibility */
+}
+
+.button_ban:hover {
+    background-color: darkred; /* Darker red on hover */
+}
+
+.banned {
+    color: red; /* Red color for banned status */
+    font-weight: bold; /* Bold text */
+    background-color: rgba(255, 0, 0, 0.2); /* Transparent red background */
+    padding: 10px; /* Padding for the box */
+    border-radius: 5px; /* Rounded corners */
+}
+
+.verified {
+    color: green; /* Green color for verified status */
+    font-weight: bold; /* Bold text */
+}
+
+.unverified {
+    color: yellow; /* Yellow color for unverified status */
+    font-weight: bold; /* Bold text */
+    background-color: rgba(255, 255, 0, 0.2); /* Transparent yellow background */
+    padding: 10px; /* Padding for the box */
+    border-radius: 5px; /* Rounded corners */
+} 

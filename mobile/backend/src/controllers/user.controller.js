@@ -451,12 +451,16 @@ const changePassword = async (req, res) => {
   }
 };
 
-// Fetch users and their profiles
+// Fetch users and their profiles, including the user's image
 const getUsers = async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       include: {
-        profile: true, // Include the profile in the response
+        profile: {
+          include: {
+            image: true, // Include the image from the Media table
+          },
+        },
       },
     });
 
@@ -474,63 +478,77 @@ const getUsers = async (req, res) => {
   }
 };
 
-// Get all users
-const getAllUsers = async (req, res) => {
-  try {
-    const users = await prisma.user.findMany();
-    res.status(200).json(users);
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({ error: "Failed to fetch users" });
-  }
-};
-
-// Get a single user by ID
+// Get a single user by ID, including the user's image
 const getUserById = async (req, res) => {
   const { id } = req.params; // Get user ID from request parameters
 
   try {
     const user = await prisma.user.findUnique({
       where: { id: parseInt(id) },
+      include: {
+        profile: {
+          include: {
+            image: true, // Include the image from the Media table
+          },
+        },
+      },
     });
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json(user);
+    res.status(200).json({
+      ...user,
+      profile: {
+        ...user.profile,
+        banned: user.profile.banned, // Include banned status
+        verified: user.profile.verified, // Include verified status
+      },
+    });
   } catch (error) {
     console.error("Error fetching user:", error);
     res.status(500).json({ error: "Failed to fetch user" });
   }
 };
 
-// Update a user
+// Update a user and their profile
 const updateUser = async (req, res) => {
-  const { id } = req.params; // Get user ID from request parameters
-  const { name, email, role, banned } = req.body; // Get updated fields from request body
+  const { id, name, role, firstName, lastName } = req.body;
 
   try {
+    if (!id) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    // Update user name and role
     const updatedUser = await prisma.user.update({
-      where: { id: parseInt(id) },
+      where: { id },
       data: {
         name,
-        email,
         role,
-        banned,
+      },
+    });
+
+    // Update profile firstName and lastName
+    const updatedProfile = await prisma.profile.update({
+      where: { userId: id },
+      data: {
+        firstName,
+        lastName,
       },
     });
 
     res.status(200).json({
       message: "User updated successfully",
       user: updatedUser,
+      profile: updatedProfile,
     });
   } catch (error) {
-    console.error("Error updating user:", error);
+    console.error("Update user error:", error);
     res.status(500).json({ error: "Failed to update user" });
   }
 };
-
 // Delete a user
 const deleteUser = async (req, res) => {
   const { id } = req.params; // Get user ID from request parameters
@@ -547,6 +565,52 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const banUser = async (req, res) => {
+  const { id } = req.params; // Get user ID from request parameters
+
+  try {
+      // Ensure the ID is converted to an integer
+      const userId = parseInt(id, 10);
+      
+      // Update the profile to set isBanned to true
+      const updatedProfile = await prisma.profile.update({
+          where: { userId: userId }, 
+          data: { isBanned: true }, // Always set isBanned to true
+      });
+
+    res.status(200).json({
+      message: "User has been banned successfully.",
+      profile: updatedProfile, // Return the updated profile
+    });
+  } catch (error) {
+    console.error("Error banning user:", error);
+    res.status(500).json({ error: "Failed to ban user" });
+  }
+};
+
+const unbanUser = async (req, res) => {
+    const { id } = req.params; // Get user ID from request parameters
+
+    try {
+        // Ensure the ID is converted to an integer
+        const userId = parseInt(id, 10);
+        
+        // Update the profile to set isBanned to false
+        const updatedProfile = await prisma.profile.update({
+            where: { userId: userId }, 
+            data: { isBanned: false }, // Set isBanned to false
+        });
+
+        res.status(200).json({
+            message: "User has been unbanned successfully.",
+            profile: updatedProfile, // Return the updated profile
+        });
+    } catch (error) {
+        console.error("Error unbanning user:", error);
+        res.status(500).json({ error: "Failed to unban user" });
+    }
+};
+
 module.exports = {
   signup,
   loginUser,
@@ -559,8 +623,9 @@ module.exports = {
   completeOnboarding,
   changePassword,
   getUsers,
-  getAllUsers,
   getUserById,
   updateUser,
   deleteUser,
+  banUser,
+  unbanUser,
 };
