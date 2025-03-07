@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Button,
 } from "react-native";
 import axiosInstance from "@/config";
 import { Message, User, Profile } from "../../types";
+import { router } from "expo-router";
 
 export default function MessagesScreen() {
   const [conversations, setConversations] = useState<
@@ -189,6 +191,38 @@ export default function MessagesScreen() {
             <Text style={styles.emptyText}>No messages yet</Text>
           </View>
         }
+      />
+      <Button
+        title="Testing initialization SO"
+        onPress={() => router.push("../processTrack/initializationSO")}
+      />
+      <Button
+        title="Testing initialization SP"
+        onPress={() => router.push("../processTrack/initializationSP")}
+      />
+      <Button
+        title="Testing verification SO"
+        onPress={() => router.push("../processTrack/verificationSO")}
+      />
+      <Button
+        title="Testing verification SP"
+        onPress={() => router.push("../processTrack/verificationSP")}
+      />
+      <Button
+        title="Testing payment SO"
+        onPress={() => router.push("../processTrack/paymentSO")}
+      />
+      <Button
+        title="Testing payment SP"
+        onPress={() => router.push("../processTrack/paymentSP")}
+      />
+      <Button
+        title="Testing pickup SO"
+        onPress={() => router.push("../processTrack/pickupSO")}
+      />
+      <Button
+        title="Testing pickup SP"
+        onPress={() => router.push("../processTrack/pickupSP")}
       />
     </View>
   );
