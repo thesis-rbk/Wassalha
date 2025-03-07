@@ -3,7 +3,23 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import styles from "../styles/Nav.module.css";
-import { User, Bell, Home, ShoppingCart, List, Moon, Sun } from "lucide-react";
+import { 
+  User, 
+  Bell, 
+  Home, 
+  ShoppingCart, 
+  List, 
+  Moon, 
+  Sun,
+  Package,
+  FileText,
+  Tag,
+  CreditCard,
+  Truck,
+  Users,
+  Award,
+  Bookmark
+} from "lucide-react";
 
 export default function Nav() {
   const [user, setUser] = useState<{ name: string; role: string; image: string } | null>(null);
@@ -31,53 +47,47 @@ export default function Nav() {
 
   return (
     <div className={styles.layout}>
-      {/* Sidebar */}
+      {/* Sidebar with updated icons */}
       <div className={styles.sidebar}>
         <Link href="/AdminDashboard" className={styles.sidebarItem}>
           <Home size={20} /> Dashboard
         </Link>
         <Link href="/ListOfUsers" className={styles.sidebarItem}>
-          <User size={20} /> List of Users
+          <Users size={20} /> List of Users
         </Link>
         <Link href="/ListOfOrders" className={styles.sidebarItem}>
           <ShoppingCart size={20} /> List of Orders
         </Link>
         <Link href="/ListOfRequests" className={styles.sidebarItem}>
-          <List size={20} /> List of Requests
+          <FileText size={20} /> List of Requests
         </Link>
         <Link href="/ListOfGoods" className={styles.sidebarItem}>
-          <List size={20} /> List of Goods
+          <Package size={20} /> List of Goods
         </Link>
         <Link href="/ListOfGoodPosts" className={styles.sidebarItem}>
-          <List size={20} /> List of Goods Posts
+          <FileText size={20} /> List of Goods Posts
         </Link>
         <Link href="/ListOfPromoPosts" className={styles.sidebarItem}>
-          <List size={20} /> List of PromoPosts
+          <FileText size={20} /> List of PromoPosts
         </Link>
         <Link href="/ListOfCategories" className={styles.sidebarItem}>
-          <List size={20} /> List of Categories
+          <Tag size={20} /> List of Categories
         </Link>
         <Link href="/ListOfPayments" className={styles.sidebarItem}>
-          <List size={20} /> List of Payments
+          <CreditCard size={20} /> List of Payments
         </Link>
         <Link href="/ListOfPickups" className={styles.sidebarItem}>
-          <List size={20} /> List of Pickups
+          <Truck size={20} /> List of Pickups
         </Link>
         <Link href="/ListOfServiceProviders" className={styles.sidebarItem}>
-          <List size={20} /> List of Service Providers
+          <Users size={20} /> List of Service Providers
         </Link>
         <Link href="/ListOfSponsorships" className={styles.sidebarItem}>
-          <List size={20} /> List of Sponsorships
+          <Award size={20} /> List of Sponsorships
         </Link>
         <Link href="/ListOfSubscriptions" className={styles.sidebarItem}>
-          <List size={20} /> List of Subscriptions
+          <Bookmark size={20} /> List of Subscriptions
         </Link>
-
-
-
-
-
-
       </div>
 
       {/* Top Navbar */}
@@ -86,7 +96,10 @@ export default function Nav() {
         <div className={styles.navItems}>
           <Bell className={`${styles.bellIcon} ${styles.icon}`} />
           <div onClick={toggleDarkMode} style={{ cursor: 'pointer' }}>
-            {isDarkMode ? <Sun className={`${styles.sunIcon} ${styles.icon}`} /> : <Moon className={`${styles.moonIcon} ${styles.icon}`} />}
+            {isDarkMode ? 
+              <Sun className={`${styles.sunIcon} ${styles.icon}`} /> : 
+              <Moon className={`${styles.moonIcon} ${styles.icon}`} />
+            }
           </div>
           <div
             className={styles.userContainer}
