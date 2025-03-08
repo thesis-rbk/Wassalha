@@ -7,23 +7,8 @@ import styles from '../styles/Profile.module.css';
 import navStyles from '../styles/Nav.module.css';
 import Nav from "../components/Nav";
 import Image from 'next/image';
+import { UserProfile } from "../types/UserProfile";
 
-interface UserProfile {
-    id: number;
-    name: string;
-    email: string;
-    phoneNumber?: string;
-    role: string;
-    profile: {
-        firstName: string;
-        lastName: string;
-        image?: { url: string };
-        country?: string;
-        gender?: string;
-        isBanned: boolean;
-        verified: boolean;
-    };
-}
 
 // Create a type for partial profile that makes nested properties optional
 type PartialUserProfile = Partial<Omit<UserProfile, 'profile'>> & {
@@ -42,6 +27,10 @@ const Profile: React.FC = () => {
         profile: {
             firstName: '',
             lastName: '',
+            bio: '',
+            review: '',
+            country: '',
+            gender: '',
             isBanned: false,
             verified: false
         }
@@ -58,20 +47,38 @@ const Profile: React.FC = () => {
             const fetchUserProfile = async () => {
                 try {
                     setLoading(true);
-                    const response = await axios.get(`http://localhost:5000/api/users/${id}`);
-                    const data = response.data;
-                    setUserProfile(data);
-                    setUpdatedProfile({
-                        ...data,
-                        profile: { ...data.profile }
-                    });
-                } catch (err) {
-                    if (axios.isAxiosError(err)) {
-                        setError(err.response?.data?.error || err.message);
-                    } else {
-                        setError("An unknown error occurred");
+                    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${id}`);
+                    const userData = response.data;
+                    
+                    // Log the response to debug image data
+                    console.log('Full user data:', userData);
+                    
+                    // Make sure we're getting the complete profile with image
+                    if (userData.profile && !userData.profile.image) {
+                        console.warn('Profile found but no image data:', userData.profile);
                     }
-                    console.error("Error fetching user profile:", err);
+                    
+                    setUserProfile(userData);
+                    setUpdatedProfile({
+                        name: userData.name,
+                        email: userData.email,
+                        phoneNumber: userData.phoneNumber,
+                        role: userData.role,
+                        profile: {
+                            firstName: userData.profile?.firstName || '',
+                            lastName: userData.profile?.lastName || '',
+                            bio: userData.profile?.bio || '',
+                            review: userData.profile?.review || '',
+                            country: userData.profile?.country || '',
+                            gender: userData.profile?.gender || '',
+                            isBanned: userData.profile?.isBanned || false,
+                            verified: userData.profile?.verified || false,
+                            image: userData.profile?.image || null
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error fetching user profile:', error);
+                    setError('Failed to load user profile');
                 } finally {
                     setLoading(false);
                 }
@@ -87,31 +94,29 @@ const Profile: React.FC = () => {
     }
 
     const handleBanUnban = async () => {
-        if (userProfile && userProfile.profile) {
-            const isBanned = userProfile.profile.isBanned;
-            try {
-                const response = await axios.put(`http://localhost:5000/api/users/${userProfile.id}/${isBanned ? 'unban' : 'ban'}`, {
-                    isBanned: !isBanned
-                });
+        if (!userProfile?.id) return;
 
-                const data = response.data;
-                // Update the local state with the new data
-                setUserProfile(prev => prev ? {
-                    ...prev,
-                    profile: {
-                        ...prev.profile,
-                        isBanned: !isBanned
-                    }
-                } : null);
-                alert(data.message || "User status updated successfully");
-            } catch (err) {
-                if (axios.isAxiosError(err)) {
-                    alert(err.response?.data?.error || "Failed to update user status");
-                } else {
-                    alert("Failed to update ban status");
+        try {
+            const isBanned = userProfile.profile?.isBanned;
+            const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}/${isBanned ? 'unban' : 'ban'}`);
+
+            const data = response.data;
+            // Update the local state with the new data
+            setUserProfile(prev => prev ? {
+                ...prev,
+                profile: {
+                    ...prev.profile,
+                    isBanned: !isBanned
                 }
-                console.error(err);
+            } : null);
+            alert(data.message || "User status updated successfully");
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                alert(err.response?.data?.error || "Failed to update user status");
+            } else {
+                alert("Failed to update ban status");
             }
+            console.error(err);
         }
     };
 
@@ -151,71 +156,95 @@ const Profile: React.FC = () => {
     };
 
     const handleUpdateUser = async () => {
-        if (!userProfile) return;
+        if (!userProfile?.id) return;
 
         try {
-            // Prepare the data to be sent to the API
-            const updateData: UserProfile = {
-                id: userProfile.id,
-                name: updatedProfile.name || userProfile.name,
-                email: updatedProfile.email || userProfile.email,
-                phoneNumber: updatedProfile.phoneNumber || userProfile.phoneNumber,
-                role: updatedProfile.role || userProfile.role,
+            const updateData = {
+                id: userProfile.id, // Ensure ID is included
+                name: updatedProfile?.name || userProfile.name,
+                email: updatedProfile?.email || userProfile.email,
+                phoneNumber: updatedProfile?.phoneNumber || userProfile.phoneNumber,
+                role: updatedProfile?.role || userProfile.role,
                 profile: {
-                    firstName: updatedProfile.profile?.firstName || userProfile.profile.firstName,
-                    lastName: updatedProfile.profile?.lastName || userProfile.profile.lastName,
-                    country: updatedProfile.profile?.country || userProfile.profile.country,
-                    gender: updatedProfile.profile?.gender || userProfile.profile.gender,
-                    isBanned: userProfile.profile.isBanned,
-                    verified: userProfile.profile.verified,
-                    ...(userProfile.profile.image && { image: userProfile.profile.image })
+                    firstName: updatedProfile?.profile?.firstName || userProfile.profile?.firstName || '',
+                    lastName: updatedProfile?.profile?.lastName || userProfile.profile?.lastName || '',
+                    bio: updatedProfile?.profile?.bio || userProfile.profile?.bio || '',
+                    review: updatedProfile?.profile?.review || userProfile.profile?.review || '',
+                    country: updatedProfile?.profile?.country || userProfile.profile?.country || '',
+                    gender: updatedProfile?.profile?.gender || userProfile.profile?.gender || '',
+                    isBanned: userProfile.profile?.isBanned || false,
+                    verified: userProfile.profile?.verified || false,
+                    image: updatedProfile?.profile?.image || userProfile.profile?.image || null
                 }
             };
 
-            console.log("Sending update with data:", updateData);
+            console.log('Sending update with data:', updateData);
 
-            const response = await axios.put(`http://localhost:5000/api/users/${userProfile.id}`, updateData);
-            console.log("Response from server:", response.data);
+            const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}`, updateData);
             
-            // If the API returns the updated user directly
-            if (response.data && (response.data.id || response.data.user?.id)) {
-                const updatedUser = response.data.user || response.data;
-                
-                // Update the userProfile state with the new data
-                setUserProfile(updatedUser);
-                
-                // Also update the updatedProfile state
+            if (response.data) {
+                setUserProfile(response.data);
                 setUpdatedProfile({
-                    ...updatedUser,
-                    profile: { ...updatedUser.profile }
+                    name: response.data.name,
+                    email: response.data.email,
+                    phoneNumber: response.data.phoneNumber,
+                    role: response.data.role,
+                    profile: {
+                        firstName: response.data.profile?.firstName || '',
+                        lastName: response.data.profile?.lastName || '',
+                        bio: response.data.profile?.bio || '',
+                        review: response.data.profile?.review || '',
+                        country: response.data.profile?.country || '',
+                        gender: response.data.profile?.gender || '',
+                        isBanned: response.data.profile?.isBanned || false,
+                        verified: response.data.profile?.verified || false,
+                        image: response.data.profile?.image || null
+                    }
                 });
-                
-                console.log("Updated user profile:", updatedUser);
-            } else {
-                // If the API doesn't return the updated user, fetch it again
-                console.log("Fetching updated profile after update");
-                const refreshResponse = await axios.get(`http://localhost:5000/api/users/${userProfile.id}`);
-                const refreshedUser = refreshResponse.data;
-                
-                setUserProfile(refreshedUser);
-                setUpdatedProfile({
-                    ...refreshedUser,
-                    profile: { ...refreshedUser.profile }
-                });
-                
-                console.log("Refreshed user profile:", refreshedUser);
+                setIsEditing(false);
+                alert("User profile updated successfully!");
             }
-            
-            setIsEditing(false);
-            alert("User profile updated successfully!");
         } catch (err) {
             let errorMessage = "Failed to update user profile";
             if (axios.isAxiosError(err)) {
                 errorMessage = err.response?.data?.error || err.message;
-                console.error("API error response:", err.response?.data);
             }
             alert(errorMessage);
             console.error("Error updating profile:", err);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!userProfile?.id) return;
+
+        // Add confirmation dialog
+        const isConfirmed = window.confirm("Are you sure you want to delete this account? This action cannot be undone.");
+        
+        if (!isConfirmed) return;
+
+        try {
+            const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}`);
+            const data = response.data;
+            console.log('Deleted user profile:', data); // Debug log
+            setUserProfile(null);
+            setUpdatedProfile({
+                profile: {
+                    firstName: '',
+                    lastName: '',
+                    isBanned: false,
+                    verified: false
+                }
+            });
+            alert(data.message || "User account deleted successfully");
+            // Optionally redirect to another page after successful deletion
+            window.location.href = 'ListOfUsers'; // Adjust the path as needed
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                alert(err.response?.data?.error || "Failed to delete user account");
+            } else {
+                alert("Failed to delete user account");
+            }
+            console.error("Error deleting user account:", err);
         }
     };
 
@@ -253,20 +282,20 @@ const Profile: React.FC = () => {
     }
 
     return (
-        <div className={navStyles.layout}>
+        <div className={navStyles.layout} style={{ overflowY: 'auto', height: '100vh' }}>
             <Nav />
-            <div className={navStyles.mainContent}>
+            <div className={navStyles.mainContent} style={{ overflowY: 'auto' }}>
                 <div className={styles.container}>
                     <div className={styles.card}>
                         <div className={styles.leftsection}>
                             <div className={styles.imageWrapper}>
                                 <img
-                                    src={userProfile.profile?.image?.url || "/default-profile.png"}
-                                    alt="Profile"
+                                    src={userProfile?.profile?.image?.url }
+                                    alt={`${userProfile?.name}'s profile`}
                                     className={styles.img}
                                     onError={(e) => {
                                         const target = e.target as HTMLImageElement;
-                                        target.src = "/default-profile.png";
+                                        // target.src = "/default-profile.png";
                                     }}
                                 />
                             </div>
@@ -291,7 +320,6 @@ const Profile: React.FC = () => {
                                     >
                                         <option value="USER">User</option>
                                         <option value="ADMIN">Admin</option>
-                                     
                                     </select>
                                 </>
                             ) : (
@@ -308,131 +336,177 @@ const Profile: React.FC = () => {
                             ) : (
                                 <div className={styles.unverified}>Not Verified</div>
                             )}
+
+                            <div className={styles.bioContainer}>
+                                <div className={styles.label}>Bio:</div>
+                                {isEditing ? (
+                                    <textarea
+                                        name="bio"
+                                        value={updatedProfile.profile?.bio || ''}
+                                        onChange={(e) => setUpdatedProfile(prev => ({
+                                            ...prev,
+                                            profile: {
+                                                ...prev.profile,
+                                                bio: e.target.value
+                                            }
+                                        }))}
+                                        className={styles.textarea}
+                                        placeholder="Enter bio..."
+                                    />
+                                ) : (
+                                    <div className={styles.bioContent}>
+                                        {userProfile?.profile?.bio || 'No bio available'}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className={styles.rightsection}>
                             {isEditing ? (
                                 <form onSubmit={(e) => e.preventDefault()}>
-                                    <div className={styles.formGroup}>
-                                        <label className={styles.label}>First Name:</label>
-                                        <input
-                                            type="text"
-                                            name="firstName"
-                                            value={updatedProfile.profile?.firstName || ''}
-                                            onChange={handleInputChange}
-                                            className={styles.input}
-                                        />
+                                    <div className={styles.formContent}>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.label}>First Name:</label>
+                                            <input
+                                                type="text"
+                                                name="firstName"
+                                                value={updatedProfile?.profile?.firstName || ''}
+                                                onChange={handleInputChange}
+                                                className={styles.input}
+                                            />
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.label}>Last Name:</label>
+                                            <input
+                                                type="text"
+                                                name="lastName"
+                                                value={updatedProfile?.profile?.lastName || ''}
+                                                onChange={handleInputChange}
+                                                className={styles.input}
+                                            />
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.label}>Email:</label>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                value={updatedProfile?.email || ''}
+                                                onChange={handleInputChange}
+                                                className={styles.input}
+                                            />
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.label}>Phone Number:</label>
+                                            <input
+                                                type="text"
+                                                name="phoneNumber"
+                                                value={updatedProfile?.phoneNumber || ''}
+                                                onChange={handleInputChange}
+                                                className={styles.input}
+                                            />
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.label}>Country:</label>
+                                            <input
+                                                type="text"
+                                                name="country"
+                                                value={updatedProfile?.profile?.country || ''}
+                                                onChange={handleInputChange}
+                                                className={styles.input}
+                                            />
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.label}>Gender:</label>
+                                            <select
+                                                name="gender"
+                                                value={updatedProfile?.profile?.gender || ''}
+                                                onChange={handleInputChange}
+                                                className={styles.input}
+                                            >
+                                                <option value="">Select Gender</option>
+                                                <option value="MALE">Male</option>
+                                                <option value="FEMALE">Female</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div className={styles.formGroup}>
-                                        <label className={styles.label}>Last Name:</label>
-                                        <input
-                                            type="text"
-                                            name="lastName"
-                                            value={updatedProfile.profile?.lastName || ''}
-                                            onChange={handleInputChange}
-                                            className={styles.input}
-                                        />
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                        <label className={styles.label}>Email:</label>
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            value={updatedProfile.email || ''}
-                                            onChange={handleInputChange}
-                                            className={styles.input}
-                                        />
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                        <label className={styles.label}>Phone Number:</label>
-                                        <input
-                                            type="text"
-                                            name="phoneNumber"
-                                            value={updatedProfile.phoneNumber || ''}
-                                            onChange={handleInputChange}
-                                            className={styles.input}
-                                        />
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                        <label className={styles.label}>Country:</label>
-                                        <input
-                                            type="text"
-                                            name="country"
-                                            value={updatedProfile.profile?.country || ''}
-                                            onChange={handleInputChange}
-                                            className={styles.input}
-                                        />
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                        <label className={styles.label}>Gender:</label>
-                                        <select
-                                            name="gender"
-                                            value={updatedProfile.profile?.gender || ''}
-                                            onChange={handleInputChange}
-                                            className={styles.input}
+                                    
+                                    {/* Fixed position button container */}
+                                    <div className={styles.buttonContainer}>
+                                        <div className={styles.buttonRow}>
+                                            <button
+                                                type="button"
+                                                onClick={handleUpdateUser}
+                                                className={`${styles.button} ${styles.buttonsubmit}`}
+                                            >
+                                                Save Changes
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={handleEditToggle}
+                                                className={`${styles.button} ${styles.buttoncancel}`}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                        <button
+                                            onClick={handleDeleteAccount}
+                                            className={`${styles.button} ${styles.buttonDelete}`}
                                         >
-                                            <option value="">Select Gender</option>
-                                            <option value="male">Male</option>
-                                            <option value="female">Female</option>
-                                        </select>
-                                    </div>
-                                    <div className={styles.actionButtons}>
-                                        <button onClick={handleEditToggle} className={styles.buttoncancel}>
-                                            Cancel
-                                        </button>
-                                        <button onClick={handleUpdateUser} className={styles.buttonsubmit}>
-                                            Submit
+                                            Delete Account
                                         </button>
                                     </div>
                                 </form>
                             ) : (
                                 <>
                                     <div className={styles.infoRow}>
-                                        <span className={styles.infoLabel}>First Name:</span>
-                                        <span className={styles.infoValue}>
-                                            {userProfile?.profile.firstName || 'N/A'}
-                                        </span>
+                                        <div className={styles.label}>First Name:</div>
+                                        <div className={styles.value}>{userProfile?.profile?.firstName || 'N/A'}</div>
                                     </div>
                                     <div className={styles.infoRow}>
-                                        <span className={styles.infoLabel}>Last Name:</span>
-                                        <span className={styles.infoValue}>
-                                            {userProfile?.profile.lastName || 'N/A'}
-                                        </span>
+                                        <div className={styles.label}>Last Name:</div>
+                                        <div className={styles.value}>{userProfile?.profile?.lastName || 'N/A'}</div>
                                     </div>
                                     <div className={styles.infoRow}>
-                                        <span className={styles.infoLabel}>Email:</span>
-                                        <span className={styles.infoValue}>
-                                            {userProfile?.email || 'N/A'}
-                                        </span>
+                                        <div className={styles.label}>Email:</div>
+                                        <div className={styles.value}>{userProfile?.email}</div>
                                     </div>
                                     <div className={styles.infoRow}>
-                                        <span className={styles.infoLabel}>Phone Number:</span>
-                                        <span className={styles.infoValue}>
-                                            {userProfile?.phoneNumber || 'N/A'}
-                                        </span>
+                                        <div className={styles.label}>Phone Number:</div>
+                                        <div className={styles.value}>{userProfile?.phoneNumber || 'N/A'}</div>
                                     </div>
                                     <div className={styles.infoRow}>
-                                        <span className={styles.infoLabel}>Country:</span>
-                                        <span className={styles.infoValue}>
-                                            {userProfile?.profile.country || 'N/A'}
-                                        </span>
+                                        <div className={styles.label}>Country:</div>
+                                        <div className={styles.value}>{userProfile?.profile?.country || 'N/A'}</div>
                                     </div>
                                     <div className={styles.infoRow}>
-                                        <span className={styles.infoLabel}>Gender:</span>
-                                        <span className={styles.infoValue}>
-                                            {userProfile?.profile.gender || 'N/A'}
-                                        </span>
+                                        <div className={styles.label}>Gender:</div>
+                                        <div className={styles.value}>{userProfile?.profile?.gender || 'N/A'}</div>
                                     </div>
-                                    <div className={styles.actionButtons}>
-                                        <button onClick={handleEditToggle} className={styles.buttonedit}>
-                                            Edit
-                                        </button>
-                                        <button 
-                                            onClick={handleBanUnban}
-                                            className={`${styles.buttonban} ${userProfile?.profile?.isBanned ? styles.unban : ''}`}
+                                    <div className={styles.infoRow}>
+                                        <div className={styles.label}>Review:</div>
+                                        <div className={styles.value}>
+                                            {userProfile?.profile?.review || 'No review available'}
+                                        </div>
+                                    </div>
+                                    <div className={styles.buttonRow}>
+                                        <button
+                                            onClick={handleEditToggle}
+                                            className={`${styles.button} ${styles.buttonedit}`}
                                         >
-                                            {userProfile?.profile?.isBanned ? "Unban" : "Ban"}
+                                            Edit Profile
+                                        </button>
+                                        <button
+                                            onClick={handleBanUnban}
+                                            className={`${styles.button} ${styles.buttonban}`}
+                                        >
+                                            {userProfile?.profile?.isBanned ? 'Unban User' : 'Ban User'}
                                         </button>
                                     </div>
+                                    <button
+                                        onClick={handleDeleteAccount}
+                                        className={`${styles.button} ${styles.buttonDelete}`}
+                                    >
+                                        Delete Account
+                                    </button>
                                 </>
                             )}
                         </div>

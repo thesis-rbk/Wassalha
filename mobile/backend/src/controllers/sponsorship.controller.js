@@ -21,4 +21,39 @@ exports.getAllSponsorships = async (req, res) => {
       error: error.message,
     });
   }
+};
+
+// Delete a sponsorship
+exports.deleteSponsorship = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Check if sponsorship exists before attempting to delete
+    const existingSponsorship = await prisma.sponsorship.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!existingSponsorship) {
+      return res.status(404).json({
+        success: false,
+        message: "Sponsorship not found"
+      });
+    }
+
+    await prisma.sponsorship.delete({
+      where: { id: parseInt(id) },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Sponsorship deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting sponsorship:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete sponsorship",
+      error: error.message,
+    });
+  }
 }; 

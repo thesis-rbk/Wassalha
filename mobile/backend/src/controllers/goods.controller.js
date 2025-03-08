@@ -93,9 +93,22 @@ exports.deleteGood = async (req, res) => {
   const { id } = req.params;
 
   try {
+    // Check if good exists before attempting to delete
+    const existingGood = await prisma.goods.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!existingGood) {
+      return res.status(404).json({
+        success: false,
+        message: "Good not found"
+      });
+    }
+
     await prisma.goods.delete({
       where: { id: parseInt(id) },
     });
+
     res.status(200).json({
       success: true,
       message: "Good deleted successfully",

@@ -1,47 +1,86 @@
 .container {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin-bottom: 20px;
-  margin-left: 20px;
+  background: var(--color-card-bg);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  margin: 24px;
 }
 
 .tableWrapper {
   overflow-x: auto;
-  margin-top: 20px;
+  margin: 0 -24px;
+  padding: 0 24px;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  max-height: 600px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.tableWrapper::before,
+.tableWrapper::after {
+  display: none;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  margin-top: 20px;
+  background-color: var(--color-card-bg);
+  color: var(--color-text);
+  transition: background-color 0.3s ease;
+}
+
+.table.darkMode {
+  background-color: var(--color-card-bg);
 }
 
 .th {
-  background: #f8f9fa;
   padding: 12px;
   text-align: left;
-  font-weight: 600;
-  color: #333;
-  border-bottom: 2px solid #dee2e6;
+  background-color: var(--color-hover);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  transition: all 0.3s ease;
+}
+
+.th.darkMode {
+  background-color: var(--color-hover);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tr:hover {
+  background-color: var(--color-hover);
+}
+
+.tr.darkMode:hover {
+  background-color: var(--color-hover);
 }
 
 .td {
   padding: 12px;
-  border-bottom: 1px solid #dee2e6;
-  color: #555;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  transition: all 0.3s ease;
 }
 
-.tr:hover {
-  background-color: #f8f9fa;
+.td.darkMode {
+  color: var(--color-text);
+  border-color: var(--color-border);
 }
 
 .title {
   font-size: 24px;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 20px;
+  color: #020202;
+  margin-bottom: 5px;
+  padding-bottom: 10px;
 }
 
 .button {
@@ -49,8 +88,12 @@
   border-radius: 4px;
   border: none;
   cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+}
+
+.button.darkMode {
+  background-color: var(--color-primary);
+  color: white;
 }
 
 .button_view {
@@ -60,4 +103,775 @@
 
 .button_view:hover {
   background-color: var(--color-primary-dark);
-} 
+}
+
+.editForm {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.editForm h2 {
+    margin-bottom: 20px;
+}
+
+.editForm form > div {
+    margin-bottom: 15px;
+}
+
+.editForm label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.editForm input,
+.editForm select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.formButtons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.formButtons button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.formButtons button[type="submit"] {
+    background-color: #007bff;
+    color: white;
+}
+
+.formButtons button[type="button"] {
+    background-color: #6c757d;
+    color: white;
+}
+
+.editButton,
+.deleteButton {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0 5px;
+}
+
+.editButton {
+    background-color: #007bff;
+    color: white;
+}
+
+.deleteButton {
+    background-color: #ff4444;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.deleteButton:hover {
+    background-color: #cc0000;
+}
+
+.editButton:hover {
+    background-color: #0056b3;
+}
+
+/* Controls Section */
+.controls {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.searchContainer {
+  flex: 1;
+  min-width: 250px;
+  margin-right: 20px;
+}
+
+.filterContainer {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-card-bg);
+  color: var(--color-text);
+  transition: all 0.3s ease;
+}
+
+.filterSelect {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-card-bg);
+  color: var(--color-text);
+  min-width: 150px;
+  transition: all 0.3s ease;
+}
+
+.noResults {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Image Styles */
+.userImage {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+}
+
+.goodImage {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+}
+
+/* Button Styles */
+.actionButton {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.viewButton {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.viewButton:hover {
+  background-color: #2563eb;
+}
+
+.editButton {
+  background-color: #10b981;
+  color: white;
+}
+
+.editButton:hover {
+  background-color: #059669;
+}
+
+.deleteButton {
+  background-color: #ef4444;
+  color: white;
+}
+
+.deleteButton:hover {
+  background-color: #dc2626;
+}
+
+.banButton {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.banButton:hover {
+  background-color: #d97706;
+}
+
+/* Status Badges */
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.badgePending {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.badgeCompleted {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.badgeProcessing {
+  background-color: #e0e7ff;
+  color: #4f46e5;
+}
+
+.badgeFailed {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Confirmation Dialog */
+.confirmationDialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--color-card-bg);
+  color: var(--color-text);
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  text-align: center;
+  border: 1px solid var(--color-border);
+}
+
+.confirmationDialog p {
+  color: var(--color-text);
+  margin-bottom: 20px;
+}
+
+.confirmationDialog button {
+  margin: 0 8px;
+  padding: 8px 20px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirmationDialog button:first-child {
+  background-color: var(--color-danger);
+  color: white;
+}
+
+.confirmationDialog button:last-child {
+  background-color: var(--color-secondary);
+  color: white;
+}
+
+.confirmationDialog button:hover {
+  opacity: 0.9;
+}
+
+/* Dark mode styles */
+:global(.dark-mode) .confirmationDialog {
+  background-color: var(--color-card-bg);
+  border-color: var(--color-border);
+  color: var(--color-text);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark-mode) .confirmationDialog p {
+  color: var(--color-text);
+}
+
+/* Controls Section */
+.controls {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.searchContainer {
+  flex: 1;
+  min-width: 250px;
+  margin-right: 20px;
+}
+
+.filterContainer {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-card-bg);
+  color: var(--color-text);
+  transition: all 0.3s ease;
+}
+
+.filterSelect {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-card-bg);
+  color: var(--color-text);
+  min-width: 150px;
+  transition: all 0.3s ease;
+}
+
+.noResults {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Image Styles */
+.userImage {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+}
+
+.goodImage {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+}
+
+/* Button Styles */
+.actionButton {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.viewButton {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.viewButton:hover {
+  background-color: #2563eb;
+}
+
+.editButton {
+  background-color: #10b981;
+  color: white;
+}
+
+.editButton:hover {
+  background-color: #059669;
+}
+
+.deleteButton {
+  background-color: #ef4444;
+  color: white;
+}
+
+.deleteButton:hover {
+  background-color: #dc2626;
+}
+
+.banButton {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.banButton:hover {
+  background-color: #d97706;
+}
+
+/* Status Badges */
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.badgePending {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.badgeCompleted {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.badgeProcessing {
+  background-color: #e0e7ff;
+  color: #4f46e5;
+}
+
+.badgeFailed {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* See More Button */
+.seeMoreContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.seeMoreButton {
+  padding: 10px 24px;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.seeMoreButton:hover {
+  background-color: var(--color-secondary);
+  text-decoration: none;
+}
+
+/* Error and Loading States */
+.error {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #6b7280;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .controls {
+    flex-direction: column;
+  }
+  
+  .filterContainer {
+    width: 100%;
+  }
+  
+  .filterSelect {
+    flex: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    margin: 16px;
+    padding: 16px;
+  }
+  
+  .title {
+    font-size: 20px;
+  }
+  
+  .tableWrapper {
+    max-height: 500px;
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+
+  .table {
+    min-width: 800px;
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchContainer {
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+
+  .filterContainer {
+    width: 100%;
+  }
+
+  .filterSelect {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+/* Form Styles */
+.form {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+  transition: all 0.3s ease;
+}
+
+.formTitle {
+  color: var(--color-text);
+  margin-bottom: 16px;
+}
+
+.formRow {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.formInput {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-card-bg);
+  color: var(--color-text);
+}
+
+.formButton {
+  padding: 8px 16px;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.formError {
+  color: #dc2626;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+/* Disable Button Styles */
+.disableButton {
+  background-color: #ef4444;
+  color: white;
+}
+
+.disableButton:hover {
+  background-color: #dc2626;
+}
+
+.enableButton {
+  background-color: #10b981;
+  color: white;
+}
+
+.enableButton:hover {
+  background-color: #059669;
+}
+
+/* Optional: Add shadow indicators for scroll */
+.tableWrapper::before,
+.tableWrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tableWrapper::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0));
+}
+
+.tableWrapper::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(255,255,255,0.9), rgba(255,255,255,0));
+}
+
+/* Add dark mode styles */
+:root.dark-mode .container {
+  background: var(--color-card-bg);
+}
+
+:root.dark-mode .table {
+  background-color: var(--color-card-bg);
+}
+
+:root.dark-mode .th {
+  background: var(--color-hover);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+:root.dark-mode .tr {
+  border-bottom: 1px solid var(--color-border);
+}
+
+:root.dark-mode .tr:hover {
+  background-color: var(--color-hover);
+}
+
+:root.dark-mode .td {
+  color: var(--color-text);
+}
+
+:root.dark-mode .searchInput,
+:root.dark-mode .filterSelect {
+  background: var(--color-card-bg);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+:root.dark-mode .searchInput:focus,
+:root.dark-mode .filterSelect:focus {
+  border-color: var(--color-primary);
+}
+
+/* Dark mode styles */
+.darkMode.container {
+  background-color: var(--color-card-bg);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.darkMode.title {
+  color: var(--color-text);
+}
+
+.darkMode .table {
+  background-color: var(--color-card-bg);
+}
+
+.darkMode .tableWrapper {
+  border-color: var(--color-border);
+}
+
+.darkMode .th {
+  background-color: var(--color-hover);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.darkMode .tr {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.darkMode .tr:hover {
+  background-color: var(--color-hover);
+}
+
+.darkMode .td {
+  color: var(--color-text);
+}
+
+.darkMode .searchInput,
+.darkMode .filterSelect {
+  background-color: var(--color-card-bg);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.darkMode .searchInput:focus,
+.darkMode .filterSelect:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(102, 178, 255, 0.1);
+}
+
+.darkMode .actionButton {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.darkMode .actionButton:hover {
+  background-color: var(--color-secondary);
+}
+
+.darkMode .seeMoreButton {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.darkMode .seeMoreButton:hover {
+  background-color: var(--color-secondary);
+}
+
+/* Dark mode scroll shadows */
+.darkMode.tableWrapper::before {
+  background: linear-gradient(to right, var(--color-card-bg), transparent);
+}
+
+.darkMode.tableWrapper::after {
+  background: linear-gradient(to left, var(--color-card-bg), transparent);
+}
+
+/* Dark mode styles */
+.darkMode .searchInput,
+.darkMode .filterSelect,
+.darkMode .formInput {
+  background-color: var(--dark-input-bg);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+.darkMode .form {
+  background-color: var(--dark-card-bg);
+  border-color: var(--dark-border);
+}
+
+.darkMode .formTitle {
+  color: var(--dark-text);
+}
+
+.darkMode .table {
+  background-color: var(--dark-card-bg);
+  color: var(--dark-text);
+}
+
+.darkMode .th {
+  background-color: var(--dark-table-header);
+  color: var(--dark-text);
+  border-color: var(--dark-border);
+}
+
+.darkMode .td {
+  color: var(--dark-text);
+  border-color: var(--dark-border);
+}
+
+/* Dark mode styles */
+.darkMode .confirmationDialog {
+  background-color: var(--dark-background);
+  border-color: var(--dark-border);
+}
+
+.darkMode .confirmationDialog p {
+  color: var(--dark-text);
+}

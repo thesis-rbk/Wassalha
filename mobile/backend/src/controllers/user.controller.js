@@ -478,9 +478,9 @@ const getUsers = async (req, res) => {
   }
 };
 
-// Get a single user by ID, including the user's image
+// Get a single user by ID, including the user's profile data
 const getUserById = async (req, res) => {
-  const { id } = req.params; // Get user ID from request parameters
+  const { id } = req.params;
 
   try {
     const user = await prisma.user.findUnique({
@@ -488,9 +488,35 @@ const getUserById = async (req, res) => {
       include: {
         profile: {
           include: {
-            image: true, // Include the image from the Media table
-          },
+            image: true,
+          }
         },
+        reviewsGiven: {
+          include: {
+            reviewer: {
+              include: {
+                profile: {
+                  include: {
+                    image: true
+                  }
+                }
+              }
+            }
+          }
+        },
+        reviewsReceived: {
+          include: {
+            reviewer: {
+              include: {
+                profile: {
+                  include: {
+                    image: true
+                  }
+                }
+              }
+            }
+          }
+        }
       },
     });
 
@@ -502,9 +528,13 @@ const getUserById = async (req, res) => {
       ...user,
       profile: {
         ...user.profile,
-        banned: user.profile.banned, // Include banned status
-        verified: user.profile.verified, // Include verified status
+        bio: user.profile?.bio || null,
+        review: user.profile?.review || null,
+        isBanned: user.profile?.isBanned || false,
+        verified: user.profile?.verified || false,
       },
+      reviewsGiven: user.reviewsGiven,
+      reviewsReceived: user.reviewsReceived
     });
   } catch (error) {
     console.error("Error fetching user:", error);
@@ -549,19 +579,35 @@ const updateUser = async (req, res) => {
     res.status(500).json({ error: "Failed to update user" });
   }
 };
+
 // Delete a user
 const deleteUser = async (req, res) => {
-  const { id } = req.params; // Get user ID from request parameters
+  const { id } = req.params;
 
   try {
-    await prisma.user.delete({
-      where: { id: parseInt(id) },
+    // First delete the profile (due to foreign key constraints)
+    await prisma.profile.delete({
+      where: { userId: parseInt(id) }
     });
 
-    res.status(200).json({ message: "User deleted successfully" });
+    // Then delete the user
+    await prisma.user.delete({
+      where: { id: parseInt(id) }
+    });
+
+    res.status(200).json({ 
+      success: true,
+      message: "User and associated profile deleted successfully" 
+    });
   } catch (error) {
     console.error("Error deleting user:", error);
-    res.status(500).json({ error: "Failed to delete user" });
+    res.status(500).json({ 
+      success: false,
+      error: "Failed to delete user",
+      details: error.message 
+    });
+  } finally {
+    await prisma.$disconnect();
   }
 };
 

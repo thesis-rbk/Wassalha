@@ -18,21 +18,41 @@ const AdminLogin = () => {
     
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/users/admin/login",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/admin/login`,
         { email, password }
       );
+
+      console.log("Login - Full response data:", response.data); // Debug log
+
+      if (!response.data.user?.id) {
+        console.error("Login - No user ID in response:", response.data); // Debug log
+        throw new Error("No user ID in response");
+      }
+
+      const userData = {
+        id: response.data.user.id,
+        name: response.data.user.name,
+        role: response.data.user.role,
+        profile: {
+          image: {
+            url: response.data.user.profile?.image?.url
+          }
+        }
+      };
+
+      console.log("Login - Storing user data:", userData); // Debug log
+
       localStorage.setItem("adminToken", response.data.token);
-      localStorage.setItem(
-        "userData",
-        JSON.stringify({
-          name: response.data.user.name,
-          role: response.data.user.role,
-          image: response.data.user.image, // Ensure this field exists in the response
-        })
-      );
+      localStorage.setItem("userData", JSON.stringify(userData));
+
+      // Verify the data was stored correctly
+      const storedData = localStorage.getItem("userData");
+      console.log("Login - Verified stored data:", storedData); // Debug log
+
       router.push("/AdminDashboard");
     } catch (error) {
-      setError("Invalid email or password"); // Handle error
+      console.error("Login error:", error);
+      setError("Invalid email or password");
     }
   };
 

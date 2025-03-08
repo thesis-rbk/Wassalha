@@ -84,9 +84,22 @@ exports.deletePromoPost = async (req, res) => {
   const { id } = req.params;
 
   try {
+    // Check if promo post exists before attempting to delete
+    const existingPost = await prisma.promoPost.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!existingPost) {
+      return res.status(404).json({
+        success: false,
+        message: "Promo post not found"
+      });
+    }
+
     await prisma.promoPost.delete({
       where: { id: parseInt(id) },
     });
+
     res.status(200).json({
       success: true,
       message: "Promo post deleted successfully",

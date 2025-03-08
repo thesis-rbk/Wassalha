@@ -127,8 +127,23 @@ class RequestController {
     // Delete Request
     async deleteRequest(req, res) {
         try {
+            const requestId = parseInt(req.params.id);
+            
+            // Check if request exists
+            const existingRequest = await prisma.request.findUnique({
+                where: { id: requestId }
+            });
+
+            if (!existingRequest) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Request not found'
+                });
+            }
+
+            // Delete the request
             await prisma.request.delete({
-                where: { id: parseInt(req.params.id) },
+                where: { id: requestId },
             });
 
             res.status(200).json({
@@ -136,8 +151,10 @@ class RequestController {
                 message: 'Request deleted successfully',
             });
         } catch (error) {
-            res.status(400).json({
+            console.error("Error deleting request:", error);
+            res.status(500).json({
                 success: false,
+                message: 'Failed to delete request',
                 error: error.message,
             });
         }
