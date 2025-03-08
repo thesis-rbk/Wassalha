@@ -23,7 +23,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/context/ThemeContext";
 import { Traveler } from "@/types/Traveler"
-// import { AppNotification } from "./Notification"
+import { Notification } from "./Notification"
 import axios from "axios";
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home");
@@ -160,7 +160,7 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-
+      <Notification />
       <TabBar activeTab={activeTab} onTabPress={setActiveTab} />
     </ThemedView>
   );
