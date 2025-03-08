@@ -2,21 +2,39 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { ThemedText } from '@/components/ThemedText';
-import { MapPin, Calendar, Package, DollarSign, Box, Info, User as UserIcon, Star, Shield, MessageCircle, Award, Users } from 'lucide-react-native';
+import { 
+  MapPin, 
+  Calendar, 
+  Package, 
+  DollarSign, 
+  Box, 
+  Info, 
+  User, 
+  Star, 
+  Shield, 
+  MessageCircle, 
+  Award, 
+  Users,
+  Bell
+} from 'lucide-react-native';
 import { BACKEND_URL } from '@/config';
 import axiosInstance from '@/config';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useAuth } from '@/hooks/useAuth';
-import { User, Profile, Reputation } from '@/types';
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { TitleLarge, BodyMedium } from "@/components/Typography";
+import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import { User as UserType, Profile, Reputation } from '@/types';
 import { ReputationDisplayProps } from '@/types/ReputationDisplayProps';
 
 export default function InitializationSp() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const { user: currentUser } = useAuth();
+  const colorScheme = useColorScheme() ?? "light";
   
   // Log received params
   console.log('InitializationSp received params:', params);
@@ -53,6 +71,7 @@ export default function InitializationSp() {
     deliveryDate: new Date(),
     message: ''
   });
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   React.useEffect(() => {
     fetchRequestDetails();
@@ -132,7 +151,7 @@ export default function InitializationSp() {
     return colors[index];
   };
 
-  const UserAvatar = ({ user }: { user: User }) => {
+  const UserAvatar = ({ user }: { user: UserType }) => {
     return (
       <View style={styles.avatarContainer}>
         {user?.profile?.imageId ? (
@@ -146,9 +165,9 @@ export default function InitializationSp() {
             colors={['#007AFF', '#00C6FF']}
             style={styles.avatar}
           >
-            <ThemedText style={styles.initials}>
+            <BodyMedium style={styles.initials}>
               {getInitials(user?.name)}
-            </ThemedText>
+            </BodyMedium>
           </LinearGradient>
         )}
         {user?.profile?.isVerified && (
@@ -165,22 +184,22 @@ export default function InitializationSp() {
         <View style={styles.reputationItem}>
           <View style={styles.ratingHeader}>
             <Star size={16} color="#f59e0b" fill="#f59e0b" />
-            <ThemedText style={styles.ratingScore}>
+            <BodyMedium style={styles.ratingScore}>
               {Number(reputation.score).toFixed(1)}
-            </ThemedText>
+            </BodyMedium>
           </View>
-          <ThemedText style={styles.ratingCount}>
+          <BodyMedium style={styles.ratingCount}>
             {reputation.totalRatings} ratings
-          </ThemedText>
+          </BodyMedium>
         </View>
 
         {/* Level Badge */}
         <View style={styles.reputationItem}>
           <View style={styles.levelBadge}>
             <Award size={16} color="#7c3aed" />
-            <ThemedText style={styles.levelText}>
+            <BodyMedium style={styles.levelText}>
               Level {reputation.level}
-            </ThemedText>
+            </BodyMedium>
           </View>
         </View>
 
@@ -189,7 +208,7 @@ export default function InitializationSp() {
           <View style={styles.reputationItem}>
             <View style={styles.verifiedBadgeInline}>
               <Shield size={16} color="#22c55e" />
-              <ThemedText style={styles.verifiedText}>Verified</ThemedText>
+              <BodyMedium style={styles.verifiedText}>Verified</BodyMedium>
             </View>
           </View>
         )}
@@ -202,219 +221,275 @@ export default function InitializationSp() {
   if (loading || !requestDetails) {
     return (
       <View style={styles.loadingContainer}>
-        <ThemedText>Loading...</ThemedText>
+        <BodyMedium>Loading...</BodyMedium>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Product Image */}
-      <View style={styles.imageContainer}>
-        <Image
-          source={{ uri: `${BACKEND_URL}/api/uploads/${requestDetails.goods.image?.filename}` }}
-          style={styles.productImage}
-          contentFit="cover"
-        />
+    <View style={styles.container}>
+      {/* Header matching create-order.tsx */}
+      <View style={styles.header}>
+        <TitleLarge style={styles.headerTitle}>Request Details</TitleLarge>
+        <View style={styles.headerIcons}>
+          <Bell size={24} color={Colors[colorScheme].primary} />
+          <MessageCircle size={24} color={Colors[colorScheme].primary} />
+          <User size={24} color={Colors[colorScheme].primary} />
+        </View>
       </View>
 
-      {/* Request Details */}
-      <View style={styles.detailsContainer}>
-        <ThemedText style={styles.title}>{requestDetails.goods.name}</ThemedText>
-        
-        {/* Price and Category */}
-        <View style={styles.priceCategory}>
-          <View style={styles.priceContainer}>
-            <DollarSign size={20} color="#16a34a" />
-            <ThemedText style={styles.price}>
-              ${requestDetails.goods.price.toFixed(2)}
-            </ThemedText>
-          </View>
-          <ThemedText style={styles.category}>
-            {requestDetails.goods.category?.name}
-          </ThemedText>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* Product Image */}
+        <View style={styles.imageContainer}>
+          <Image
+            source={{ uri: `${BACKEND_URL}/api/uploads/${requestDetails.goods.image?.filename}` }}
+            style={styles.productImage}
+            contentFit="cover"
+            onError={(error) => console.error("Image loading error:", error)}
+          />
         </View>
 
-        {/* Delivery Details */}
-        <View style={styles.infoCard}>
-          <View style={styles.infoRow}>
-            <MapPin size={20} color="#64748b" />
-            <View style={styles.infoContent}>
-              <ThemedText style={styles.infoLabel}>Route</ThemedText>
-              <ThemedText style={styles.infoValue}>
-                {requestDetails.goodsLocation} → {requestDetails.goodsDestination}
-              </ThemedText>
-            </View>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Calendar size={20} color="#64748b" />
-            <View style={styles.infoContent}>
-              <ThemedText style={styles.infoLabel}>Delivery Date</ThemedText>
-              <ThemedText style={styles.infoValue}>
-                {new Date(requestDetails.date).toLocaleDateString()}
-              </ThemedText>
-            </View>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Package size={20} color="#64748b" />
-            <View style={styles.infoContent}>
-              <ThemedText style={styles.infoLabel}>Quantity</ThemedText>
-              <ThemedText style={styles.infoValue}>{requestDetails.quantity}</ThemedText>
-            </View>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Box size={20} color="#64748b" />
-            <View style={styles.infoContent}>
-              <ThemedText style={styles.infoLabel}>Original Box</ThemedText>
-              <ThemedText style={styles.infoValue}>
-                {requestDetails.withBox ? 'Required' : 'Not Required'}
-              </ThemedText>
-            </View>
-          </View>
-        </View>
-
-        {/* Product Description */}
-        {requestDetails.goods.description && (
-          <View style={styles.descriptionCard}>
-            <View style={styles.sectionHeader}>
-              <Info size={20} color="#64748b" />
-              <ThemedText style={styles.sectionTitle}>Description</ThemedText>
-            </View>
-            <ThemedText style={styles.description}>
-              {requestDetails.goods.description}
-            </ThemedText>
-          </View>
-        )}
-
-        {/* Requester Information */}
-        <View style={styles.requesterSection}>
-          <ThemedText style={styles.sectionTitle}>Request by</ThemedText>
+        {/* Request Details */}
+        <View style={styles.detailsContainer}>
+          <TitleLarge style={styles.title}>{requestDetails.goods.name}</TitleLarge>
           
-          <View style={styles.requesterCard}>
-            <View style={styles.requesterHeader}>
-              <UserAvatar user={requestDetails.user} />
-              <View style={styles.requesterInfo}>
-                <ThemedText style={styles.requesterName}>
-                  {requestDetails.user.name}
-                </ThemedText>
-                <ReputationDisplay 
-                  reputation={{
-                    score: Number(params.requesterRating),
-                    level: Number(params.requesterLevel),
-                    totalRatings: Number(params.requesterTotalRatings)
-                  }}
-                  isVerified={params.requesterVerified === 'true'}
+          {/* Price and Category */}
+          <View style={styles.priceCategory}>
+            <View style={styles.priceContainer}>
+              <DollarSign size={20} color={Colors[colorScheme].primary} />
+              <BodyMedium style={styles.price}>
+                ${requestDetails.goods.price.toFixed(2)}
+              </BodyMedium>
+            </View>
+            <BodyMedium style={styles.category}>
+              {requestDetails.goods.category?.name || "Uncategorized"}
+            </BodyMedium>
+          </View>
+
+          {/* Delivery Details */}
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <MapPin size={20} color={Colors[colorScheme].primary} />
+              <View style={styles.infoContent}>
+                <BodyMedium style={styles.infoLabel}>Route</BodyMedium>
+                <BodyMedium style={styles.infoValue}>
+                  {requestDetails.goodsLocation} → {requestDetails.goodsDestination}
+                </BodyMedium>
+              </View>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Calendar size={20} color={Colors[colorScheme].primary} />
+              <View style={styles.infoContent}>
+                <BodyMedium style={styles.infoLabel}>Delivery Date</BodyMedium>
+                <BodyMedium style={styles.infoValue}>
+                  {new Date(requestDetails.date).toLocaleDateString()}
+                </BodyMedium>
+              </View>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Package size={20} color={Colors[colorScheme].primary} />
+              <View style={styles.infoContent}>
+                <BodyMedium style={styles.infoLabel}>Quantity</BodyMedium>
+                <BodyMedium style={styles.infoValue}>{requestDetails.quantity}</BodyMedium>
+              </View>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Box size={20} color={Colors[colorScheme].primary} />
+              <View style={styles.infoContent}>
+                <BodyMedium style={styles.infoLabel}>Original Box</BodyMedium>
+                <BodyMedium style={styles.infoValue}>
+                  {requestDetails.withBox ? 'Required' : 'Not Required'}
+                </BodyMedium>
+              </View>
+            </View>
+          </View>
+
+          {/* Product Description */}
+          {requestDetails.goods.description && (
+            <View style={styles.descriptionCard}>
+              <View style={styles.sectionHeader}>
+                <Info size={20} color={Colors[colorScheme].primary} />
+                <BodyMedium style={styles.sectionTitle}>Description</BodyMedium>
+              </View>
+              <BodyMedium style={styles.description}>
+                {requestDetails.goods.description}
+              </BodyMedium>
+            </View>
+          )}
+
+          {/* Requester Information */}
+          <View style={styles.requesterSection}>
+            <TitleLarge style={styles.sectionTitle}>Request by</TitleLarge>
+            
+            <View style={styles.requesterCard}>
+              <View style={styles.requesterHeader}>
+                <UserAvatar user={requestDetails.user} />
+                <View style={styles.requesterInfo}>
+                  <BodyMedium style={styles.requesterName}>
+                    {requestDetails.user.name}
+                  </BodyMedium>
+                  <ReputationDisplay 
+                    reputation={{
+                      score: Number(params.requesterRating),
+                      level: Number(params.requesterLevel),
+                      totalRatings: Number(params.requesterTotalRatings)
+                    }}
+                    isVerified={params.requesterVerified === 'true'}
+                  />
+                </View>
+              </View>
+
+              <BlurView intensity={85} tint="light" style={styles.blurredSection}>
+                <View style={styles.securityNote}>
+                  <BodyMedium style={styles.securityText}>
+                    🔒 Contact information will be available after offer acceptance
+                  </BodyMedium>
+                </View>
+              </BlurView>
+
+              <BaseButton 
+                size="large"
+                onPress={() => Alert.alert(
+                  'Contact Available After Acceptance',
+                  'You will be able to message and coordinate with the requester once they accept your offer.'
+                )}
+                style={styles.contactButton}
+              >
+                <MessageCircle size={20} color="#ffffff" />
+                <BodyMedium style={styles.contactButtonText}>
+                  Contact after acceptance
+                </BodyMedium>
+              </BaseButton>
+            </View>
+          </View>
+
+          {/* Make Offer Button */}
+          {showOfferForm ? (
+            <View style={styles.offerFormContainer}>
+              <TitleLarge style={styles.formTitle}>Make an Offer</TitleLarge>
+              
+              <View style={styles.formField}>
+                <BodyMedium style={styles.label}>Your Price</BodyMedium>
+                <TextInput
+                  style={styles.input}
+                  value={offerDetails.price.toString()}
+                  onChangeText={(text) => setOfferDetails(prev => ({...prev, price: text}))}
+                  keyboardType="numeric"
+                  placeholder="Enter your price"
                 />
               </View>
-            </View>
 
-            <BlurView intensity={85} tint="light" style={styles.blurredSection}>
-              <View style={styles.securityNote}>
-                <ThemedText style={styles.securityText}>
-                  🔒 Contact information will be available after offer acceptance
-                </ThemedText>
+              <View style={styles.formField}>
+                <BodyMedium style={styles.label}>Estimated Delivery Date</BodyMedium>
+                <TouchableOpacity 
+                  style={styles.input}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <BodyMedium>
+                    {offerDetails.deliveryDate.toLocaleDateString()}
+                  </BodyMedium>
+                </TouchableOpacity>
+
+                <DateTimePickerModal
+                  isVisible={showDatePicker}
+                  mode="date"
+                  onConfirm={(date) => {
+                    setShowDatePicker(false);
+                    setOfferDetails(prev => ({...prev, deliveryDate: date}));
+                  }}
+                  onCancel={() => setShowDatePicker(false)}
+                  minimumDate={new Date()}
+                />
               </View>
-            </BlurView>
 
-            <TouchableOpacity 
-              style={styles.contactButton}
-              onPress={() => Alert.alert(
-                'Contact Available After Acceptance',
-                'You will be able to message and coordinate with the requester once they accept your offer.'
-              )}
+              <View style={styles.formField}>
+                <BodyMedium style={styles.label}>Message to Requester</BodyMedium>
+                <TextInput
+                  style={[styles.input, styles.messageInput]}
+                  value={offerDetails.message}
+                  onChangeText={(text) => setOfferDetails(prev => ({...prev, message: text}))}
+                  multiline
+                  placeholder="Add any additional details about your offer"
+                />
+              </View>
+
+              <View style={styles.buttonRow}>
+                <TouchableOpacity 
+                  style={[styles.button, styles.cancelButton]}
+                  onPress={() => setShowOfferForm(false)}
+                >
+                  <BodyMedium style={styles.cancelButtonText}>Cancel</BodyMedium>
+                </TouchableOpacity>
+                
+                <BaseButton 
+                  size="large"
+                  onPress={handleSubmitOffer}
+                  style={styles.submitButton}
+                >
+                  <BodyMedium style={styles.submitButtonText}>Submit Offer</BodyMedium>
+                </BaseButton>
+              </View>
+            </View>
+          ) : (
+            <BaseButton
+              size="large"
+              onPress={handleMakeOffer}
+              style={styles.makeOfferButton}
             >
-              <MessageCircle size={20} color="#ffffff" />
-              <ThemedText style={styles.contactButtonText}>
-                Contact after acceptance
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
+              <BodyMedium style={styles.makeOfferButtonText}>Make an Offer</BodyMedium>
+            </BaseButton>
+          )}
         </View>
-
-        {/* Make Offer Button */}
-        {showOfferForm ? (
-          <View style={styles.offerFormContainer}>
-            <ThemedText style={styles.formTitle}>Make an Offer</ThemedText>
-            
-            <View style={styles.formField}>
-              <ThemedText style={styles.label}>Your Price</ThemedText>
-              <TextInput
-                style={styles.input}
-                value={offerDetails.price.toString()}
-                onChangeText={(text) => setOfferDetails(prev => ({...prev, price: text}))}
-                keyboardType="numeric"
-                placeholder="Enter your price"
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <ThemedText style={styles.label}>Estimated Delivery Date</ThemedText>
-              <DateTimePicker
-                value={offerDetails.deliveryDate}
-                onChange={(event, date) => 
-                  setOfferDetails(prev => ({...prev, deliveryDate: date || prev.deliveryDate}))
-                }
-                minimumDate={new Date()}
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <ThemedText style={styles.label}>Message to Requester</ThemedText>
-              <TextInput
-                style={[styles.input, styles.messageInput]}
-                value={offerDetails.message}
-                onChangeText={(text) => setOfferDetails(prev => ({...prev, message: text}))}
-                multiline
-                placeholder="Add any additional details about your offer"
-              />
-            </View>
-
-            <View style={styles.buttonRow}>
-              <TouchableOpacity 
-                style={[styles.button, styles.cancelButton]}
-                onPress={() => setShowOfferForm(false)}
-              >
-                <ThemedText style={styles.buttonText}>Cancel</ThemedText>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.button, styles.submitButton]}
-                onPress={handleSubmitOffer}
-              >
-                <ThemedText style={styles.buttonText}>Submit Offer</ThemedText>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          <TouchableOpacity 
-            style={styles.makeOfferButton}
-            onPress={handleMakeOffer}
-          >
-            <ThemedText style={styles.makeOfferButtonText}>Make an Offer</ThemedText>
-          </TouchableOpacity>
-        )}
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
+  container: { 
+    flex: 1, 
+    backgroundColor: "#fff" 
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  headerTitle: { 
+    fontSize: 20, 
+    color: Colors.light.primary 
+  },
+  headerIcons: { 
+    flexDirection: "row", 
+    gap: 16 
+  },
+  scrollView: { 
+    flex: 1 
+  },
+  scrollContent: { 
+    padding: 16, 
+    paddingBottom: 32 
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: "#fff",
   },
   imageContainer: {
     width: '100%',
     height: 300,
     backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 16,
   },
   productImage: {
     width: '100%',
@@ -422,11 +497,13 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     padding: 16,
+    backgroundColor: "#fff",
+    borderRadius: 12,
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1e293b',
+    color: Colors.light.text,
     marginBottom: 8,
   },
   priceCategory: {
@@ -442,12 +519,12 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#16a34a',
+    color: Colors.light.primary,
     marginLeft: 4,
   },
   category: {
     fontSize: 16,
-    color: '#64748b',
+    color: Colors.light.text,
     backgroundColor: '#f1f5f9',
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -463,6 +540,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
   infoRow: {
     flexDirection: 'row',
@@ -475,13 +554,13 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    color: '#64748b',
+    color: Colors.light.text,
     marginBottom: 2,
   },
   infoValue: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1e293b',
+    color: Colors.light.text,
   },
   descriptionCard: {
     backgroundColor: 'white',
@@ -493,6 +572,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -502,24 +583,25 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1e293b',
+    color: Colors.light.text,
     marginLeft: 8,
   },
   description: {
     fontSize: 16,
-    color: '#334155',
+    color: Colors.light.text,
     lineHeight: 24,
   },
   requesterSection: {
     marginTop: 24,
     marginBottom: 16,
-    paddingHorizontal: 16,
   },
   requesterCard: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 16,
     marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
   requesterHeader: {
     flexDirection: 'row',
@@ -556,7 +638,7 @@ const styles = StyleSheet.create({
   blurredSection: {
     borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: 16,
+    marginVertical: 16,
   },
   securityNote: {
     padding: 12,
@@ -564,10 +646,10 @@ const styles = StyleSheet.create({
   },
   securityText: {
     fontSize: 13,
-    color: '#64748b',
+    color: Colors.light.secondary,
   },
   contactButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: Colors.light.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -585,18 +667,21 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginTop: 16,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
   formTitle: {
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 16,
+    color: Colors.light.text,
   },
   formField: {
     marginBottom: 16,
   },
   label: {
     fontSize: 14,
-    color: '#64748b',
+    color: Colors.light.text,
     marginBottom: 8,
   },
   input: {
@@ -605,6 +690,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    color: Colors.light.text,
   },
   messageInput: {
     height: 100,
@@ -614,6 +700,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
+    marginTop: 16,
   },
   button: {
     flex: 1,
@@ -623,20 +710,30 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     backgroundColor: '#e2e8f0',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.light.text,
   },
   submitButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: Colors.light.primary,
+    flex: 1,
   },
-  buttonText: {
+  submitButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: 'white',
   },
   makeOfferButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: Colors.light.primary,
     borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
+    marginTop: 24,
+    width: "100%",
   },
   makeOfferButtonText: {
     color: 'white',
@@ -649,11 +746,11 @@ const styles = StyleSheet.create({
   requesterName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1e293b',
+    color: Colors.light.text,
   },
   requestCount: {
     fontSize: 14,
-    color: '#64748b',
+    color: Colors.light.text,
     marginTop: 2,
   },
   reputationContainer: {
@@ -678,7 +775,7 @@ const styles = StyleSheet.create({
   },
   ratingCount: {
     fontSize: 12,
-    color: '#64748b',
+    color: Colors.light.text,
     marginLeft: 4,
   },
   levelBadge: {

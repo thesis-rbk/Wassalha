@@ -6,6 +6,7 @@ import {
   Switch,
   ScrollView,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { Camera, X, Minus, Plus } from 'lucide-react-native';
 import { InputField } from '@/components/InputField';
@@ -16,7 +17,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { useLocalSearchParams } from 'expo-router';
 import { ProductDetailsProps } from '@/types/ProductDetails';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import axiosInstance from "@/config";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -48,18 +49,28 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
 
   const pickImage = async () => {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'images',
-        allowsEditing: true,
-        quality: 1,
+      console.log('📄 Opening document picker...');
+      
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/*'], // Limit to image files
+        copyToCacheDirectory: true
       });
-  
-      if (!result.canceled && result.assets.length > 0) {
-        setProductImage(result.assets[0].uri);
+      
+      console.log('📄 Document picker result:', result);
+      
+      if (result.canceled === false && result.assets && result.assets.length > 0) {
+        const selectedFile = result.assets[0];
+        console.log('📄 Selected file:', selectedFile);
+        
+        // Update state with the selected file URI
+        setProductImage(selectedFile.uri);
+        console.log('📄 Updated product image with new URI:', selectedFile.uri);
+      } else {
+        console.log('📄 Document picking cancelled or no file selected');
       }
     } catch (error) {
-      console.error('Image picker error:', error);
-      Alert.alert('Error', 'Failed to pick image. Please try again.');
+      console.error('❌ Error picking document:', error);
+      Alert.alert('Error', 'Failed to pick document');
     }
   };
   
@@ -109,7 +120,23 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
         <View style={styles.imageContainer}>
           {productImage ? (
             <View style={styles.imageWrapper}>
-              <Image source={{ uri: productImage }} style={styles.productImage} />
+              <Image 
+                source={{ uri: productImage }} 
+                style={styles.productImage} 
+                onError={(e) => {
+                  console.error('Image loading error:', e.nativeEvent.error);
+                  Alert.alert('Error', 'Failed to load image. Please try selecting another image.');
+                  setProductImage('');
+                }}
+              />
+              <TouchableOpacity 
+                style={styles.changeImageButton}
+                onPress={pickImage}
+              >
+                <BodyMedium style={styles.changeImageText}>
+                  Change Image
+                </BodyMedium>
+              </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.uploadCard}>
@@ -247,6 +274,18 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   buttonText: { color: '#ffffff' },
+  changeImageButton: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 8,
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    borderTopLeftRadius: 8,
+  },
+  changeImageText: {
+    color: '#fff',
+    fontSize: 14,
+  },
 });
 
 export default ProductDetails;

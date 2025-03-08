@@ -30,7 +30,7 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static files from the "uploads" directory
-app.use('/api/uploads', express.static(path.join(__dirname, '/uploads'))); // Serve static files
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve static files
 // console.log("pathsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", path.join(__dirname, 'src/uploads'));
 app.use("/api/fecth", fetchRoute)
 // Routes
