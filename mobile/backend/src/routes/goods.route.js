@@ -4,7 +4,7 @@ const router = express.Router();
 const { createGoods } = require('../controllers/goods.controller');
 
 // Create new goods
-router.post('/',  createGoods);
+router.post('/', multer.single('file'), createGoods);
 
 // Add logging middleware
 router.use((req, res, next) => {

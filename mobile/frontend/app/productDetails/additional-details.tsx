@@ -2,8 +2,8 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native"
-import { ChevronDown } from "lucide-react-native"
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Image as RNImage } from "react-native"
+import { ChevronDown, Upload, Image as ImageIcon } from "lucide-react-native"
 import { InputField } from "@/components/InputField"
 import { BaseButton } from "@/components/ui/buttons/BaseButton"
 import { TitleLarge, TitleSection, BodyMedium } from "@/components/Typography"
@@ -13,6 +13,8 @@ import { useRouter, useLocalSearchParams } from "expo-router"
 import { Category } from '@/types/Category'
 import axiosInstance from "@/config"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import * as FileSystem from 'expo-file-system'
+import * as DocumentPicker from 'expo-document-picker'
 
 const AdditionalDetails: React.FC = () => {
   const colorScheme = useColorScheme() ?? "light"
@@ -20,13 +22,13 @@ const AdditionalDetails: React.FC = () => {
   const params = useLocalSearchParams()
 
   // Update the productDetails conversion to include all passed data
-  const productDetails = {
+  const [productDetails, setProductDetails] = useState({
     name: params.name as string,
     price: parseFloat(params.price as string),
     details: params.details as string,
     withBox: params.withBox === 'true',
     imageUri: params.imageUri as string | undefined
-  }
+  });
 
   console.log('Received and converted data:', productDetails)
 
@@ -46,8 +48,10 @@ const AdditionalDetails: React.FC = () => {
 
   // Add this to handle closing dropdown when clicking outside
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  
+  // Add loading state for image picker
+  const [imageLoading, setImageLoading] = useState(false);
 
-  // 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -68,123 +72,248 @@ const AdditionalDetails: React.FC = () => {
     setShowCategoryDropdown(false)
   }
 
+  // Document picker function
+  const pickDocument = async () => {
+    try {
+      setImageLoading(true);
+      console.log('📄 Opening document picker...');
+      
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/*'], // Limit to image files
+        copyToCacheDirectory: true
+      });
+      
+      console.log('📄 Document picker result:', result);
+      
+      if (result.canceled === false && result.assets && result.assets.length > 0) {
+        const selectedFile = result.assets[0];
+        console.log('📄 Selected file:', selectedFile);
+        
+        // Update state with the selected file URI
+        setProductDetails(prev => ({
+          ...prev,
+          imageUri: selectedFile.uri
+        }));
+        
+        console.log('📄 Updated product details with new image URI:', selectedFile.uri);
+      } else {
+        console.log('📄 Document picking cancelled or no file selected');
+      }
+    } catch (error) {
+      console.error('❌ Error picking document:', error);
+      Alert.alert('Error', 'Failed to pick document');
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  // Add this right before your handleSubmit function
+  const debugFormData = (formData: FormData) => {
+    console.log('🔍 DEBUG: FormData contents:');
+    // @ts-ignore - accessing _parts which exists in React Native's FormData
+    const parts = formData._parts || [];
+    parts.forEach((part: [string, any], index: number) => {
+      if (part[0] === 'file' && part[1] && typeof part[1] === 'object') {
+        console.log(`📎 Part ${index} (File):`, {
+          fieldName: part[0],
+          fileName: part[1].name,
+          type: part[1].type,
+          uri: part[1].uri ? `${part[1].uri.substring(0, 30)}...` : undefined
+        });
+      } else {
+        console.log(`📝 Part ${index}:`, part);
+      }
+    });
+  };
+
+  // Then modify your handleSubmit function to include debugging
   const handleSubmit = async () => {
     try {
       console.log('🚀 Starting submission process...');
-      const jwtToken = await AsyncStorage.getItem('jwtToken');
+      let jwtToken = await AsyncStorage.getItem('jwtToken');
       console.log('🔑 Token retrieved:', jwtToken ? 'Found' : 'Not found');
-
-      // Test connection before main request
-      try {
-        console.log('🔄 Testing connection...');
-        const testResponse = await axiosInstance.get('/api/categories');
-        console.log('✅ Connection test successful');
-      } catch (e) {
-        console.error('❌ Connection test failed:', e);
-      }
-
-      const formData = new FormData();
       
-      // Log each field being added
-      const fields = {
-        name: productDetails.name,
-        price: productDetails.price.toString(),
-        description: productDetails.details,
-        categoryId: categoryId!.toString(),
-        size,
-        weight,
-        isVerified: 'false'
-      };
-
-      console.log('Adding fields to FormData:', fields);
-      Object.entries(fields).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
-      });
-      console.log('📝 Creating FormData with fields:', fields);
-      // 3. Image Handling
-      if (productDetails.imageUri) {
-        console.log('Starting image processing...');
-        console.log('Original imageUri:', productDetails.imageUri);
-        
-        const uriParts = productDetails.imageUri.split('.');
-        const fileType = uriParts[uriParts.length - 1];
-        
-        const imageData = {
-          uri: productDetails.imageUri,
-          name: `photo.${fileType}`,
-          type: `image/${fileType}`,
-        };
-        console.log('Final imageData:', imageData);
-        console.log('🖼️ Processing image:', productDetails.imageUri);
-        console.log('📦 FormData before image:', formData);
-        formData.append('image', imageData as any);
-        console.log('📦 FormData after image append');
+      // Make sure we have a token
+      if (!jwtToken) {
+        Alert.alert('Error', 'You need to be logged in to create a request');
+        return;
       }
-
-      console.log('📡 Making API call to:', `${axiosInstance.defaults.baseURL}/api/goods`);
-      const goodsResponse = await axiosInstance.post('/api/goods', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${jwtToken}`
-        },
-        timeout: 30000,
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            console.log('⏫ Upload progress:', Math.round((progressEvent.loaded * 100) / progressEvent.total));
+      
+      // Check if token is expired and refresh if needed
+      try {
+        // Try a simple API call to check token validity
+        await axiosInstance.get('/api/categories', {
+          headers: {
+            'Authorization': `Bearer ${jwtToken}`
+          }
+        });
+      } catch (tokenError: any) {
+        // If token is expired, try to refresh it
+        if (tokenError.response?.status === 401 && 
+            tokenError.response?.data?.message === 'jwt expired') {
+          console.log('🔄 Token expired, attempting to refresh...');
+          try {
+            // Call your refresh token endpoint
+            const refreshResponse = await axiosInstance.post('/api/auth/refresh-token');
+            if (refreshResponse.data.success) {
+              const newToken = refreshResponse.data.token;
+              if (newToken) {
+                jwtToken = newToken;
+                await AsyncStorage.setItem('jwtToken', newToken);
+                console.log('🔑 Token refreshed successfully');
+              }
+            } else {
+              // If refresh fails, redirect to login
+              Alert.alert('Session Expired', 'Please log in again');
+              router.replace('../login');
+              return;
+            }
+          } catch (refreshError) {
+            console.error('❌ Token refresh failed:', refreshError);
+            Alert.alert('Session Expired', 'Please log in again');
+            router.replace('../login');
+            return;
           }
         }
-      });
-
-      console.log('✅ Goods creation successful:', goodsResponse.data);
-      
-      // if (goodsResponse.data.success) {
-      //   // 7. Creating Request
-      //   console.log('Creating request with goods ID:', goodsResponse.data.data.id);
-      //   const requestData = {
-      //     goodsId: goodsResponse.data.data.id,
-      //     quantity: parseInt(quantity),
-      //     goodsLocation,
-      //     goodsDestination,
-      //     date: new Date(deliveryDate),
-      //     withBox: productDetails.withBox
-      //   };
-
-      //   console.log('Request data:', requestData);
-      //   const requestResponse = await axiosInstance.post('/api/requests', requestData);
-        
-      //   console.log('Request creation response:', requestResponse.data);
-      //   if (requestResponse.data.success) {
-      //     console.log('✅ Goods and Request created successfully');
-      //     router.push('/home');
-      //   }
-      // }
-    } catch (error: any) {
-      console.error('Detailed error information:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        headers: error.response?.headers,
-        config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          headers: error.config?.headers,
-          data: error.config?.data
-        }
-      });
-      // tMore specific error messages based on the error type
-      if (error.code === 'ECONNABORTED') {
-        
-        Alert.alert('Error', 'Request timed out. Please try again.');
-      } else if (error.response?.status === 413) {
-        Alert.alert('Error', 'Image file is too large. Please choose a smaller image.');
-      } else if (error.response?.status === 401) {
-        Alert.alert('Error', 'Authentication failed. Please log in again.');
-      } else {
-        Alert.alert('Error', `Failed to create goods and request: ${error.message}`);
       }
-    } finally {
-      await AsyncStorage.removeItem('token');
+      
+      // Create FormData for goods with image
+      console.log('📤 Creating goods with image...');
+      
+      const formData = new FormData();
+      
+      // Add all the goods data
+      formData.append('name', productDetails.name);
+      formData.append('price', productDetails.price.toString());
+      formData.append('description', productDetails.details);
+      formData.append('categoryId', categoryId!.toString());
+      formData.append('isVerified', 'false');
+      
+      // Add image if available - using document picker approach
+      if (productDetails.imageUri) {
+        console.log('📄 Processing selected image:', productDetails.imageUri);
+        
+        // Get file info
+        const fileInfo = await FileSystem.getInfoAsync(productDetails.imageUri);
+        console.log('📄 File info:', fileInfo);
+        
+        // Determine file type based on URI
+        const uriParts = productDetails.imageUri.split('.');
+        const fileExtension = uriParts[uriParts.length - 1];
+        
+        let fileType = 'image/jpeg'; // Default
+        if (fileExtension) {
+          if (fileExtension.toLowerCase() === 'png') {
+            fileType = 'image/png';
+          } else if (fileExtension.toLowerCase() === 'gif') {
+            fileType = 'image/gif';
+          } else if (fileExtension.toLowerCase() === 'webp') {
+            fileType = 'image/webp';
+          }
+        }
+        
+        // Get filename from URI
+        const fileName = productDetails.imageUri.split('/').pop() || `image.${fileExtension || 'jpg'}`;
+        
+        console.log('📄 Creating file object with:', {
+          uri: productDetails.imageUri,
+          type: fileType,
+          name: fileName
+        });
+        
+        const imageFile = {
+          uri: productDetails.imageUri,
+          type: fileType,
+          name: fileName,
+        };
+        
+        formData.append('file', imageFile as any);
+        console.log('📎 Appended image to FormData');
+      } else {
+        console.log('⚠️ No image selected');
+      }
+      
+      // Debug the FormData
+      debugFormData(formData);
+      
+      try {
+        // Use fetch instead of axios for more direct control
+        console.log('📤 Using fetch API for file upload...');
+        
+        const response = await fetch(`${axiosInstance.defaults.baseURL}/api/goods`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${jwtToken}`,
+            // Don't set Content-Type - let fetch set it automatically with the boundary
+          },
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}: ${await response.text()}`);
+        }
+        
+        const goodsResponse = await response.json();
+        console.log('✅ Goods created:', goodsResponse);
+        
+        // Create request with the new goods ID
+        if (goodsResponse.success) {
+          // Parse and validate the date
+          let requestDate = null;
+          try {
+            if (deliveryDate && deliveryDate.trim() !== '') {
+              requestDate = new Date(deliveryDate);
+              // Check if date is valid
+              if (isNaN(requestDate.getTime())) {
+                console.warn('⚠️ Invalid date format, using null instead');
+                requestDate = null;
+              } else {
+                console.log('📅 Using date:', requestDate.toISOString());
+              }
+            }
+          } catch (dateError) {
+            console.warn('⚠️ Date parsing error:', dateError);
+            requestDate = null;
+          }
+          
+          const requestData = {
+            goodsId: goodsResponse.data.id,
+            quantity: parseInt(quantity) || 1,
+            goodsLocation,
+            goodsDestination,
+            date: requestDate,
+            withBox: productDetails.withBox
+          };
+          
+          console.log('📤 Creating request with data:', requestData);
+          
+          const requestResponse = await axiosInstance.post('/api/requests', requestData, {
+            headers: {
+              'Authorization': `Bearer ${jwtToken}`
+            }
+          });
+          console.log('✅ Request created:', requestResponse.data);
+          
+          if (requestResponse.data.success) {
+            Alert.alert('Success', 'Product and request created successfully!');
+            router.push('/home');
+          }
+        }
+      } catch (error: any) {
+        console.error('❌ Error:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          response: error.response ? {
+            status: error.response.status,
+            data: error.response.data
+          } : 'No response',
+          request: error.request ? 'Request was made but no response received' : 'Request setup failed'
+        });
+        Alert.alert('Error', error.message || 'An unknown error occurred');
+      }
+    } catch (outerError: any) {
+      console.error('❌ Outer error:', outerError);
+      Alert.alert('Error', outerError.message || 'An unknown error occurred');
     }
   };
 
@@ -192,6 +321,51 @@ const AdditionalDetails: React.FC = () => {
     <ScrollView style={styles.container} scrollEnabled={!dropdownVisible}>
       <View style={styles.card}>
         <TitleLarge style={styles.mainTitle}>Product Details</TitleLarge>
+
+        {/* Image Selection Section */}
+        <View style={styles.imageSection}>
+          <TitleSection style={styles.sectionTitle}>
+            Product Image
+          </TitleSection>
+          
+          {productDetails.imageUri ? (
+            <View style={styles.selectedImageContainer}>
+              <RNImage 
+                source={{ uri: productDetails.imageUri }}
+                style={styles.selectedImage}
+                resizeMode="cover"
+              />
+              <TouchableOpacity 
+                style={styles.changeImageButton}
+                onPress={pickDocument}
+                disabled={imageLoading}
+              >
+                <BodyMedium style={styles.changeImageText}>
+                  {imageLoading ? 'Loading...' : 'Change Image'}
+                </BodyMedium>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity 
+              style={styles.pickDocumentButton}
+              onPress={pickDocument}
+              disabled={imageLoading}
+            >
+              {imageLoading ? (
+                <BodyMedium style={styles.pickDocumentText}>
+                  Loading...
+                </BodyMedium>
+              ) : (
+                <>
+                  <ImageIcon size={24} color={Colors[colorScheme].primary} />
+                  <BodyMedium style={styles.pickDocumentText}>
+                    Select Product Image
+                  </BodyMedium>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* Category Dropdown */}
         <View style={styles.dropdownContainer}>
@@ -472,6 +646,48 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#e0e0e0',
     marginVertical: 20,
+  },
+  // New styles for image picker
+  imageSection: {
+    marginBottom: 16,
+  },
+  pickDocumentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.light.primary,
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    padding: 16,
+    backgroundColor: Colors.light.primary + '10',
+    gap: 8,
+  },
+  pickDocumentText: {
+    color: Colors.light.primary,
+    fontWeight: '500',
+  },
+  selectedImageContainer: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  selectedImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+  },
+  changeImageButton: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 8,
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    borderTopLeftRadius: 8,
+  },
+  changeImageText: {
+    color: '#fff',
+    fontSize: 14,
   },
 })
 

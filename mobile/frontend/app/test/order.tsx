@@ -42,28 +42,26 @@ export default function OrderPage() {
   const renderItem = ({ item }: { item: Request }) => {
     // Helper function to get the correct image URL
     const getImageUrl = (goods: Goods) => {
-        // Debug log to see what we're receiving
-        console.log('Image data:', {
-           // imageInfo: goods.image,
-            //goodsUrl: goods.goodsUrl,
-            //imageId: goods.imageId
-            goods
-        });
-
-        // If no image data at all, return null
-        if (!goods.imageId && !goods.goodsUrl) return null;
-
-        // If we have image object with filename, use that
-        if (goods.imageId) {
-            return `${BACKEND_URL}/api/uploads/${goods.imageId}`;
-        }
-
-        // Fallback to goodsUrl if it exists
-        if (goods.goodsUrl) {
-            return `${BACKEND_URL}/api/uploads/${goods.goodsUrl}`;
-        }
-
-        return null;
+      // If no image data at all, return null
+      if (!goods) return null;
+      
+      // If goodsUrl has the full path
+      if (goods.goodsUrl?.startsWith('/api/uploads/')) {
+        return `${BACKEND_URL}${goods.goodsUrl}`;
+      }
+      
+      // If goodsUrl is just the filename
+      if (goods.goodsUrl) {
+        return `${BACKEND_URL}/api/uploads/${goods.goodsUrl}`;
+      }
+      
+      // If we have imageId but no direct access to filename
+      if (goods.imageId) {
+        // Use the imageId to construct the URL
+        return `${BACKEND_URL}/api/uploads/${goods.imageId}`;
+      }
+      
+      return null;
     };
 
     const getInitials = (user?: { name?: string }) => {
