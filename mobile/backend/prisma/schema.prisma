@@ -249,7 +249,7 @@ model User {
   // Subscriptions / Sponsorships
   subscriptions Subscription[] @relation("UserSubscriptions")
   sponsorships  Sponsorship[]  @relation("UserSponsorships")
-  
+
   // New relation for user as recipient
   sponsorshipsReceived Sponsorship[] @relation("SponsorshipRecipients")
 
@@ -264,7 +264,7 @@ model User {
   processEvents   ProcessEvent[]   @relation("UserChangedProcessState")
   serviceProvider ServiceProvider?
   profile         Profile?
-  
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -306,10 +306,10 @@ model ServiceProvider {
   badge       String?
 
   // Verification Fields
-  idCard      String?
-  passport    String?
-  license     String?
-  creditCard  String?
+  idCard      String? // Optional: Government ID
+  passport    String? // Optional: Passport Number
+  license     String? // Optional: Driving License
+  creditCard  String? // Optional: Last 4 digits for security
 
   // Example attributes
   brandName         String?
@@ -580,7 +580,7 @@ model Sponsorship {
   status      String @default("pending")
 
   users User[] @relation("UserSponsorships")
-  
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
