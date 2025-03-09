@@ -9,7 +9,7 @@ const getProfile = async (req, res) => {
         const profile = await prisma.profile.findUnique({
             where: { userId: parseInt(userId) },
             include: {
-                
+
                 image: true, // Include the image relation
             },
         });
@@ -67,11 +67,11 @@ const updateProfile = async (req, res) => {
     try {
         const updatedProfile = await prisma.profile.update({
             where: { userId: parseInt(userId) },
-            data: { 
-                firstName, 
-                lastName, 
-                bio, 
-                country, 
+            data: {
+                firstName,
+                lastName,
+                bio,
+                country,
                 phoneNumber,
                 imageId: imageId // Save the image ID if uploaded
             },

@@ -34,7 +34,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Allow manual notification sending from client (optional)
+    // Allow manual notification sending from client
     socket.on('sendNotification', ({ userId, message }) => {
         const targetSocketId = connectedUsers[userId];
         if (targetSocketId) {
@@ -45,14 +45,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// Send periodic notifications to all connected clients
-setInterval(() => {
-    const message = `Server notification at ${new Date().toLocaleTimeString()}`;
-    io.emit('notification', { message }); // Broadcast to all connected clients
-    console.log('Sent notification to all clients:', message);
-}, 10000); // Every 10 seconds
 
-// Basic route to test server
 app.get('/', (req, res) => {
     res.send('Socket.IO server running');
 });

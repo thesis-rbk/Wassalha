@@ -1,75 +1,141 @@
-// NotificationContext.tsx
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import io from 'socket.io-client';
-import { Alert } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, Animated, StyleSheet, TouchableOpacity } from 'react-native';
+import { NotificationProps } from "../types/notifications"
 
-// Define the Notification type
-type Notification = {
-    id: number;
-    title: string;
-    message: string;
-    timestamp: string;
-};
-
-// Define the NotificationContextType
-type NotificationContextType = {
-    notifications: Notification[];
-    addNotification: (notification: Notification) => void;
-    socket: typeof io.Socket | null;
-    socketId: string | null;
-};
-
-// Create the NotificationContext
-const NotificationContext = createContext<NotificationContextType>({
-    notifications: [],
-    addNotification: () => { },
-    socket: null,
-    socketId: null,
-});
-
-// Define the NotificationProvider component
-export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [socket, setSocket] = useState<typeof io.Socket | null>(null);
-    const [socketId, setSocketId] = useState<string | null>(null);
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+const NotificationItem: React.FC<NotificationProps> = ({ message, timestamp }) => {
+    const translateY = useRef(new Animated.Value(-100)).current;
+    const opacity = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
-        // Connect to Socket.io server
-        const newSocket = io('http://localhost:3000', {
-            transports: ['websocket'], // Required for React Native
-        });
+        Animated.timing(translateY, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+        }).start();
 
-        setSocket(newSocket);
+        const timer = setTimeout(() => {
+            Animated.timing(opacity, {
+                toValue: 0,
+                duration: 500,
+                useNativeDriver: true,
+            }).start(() => {
+                Animated.timing(translateY, {
+                    toValue: -100,
+                    duration: 500,
+                    useNativeDriver: true,
+                }).start();
+            });
+        }, 3500);
 
-        newSocket.on('connect', () => {
-            setSocketId(newSocket.id);
-            console.log('Connected to server:', newSocket.id);
-        });
-
-        newSocket.on('notification', (notification: Notification) => {
-            addNotification(notification);
-            Alert.alert(notification.title, notification.message);
-        });
-
-        newSocket.on('disconnect', () => {
-            console.log('Disconnected from server');
-        });
-
-        return () => {
-            newSocket.disconnect();
-        };
+        return () => clearTimeout(timer);
     }, []);
 
-    const addNotification = (notification: Notification) => {
-        setNotifications(prev => [notification, ...prev].slice(0, 50)); // Keep last 50
+    const handleAccept = () => {
+        console.log('Accepted');
+        // Add your accept logic here
+    };
+
+    const handleRefuse = () => {
+        console.log('Refused');
+        // Add your refuse logic here
+    };
+
+    const handleNegotiate = () => {
+        console.log('Negotiate');
+        // Add your negotiate logic here
     };
 
     return (
-        <NotificationContext.Provider value={{ notifications, addNotification, socket, socketId }}>
-            {children}
-        </NotificationContext.Provider>
+        <Animated.View style={[styles.notificationItem, { transform: [{ translateY }], opacity }]}>
+            <View style={styles.contentContainer}>
+                <Text style={styles.notificationText}>{message}</Text>
+                <Text style={styles.timestamp}>
+                    {new Date(timestamp).toLocaleTimeString()}
+                </Text>
+            </View>
+            <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                    style={[styles.button, styles.refuseButton]}
+                    onPress={handleRefuse}
+                >
+                    <Text style={styles.buttonText}>Refuse</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.button, styles.negotiateButton]}
+                    onPress={handleNegotiate}
+                >
+                    <Text style={styles.buttonText}>Negotiate</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.button, styles.acceptButton]}
+                    onPress={handleAccept}
+                >
+                    <Text style={styles.buttonText}>Accept</Text>
+                </TouchableOpacity>
+            </View>
+        </Animated.View>
     );
 };
 
-// Custom hook to use the NotificationContext
-export const useNotifications = () => useContext(NotificationContext);
+const styles = StyleSheet.create({
+    notificationItem: {
+        backgroundColor: '#fff',
+        padding: 12,
+        borderRadius: 8,
+        marginBottom: 8,
+        elevation: 2,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    contentContainer: {
+        marginBottom: 10,
+    },
+    notificationText: {
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    timestamp: {
+        fontSize: 12,
+        color: '#888',
+        marginTop: 4,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 8,
+        gap: 8,
+    },
+    button: {
+        flex: 1,
+        padding: 8,
+        borderRadius: 4,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    refuseButton: {
+        backgroundColor: '#ff4444',
+    },
+    negotiateButton: {
+        backgroundColor: '#ffbb33',
+    },
+    acceptButton: {
+        backgroundColor: '#00C851',
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+});
+
+export default NotificationItem;

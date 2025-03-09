@@ -4,6 +4,8 @@ import {
   StyleSheet,
   ScrollView,
   Image,
+  TextInput,
+  Button,
 } from "react-native";
 import axiosInstance from '@/config';
 import { TopNavigation } from "@/components/navigation/TopNavigation";
@@ -23,12 +25,17 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/context/ThemeContext";
 import { Traveler } from "@/types/Traveler"
-import { Notification } from "./Notification"
+import NotificationItem from "../components/notificationContect";
+import Notification from "./Notification";
+// Import the NotificationItem component
 import axios from "axios";
+
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home");
   const [travelers, setTravelers] = useState<Traveler[]>([]);
-  const [sponsors, setSponsors] = useState<Traveler[]>([])
+  const [sponsors, setSponsors] = useState<Traveler[]>([]);
+  const [notifications, setNotifications] = useState<{ message: string, timestamp: number }[]>([]);
+  const [customMessage, setCustomMessage] = useState<string>('');
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
   const { theme } = useTheme();
@@ -41,11 +48,12 @@ export default function HomeScreen() {
     try {
       const result = await axiosInstance.get("/api/fecth/besttarveler");
       setTravelers(result.data.traveler);
-      setSponsors(result.data.sponsor)
+      setSponsors(result.data.sponsor);
     } catch (err) {
       console.log("errrr", err);
     }
   };
+
   const services = [
     {
       title: "Travel",
@@ -78,33 +86,27 @@ export default function HomeScreen() {
     }
   };
 
-  return (
+  const sendTestNotification = () => {
+    setNotifications((prev) => [
+      ...prev,
+      { message: customMessage, timestamp: Date.now() },
+    ]);
+    setCustomMessage('');
+  };
 
+  return (
     <ThemedView style={styles.container}>
-      {/* <View><AppNotification /></View> */}
       <TopNavigation
         title="Wassalha"
         onMenuPress={() => { }}
         onNotificationPress={() => { }}
       />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* <View style={styles.heroCard}>
-          <Image
-            source={require("@/assets/images/11.jpeg")}
-            style={styles.heroImage}
-            resizeMode="cover"
-          />
-          <View style={styles.heroOverlay}>
-            <ThemedText style={styles.heroText}>
-              Turn Every Trip into an Opportunity
-            </ThemedText>
-            <ThemedText style={[styles.heroText, styles.heroSubtext]}>
-              Deliver, Earn, and Connect.
-            </ThemedText>
-          </View>
-        </View> */}
+      {notifications.map((notification, index) => (
+        <NotificationItem key={index} message={notification.message} timestamp={notification.timestamp} />
+      ))}
 
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.servicesSection}>
           <ThemedText style={styles.sectionTitle}>Our Services</ThemedText>
           <View style={styles.servicesGrid}>
@@ -159,8 +161,17 @@ export default function HomeScreen() {
             </ScrollView>
           </View>
         </View>
+        <Notification />
       </ScrollView>
-      <Notification />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter custom message"
+          value={customMessage}
+          onChangeText={setCustomMessage}
+        />
+        <Button title="Send Notification" onPress={sendTestNotification} />
+      </View>
       <TabBar activeTab={activeTab} onTabPress={setActiveTab} />
     </ThemedView>
   );
@@ -172,38 +183,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-  },
-  heroCard: {
-    height: 200,
-    margin: 16,
-    borderRadius: 12,
-    overflow: "hidden",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  heroImage: {
-    width: "100%",
-    height: "100%",
-  },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 16,
-  },
-  heroText: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  heroSubtext: {
-    marginTop: 8,
-    fontSize: 20,
   },
   servicesSection: {
     padding: 16,
@@ -226,14 +205,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 128, 152,0.8)",
     aspectRatio: 1,
     padding: 16,
-    borderRadius: 12, // Rounded corners for a modern look
+    borderRadius: 12,
     borderColor: "white",
     borderWidth: 0.5,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 }, // Increased offset for a deeper shadow
-    shadowOpacity: 0.3, // Slightly more opaque shadow
-    shadowRadius: 4, // Larger radius for a softer shadow
-    elevation: 5, // Increased elevation for Android
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   serviceContent: {
     flex: 1,
@@ -261,7 +240,17 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     marginBottom: 16,
   },
+  inputContainer: {
+    flexDirection: 'row',
+    padding: 16,
+    backgroundColor: '#f5f5f5',
+  },
+  input: {
+    flex: 1,
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginRight: 10,
+    paddingHorizontal: 10,
+  },
 });
-
-
-{/* Search Section */ }
