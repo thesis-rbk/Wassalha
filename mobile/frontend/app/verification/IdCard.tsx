@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.light.background,
   },
   content: {
     flex: 1,
@@ -90,13 +90,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: Colors.primary,
+    color: Colors.light.primary,
   },
   instruction: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 20,
-    color: Colors.secondary,
+    color: Colors.light.secondary,
   },
   button: {
     backgroundColor: '#FFD700', // Gold color

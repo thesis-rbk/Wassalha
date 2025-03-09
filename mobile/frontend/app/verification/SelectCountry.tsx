@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: Colors[colorScheme as keyof typeof Colors].background,
+    backgroundColor: Colors.light.background,
   },
   content: {
     flex: 1,
@@ -125,13 +125,13 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: Colors[colorScheme as keyof typeof Colors].primary,
+    color: Colors.light.primary,
   },
   subtitle: {
     fontSize: 20,
     marginTop: 20,
     marginBottom: 10,
-    color: Colors[colorScheme as keyof typeof Colors].secondary,
+    color: Colors.light.secondary,
   },
   scrollContainer: {
     maxHeight: 220,
