@@ -6,13 +6,8 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { FileText, UserCircle2, Phone } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { VerificationOption } from '@/types/VerificationOption';
 
-interface VerificationOption {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}
 
 const VerificationScreen = () => {
   const colorScheme = useColorScheme() ?? 'light';
