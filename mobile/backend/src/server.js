@@ -45,7 +45,6 @@ io.on('connection', (socket) => {
     });
 });
 
-
 app.get('/', (req, res) => {
     res.send('Socket.IO server running');
 });

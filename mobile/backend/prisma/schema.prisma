@@ -285,7 +285,8 @@ model Profile {
   isOnline            Boolean         @default(false)
   preferredCategories String?
   referralSource      ReferralSource?
-  User                User?           @relation(fields: [userId], references: [id])
+
+  user User? @relation(fields: [userId], references: [id])
 }
 
 // ========== SERVICE PROVIDER ==========

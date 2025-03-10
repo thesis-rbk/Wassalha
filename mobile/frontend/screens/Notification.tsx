@@ -11,10 +11,8 @@ const USER_ID = '11'; // Example user ID
 export const Notification: React.FC = () => {
     const [socket, setSocket] = useState<typeof Socket | null>(null);
     const [notifications, setNotifications] = useState<Notificationy[]>([]);
-    const [customMessage, setCustomMessage] = useState<string>('');
 
     useEffect(() => {
-        console.log("hello socket hhhhhhhhhhhhhhhhhhhh", SOCKET)
         const socketInstance = io(SOCKET, {
             transports: ['websocket'],
             reconnection: true,
@@ -51,16 +49,7 @@ export const Notification: React.FC = () => {
         };
     }, []);
 
-    const sendTestNotification = () => {
-        if (socket) {
-            socket.emit('sendNotification', {
-                userId: USER_ID,
-                message: customMessage,
-            });
-        }
-    };
-
-    return null
+    return null;
 };
 
 const styles = StyleSheet.create({
