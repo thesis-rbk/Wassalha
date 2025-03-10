@@ -29,11 +29,13 @@ import { TitleLarge, BodyMedium } from "@/components/Typography";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { User as UserType, Profile, Reputation } from '@/types';
 import { ReputationDisplayProps } from '@/types/ReputationDisplayProps';
+import { useRoleDetection } from '@/hooks/useRoleDetection';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { decode as atob } from 'base-64';
 
 export default function InitializationSp() {
   const params = useLocalSearchParams();
   const router = useRouter();
-  const { user: currentUser } = useAuth();
   const colorScheme = useColorScheme() ?? "light";
   
   // Log received params
@@ -72,10 +74,55 @@ export default function InitializationSp() {
     message: ''
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [currentUser, setCurrentUser] = React.useState<any>(null);
+
+  const { role, loading: roleLoading } = useRoleDetection(
+    currentUser?.id ? parseInt(currentUser.id) : undefined
+  );
+  console.log('🔍 Auth Debug:', {
+    currentUser: currentUser ? 'Exists' : 'Null',
+    userId: currentUser?.id,
+    userEmail: currentUser?.email,
+    token: AsyncStorage.getItem('jwtToken').then(token => 
+      console.log('JWT Token:', token ? 'Exists' : 'Missing')
+    )
+  });
 
   React.useEffect(() => {
     fetchRequestDetails();
   }, [params.id]);
+
+  React.useEffect(() => {
+    async function loadUserFromToken() {
+      try {
+        const token = await AsyncStorage.getItem('jwtToken');
+        if (token) {
+          // Try to decode the token to get user info
+          const tokenParts = token.split('.');
+          if (tokenParts.length === 3) {
+            try {
+              const payload = JSON.parse(atob(tokenParts[1]));
+              console.log('Token payload loaded:', payload);
+              
+              if (payload.id) {
+                setCurrentUser({
+                  id: payload.id.toString(),
+                  name: payload.name || 'User from token',
+                  email: payload.email || ''
+                });
+              }
+            } catch (e) {
+              console.error('Error decoding token:', e);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Error loading user from token:', e);
+      }
+    }
+    
+    loadUserFromToken();
+  }, []);
 
   const fetchRequestDetails = async () => {
     try {
@@ -102,6 +149,8 @@ export default function InitializationSp() {
 
   const handleSubmitOffer = async () => {
     try {
+      // Comment out the actual API call for now
+      /*
       const response = await axiosInstance.post('/api/offers', {
         requestId: Array.isArray(params.id) ? params.id[0] : params.id,
         price: parseFloat(Array.isArray(offerDetails.price) ? offerDetails.price[0] : offerDetails.price),
@@ -110,19 +159,29 @@ export default function InitializationSp() {
         serviceProviderId: currentUser?.id,
         serviceOwnerId: params.requesterId
       });
-
-      if (response.data.success) {
-        Alert.alert(
-          'Success',
-          'Your offer has been sent to the requester',
-          [
-            {
-              text: 'OK',
-              onPress: () => router.back() // Go back to requests list
-            }
-          ]
-        );
-      }
+      */
+      
+      // For testing purposes, just show a mock success message
+      console.log('Would have submitted offer with data:', {
+        requestId: Array.isArray(params.id) ? params.id[0] : params.id,
+        price: parseFloat(Array.isArray(offerDetails.price) ? offerDetails.price[0] : offerDetails.price),
+        deliveryDate: offerDetails.deliveryDate,
+        message: offerDetails.message,
+        serviceProviderId: currentUser?.id,
+        serviceOwnerId: params.requesterId
+      });
+      
+      // Navigate to role test screen
+      Alert.alert(
+        'Testing',
+        'Navigating to role test screen',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.push('../role-test')
+          }
+        ]
+      );
     } catch (error) {
       console.error('Offer submission error:', error);
       Alert.alert('Error', 'Failed to submit offer');

@@ -5,7 +5,7 @@ const { authenticateUser } = require('../middleware/middleware');
 
 // Public routes
 router.get('/', requestController.getAllRequests); // Anyone can view requests
-//router.get('/:id', requestController.getRequestById);
+router.get('/:id', requestController.getRequestById);
 
 // Protected routes - require authentication
 router.post('/', authenticateUser, requestController.createRequest);

@@ -16,4 +16,4 @@ export * from './GoodsProcess';
 export * from './GoodsPost';
 export * from './ServiceProvider';
 export * from './PromoPost';
-
+export * from './Role';
