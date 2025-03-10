@@ -165,7 +165,9 @@ export default function Nav() {
 
       {/* Top Navbar */}
       <nav className={styles.nav}>
-        <div className={styles.logo}>Admin Dashboard</div>
+        <div className={styles.logo}>
+          {/* Admin Dashboard */}
+          </div>
         <div className={styles.navItems}>
           <Bell className={`${styles.bellIcon} ${styles.icon}`} />
           <div 
