@@ -22,18 +22,41 @@ export default function ListOfUsers() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`);
+        // Get the token from localStorage
+        const token = localStorage.getItem('adminToken');
+        
+        if (!token) {
+          // Redirect to login if no token exists
+          router.push('/AdminLogin');
+          return;
+        }
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
         if (!response.ok) {
+          if (response.status === 401) {
+            // Token might be expired - redirect to login
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('userData');
+            router.push('/AdminLogin');
+            return;
+          }
           throw new Error(`HTTP error! status: ${response.status}`);
         }
+
         const data = await response.json();
-        console.log("Fetched users:", data); // Log the fetched data
-        setUsers(data.data); // Assuming the response structure is { data: users }
+        console.log("Fetched users:", data);
+        setUsers(data.data);
         
         // Apply initial sorting (newest first)
         const sortedUsers = [...data.data].sort((a, b) => b.id - a.id);
         setDisplayedUsers(sortedUsers.slice(0, 5));
-        setIsShowingAll(data.data.length <= 5); // Set initial state
+        setIsShowingAll(data.data.length <= 5);
       } catch (error) {
         console.error("Error fetching users:", error);
         setError("Failed to fetch users. Please try again later.");
@@ -41,7 +64,7 @@ export default function ListOfUsers() {
     };
 
     fetchUsers();
-  }, []);
+  }, [router]); // Add router to dependencies
 
   // Add effect to sync with dark mode preference
   useEffect(() => {

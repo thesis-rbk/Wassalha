@@ -458,15 +458,35 @@ const getUsers = async (req, res) => {
       include: {
         profile: {
           include: {
-            image: true, // Include the image from the Media table
-          },
-        },
-      },
+            image: {
+              select: {
+                id: true,
+                url: true,
+                type: true
+              }
+            }
+          }
+        }
+      }
     });
+
+    // Transform the data to ensure image URLs are complete
+    const transformedUsers = users.map(user => ({
+      ...user,
+      profile: user.profile ? {
+        ...user.profile,
+        image: user.profile.image ? {
+          ...user.profile.image,
+          url: user.profile.image.url.startsWith('http') 
+            ? user.profile.image.url 
+            : `${process.env.NEXT_PUBLIC_API_URL}/${user.profile.image.url}`
+        } : null
+      } : null
+    }));
 
     res.status(200).json({
       success: true,
-      data: users,
+      data: transformedUsers,
     });
   } catch (error) {
     console.error("Error fetching users:", error);

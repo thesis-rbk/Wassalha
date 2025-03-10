@@ -8,7 +8,7 @@ import navStyles from '../styles/Nav.module.css';
 import Nav from "../components/Nav";
 import Image from 'next/image';
 import { UserProfile } from "../types/UserProfile";
-
+import { User } from "../types/User";
 
 // Create a type for partial profile that makes nested properties optional
 type PartialUserProfile = Partial<Omit<UserProfile, 'profile'>> & {
@@ -47,13 +47,26 @@ const Profile: React.FC = () => {
             const fetchUserProfile = async () => {
                 try {
                     setLoading(true);
-                    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${id}`);
-                    const userData = response.data;
+                    const token = localStorage.getItem('adminToken');
                     
-                    // Log the response to debug image data
+                    if (!token) {
+                        window.location.href = '/AdminLogin';
+                        return;
+                    }
+
+                    const response = await axios.get(
+                        `${process.env.NEXT_PUBLIC_API_URL}/api/users/${id}`,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+                    
+                    const userData = response.data;
                     console.log('Full user data:', userData);
                     
-                    // Make sure we're getting the complete profile with image
                     if (userData.profile && !userData.profile.image) {
                         console.warn('Profile found but no image data:', userData.profile);
                     }
@@ -78,6 +91,13 @@ const Profile: React.FC = () => {
                     });
                 } catch (error) {
                     console.error('Error fetching user profile:', error);
+                    if (axios.isAxiosError(error) && error.response?.status === 401) {
+                        // Token expired or invalid
+                        localStorage.removeItem('adminToken');
+                        localStorage.removeItem('userData');
+                        window.location.href = '/AdminLogin';
+                        return;
+                    }
                     setError('Failed to load user profile');
                 } finally {
                     setLoading(false);
@@ -97,8 +117,23 @@ const Profile: React.FC = () => {
         if (!userProfile?.id) return;
 
         try {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                window.location.href = '/AdminLogin';
+                return;
+            }
+
             const isBanned = userProfile.profile?.isBanned;
-            const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}/${isBanned ? 'unban' : 'ban'}`);
+            const response = await axios.put(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}/${isBanned ? 'unban' : 'ban'}`,
+                {},
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
 
             const data = response.data;
             // Update the local state with the new data
@@ -159,6 +194,12 @@ const Profile: React.FC = () => {
         if (!userProfile?.id) return;
 
         try {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                window.location.href = '/AdminLogin';
+                return;
+            }
+
             const updateData = {
                 id: userProfile.id, // Ensure ID is included
                 name: updatedProfile?.name || userProfile.name,
@@ -180,7 +221,16 @@ const Profile: React.FC = () => {
 
             console.log('Sending update with data:', updateData);
 
-            const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}`, updateData);
+            const response = await axios.put(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}`,
+                updateData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
             
             if (response.data) {
                 setUserProfile(response.data);
@@ -223,7 +273,21 @@ const Profile: React.FC = () => {
         if (!isConfirmed) return;
 
         try {
-            const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}`);
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                window.location.href = '/AdminLogin';
+                return;
+            }
+
+            const response = await axios.delete(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
             const data = response.data;
             console.log('Deleted user profile:', data); // Debug log
             setUserProfile(null);
@@ -490,16 +554,18 @@ const Profile: React.FC = () => {
                                     <div className={styles.buttonRow}>
                                         <button
                                             onClick={handleEditToggle}
-                                            className={`${styles.button} ${styles.buttonedit}`}
+                                            className={`${styles.button} ${styles.buttonedit} ${userProfile?.role === 'ADMIN' ? styles.fullWidth : ''}`}
                                         >
                                             Edit Profile
                                         </button>
-                                        <button
-                                            onClick={handleBanUnban}
-                                            className={`${styles.button} ${styles.buttonban}`}
-                                        >
-                                            {userProfile?.profile?.isBanned ? 'Unban User' : 'Ban User'}
-                                        </button>
+                                        {userProfile?.role !== 'ADMIN' && (
+                                            <button
+                                                onClick={handleBanUnban}
+                                                className={`${styles.button} ${styles.buttonban}`}
+                                            >
+                                                {userProfile?.profile?.isBanned ? 'Unban User' : 'Ban User'}
+                                            </button>
+                                        )}
                                     </div>
                                     <button
                                         onClick={handleDeleteAccount}

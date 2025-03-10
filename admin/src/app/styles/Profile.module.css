@@ -736,4 +736,6 @@ select.input {
   background-color: rgba(220, 53, 69, 0.2);
   color: #ff6b6b;
 }
-
+.fullWidth {
+  width: 100% !important;
+}

@@ -5,11 +5,16 @@ export interface User {
     password: string; 
     phoneNumber?: string;
     role: string;
-    profile: {
-      firstName: string;
-      lastName: string;
-      image?: {url:string}; 
-      country?: string;
-      gender?: string;
+    profile?: {
+        firstName: string;
+        lastName: string;
+        bio?: string;
+        country?: string;
+        gender?: string;
+        image?: {
+            id?: number;
+            url: string;
+            type?: string;
+        };
     }
 }
