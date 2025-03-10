@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
+import TermsAndConditions from './Terms&Conditions';
 export default function Travel() {
     return (
         <View style={styles.container}>
-            <ThemedText>Travel Page Coming Soon</ThemedText>
+            <TermsAndConditions />
         </View>
     );
 }
