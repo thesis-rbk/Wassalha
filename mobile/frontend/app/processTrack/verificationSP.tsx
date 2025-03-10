@@ -196,15 +196,6 @@ export default function VerificationScreen() {
             </TouchableOpacity>
           </View>
         )}
-
-        {/* Back Button */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <MaterialIcons name="arrow-back" size={24} color="#007AFF" />
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
