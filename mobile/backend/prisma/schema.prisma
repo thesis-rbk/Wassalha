@@ -312,12 +312,9 @@ model ServiceProvider {
   creditCard  String? // Optional: Last 4 digits for security
 
   // Example attributes
-  brandName         String?
   subscriptionLevel String?
 
-  // Criteria fields
-  isEligible    Boolean @default(false)
-  followerCount Int?
+
 
   // Sponsorships relation
   sponsorships  Sponsorship[] @relation("ServiceProviderSponsors")
