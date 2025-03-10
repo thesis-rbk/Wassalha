@@ -11,22 +11,104 @@ import { Image } from 'expo-image';
 import { MapPin, DollarSign, Package, Activity } from 'lucide-react-native';
 import { BACKEND_URL } from '@/config';
 import { useRouter } from 'expo-router';
+import { decode as atob } from 'base-64';
+
+// Custom hook to ensure we have user data
+const useReliableAuth = () => {
+  const { user: authUser, loading: authLoading } = useAuth();
+  const [tokenUser, setTokenUser] = useState<{id: string, name: string, email: string} | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        // First, check if useAuth provided a user
+        if (authUser) {
+          console.log('User found from useAuth:', authUser);
+          setLoading(false);
+          return;
+        }
+
+        // Second, try to load from AsyncStorage 'user'
+        const userData = await AsyncStorage.getItem('user');
+        if (userData) {
+          const parsedUser = JSON.parse(userData);
+          console.log('User found from AsyncStorage:', parsedUser);
+          setTokenUser(parsedUser);
+          setLoading(false);
+          return;
+        }
+
+        // Third, try to decode the JWT token
+        const token = await AsyncStorage.getItem('jwtToken');
+        if (token) {
+          try {
+            const tokenParts = token.split('.');
+            if (tokenParts.length === 3) {
+              const payload = JSON.parse(atob(tokenParts[1]));
+              console.log('User found from JWT token:', payload);
+              
+              if (payload.id) {
+                setTokenUser({
+                  id: payload.id.toString(),
+                  name: payload.name || 'User',
+                  email: payload.email || ''
+                });
+              }
+            }
+          } catch (e) {
+            console.error('Error decoding JWT token:', e);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [authUser, authLoading]);
+
+  return {
+    user: authUser || tokenUser,
+    loading
+  };
+};
 
 export default function OrderPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [requests, setRequests] = useState<Request[]>([]);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useReliableAuth();
   const router = useRouter();
+
+  // Add a function to check if the current user is the owner of a request
+  const isOwnRequest = (requestUserId: number): boolean => {
+    if (!user || !user.id) return false;
+    
+    // Convert both IDs to strings for comparison
+    const userIdStr = user.id.toString();
+    const requestUserIdStr = requestUserId.toString();
+    
+    return userIdStr === requestUserIdStr;
+  };
+
+  // Fetch requests when component mounts or user changes
+  useEffect(() => {
+    if (!authLoading) {
+      console.log('User loaded, fetching requests...', user);
+      fetchRequests();
+    }
+  }, [user, authLoading]);
 
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
       const response = await axiosInstance.get('/api/requests');
-      console.log('Request with user data:', {
-        firstRequest: response.data.data[0],
-        userData: response.data.data[0]?.user,
-        userName: response.data.data[0]?.user?.name
-      });
+      
+      // Log user ID for debugging
+      console.log('Current user ID:', user?.id);
+      
       setRequests(response.data.data);
     } catch (error: any) {
       console.error('Error details:', error);
@@ -34,10 +116,6 @@ export default function OrderPage() {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchRequests();
-  }, []);
 
   const renderItem = ({ item }: { item: Request }) => {
     // Helper function to get the correct image URL
@@ -130,6 +208,13 @@ export default function OrderPage() {
         <View style={styles.content}>
           <ThemedText style={styles.productTitle}>{item.goods.name}</ThemedText>
           
+          {/* Add an indicator for own requests */}
+          {isOwnRequest(item.userId) && (
+            <View style={styles.ownRequestBadge}>
+              <ThemedText style={styles.ownRequestText}>Your Request</ThemedText>
+            </View>
+          )}
+          
           <View style={styles.detailsCard}>
             <View style={styles.detailRow}>
               <View style={styles.iconContainer}>
@@ -190,7 +275,8 @@ export default function OrderPage() {
             </View>
           )}
 
-          {item.status === 'PENDING' && (
+          {/* Only show the button for pending requests that aren't owned by the current user */}
+          {item.status === 'PENDING' && !isOwnRequest(item.userId) && (
             <TouchableOpacity 
               style={styles.offerButton}
               onPress={handleMakeOffer}
@@ -362,5 +448,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     color: '#666',
+  },
+  ownRequestBadge: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+  },
+  ownRequestText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

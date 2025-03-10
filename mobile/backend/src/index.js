@@ -19,6 +19,10 @@ const profileRoutes = require("./routes/profileRoutes");
 const mediaRoutes = require("./routes/media.route");
 const all = require("./routes/alltravNpost");
 const goodsRoutes = require("./routes/goods.route");
+const mobileRequestRoutes = require("./routes/mobileRequestRoutes");
+const mobileGoodsRoutes = require("./routes/mobileGoodsRoutes");
+const serviceProviderRoutes = require("./routes/serviceProvider.Routes");
+
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
 const app = express();
@@ -45,6 +49,9 @@ app.use("/api/users/profile", profileRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/goods", goodsRoutes);
 app.use("/api", all);
+app.use("/api/mobile/requests", mobileRequestRoutes);
+app.use("/api/mobile/goods", mobileGoodsRoutes);
+app.use("/api/service-provider", serviceProviderRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

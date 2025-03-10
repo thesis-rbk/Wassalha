@@ -138,7 +138,7 @@ const AdditionalDetails: React.FC = () => {
         Alert.alert('Error', 'You need to be logged in to create a request');
         return;
       }
-      
+
       // Check if token is expired and refresh if needed
       try {
         // Try a simple API call to check token validity
@@ -177,6 +177,74 @@ const AdditionalDetails: React.FC = () => {
         }
       }
       
+      // If the image is a remote URL, download it first
+      if (productDetails.imageUri && productDetails.imageUri.startsWith('http')) {
+        console.log('📥 Downloading remote image before submission...');
+        setImageLoading(true);
+        
+        try {
+          const filename = productDetails.imageUri.split('/').pop() || 'image.jpg';
+          const fileUri = `${FileSystem.cacheDirectory}${filename}`;
+          
+          const result = await FileSystem.downloadAsync(productDetails.imageUri, fileUri);
+          
+          if (result.status === 200) {
+            console.log('✅ Remote image downloaded successfully');
+            setProductDetails(prev => ({
+              ...prev,
+              imageUri: fileUri
+            }));
+          } else {
+            throw new Error('Failed to download image');
+          }
+        } catch (error) {
+          console.error('❌ Image download error:', error);
+          Alert.alert(
+            'Image Download Failed',
+            'We couldn\'t download the web image. Would you like to continue without an image or go back and select a local image?',
+            [
+              {
+                text: 'Continue Without Image',
+                onPress: () => {
+                  setProductDetails(prev => ({
+                    ...prev,
+                    imageUri: undefined
+                  }));
+                  // Continue with submission
+                  if (jwtToken) {
+                    submitForm(jwtToken);
+                  } else {
+                    Alert.alert('Error', 'Authentication token is missing');
+                  }
+                }
+              },
+              {
+                text: 'Go Back',
+                style: 'cancel'
+              }
+            ]
+          );
+          return;
+        } finally {
+          setImageLoading(false);
+        }
+      }
+      
+      // Continue with form submission
+      if (jwtToken) {
+        submitForm(jwtToken);
+      } else {
+        Alert.alert('Error', 'Authentication token is missing');
+      }
+    } catch (error) {
+      console.error('❌ Outer error:', error);
+      Alert.alert('Error', (error as Error).message || 'An unknown error occurred');
+    }
+  };
+
+  // Extract the actual form submission logic
+  async function submitForm(jwtToken: string) {
+    try {
       // Create FormData for goods with image
       console.log('📤 Creating goods with image...');
       
@@ -276,15 +344,15 @@ const AdditionalDetails: React.FC = () => {
             requestDate = null;
           }
           
-          const requestData = {
+        const requestData = {
             goodsId: goodsResponse.data.id,
             quantity: parseInt(quantity) || 1,
-            goodsLocation,
-            goodsDestination,
+          goodsLocation,
+          goodsDestination,
             date: requestDate,
-            withBox: productDetails.withBox
-          };
-          
+          withBox: productDetails.withBox
+        };
+
           console.log('📤 Creating request with data:', requestData);
           
           const requestResponse = await axiosInstance.post('/api/requests', requestData, {
@@ -293,13 +361,13 @@ const AdditionalDetails: React.FC = () => {
             }
           });
           console.log('✅ Request created:', requestResponse.data);
-          
-          if (requestResponse.data.success) {
+        
+        if (requestResponse.data.success) {
             Alert.alert('Success', 'Product and request created successfully!');
-            router.push('/home');
-          }
+          router.push('/home');
         }
-      } catch (error: any) {
+      }
+    } catch (error: any) {
         console.error('❌ Error:', error);
         console.error('❌ Error details:', {
           message: error.message,
@@ -311,11 +379,19 @@ const AdditionalDetails: React.FC = () => {
         });
         Alert.alert('Error', error.message || 'An unknown error occurred');
       }
-    } catch (outerError: any) {
-      console.error('❌ Outer error:', outerError);
-      Alert.alert('Error', outerError.message || 'An unknown error occurred');
+    } catch (error: any) {
+      console.error('❌ Error:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        response: error.response ? {
+          status: error.response.status,
+          data: error.response.data
+        } : 'No response',
+        request: error.request ? 'Request was made but no response received' : 'Request setup failed'
+      });
+      Alert.alert('Error', (error as Error).message || 'An unknown error occurred');
     }
-  };
+  }
 
   return (
     <ScrollView style={styles.container} scrollEnabled={!dropdownVisible}>
@@ -369,23 +445,23 @@ const AdditionalDetails: React.FC = () => {
 
         {/* Category Dropdown */}
         <View style={styles.dropdownContainer}>
-          <TitleSection style={styles.sectionTitle}>
-            Category * {/* Asterisk indicates required field */}
-          </TitleSection>
-          <TouchableOpacity 
-            style={[
-              styles.dropdownTrigger,
+        <TitleSection style={styles.sectionTitle}>
+          Category * {/* Asterisk indicates required field */}
+        </TitleSection>
+        <TouchableOpacity 
+          style={[
+            styles.dropdownTrigger,
               categoryError ? styles.errorBorder : null,
               dropdownVisible ? styles.dropdownTriggerActive : null
-            ]} 
+          ]} 
             onPress={() => setDropdownVisible(!dropdownVisible)}
             activeOpacity={0.7}
+        >
+          <BodyMedium 
+            style={categoryId ? styles.selectedText : styles.placeholderText}
           >
-            <BodyMedium 
-              style={categoryId ? styles.selectedText : styles.placeholderText}
-            >
-              {categories.find(c => c.id === categoryId)?.name || "Select a category"}
-            </BodyMedium>
+            {categories.find(c => c.id === categoryId)?.name || "Select a category"}
+          </BodyMedium>
             <ChevronDown 
               size={20} 
               color={Colors[colorScheme].primary}
@@ -394,17 +470,17 @@ const AdditionalDetails: React.FC = () => {
                 dropdownVisible ? styles.dropdownIconActive : null
               ]} 
             />
-          </TouchableOpacity>
-          
-          {/* Error message */}
-          {categoryError ? (
-            <BodyMedium style={styles.errorText}>{categoryError}</BodyMedium>
-          ) : null}
+        </TouchableOpacity>
+        
+        {/* Error message */}
+        {categoryError ? (
+          <BodyMedium style={styles.errorText}>{categoryError}</BodyMedium>
+        ) : null}
 
           {dropdownVisible && (
-            <View style={styles.dropdownMenu}>
+          <View style={styles.dropdownMenu}>
               <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={true}>
-                {categories.map((category) => (
+            {categories.map((category) => (
                   <TouchableOpacity 
                     key={category.id} 
                     style={[
@@ -423,11 +499,11 @@ const AdditionalDetails: React.FC = () => {
                     ]}>
                       {category.name}
                     </BodyMedium>
-                  </TouchableOpacity>
-                ))}
+              </TouchableOpacity>
+            ))}
               </ScrollView>
-            </View>
-          )}
+          </View>
+        )}
         </View>
 
         {/* Size Input */}

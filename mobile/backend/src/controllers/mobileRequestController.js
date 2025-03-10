@@ -1,10 +1,10 @@
 const prisma = require('../../prisma');
 const { authenticateUser } = require('../middleware/middleware');
 
-class RequestController {
+class MobileRequestController {
     // Create Request
     async createRequest(req, res) {
-        console.log('📥 Received request creation request');
+        console.log('📱 Mobile: Received request creation request');
         console.log('👤 User ID:', req.user.id);
         console.log('📦 Request body:', req.body);
         
@@ -28,7 +28,7 @@ class RequestController {
                     goods: true,
                 },
             });
-            console.log('✅ Request created successfully:', request.id);
+            console.log('✅ Mobile: Request created successfully:', request.id);
 
             res.status(201).json({
                 success: true,
@@ -91,7 +91,7 @@ class RequestController {
                 }
             });
 
-            console.log('Backend sending user data:', requests.map(r => ({
+            console.log('📱 Mobile: Backend sending user data:', requests.map(r => ({
                 requestId: r.id,
                 userName: r.user?.name,
                 userId: r.user?.id,
@@ -107,7 +107,7 @@ class RequestController {
                 }
             }));
 
-            console.log('First request debug:', {
+            console.log('📱 Mobile: First request debug:', {
                 goodsId: transformedRequests[0]?.goods?.id,
                 imageData: transformedRequests[0]?.goods?.image,
                 goodsUrl: transformedRequests[0]?.goods?.goodsUrl,
@@ -119,7 +119,7 @@ class RequestController {
                 data: transformedRequests
             });
         } catch (error) {
-            console.error('Error in getAllRequests:', error);
+            console.error('📱 Mobile: Error in getAllRequests:', error);
             res.status(400).json({
                 success: false,
                 error: error.message
@@ -130,19 +130,11 @@ class RequestController {
     // Get Request by ID with complete information
     async getRequestById(req, res) {
         try {
-            const requestId = parseInt(req.params.id);
-            console.log('🔍 Getting request details for ID:', requestId);
-
-            if (!requestId) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Request ID is required'
-                });
-            }
-
+            console.log('📱 Mobile: Fetching request by ID:', req.params.id);
+            
             const request = await prisma.request.findUnique({
-                where: {
-                    id: requestId  // This was missing the actual ID value
+                where: { 
+                    id: parseInt(req.params.id) 
                 },
                 include: {
                     user: {
@@ -154,6 +146,13 @@ class RequestController {
                                 select: {
                                     image: true,
                                     isVerified: true
+                                }
+                            },
+                            reputation: {
+                                select: {
+                                    score: true,
+                                    totalRatings: true,
+                                    level: true
                                 }
                             }
                         }
@@ -176,13 +175,14 @@ class RequestController {
             });
 
             if (!request) {
+                console.log('📱 Mobile: Request not found:', req.params.id);
                 return res.status(404).json({
                     success: false,
-                    message: 'Request not found'
+                    error: 'Request not found'
                 });
             }
 
-            // Transform image URLs
+            // Transform the response to include full image URL
             const transformedRequest = {
                 ...request,
                 goods: {
@@ -194,15 +194,15 @@ class RequestController {
                 }
             };
 
-            return res.status(200).json({
+            console.log('📱 Mobile: Request found and transformed');
+            res.status(200).json({
                 success: true,
                 data: transformedRequest
             });
         } catch (error) {
-            console.error('Error in getRequestById:', error);
-            return res.status(500).json({
+            console.error('📱 Mobile: Error in getRequestById:', error);
+            res.status(400).json({
                 success: false,
-                message: 'Failed to fetch request details',
                 error: error.message
             });
         }
@@ -285,62 +285,47 @@ class RequestController {
     // Get User's Requests
     async getUserRequests(req, res) {
         try {
-            // Get user ID from authenticated user
-            const userId = req.user?.id;
-            console.log('👤 Getting requests for authenticated user:', userId);
-
-            if (!userId) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Not authenticated'
-                });
-            }
-
-            // Find all requests for this user
             const requests = await prisma.request.findMany({
-                where: {
-                    OR: [
-                        { userId: userId },          // Requests created by the user
-                        { 'order.spId': userId }     // Requests where user is service provider
-                    ]
-                },
+                where: { userId: parseInt(req.user.id) },
                 include: {
                     goods: {
                         include: {
-                            image: true,
-                            category: true
-                        }
-                    },
-                    user: {
-                        select: {
-                            id: true,
-                            name: true,
-                            email: true,
-                            profile: {
+                            image: {
                                 select: {
-                                    image: true,
-                                    isVerified: true
+                                    id: true,
+                                    url: true,
+                                    filename: true
                                 }
                             }
                         }
                     },
-                    order: true
-                }
+                    pickup: true,
+                    order: true,
+                },
+                orderBy: { date: 'desc' },
             });
 
-            console.log(`📦 Found ${requests.length} requests for user ${userId}`);
+            // Transform the responses to include full image URLs
+            const transformedRequests = requests.map(request => ({
+                ...request,
+                goods: {
+                    ...request.goods,
+                    image: request.goods.image ? {
+                        ...request.goods.image,
+                        url: `/api/uploads/${request.goods.image.filename}`
+                    } : null
+                }
+            }));
 
-            return res.status(200).json({
+            res.status(200).json({
                 success: true,
-                data: requests,
-                count: requests.length
+                data: transformedRequests,
             });
         } catch (error) {
-            console.error('❌ Error in getUserRequests:', error);
-            return res.status(500).json({
+            console.error('📱 Mobile: Error in getUserRequests:', error);
+            res.status(400).json({
                 success: false,
-                message: 'Failed to fetch user requests',
-                error: error.message
+                error: error.message,
             });
         }
     }
@@ -385,4 +370,4 @@ class RequestController {
     }
 }
 
-module.exports = new RequestController(); 
+module.exports = new MobileRequestController();
