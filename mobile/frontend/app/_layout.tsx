@@ -56,6 +56,85 @@ export default function RootLayout() {
                 options={{ title: "New Password" }}
               />
 
+            <Stack.Screen
+              name="productDetails"
+              options={{
+                title: "Product Details",
+              }}
+            />
+            <Stack.Screen
+              name="test/Subscription"
+              options={{ title: "Subscription" }}
+            />
+            <Stack.Screen
+              name="onboarding/howYouHeard"
+              options={{ title: "How You Heard" }}
+            />
+            <Stack.Screen
+              name="onboarding/selectCategories"
+              options={{ title: "Select Categories" }}
+            />
+            <Stack.Screen
+              name="onboarding/customScreen"
+              options={{ title: "Custom Screen" }}
+            />
+            <Stack.Screen
+              name="profile/change"
+              options={{ title: "Change Password" }}
+            />
+            <Stack.Screen
+              name="profile/edit"
+              options={{ title: "Edit Profile" }}
+            />
+            <Stack.Screen name="profile/index" options={{ title: "Profile" }} />
+            <Stack.Screen
+              name="messages/messages"
+              options={{ title: "Messages" }}
+            />
+            <Stack.Screen
+              name="test/Terms&&Conditions"
+              options={{ title: "terms n conditions" }}
+            />
+            <Stack.Screen name="test/Travel" options={{ title: "Travel" }} />
+            <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
+            <Stack.Screen name="test/chat" options={{ title: "Chat" }} />
+            <Stack.Screen name="test/order" options={{ title: "order" }} />
+            <Stack.Screen name="verification/start" options={{ title: "verification" }} />
+            <Stack.Screen
+              name="processTrack/initializationSO"
+              options={{ title: "Initialization" }}
+            />
+            <Stack.Screen
+              name="processTrack/initializationSP"
+              options={{ title: "Initialization" }}
+            />
+            <Stack.Screen
+              name="processTrack/verificationSO"
+              options={{ title: "Verification" }}
+            />
+            <Stack.Screen
+              name="processTrack/verificationSP"
+              options={{ title: "Verification" }}
+            />
+            <Stack.Screen
+              name="processTrack/paymentSO"
+              options={{ title: "Payment" }}
+            />
+            <Stack.Screen
+              name="processTrack/paymentSP"
+              options={{ title: "Payment" }}
+            />
+            <Stack.Screen
+              name="processTrack/pickupSO"
+              options={{ title: "Pickup" }}
+            />
+            <Stack.Screen
+              name="processTrack/pickupSP"
+              options={{ title: "Pickup" }}
+            />
+          </Stack>
+        )}
+      </Provider>
               <Stack.Screen
                 name="productDetails"
                 options={{

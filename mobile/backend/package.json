@@ -1,21 +1,31 @@
 {
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "seeds": "node prisma/seeds.js"
+    "seeds": "node prisma/seeds.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "@faker-js/faker": "^9.5.0",
     "@prisma/client": "^6.4.1",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
+    "canvas": "^3.1.0",
     "cheerio": "^1.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "face-api.js": "^0.22.2",
     "franc": "^6.2.0",
     "fuse.js": "^7.1.0",
     "google-auth-library": "^9.15.1",
