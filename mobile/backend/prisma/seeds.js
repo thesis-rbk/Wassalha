@@ -28,9 +28,7 @@ async function seed() {
         data: {
           userId: user.id,
           type: faker.helpers.arrayElement(["SPONSOR", "SUBSCRIBER"]),
-          brandName: faker.company.name(),
           subscriptionLevel: faker.helpers.arrayElement(["BASIC", "PREMIUM"]),
-          isEligible: faker.datatype.boolean(),
           isVerified: faker.datatype.boolean(),
           badge: faker.helpers.maybe(() => faker.system.fileName()),
           idCard: faker.helpers.maybe(() => faker.string.uuid()),
