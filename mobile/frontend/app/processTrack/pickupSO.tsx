@@ -1,14 +1,17 @@
 import { useRouter } from "expo-router";
 import ProgressBar from "../../components/ProgressBar";
-import React, { useState, useEffect } from 'react';
-import { View, Text, Button, FlatList, StyleSheet, ScrollView } from 'react-native';
-import axiosInstance from '../../config';
-import Pickups from '../pickup/pickup';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, FlatList, ActivityIndicator, Text } from "react-native";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import axiosInstance from "../../config";
+import Pickups from "../pickup/pickup";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
 import { Pickup } from "../../types/Pickup";
-
+import { MapPin, CheckCircle, XCircle, AlertCircle } from "lucide-react-native";
+import { BaseButton } from "@/components/ui/buttons/BaseButton";
 
 export default function PickupOwner() {
   const router = useRouter();
@@ -23,6 +26,7 @@ export default function PickupOwner() {
   const [pickupId, setPickupId] = useState<number>(0);
   const [pickups, setPickups] = useState<Pickup[]>([]);
   const [showPickup, setShowPickup] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { user } = useSelector((state: RootState) => state.auth);
   const userId = user?.id;
 
@@ -32,84 +36,71 @@ export default function PickupOwner() {
 
   const fetchPickups = async (): Promise<void> => {
     try {
-      const response = await axiosInstance.get<{ success: boolean; data: Pickup[] }>(`/api/pickup/${userId}`);
+      setIsLoading(true);
+      const response = await axiosInstance.get<{ success: boolean; data: Pickup[] }>(
+        `/api/pickup/${userId}`
+      );
       setPickups(response.data.data);
-      console.log('Pickups:', response.data.data);
+      console.log("Pickups:", response.data.data);
     } catch (error) {
-      console.error('Error fetching pickups:', error);
+      console.error("Error fetching pickups:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleAccept = async (pickupId: number): Promise<void> => {
-    console.log('pickup iiid: ', pickupId);
     try {
-      const token = await AsyncStorage.getItem('jwtToken');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+      const token = await AsyncStorage.getItem("jwtToken");
+      if (!token) throw new Error("No authentication token found");
 
       await axiosInstance.put(
-        '/api/pickup/accept',
+        "/api/pickup/accept",
         { pickupId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert('Pickup accepted!');
-      setPickups(prevPickups =>
-        prevPickups.map(pickup =>
+      alert("Pickup accepted!");
+      setPickups((prev) =>
+        prev.map((pickup) =>
           pickup.id === pickupId
-            ? { ...pickup, status: 'IN_PROGRESS', userconfirmed: true }
+            ? { ...pickup, status: "IN_PROGRESS", userconfirmed: true }
             : pickup
         )
       );
       fetchPickups();
     } catch (error) {
-      console.error('Error accepting pickup:', error);
-      alert('Failed to accept pickup. Please try again.');
+      console.error("Error accepting pickup:", error);
+      alert("Failed to accept pickup. Please try again.");
     }
   };
 
   const handleSuggest = async (pickupId: number): Promise<void> => {
     setPickupId(pickupId);
     setShowPickup(true);
-    // Optionally fetch pickups here if you want to refresh immediately after opening Pickup
-    // await fetchPickups();
   };
 
   const handleCancel = async (pickupId: number): Promise<void> => {
-    console.log('Cancel pickup', pickupId);
     try {
-      const token = await AsyncStorage.getItem('jwtToken');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+      const token = await AsyncStorage.getItem("jwtToken");
+      if (!token) throw new Error("No authentication token found");
 
       await axiosInstance.put(
-        '/api/pickup/status',
-        { pickupId, newStatus: 'CANCELLED' },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        "/api/pickup/status",
+        { pickupId, newStatus: "CANCELLED" },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert('Pickup cancelled!');
-      setPickups(prevPickups =>
-        prevPickups.map(pickup =>
-          pickup.id === pickupId
-            ? { ...pickup, status: 'CANCELLED' }
-            : pickup
+      alert("Pickup cancelled!");
+      setPickups((prev) =>
+        prev.map((pickup) =>
+          pickup.id === pickupId ? { ...pickup, status: "CANCELLED" } : pickup
         )
       );
       fetchPickups();
     } catch (error) {
-      console.error('Error cancelling pickup:', error);
-      alert('Failed to cancel pickup. Please try again.');
+      console.error("Error cancelling pickup:", error);
+      alert("Failed to cancel pickup. Please try again.");
     }
   };
 
@@ -120,51 +111,135 @@ export default function PickupOwner() {
     const userIsRequester = !userIsTraveler;
 
     return (
-      <View style={styles.item}>
-        <Text>Order #{item.orderId} - {item.pickupType}</Text>
-        <Text>Location: {item.location}, {item.address}</Text>
-        <Text>Status: {item.status}</Text>
-        <Text>Scheduled: {new Date(item.scheduledTime).toLocaleString()}</Text>
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>
+          Order #{item.orderId} - {item.pickupType}
+        </Text>
+
+        <View style={styles.orderRow}>
+          <View style={styles.iconContainer}>
+            <MapPin size={20} color="#64748b" />
+          </View>
+          <View style={styles.detailContent}>
+            <Text style={styles.orderLabel}>Location</Text>
+            <Text style={styles.orderValue}>
+              {item.location}, {item.address}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.orderRow}>
+          <View style={styles.iconContainer}>
+            <CheckCircle size={20} color="#64748b" />
+          </View>
+          <View style={styles.detailContent}>
+            <Text style={styles.orderLabel}>Scheduled</Text>
+            <Text style={styles.orderValue}>
+              {new Date(item.scheduledTime).toLocaleString()}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.orderRow}>
+          <View style={styles.iconContainer}>
+            <AlertCircle size={20} color="#64748b" />
+          </View>
+          <View style={styles.detailContent}>
+            <Text style={styles.orderLabel}>Status</Text>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: getStatusColor(item.status) },
+              ]}
+            >
+              <Text style={styles.badgeText}>{item.status}</Text>
+            </View>
+          </View>
+        </View>
 
         {item.userconfirmed && !item.travelerconfirmed && (
-          <Text style={styles.waitingText}>Waiting for traveler to confirm</Text>
+          <View style={styles.note}>
+            <Text style={styles.waitingText}>Waiting for traveler to confirm</Text>
+          </View>
         )}
 
         {item.userconfirmed && item.travelerconfirmed && (
-          <Text style={styles.successText}>Pickup Accepted! Package on the way.</Text>
+          <View style={styles.note}>
+            <Text style={styles.successText}>
+              Pickup Accepted! Package on the way.
+            </Text>
+          </View>
         )}
 
         {!item.userconfirmed && item.travelerconfirmed && (
-          <>
-            {item.status === 'CANCELLED' ? (
+          <View style={styles.note}>
+            {item.status === "CANCELLED" ? (
               <>
                 <Text style={styles.cancelledText}>Pickup Cancelled</Text>
                 <Text style={styles.warningText}>
                   This pickup was cancelled. Please suggest a new pickup method to proceed.
                 </Text>
-                <Button
-                  title="Suggest Another"
-                  onPress={() => handleSuggest(item.id)}
-                  color="#2196F3"
-                />
               </>
             ) : (
-              <>
-                <Button title="Accept" onPress={() => handleAccept(item.id)} />
-                <Button title="Suggest Another" onPress={() => handleSuggest(item.id)} />
-                <Button title="Cancel" onPress={() => handleCancel(item.id)} />
-              </>
+              <Text style={styles.orderValue}>
+                Traveler has confirmed. Your action is required.
+              </Text>
             )}
-          </>
+          </View>
         )}
+
+        <View style={styles.actionRow}>
+          {!item.userconfirmed && item.travelerconfirmed && item.status !== "CANCELLED" && (
+            <View style={styles.buttonContainer}>
+              <View style={styles.topRow}>
+                <BaseButton
+                  variant="primary"
+                  size="small"
+                  style={styles.actionButton}
+                  onPress={() => handleAccept(item.id)}
+                >
+                  Accept
+                </BaseButton>
+                <BaseButton
+                  variant="primary"
+                  size="small"
+                  style={styles.actionButton}
+                  onPress={() => handleSuggest(item.id)}
+                >
+                  Suggest Another
+                </BaseButton>
+              </View>
+              <BaseButton
+                variant="primary"
+                size="small"
+                style={styles.actionButton}
+                onPress={() => handleCancel(item.id)}
+              >
+                Cancel
+              </BaseButton>
+            </View>
+          )}
+          {item.status === "CANCELLED" && (
+            <View style={styles.buttonContainer}>
+              <BaseButton
+                variant="primary"
+                size="small"
+                style={styles.actionButton}
+                onPress={() => handleSuggest(item.id)}
+              >
+                Suggest Another
+              </BaseButton>
+            </View>
+          )}
+        </View>
       </View>
     );
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ThemedView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Pickup Option</Text>
+        <Text style={styles.title}>Pickup Options</Text>
         <Text style={styles.subtitle}>
           Choose how you'd like to receive your item.
         </Text>
@@ -172,64 +247,177 @@ export default function PickupOwner() {
       </View>
 
       {showPickup ? (
-        <Pickups pickupId={pickupId} /> // Removed onClose prop
+        <Pickups pickupId={pickupId} />
+      ) : isLoading && pickups.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
       ) : (
         <FlatList
           data={pickups}
           renderItem={renderItem}
-          keyExtractor={item => item.id.toString()}
-          ListEmptyComponent={<Text>No pickup requests found.</Text>}
+          keyExtractor={(item) => item.id.toString()}
+          refreshing={isLoading}
+          onRefresh={fetchPickups}
+          contentContainerStyle={styles.listContainer}
+          ListEmptyComponent={
+            <Text style={styles.noImageText}>No pickup requests found.</Text>
+          }
         />
       )}
-    </ScrollView>
+    </ThemedView>
   );
 }
+
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case "PENDING": return "#f59e0b"; // orange
+    case "IN_PROGRESS": return "#3b82f6"; // blue
+    case "CANCELLED": return "#ef4444"; // red
+    case "COMPLETED": return "#10b981"; // green
+    default: return "#6b7280"; // gray
+  }
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#f8fafc", // Matches PaymentScreen
   },
   content: {
     padding: 16,
     paddingBottom: 40,
   },
   title: {
-    fontFamily: "Poppins-Bold",
+    fontFamily: "Poppins-Bold", // Matches PaymentScreen
     fontSize: 24,
     color: "#1e293b",
     marginBottom: 4,
   },
   subtitle: {
-    fontFamily: "Inter-Regular",
+    fontFamily: "Inter-Regular", // Matches PaymentScreen
     fontSize: 14,
     color: "#64748b",
     marginBottom: 20,
   },
-  item: {
-    padding: 10,
-    marginVertical: 5,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 5,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontFamily: "Inter-Medium", // Matches PaymentScreen
+    fontSize: 16,
+    color: "#64748b",
+  },
+  listContainer: {
+    padding: 16,
+  },
+  card: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 16, // Matches Card padding in PaymentScreen
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  sectionTitle: {
+    fontFamily: "Poppins-SemiBold", // Matches PaymentScreen
+    fontSize: 18,
+    color: "#1e293b",
+    marginBottom: 16,
+  },
+  orderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  iconContainer: {
+    width: 24,
+    alignItems: "center",
+  },
+  detailContent: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  orderLabel: {
+    fontFamily: "Inter-Medium", // Matches PaymentScreen
+    fontSize: 14,
+    color: "#64748b",
+  },
+  orderValue: {
+    fontFamily: "Inter-Medium", // Matches PaymentScreen
+    fontSize: 14,
+    color: "#1e293b",
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  badgeText: {
+    fontFamily: "Inter-Medium", // Matches PaymentScreen typography
+    fontSize: 12,
+    color: "white",
+    fontWeight: "500",
+  },
+  note: {
+    marginTop: 8,
+    marginBottom: 16,
   },
   waitingText: {
-    color: '#666',
-    fontStyle: 'italic',
-    marginTop: 5,
+    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontSize: 14,
+    color: "#666",
+    fontStyle: "italic",
   },
   successText: {
-    color: 'green',
-    fontWeight: 'bold',
-    marginTop: 5,
+    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontSize: 14,
+    color: "#10b981",
+    fontWeight: "600",
   },
   cancelledText: {
-    color: 'red',
-    fontWeight: 'bold',
-    marginTop: 5,
+    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontSize: 14,
+    color: "#ef4444",
+    fontWeight: "600",
   },
   warningText: {
-    color: '#ff9800',
-    fontWeight: 'bold',
-    marginTop: 5,
+    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontSize: 14,
+    color: "#ff9800",
+    fontWeight: "600",
+  },
+  actionRow: {
+    paddingBottom: 16,
+    alignItems: "center", // Center buttons horizontally
+  },
+  buttonContainer: {
+    width: "100%",
+    alignItems: "center",
+  },
+  topRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 8,
+    justifyContent: "center",
+  },
+  actionButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    minWidth: 100,
+  },
+  noImageText: {
+    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontSize: 12,
+    textAlign: "center",
+    color: "#666",
   },
 });
