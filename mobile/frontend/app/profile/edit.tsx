@@ -25,16 +25,10 @@ import axiosInstance from "@/config"
 import { TitleLarge, BodyMedium } from "@/components/Typography"
 import * as ImagePicker from "expo-image-picker"
 import { MaterialIcons, Feather, FontAwesome } from "@expo/vector-icons"
+import { Profile } from "@/types" 
 
-interface Profile {
-  firstName: string
-  lastName: string
-  bio: string
-  country: string
-  phoneNumber: string
-  image: any
-  imageId: string | null
-}
+ 
+
 
 export default function EditProfile() {
     const { theme } = useTheme();
