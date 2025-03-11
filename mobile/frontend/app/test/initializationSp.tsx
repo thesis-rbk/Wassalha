@@ -32,6 +32,47 @@ import { ReputationDisplayProps } from '@/types/ReputationDisplayProps';
 import { useRoleDetection } from '@/hooks/useRoleDetection';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { decode as atob } from 'base-64';
+import { Picker } from '@react-native-picker/picker';
+
+const AIRLINE_CODES: { [key: string]: string } = {
+  "Turkish Airlines": "TK",
+  "Air France": "AF",
+  "British Airways": "BA",
+  "Lufthansa": "LH",
+  "Emirates": "EK",
+  "Qatar Airways": "QR",
+  "Royal Air Maroc": "AT",
+  "Tunisair": "TU",
+  "Air Algérie": "AH",
+  "Egypt Air": "MS"
+};
+
+const FLIGHT_NUMBERS = Array.from({ length: 100 }, (_, i) => 
+  (i + 100).toString()
+);
+
+const COUNTRIES = {
+  "USA": "US",
+  "FRANCE": "FR", 
+  "SPAIN": "ES",
+  "GERMANY": "DE",
+  "ITALY": "IT",
+  "UK": "GB",
+  "CANADA": "CA",
+  "AUSTRALIA": "AU",
+  "JAPAN": "JP",
+  "CHINA": "CN",
+  "BRAZIL": "BR",
+  "INDIA": "IN",
+  "RUSSIA": "RU",
+  "MEXICO": "MX",
+  "BOLIVIA": "BO",
+  "MOROCCO": "MA",
+  "TUNISIA": "TN", 
+  "ALGERIA": "DZ",
+  "TURKEY": "TR",
+  "PORTUGAL": "PT"
+};
 
 export default function InitializationSp() {
   const params = useLocalSearchParams();
@@ -69,9 +110,13 @@ export default function InitializationSp() {
   const [loading, setLoading] = React.useState(true);
   const [showOfferForm, setShowOfferForm] = useState(false);
   const [offerDetails, setOfferDetails] = useState({
-    price: params.price, // Initial price from request
     deliveryDate: new Date(),
-    message: ''
+    departureFlightCode: '',
+    arrivalFlightCode: '',
+    airline: Object.keys(AIRLINE_CODES)[0],
+    flightNumber: FLIGHT_NUMBERS[0],
+    departureCountry: Object.keys(COUNTRIES)[0],
+    arrivalCountry: Object.keys(COUNTRIES)[0]
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentUser, setCurrentUser] = React.useState<any>(null);
@@ -152,25 +197,46 @@ export default function InitializationSp() {
     try {
       setIsSubmitting(true);
       
-      // Extract request ID from params
       const requestId = Array.isArray(params.id) ? params.id[0] : params.id;
       
-      // Prepare order data
+      // Check request status first
+      const checkResponse = await axiosInstance.get(`/api/requests/${requestId}`);
+      const request = checkResponse.data.data;
+      
+      // Check if request is available for offers
+      if (request.status !== 'PENDING' || request.order) {
+        Alert.alert(
+          'Request Not Available',
+          'This request already has an active order or is not accepting offers.',
+          [{ text: 'Back to Requests', onPress: () => router.back() }]
+        );
+        return;
+      }
+
+      // Create the tracking number by combining airline code and flight number
+      const airlineCode = AIRLINE_CODES[offerDetails.airline];
+      const flightNumber = offerDetails.flightNumber;
+      const trackingNumber = `${airlineCode}${flightNumber}`;
+      
+      // Create new order
       const orderData = {
         requestId: parseInt(requestId),
         travelerId: currentUser?.id,
         departureDate: offerDetails.deliveryDate,
-        totalAmount: parseFloat(Array.isArray(offerDetails.price) ? offerDetails.price[0] : offerDetails.price)
+        arrivalDate: offerDetails.deliveryDate,
+        trackingNumber: trackingNumber,
+        orderStatus: "PENDING",
+        paymentStatus: "ON_HOLD"
       };
+
+      console.log('Submitting order with data:', orderData);
       
-      // Make API call to create order
       const response = await axiosInstance.post('/api/orders', orderData);
       
       if (response.status === 201) {
-        // Navigate to order details screen with the new order ID
         Alert.alert(
           'Offer Submitted',
-          'Your offer has been submitted successfully.',
+          `Your offer has been submitted successfully.\nAirline: ${offerDetails.airline}\nFlight Number: ${trackingNumber}\nDeparture Date: ${orderData.departureDate.toLocaleDateString()}`,
           [
             {
               text: 'View Order',
@@ -181,22 +247,10 @@ export default function InitializationSp() {
       }
     } catch (error: any) {
       console.error('Error submitting offer:', error);
-      
-      // Check if error is due to request already having an order
-      if (error.response && error.response.data && error.response.data.error === 'An order already exists for this request') {
-        Alert.alert(
-          'Request Already Taken',
-          'This request already has an offer. Please choose another request.',
-          [
-            {
-              text: 'Back to Requests',
-              onPress: () => router.back()
-            }
-          ]
-        );
-      } else {
-        Alert.alert('Error', 'Failed to submit offer. Please try again.');
-      }
+      Alert.alert(
+        'Error', 
+        'This request is not available for offers at the moment. Please try another request.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -287,6 +341,11 @@ export default function InitializationSp() {
         )}
       </View>
     );
+  };
+
+  const isValidFlightCode = (code: string) => {
+    const pattern = /^[A-Z]{2,3}\d{3,4}$/;
+    return pattern.test(code);
   };
 
   console.log('InitializationSp requestDetails:', requestDetails);
@@ -445,20 +504,102 @@ export default function InitializationSp() {
               <TitleLarge style={styles.formTitle}>Make an Offer</TitleLarge>
               
               <View style={styles.formField}>
-                <BodyMedium style={styles.label}>Your Price</BodyMedium>
-                <TextInput
-                  style={styles.input}
-                  value={offerDetails.price.toString()}
-                  onChangeText={(text) => setOfferDetails(prev => ({...prev, price: text}))}
-                  keyboardType="numeric"
-                  placeholder="Enter your price"
-                />
+                <BodyMedium style={styles.label}>Departure Country</BodyMedium>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={offerDetails.departureCountry}
+                    style={styles.picker}
+                    onValueChange={(value) => setOfferDetails(prev => ({
+                      ...prev,
+                      departureCountry: value
+                    }))}
+                  >
+                    {Object.keys(COUNTRIES).map(country => (
+                      <Picker.Item 
+                        key={country} 
+                        label={country} 
+                        value={country} 
+                      />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+
+              <View style={styles.formField}>
+                <BodyMedium style={styles.label}>Arrival Country</BodyMedium>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={offerDetails.arrivalCountry}
+                    style={styles.picker}
+                    onValueChange={(value) => setOfferDetails(prev => ({
+                      ...prev,
+                      arrivalCountry: value
+                    }))}
+                  >
+                    {Object.keys(COUNTRIES).map(country => (
+                      <Picker.Item 
+                        key={country} 
+                        label={country} 
+                        value={country} 
+                      />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+
+              <View style={styles.formField}>
+                <BodyMedium style={styles.label}>Departure Flight</BodyMedium>
+                <View style={styles.flightCodeContainer}>
+                  <View style={[styles.pickerContainer, { flex: 1 }]}>
+                    <Picker
+                      selectedValue={offerDetails.airline}
+                      style={styles.picker}
+                      onValueChange={(value) => {
+                        setOfferDetails(prev => ({
+                          ...prev,
+                          airline: value,
+                          departureFlightCode: `${AIRLINE_CODES[value]}${offerDetails.flightNumber}`
+                        }));
+                      }}
+                    >
+                      {Object.keys(AIRLINE_CODES).map(airline => (
+                        <Picker.Item 
+                          key={airline} 
+                          label={airline} 
+                          value={airline} 
+                        />
+                      ))}
+                    </Picker>
+                  </View>
+                  
+                  <View style={[styles.pickerContainer, { flex: 1 }]}>
+                    <Picker
+                      selectedValue={offerDetails.flightNumber}
+                      style={styles.picker}
+                      onValueChange={(value) => {
+                        setOfferDetails(prev => ({
+                          ...prev,
+                          flightNumber: value,
+                          departureFlightCode: `${AIRLINE_CODES[prev.airline]}${value}`
+                        }));
+                      }}
+                    >
+                      {FLIGHT_NUMBERS.map(num => (
+                        <Picker.Item 
+                          key={num} 
+                          label={num} 
+                          value={num}
+                        />
+                      ))}
+                    </Picker>
+                  </View>
+                </View>
               </View>
 
               <View style={styles.formField}>
                 <BodyMedium style={styles.label}>Estimated Delivery Date</BodyMedium>
                 <TouchableOpacity 
-                  style={styles.input}
+                  style={styles.dateInput}
                   onPress={() => setShowDatePicker(true)}
                 >
                   <BodyMedium>
@@ -478,17 +619,6 @@ export default function InitializationSp() {
                 />
               </View>
 
-              <View style={styles.formField}>
-                <BodyMedium style={styles.label}>Message to Requester</BodyMedium>
-                <TextInput
-                  style={[styles.input, styles.messageInput]}
-                  value={offerDetails.message}
-                  onChangeText={(text) => setOfferDetails(prev => ({...prev, message: text}))}
-                  multiline
-                  placeholder="Add any additional details about your offer"
-                />
-              </View>
-
               <View style={styles.buttonRow}>
                 <TouchableOpacity 
                   style={[styles.button, styles.cancelButton]}
@@ -501,6 +631,7 @@ export default function InitializationSp() {
                   size="large"
                   onPress={handleSubmitOffer}
                   style={styles.submitButton}
+                  disabled={!isValidFlightCode(offerDetails.departureFlightCode)}
                 >
                   <BodyMedium style={styles.submitButtonText}>Submit Offer</BodyMedium>
                 </BaseButton>
@@ -757,17 +888,27 @@ const styles = StyleSheet.create({
     color: Colors.light.text,
     marginBottom: 8,
   },
-  input: {
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: 'white',
+  },
+  picker: {
+    height: 50,
+    width: '100%',
+  },
+  flightCodeContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  dateInput: {
     borderWidth: 1,
     borderColor: '#e2e8f0',
     borderRadius: 8,
     padding: 12,
-    fontSize: 16,
-    color: Colors.light.text,
-  },
-  messageInput: {
-    height: 100,
-    textAlignVertical: 'top',
+    backgroundColor: 'white',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -879,4 +1020,4 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#22c55e',
   },
-}); 
+});

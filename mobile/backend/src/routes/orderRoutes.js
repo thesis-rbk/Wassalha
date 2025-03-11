@@ -7,5 +7,7 @@ router.get('/', orderController.getAllOrders);
 router.get('/:id', orderController.getOrderById);
 router.post('/', orderController.createOrder);
 router.patch('/:id', orderController.updateOrder);
+// Add new route for status updates
+router.patch('/:id/status', orderController.updateOrderStatus);
 
 module.exports = router;

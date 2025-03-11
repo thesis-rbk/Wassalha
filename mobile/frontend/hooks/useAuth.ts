@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
+import { User } from '@/types';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);

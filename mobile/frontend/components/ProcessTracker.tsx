@@ -1,19 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { ProcessStatus } from '@/types';
-
-interface ProcessTrackerProps {
-  currentStatus: ProcessStatus;
-  events: Array<{
-    fromStatus: ProcessStatus;
-    toStatus: ProcessStatus;
-    createdAt: string;
-    note?: string;
-    changedByUser?: {
-      name: string;
-    };
-  }>;
-}
+import { ProcessStatus } from '@/types/GoodsProcess';
+import { ProcessTrackerProps } from '@/types/ProcessTracker';
 
 const ProcessTracker: React.FC<ProcessTrackerProps> = ({ currentStatus, events }) => {
   const statusOrder = [
