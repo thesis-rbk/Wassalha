@@ -1,36 +1,52 @@
 require("dotenv").config();
-
+const morgan = require("morgan");
 // Import dependencies
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
+const path = require("path"); // Import path module
+
 const path = require("path");
 
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
 const fetchRoute = require("./routes/fetchAll");
+const fetchRoute = require("./routes/fetchAll");
 const productRoutes = require("./routes/productRoutes");
 const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
 const profileRoutes = require("./routes/profileRoutes");
+const mediaRoutes = require("./routes/media.route");
+const all = require("./routes/alltravNpost");
+const goodsRoutes = require("./routes/goods.route");
+const mobileRequestRoutes = require("./routes/mobileRequestRoutes");
+const mobileGoodsRoutes = require("./routes/mobileGoodsRoutes");
+const serviceProviderRoutes = require("./routes/serviceProvider.Routes");
+const orderRoutes = require("./routes/orderRoutes");
+const processRoutes = require("./routes/processRoutes");
 const paymentRoutes = require("./routes/payment.route");
 
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
-const all = require("./routes/alltravNpost");
 const app = express();
 const server = http.createServer(app);
+app.use(morgan("dev"));
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // Serve static files from the "uploads" directory
+app.use("/api/uploads", express.static(path.join(__dirname, "uploads"))); // Serve static files
+// console.log("pathsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", path.join(__dirname, 'src/uploads'));
+app.use("/api/fecth", fetchRoute);
 app.use("/api/uploads", express.static(path.join(__dirname, "/uploads"))); // Serve static files
 app.use("/api/fecth", fetchRoute);
 
 // Routes
+
+// API Routes
 app.use("/api/products", productRoutes);
 app.use("/api/scrape", scrapeRoutes);
 app.use("/api", all);
@@ -38,6 +54,14 @@ app.use("/api/requests", requestRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/users/profile", profileRoutes);
+app.use("/api/media", mediaRoutes);
+app.use("/api/goods", goodsRoutes);
+app.use("/api", all);
+app.use("/api/mobile/requests", mobileRequestRoutes);
+app.use("/api/mobile/goods", mobileGoodsRoutes);
+app.use("/api/service-provider", serviceProviderRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/process", processRoutes);
 app.use("/api/payment", paymentRoutes);
 
 // Error handling middleware

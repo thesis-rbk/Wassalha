@@ -7,3 +7,6 @@ uploads/
 prisma/migrations
 
 illegal_items.json
+
+# Uploaded files directory
+uploads/
