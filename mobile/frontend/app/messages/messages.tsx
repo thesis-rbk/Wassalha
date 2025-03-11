@@ -194,35 +194,35 @@ export default function MessagesScreen() {
       />
       <Button
         title="Testing initialization SO"
-        onPress={() => router.push("../processTrack/initializationSO")}
+        onPress={() => router.push("/processTrack/initializationSO")}
       />
       <Button
         title="Testing initialization SP"
-        onPress={() => router.push("../processTrack/initializationSP")}
+        onPress={() => router.push("/processTrack/initializationSP")}
       />
       <Button
         title="Testing verification SO"
-        onPress={() => router.push("../processTrack/verificationSO")}
+        onPress={() => router.push("/processTrack/verificationSO")}
       />
       <Button
         title="Testing verification SP"
-        onPress={() => router.push("../processTrack/verificationSP")}
+        onPress={() => router.push("/processTrack/verificationSP")}
       />
       <Button
         title="Testing payment SO"
-        onPress={() => router.push("../processTrack/paymentSO")}
+        onPress={() => router.push("/processTrack/paymentSO")}
       />
       <Button
         title="Testing payment SP"
-        onPress={() => router.push("../processTrack/paymentSP")}
+        onPress={() => router.push("/processTrack/paymentSP")}
       />
       <Button
         title="Testing pickup SO"
-        onPress={() => router.push("../processTrack/pickupSO")}
+        onPress={() => router.push("/processTrack/pickupSO")}
       />
       <Button
         title="Testing pickup SP"
-        onPress={() => router.push("../processTrack/pickupSP")}
+        onPress={() => router.push("/processTrack/pickupSP")}
       />
     </View>
   );
