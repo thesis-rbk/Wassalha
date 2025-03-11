@@ -367,8 +367,13 @@ const AdditionalDetails: React.FC = () => {
           console.log('✅ Request created:', requestResponse.data);
 
           if (requestResponse.data.success) {
-            Alert.alert('Success', 'Product and request created successfully!');
-            router.push('/home');
+            router.replace({
+              pathname: '/screens/RequestSuccessScreen',
+              params: {
+                requestId: requestResponse.data.data.id,
+                goodsName: productDetails.name
+              }
+            });
           }
         }
       } catch (error: any) {

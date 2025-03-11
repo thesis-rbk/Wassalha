@@ -132,6 +132,27 @@ export default function RootLayout() {
             />
             <Stack.Screen name="test/role-test" options={{ title: "Role Test" }} />
             <Stack.Screen name="test/order-details" />
+            <Stack.Screen
+              name="processTrack/makeOffer"
+              options={{ title: "Make Offer" }}
+            />
+
+            {/* Add the new success screens */}
+            <Stack.Screen
+              name="screens/RequestSuccessScreen"
+              options={{
+                title: "Request Created",
+
+              }}
+            />
+            <Stack.Screen
+              name="screens/OrderSuccessScreen"
+              options={{
+                title: "Order Created",
+
+              }}
+            />
+            <Stack.Screen name="test/order-details" />
             <Stack.Screen name="verification/fetchAll" />
           </Stack>
         )}
