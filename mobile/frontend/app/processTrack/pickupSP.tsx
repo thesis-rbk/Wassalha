@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
 import { useRouter } from "expo-router";
 import ProgressBar from "../../components/ProgressBar";
-import { View, Text, Button, FlatList, StyleSheet,ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Button, FlatList, StyleSheet, ScrollView, Alert, Modal, TouchableOpacity } from 'react-native';
 import axiosInstance from '../../config';
+import Pickup from '../pickup/pickup';
+import { useSelector } from "react-redux";
+import { RootState } from "../../store";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Pickup {
   id: number;
@@ -20,7 +24,8 @@ interface Pickup {
     travelerId: number;
   };
 }
-export default function PickupScreen() {
+
+export default function PickupTraveler() {
   const router = useRouter();
 
   const progressSteps = [
@@ -29,8 +34,14 @@ export default function PickupScreen() {
     { id: 3, title: "Payment", icon: "payment" },
     { id: 4, title: "Pickup", icon: "pickup" },
   ];
+
+  const [pickupId, setPickupId] = useState<number>(0);
   const [pickups, setPickups] = useState<Pickup[]>([]);
-  const userId = 2; // Hardcoded for now, replace with dynamic user ID later
+  const [showPickup, setShowPickup] = useState(false);
+  const { user } = useSelector((state: RootState) => state.auth);
+  const userId = user?.id;
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [selectedPickupId, setSelectedPickupId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchPickups();
@@ -47,31 +58,132 @@ export default function PickupScreen() {
   };
 
   const handleAccept = async (pickupId: number): Promise<void> => {
+    console.log('pickup id: ', pickupId);
     try {
-      await axiosInstance.post('/api/pickup/accept', { pickupId });
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      await axiosInstance.put(
+        '/api/pickup/accept',
+        { pickupId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       alert('Pickup accepted!');
+      setPickups(prevPickups =>
+        prevPickups.map(pickup =>
+          pickup.id === pickupId
+            ? { ...pickup, status: 'IN_PROGRESS', travelerconfirmed: true } // Update travelerconfirmed instead of userconfirmed
+            : pickup
+        )
+      );
       fetchPickups();
     } catch (error) {
       console.error('Error accepting pickup:', error);
+      alert('Failed to accept pickup. Please try again.');
     }
   };
 
   const handleSuggest = async (pickupId: number): Promise<void> => {
-    const suggestedType: Pickup['pickupType'] = 'PICKUPPOINT';
+    setPickupId(pickupId);
+    console.log('Suggest pickuppppppppppppppppppppppppppppppp', pickupId);
+    setShowPickup(true);
+  };
+
+  const handleCancel = async (pickupId: number): Promise<void> => {
+    console.log('Cancel pickup', pickupId);
     try {
-      await axiosInstance.post('/api/pickup/suggest', { pickupId, suggestedType });
-      alert(`Suggested ${suggestedType} for pickup!`);
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      await axiosInstance.put(
+        '/api/pickup/status',
+        { pickupId, newStatus: 'CANCELLED' },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert('Pickup cancelled!');
+      setPickups(prevPickups =>
+        prevPickups.map(pickup =>
+          pickup.id === pickupId
+            ? { ...pickup, status: 'CANCELLED' }
+            : pickup
+        )
+      );
       fetchPickups();
     } catch (error) {
-      console.error('Error suggesting pickup:', error);
+      console.error('Error cancelling pickup:', error);
+      alert('Failed to cancel pickup. Please try again.');
     }
   };
 
-  const isTraveler = (pickup: Pickup) => userId === pickup.order.travelerId;
+  const handleUpdateStatus = async (pickupId: number, newStatus: Pickup['status']): Promise<void> => {
+    console.log('Updating status for pickupId:', pickupId, 'to', newStatus);
 
-const renderItem = ({ item }: { item: Pickup }) => {
-    const userIsTraveler = isTraveler(item);
-    const userIsRequester = !userIsTraveler;
+    try {
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const validStatuses: Pickup['status'][] = [
+        'SCHEDULED',
+        'IN_PROGRESS',
+        'COMPLETED',
+        'CANCELLED',
+        'DELAYED',
+        'DELIVERED',
+      ];
+
+      if (!validStatuses.includes(newStatus)) {
+        throw new Error('Invalid status selected');
+      }
+
+      await axiosInstance.put(
+        '/api/pickup/status',
+        { pickupId, newStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      Alert.alert('Success', `Pickup status updated to ${newStatus} successfully!`);
+      setPickups(prevPickups =>
+        prevPickups.map(pickup =>
+          pickup.id === pickupId ? { ...pickup, status: newStatus } : pickup
+        )
+      );
+      fetchPickups();
+      setStatusModalVisible(false);
+    } catch (error) {
+      console.error('Error updating pickup status:', error);
+      Alert.alert('Error', 'Failed to update pickup status. Please try again.');
+    }
+  };
+
+  const openStatusModal = (pickupId: number) => {
+    setSelectedPickupId(pickupId);
+    setStatusModalVisible(true);
+  };
+
+  const isRequester = (pickup: Pickup) => userId !== pickup.order.travelerId;
+
+  const renderItem = ({ item }: { item: Pickup }) => {
+    const userIsRequester = isRequester(item);
 
     return (
       <View style={styles.item}>
@@ -80,19 +192,61 @@ const renderItem = ({ item }: { item: Pickup }) => {
         <Text>Status: {item.status}</Text>
         <Text>Scheduled: {new Date(item.scheduledTime).toLocaleString()}</Text>
 
-        {userIsRequester && item.userconfirmed ? (
-          <Text style={styles.waitingText}>Waiting for your traveler to confirm</Text>
-        ) : userIsTraveler && item.travelerconfirmed ? (
-          <Text style={styles.waitingText}>Waiting for your requester to confirm</Text>
-        ) : (
+        {item.userconfirmed && !item.travelerconfirmed && (
+          <Text style={styles.waitingText}>Waiting for your confirmation as traveler</Text>
+        )}
+
+        {!item.userconfirmed && item.travelerconfirmed && (
+          <Text style={styles.waitingText}>Waiting for requester to confirm</Text>
+        )}
+
+        {item.userconfirmed && item.travelerconfirmed && (
           <>
-            <Button title="Accept" onPress={() => handleAccept(item.id)} />
-            <Button title="Suggest Another" onPress={() => handleSuggest(item.id)} />
+            <Text style={styles.successText}>Pickup Accepted! Package on the way.</Text>
+            <Text>Current Status: {item.status}</Text>
+            <Button title="Update Status" onPress={() => openStatusModal(item.id)} />
+          </>
+        )}
+
+        {!item.userconfirmed && !item.travelerconfirmed && (
+          <Text style={styles.waitingText}>Waiting for requester to suggest a pickup</Text>
+        )}
+
+        {item.userconfirmed && !item.travelerconfirmed && (
+          <>
+            {item.status === 'CANCELLED' ? (
+              <>
+                <Text style={styles.cancelledText}>Pickup Cancelled</Text>
+                <Text style={styles.warningText}>
+                  This pickup was cancelled. Please suggest a new pickup method to proceed.
+                </Text>
+                <Button
+                  title="Suggest Another"
+                  onPress={() => handleSuggest(item.id)}
+                  color="#2196F3"
+                />
+              </>
+            ) : (
+              <>
+                <Button title="Accept" onPress={() => handleAccept(item.id)} />
+                <Button title="Suggest Another" onPress={() => handleSuggest(item.id)} />
+                <Button title="Cancel" onPress={() => handleCancel(item.id)} />
+              </>
+            )}
           </>
         )}
       </View>
     );
   };
+
+  const statusOptions: Pickup['status'][] = [
+    'SCHEDULED',
+    'IN_PROGRESS',
+    'COMPLETED',
+    'CANCELLED',
+    'DELAYED',
+    'DELIVERED',
+  ];
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -101,17 +255,48 @@ const renderItem = ({ item }: { item: Pickup }) => {
         <Text style={styles.subtitle}>
           Choose how you'd like to receive your item.
         </Text>
-
         <ProgressBar currentStep={4} steps={progressSteps} />
       </View>
-       <View style={styles.container}>
-            <FlatList
-              data={pickups}
-              renderItem={renderItem}
-              keyExtractor={item => item.id.toString()}
-              ListEmptyComponent={<Text>No pickup requests found.</Text>}
-            />
+
+      {showPickup ? (
+        <Pickup pickupId={pickupId} />
+      ) : (
+        <FlatList
+          data={pickups}
+          renderItem={renderItem}
+          keyExtractor={item => item.id.toString()}
+          ListEmptyComponent={<Text>No pickup requests found.</Text>}
+        />
+      )}
+
+      {/* Status Selection Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={statusModalVisible}
+        onRequestClose={() => setStatusModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select New Status</Text>
+            <ScrollView style={styles.statusList}>
+              {statusOptions.map(status => (
+                <TouchableOpacity
+                  key={status}
+                  style={[
+                    styles.statusOption,
+                    pickups.find(p => p.id === selectedPickupId)?.status === status && styles.selectedStatusOption,
+                  ]}
+                  onPress={() => selectedPickupId && handleUpdateStatus(selectedPickupId, status)}
+                >
+                  <Text style={styles.statusText}>{status}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <Button title="Cancel" onPress={() => setStatusModalVisible(false)} color="#FF4444" />
           </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -120,16 +305,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8fafc",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 16,
-    color: "#64748b",
   },
   content: {
     padding: 16,
@@ -147,162 +322,6 @@ const styles = StyleSheet.create({
     color: "#64748b",
     marginBottom: 20,
   },
-  summaryCard: {
-    marginTop: 16,
-  },
-  sectionTitle: {
-    fontFamily: "Poppins-SemiBold",
-    fontSize: 18,
-    color: "#1e293b",
-    marginBottom: 16,
-  },
-  orderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  orderLabel: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#64748b",
-  },
-  orderValue: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#1e293b",
-  },
-  travelerInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  travelerImage: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginRight: 8,
-  },
-  priceValue: {
-    fontFamily: "Inter-SemiBold",
-    fontSize: 14,
-    color: "#16a34a",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#e2e8f0",
-    marginVertical: 12,
-  },
-  totalLabel: {
-    fontFamily: "Inter-Bold",
-    fontSize: 16,
-    color: "#1e293b",
-  },
-  totalValue: {
-    fontFamily: "Inter-Bold",
-    fontSize: 16,
-    color: "#16a34a",
-  },
-  paymentCard: {
-    marginTop: 16,
-  },
-  paymentOptions: {
-    flexDirection: "row",
-    marginBottom: 16,
-  },
-  paymentOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    marginRight: 12,
-    minWidth: 120,
-  },
-  selectedPaymentOption: {
-    borderColor: "#3b82f6",
-    backgroundColor: "#eff6ff",
-  },
-  paymentOptionText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#64748b",
-    marginLeft: 8,
-  },
-  paypalText: {
-    fontFamily: "Inter-Bold",
-    fontSize: 16,
-    color: "#64748b",
-  },
-  selectedPaymentOptionText: {
-    color: "#3b82f6",
-  },
-  cardForm: {
-    marginTop: 8,
-  },
-  formGroup: {
-    marginBottom: 16,
-  },
-  formRow: {
-    flexDirection: "row",
-  },
-  inputLabel: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#64748b",
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: "#f8fafc",
-    borderRadius: 8,
-    padding: 12,
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#1e293b",
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  paypalContainer: {
-    padding: 16,
-    backgroundColor: "#f8fafc",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  paypalInstructions: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#64748b",
-    textAlign: "center",
-  },
-  securityNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  securityText: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#64748b",
-    marginLeft: 8,
-  },
-  escrowNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  escrowText: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#64748b",
-    marginLeft: 8,
-  },
-  payButton: {
-    marginTop: 8,
-  },
   item: {
     padding: 10,
     marginVertical: 5,
@@ -313,5 +332,55 @@ const styles = StyleSheet.create({
     color: '#666',
     fontStyle: 'italic',
     marginTop: 5,
+  },
+  successText: {
+    color: 'green',
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
+  cancelledText: {
+    color: 'red',
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
+  warningText: {
+    color: '#ff9800', // Orange for warning
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    maxHeight: '60%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  statusList: {
+    maxHeight: 200,
+  },
+  statusOption: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  selectedStatusOption: {
+    backgroundColor: '#e0f7fa',
+  },
+  statusText: {
+    fontSize: 16,
+    color: '#333',
   },
 });

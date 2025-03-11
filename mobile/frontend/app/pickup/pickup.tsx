@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Modal } from "react-native";
+import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Modal, Alert } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { InputField } from "@/components/InputField";
@@ -10,24 +10,27 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import axiosInstance from "../../config";
 import * as Location from 'expo-location';
 import { useRouter } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import PickupMap from "./pickupMap"; // Import the new component
 
-export default function Pickup() {
-    const router = useRouter();
-  const colorScheme = useColorScheme() ?? "light";
-  const [location, setLocation] = useState("");
-  const [address, setAddress] = useState("");
-  const [contact, setContact] = useState("");
-  const [pickupType, setPickupType] = useState<"AIRPORT" | "DELIVERY" | "IN_PERSON" | "PICKUPPOINT" | "">("");
-  const [step, setStep] = useState<"select" | "form">("select");
-  const [airportName, setAirportName] = useState("");
-  const [manualAddress, setManualAddress] = useState("");
-  const [currentLocation, setCurrentLocation] = useState("");
-  const [pickupDescription, setPickupDescription] = useState("");
-  const orderId = 1;
-  const [scheduledTime, setScheduledTime] = useState("");
+export default function Pickup({ pickupId }: { pickupId?: number }) {
+  console.log(pickupId, "pickuuupId"); // pickupId is optional
+  const router = useRouter();
+  const colorScheme = useColorScheme() ?? 'light';
+  const [location, setLocation] = useState<string>('');
+  const [address, setAddress] = useState<string>('');
+  const [contact, setContact] = useState<string>('');
+  const [pickupType, setPickupType] = useState<'AIRPORT' | 'DELIVERY' | 'IN_PERSON' | 'PICKUPPOINT' | ''>('');
+  const [step, setStep] = useState<'select' | 'form'>('select');
+  const [airportName, setAirportName] = useState<string>('');
+  const [manualAddress, setManualAddress] = useState<string>('');
+  const [currentLocation, setCurrentLocation] = useState<string>('');
+  const [pickupDescription, setPickupDescription] = useState<string>('');
+  const [orderId, setOrderId] = useState<number | null>(null);
+  const [scheduledTime, setScheduledTime] = useState<string>('');
   const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedOptionInfo, setSelectedOptionInfo] = useState("");
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [selectedOptionInfo, setSelectedOptionInfo] = useState<string>('');
 
   const styles = StyleSheet.create({
     container: {
@@ -152,19 +155,19 @@ export default function Pickup() {
     modalText: {
       fontSize: 16,
       marginBottom: 15,
-      color: Colors[colorScheme].text, // Black/default theme color
+      color: Colors[colorScheme].text,
     },
     importantTextSafe: {
       fontSize: 16,
       fontWeight: "bold",
       marginBottom: 15,
-      color: '#00CC00', // Green for safe processes
+      color: '#00CC00',
     },
     importantTextRisk: {
       fontSize: 16,
       fontWeight: "bold",
       marginBottom: 15,
-      color: '#FF0000', // Red for risky processes
+      color: '#FF0000',
     },
     modalButtonContainer: {
       flexDirection: 'row',
@@ -177,51 +180,52 @@ export default function Pickup() {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        alert('Permission to access location was denied');
+        Alert.alert('Permission Denied', 'Permission to access location was denied');
         return;
       }
 
       let location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
-      
+
       const { latitude, longitude } = location.coords;
       setCoordinates({ latitude, longitude });
-      
-      let address = await Location.reverseGeocodeAsync({
-        latitude,
-        longitude,
-      });
-      
-      const displayAddress = address[0]?.name || address[0]?.street || "Current Location";
+
+      let address = await Location.reverseGeocodeAsync({ latitude, longitude });
+      const displayAddress = address[0]?.name || address[0]?.street || 'Current Location';
       setManualAddress(displayAddress);
     } catch (error) {
       console.error('Error getting location:', error);
-      alert("Error getting location");
+      Alert.alert('Error', 'Failed to get location');
     }
   };
 
-  const handlePickupSelection = (type: "AIRPORT" | "DELIVERY" | "IN_PERSON" | "PICKUPPOINT") => {
-    let info = "";
-    const travelerConfirmationNote = "Note: Your selection requires confirmation from the traveler. After choosing this option, please wait for their acceptance. The traveler may also suggest an alternative pickup method if needed.";
-    
-    switch(type) {
+  const handlePickupSelection = (type: 'AIRPORT' | 'DELIVERY' | 'IN_PERSON' | 'PICKUPPOINT') => {
+    let info = '';
+    const travelerConfirmationNote =
+      'Note: Your selection requires confirmation from the traveler. After choosing this option, please wait for their acceptance. The traveler may also suggest an alternative pickup method if needed.';
+
+    switch (type) {
       case 'AIRPORT':
-        info = "Airport Pickup Process: Our staff has an employee stationed at the airport. The traveler delivers your package to our employee. Visit the designated pickup zone at the specified airport with your QR code to collect it. Check your package contents and confirm receipt with our staff. Requires traveler confirmation.\n\n" +
-               "IMPORTANT: This process is managed by our team for your convenience and safety.";
+        info =
+          'Airport Pickup Process: Our staff has an employee stationed at the airport. The traveler delivers your package to our employee. Visit the designated pickup zone at the specified airport with your QR code to collect it. Check your package contents and confirm receipt with our staff. Requires traveler confirmation.\n\n' +
+          'IMPORTANT: This process is managed by our team for your convenience and safety.';
         break;
       case 'DELIVERY':
-        info = "Home Delivery Process: Provide your address or use current location. Our delivery team brings the package to you. Receive a QR code for verification, inspect your package upon arrival, and confirm delivery completion. Requires traveler confirmation.\n\n" +
-               "IMPORTANT: This process is fully managed and guaranteed by us - no risk to you!";
+        info =
+          'Home Delivery Process: Provide your address or use current location. Our delivery team brings the package to you. Receive a QR code for verification, inspect your package upon arrival, and confirm delivery completion. Requires traveler confirmation.\n\n' +
+          'IMPORTANT: This process is fully managed and guaranteed by us - no risk to you!';
         break;
       case 'IN_PERSON':
-        info = "In-Person Pickup Terms: You arrange directly with the traveler for pickup. Agree on a meeting location and time with the traveler. Bring your QR code for identification, verify your package contents, and confirm receipt. Requires traveler confirmation.\n\n" +
-               "IMPORTANT: This process excludes us from the delivery arrangement. You are fully responsible for what happens during the handover. Our app is not liable for any issues.\n\n" +
-               "Advice: Choose a public place to meet the traveler to minimize any potential risks.";
+        info =
+          'In-Person Pickup Terms: You arrange directly with the traveler for pickup. Agree on a meeting location and time with the traveler. Bring your QR code for identification, verify your package contents, and confirm receipt. Requires traveler confirmation.\n\n' +
+          'IMPORTANT: This process excludes us from the delivery arrangement. You are fully responsible for what happens during the handover. Our app is not liable for any issues.\n\n' +
+          'Advice: Choose a public place to meet the traveler to minimize any potential risks.';
         break;
       case 'PICKUPPOINT':
-        info = "Designated Pickup Point Process: Choose a specific pickup location. The package is delivered to the point by the traveler. Visit within specified hours with your QR code, check your package, and confirm collection. Requires traveler confirmation. Provide clear instructions for smooth pickup.\n\n" +
-               "IMPORTANT: This process is managed by us once the package reaches the point - safe process!";
+        info =
+          'Designated Pickup Point Process: Choose a specific pickup location. The package is delivered to the point by the traveler. Visit within specified hours with your QR code, check your package, and confirm collection. Requires traveler confirmation. Provide clear instructions for smooth pickup.\n\n' +
+          'IMPORTANT: This process is managed by us once the package reaches the point - safe process!';
         break;
     }
     setSelectedOptionInfo(info);
@@ -230,42 +234,82 @@ export default function Pickup() {
   };
 
   const handleConfirmPickup = async () => {
-    let payload;
-    const basePayload = {
-      orderId,
-      pickupType: pickupType,
-      contactPhoneNumber: contact,
-      scheduledTime: new Date().toISOString().replace(/T/, ' ').replace(/Z/, ''),
-      coordinates: coordinates ? `${coordinates.latitude},${coordinates.longitude}` : "",
-      qrCode: ""
+    const token = await AsyncStorage.getItem('jwtToken');
+    console.log('Token:', token);
+    if (!token) {
+      Alert.alert('Authentication Error', 'User is not authenticated.');
+      return;
+    }
+
+    if (!orderId && !pickupId) {
+      console.log(pickupId, "pickupiiid");
+      Alert.alert('Error', 'Order ID is required to create a new pickup.');
+      return;
+    }
+
+    if (!pickupType) {
+      Alert.alert('Error', 'Please select a valid pickup type');
+      return;
+    }
+
+    const headers = {
+      Authorization: `Bearer ${token}`,
     };
 
-    switch(pickupType) {
+    const basePayload = {
+      pickupId: pickupId || undefined,
+      orderId: orderId || undefined,
+      pickupType,
+      contactPhoneNumber: contact || null,
+      scheduledTime: scheduledTime || new Date().toISOString(),
+      coordinates: coordinates ? `${coordinates.latitude},${coordinates.longitude}` : null,
+      qrCode: null,
+    };
+
+    let payload;
+    switch (pickupType) {
       case 'AIRPORT':
-        payload = { ...basePayload, location: airportName, address: "Airport Pickup Zone" };
+        payload = { ...basePayload, location: airportName || null, address: 'Airport Pickup Zone' };
         break;
       case 'DELIVERY':
-        payload = { ...basePayload, location: manualAddress ? 'manual' : 'current', address: manualAddress || "Current Location" };
+        payload = {
+          ...basePayload,
+          location: manualAddress ? 'manual' : 'current',
+          address: manualAddress || 'Current Location',
+        };
         break;
       case 'IN_PERSON':
-        payload = { ...basePayload, location: 'in_person', address: manualAddress || currentLocation };
+        payload = { ...basePayload, location: 'in_person', address: manualAddress || currentLocation || null };
         break;
       case 'PICKUPPOINT':
-        payload = { ...basePayload, location: 'custom_point', address: manualAddress, description: pickupDescription };
+        payload = {
+          ...basePayload,
+          location: 'custom_point',
+          address: manualAddress || null,
+          description: pickupDescription || null,
+        };
         break;
       default:
-        alert('Please select a valid pickup type');
+        Alert.alert('Error', 'Invalid pickup type');
         return;
     }
 
     try {
-      console.log("Submitting payload:", payload);
-      await axiosInstance.post('/api/pickup/add', payload);
-      alert('Pickup scheduled successfully! Awaiting traveler confirmation.');
+      const response = await axiosInstance.post('/api/pickup/handle-confirm', payload, { headers });
+      Alert.alert(
+        'Success',
+        pickupId ? 'Pickup updated successfully!' : 'Pickup scheduled successfully! Awaiting traveler confirmation.'
+      );
       setStep('select');
+      setPickupType('');
+      setLocation('');
+      setAddress('');
+      setContact('');
+      setScheduledTime('');
+      setCoordinates(null);
     } catch (error) {
       console.error('Pickup error:', error);
-      alert('Failed to schedule pickup');
+      Alert.alert('Error', pickupId ? 'Failed to update pickup' : 'Failed to schedule pickup');
     }
   };
 
@@ -274,12 +318,6 @@ export default function Pickup() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {step === 'select' ? (
           <>
-            {/* <Image
-              source={require("@/assets/images/11.jpeg")}
-              style={styles.logo}
-              resizeMode="contain"
-            /> */}
-
             <ThemedText style={styles.headerText}>Schedule Pickup</ThemedText>
             <ThemedText style={styles.subText}>Choose your pickup method</ThemedText>
 
@@ -362,20 +400,6 @@ export default function Pickup() {
                 <ThemedText style={styles.descriptionText}>
                   Collect from a pre-arranged location.
                 </ThemedText>
-                <BaseButton
-                variant="primary"
-                onPress={() => {router.push("/pickup/pickupTravel")}}
-                style={styles.confirmButton}
-              >
-                traveler request
-              </BaseButton>
-              <BaseButton
-                variant="primary"
-                onPress={() => {router.push("/pickup/pickupUser")}}
-                style={styles.confirmButton}
-              >
-                user request
-              </BaseButton>
               </TouchableOpacity>
             </View>
           </>
@@ -442,7 +466,6 @@ export default function Pickup() {
                   placeholder="Enter pickup point address"
                   value={manualAddress}
                   onChangeText={setManualAddress}
-
                 />
                 <InputField
                   label="Description"
@@ -451,14 +474,7 @@ export default function Pickup() {
                   onChangeText={setPickupDescription}
                   multiline
                 />
-                <BaseButton
-                  variant="secondary"
-                  onPress={() => console.log("Open map picker")}
-                  style={styles.mapButton}
-                >
-                  <FontAwesome5 name="map-marked-alt" size={16} />
-                  <ThemedText style={styles.buttonText}>Pick on Map</ThemedText>
-                </BaseButton>
+                <PickupMap setCoordinates={setCoordinates} setManualAddress={setManualAddress} />
               </>
             )}
 
@@ -515,19 +531,19 @@ export default function Pickup() {
             </ThemedText>
             <ScrollView>
               <ThemedText style={styles.modalText}>
-                {selectedOptionInfo.split('\n\n')[0]} {/* Process steps in black */}
+                {selectedOptionInfo.split('\n\n')[0]}
               </ThemedText>
               <ThemedText style={pickupType === 'IN_PERSON' ? styles.importantTextRisk : styles.importantTextSafe}>
-                {selectedOptionInfo.split('\n\n')[1]} {/* IMPORTANT in green or red */}
+                {selectedOptionInfo.split('\n\n')[1]}
               </ThemedText>
               {pickupType === 'IN_PERSON' && (
                 <ThemedText style={styles.modalText}>
-                  {selectedOptionInfo.split('\n\n')[2]} {/* Advice for In-Person in black */}
+                  {selectedOptionInfo.split('\n\n')[2]}
                 </ThemedText>
               )}
               {pickupType === 'PICKUPPOINT' && (
                 <ThemedText style={styles.modalText}>
-                  {selectedOptionInfo.split('\n\n')[2]} {/* Tip for Pickup Point in black */}
+                  {selectedOptionInfo.split('\n\n')[2]}
                 </ThemedText>
               )}
             </ScrollView>
@@ -536,7 +552,7 @@ export default function Pickup() {
                 variant="secondary"
                 onPress={() => {
                   setModalVisible(false);
-                  setPickupType(""); // Reset selection
+                  setPickupType("");
                 }}
                 style={styles.backButton}
               >

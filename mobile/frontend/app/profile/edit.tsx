@@ -60,6 +60,7 @@ export default function EditProfile() {
         const token = await AsyncStorage.getItem("jwtToken");
         if (token) {
           const decoded: any = jwtDecode(token);
+          console.log("Decoded token:", decoded);
           const response = await axiosInstance.get(
             `/api/users/profile/${decoded.id}`,
             {

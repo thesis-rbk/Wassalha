@@ -1,10 +1,13 @@
 import { useRouter } from "expo-router";
 import ProgressBar from "../../components/ProgressBar";
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, FlatList, StyleSheet,ScrollView } from 'react-native';
+import { View, Text, Button, FlatList, StyleSheet, ScrollView } from 'react-native';
 import axiosInstance from '../../config';
+import Pickup from '../pickup/pickup';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSelector } from "react-redux";
+import { RootState } from "../../store";
 
-// Define the pickup type
 interface Pickup {
   id: number;
   orderId: number;
@@ -21,7 +24,8 @@ interface Pickup {
     travelerId: number;
   };
 }
-export default function PickupScreen() {
+
+export default function PickupOwner() {
   const router = useRouter();
 
   const progressSteps = [
@@ -30,8 +34,12 @@ export default function PickupScreen() {
     { id: 3, title: "Payment", icon: "payment" },
     { id: 4, title: "Pickup", icon: "pickup" },
   ];
+
+  const [pickupId, setPickupId] = useState<number>(0);
   const [pickups, setPickups] = useState<Pickup[]>([]);
-  const userId = 2; // Hardcoded for now, replace with dynamic user ID later
+  const [showPickup, setShowPickup] = useState(false);
+  const { user } = useSelector((state: RootState) => state.auth);
+  const userId = user?.id;
 
   useEffect(() => {
     fetchPickups();
@@ -48,23 +56,75 @@ export default function PickupScreen() {
   };
 
   const handleAccept = async (pickupId: number): Promise<void> => {
+    console.log('pickup iiid: ', pickupId);
     try {
-      await axiosInstance.post('/api/pickup/accept', { pickupId });
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      await axiosInstance.put(
+        '/api/pickup/accept',
+        { pickupId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       alert('Pickup accepted!');
+      setPickups(prevPickups =>
+        prevPickups.map(pickup =>
+          pickup.id === pickupId
+            ? { ...pickup, status: 'IN_PROGRESS', userconfirmed: true }
+            : pickup
+        )
+      );
       fetchPickups();
     } catch (error) {
       console.error('Error accepting pickup:', error);
+      alert('Failed to accept pickup. Please try again.');
     }
   };
 
   const handleSuggest = async (pickupId: number): Promise<void> => {
-    const suggestedType: Pickup['pickupType'] = 'PICKUPPOINT';
+    setPickupId(pickupId);
+    setShowPickup(true);
+    // Optionally fetch pickups here if you want to refresh immediately after opening Pickup
+    // await fetchPickups();
+  };
+
+  const handleCancel = async (pickupId: number): Promise<void> => {
+    console.log('Cancel pickup', pickupId);
     try {
-      await axiosInstance.post('/api/pickup/suggest', { pickupId, suggestedType });
-      alert(`Suggested ${suggestedType} for pickup!`);
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      await axiosInstance.put(
+        '/api/pickup/status',
+        { pickupId, newStatus: 'CANCELLED' },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert('Pickup cancelled!');
+      setPickups(prevPickups =>
+        prevPickups.map(pickup =>
+          pickup.id === pickupId
+            ? { ...pickup, status: 'CANCELLED' }
+            : pickup
+        )
+      );
       fetchPickups();
     } catch (error) {
-      console.error('Error suggesting pickup:', error);
+      console.error('Error cancelling pickup:', error);
+      alert('Failed to cancel pickup. Please try again.');
     }
   };
 
@@ -75,29 +135,44 @@ export default function PickupScreen() {
     const userIsRequester = !userIsTraveler;
 
     return (
-      <><View style={styles.item}>
+      <View style={styles.item}>
         <Text>Order #{item.orderId} - {item.pickupType}</Text>
         <Text>Location: {item.location}, {item.address}</Text>
         <Text>Status: {item.status}</Text>
         <Text>Scheduled: {new Date(item.scheduledTime).toLocaleString()}</Text>
 
-        {userIsRequester && item.userconfirmed ? (
-          <Text style={styles.waitingText}>Waiting for your traveler to confirm</Text>
-        ) : (
+        {item.userconfirmed && !item.travelerconfirmed && (
+          <Text style={styles.waitingText}>Waiting for traveler to confirm</Text>
+        )}
+
+        {item.userconfirmed && item.travelerconfirmed && (
+          <Text style={styles.successText}>Pickup Accepted! Package on the way.</Text>
+        )}
+
+        {!item.userconfirmed && item.travelerconfirmed && (
           <>
-            <Button title="Accept" onPress={() => handleAccept(item.id)} />
-            <Button title="Suggest Another" onPress={() => handleSuggest(item.id)} />
+            {item.status === 'CANCELLED' ? (
+              <>
+                <Text style={styles.cancelledText}>Pickup Cancelled</Text>
+                <Text style={styles.warningText}>
+                  This pickup was cancelled. Please suggest a new pickup method to proceed.
+                </Text>
+                <Button
+                  title="Suggest Another"
+                  onPress={() => handleSuggest(item.id)}
+                  color="#2196F3"
+                />
+              </>
+            ) : (
+              <>
+                <Button title="Accept" onPress={() => handleAccept(item.id)} />
+                <Button title="Suggest Another" onPress={() => handleSuggest(item.id)} />
+                <Button title="Cancel" onPress={() => handleCancel(item.id)} />
+              </>
+            )}
           </>
         )}
       </View>
-       <View style={styles.container}>
-            <FlatList
-              data={pickups}
-              renderItem={renderItem}
-              keyExtractor={item => item.id.toString()}
-              ListEmptyComponent={<Text>No pickup requests found.</Text>}
-            />
-          </View></>
     );
   };
 
@@ -108,9 +183,19 @@ export default function PickupScreen() {
         <Text style={styles.subtitle}>
           Choose how you'd like to receive your item.
         </Text>
-
         <ProgressBar currentStep={4} steps={progressSteps} />
       </View>
+
+      {showPickup ? (
+        <Pickup pickupId={pickupId} /> // Removed onClose prop
+      ) : (
+        <FlatList
+          data={pickups}
+          renderItem={renderItem}
+          keyExtractor={item => item.id.toString()}
+          ListEmptyComponent={<Text>No pickup requests found.</Text>}
+        />
+      )}
     </ScrollView>
   );
 }
@@ -119,16 +204,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8fafc",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 16,
-    color: "#64748b",
   },
   content: {
     padding: 16,
@@ -146,162 +221,6 @@ const styles = StyleSheet.create({
     color: "#64748b",
     marginBottom: 20,
   },
-  summaryCard: {
-    marginTop: 16,
-  },
-  sectionTitle: {
-    fontFamily: "Poppins-SemiBold",
-    fontSize: 18,
-    color: "#1e293b",
-    marginBottom: 16,
-  },
-  orderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  orderLabel: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#64748b",
-  },
-  orderValue: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#1e293b",
-  },
-  travelerInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  travelerImage: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginRight: 8,
-  },
-  priceValue: {
-    fontFamily: "Inter-SemiBold",
-    fontSize: 14,
-    color: "#16a34a",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#e2e8f0",
-    marginVertical: 12,
-  },
-  totalLabel: {
-    fontFamily: "Inter-Bold",
-    fontSize: 16,
-    color: "#1e293b",
-  },
-  totalValue: {
-    fontFamily: "Inter-Bold",
-    fontSize: 16,
-    color: "#16a34a",
-  },
-  paymentCard: {
-    marginTop: 16,
-  },
-  paymentOptions: {
-    flexDirection: "row",
-    marginBottom: 16,
-  },
-  paymentOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    marginRight: 12,
-    minWidth: 120,
-  },
-  selectedPaymentOption: {
-    borderColor: "#3b82f6",
-    backgroundColor: "#eff6ff",
-  },
-  paymentOptionText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#64748b",
-    marginLeft: 8,
-  },
-  paypalText: {
-    fontFamily: "Inter-Bold",
-    fontSize: 16,
-    color: "#64748b",
-  },
-  selectedPaymentOptionText: {
-    color: "#3b82f6",
-  },
-  cardForm: {
-    marginTop: 8,
-  },
-  formGroup: {
-    marginBottom: 16,
-  },
-  formRow: {
-    flexDirection: "row",
-  },
-  inputLabel: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#64748b",
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: "#f8fafc",
-    borderRadius: 8,
-    padding: 12,
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#1e293b",
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  paypalContainer: {
-    padding: 16,
-    backgroundColor: "#f8fafc",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  paypalInstructions: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#64748b",
-    textAlign: "center",
-  },
-  securityNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  securityText: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#64748b",
-    marginLeft: 8,
-  },
-  escrowNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  escrowText: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#64748b",
-    marginLeft: 8,
-  },
-  payButton: {
-    marginTop: 8,
-  },
   item: {
     padding: 10,
     marginVertical: 5,
@@ -311,6 +230,21 @@ const styles = StyleSheet.create({
   waitingText: {
     color: '#666',
     fontStyle: 'italic',
+    marginTop: 5,
+  },
+  successText: {
+    color: 'green',
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
+  cancelledText: {
+    color: 'red',
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
+  warningText: {
+    color: '#ff9800',
+    fontWeight: 'bold',
     marginTop: 5,
   },
 });
