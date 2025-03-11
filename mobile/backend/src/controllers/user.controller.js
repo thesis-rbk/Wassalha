@@ -489,6 +489,52 @@ const verifyIdCard = async (req, res) => {
   }
 };
 
+const verifySelfie = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        message: "No selfie uploaded"
+      });
+    }
+
+    // Hash the file path/content for security
+    const fileHash = crypto
+      .createHash('sha256')
+      .update(file.path)
+      .digest('hex');
+
+    // Update ServiceProvider record with selfie
+    const serviceProvider = await prisma.serviceProvider.update({
+      where: {
+        userId: userId
+      },
+      data: {
+        selfie: fileHash,
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Selfie uploaded successfully",
+      data: {
+        selfie: fileHash
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in selfie verification:', error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to process selfie",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   signup,
   loginUser,
@@ -501,4 +547,5 @@ module.exports = {
   changePassword,
   getUsers,
   verifyIdCard,
+  verifySelfie,
 };
