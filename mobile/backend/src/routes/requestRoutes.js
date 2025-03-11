@@ -14,6 +14,9 @@ router.put('/:id', authenticateUser, requestController.updateRequest);
 router.delete('/:id', authenticateUser, requestController.deleteRequest);
 router.patch('/:id/status', authenticateUser, requestController.updateRequestStatus);
 
+// Add this route to get offers for a specific request
+router.get('/:id/offers', requestController.getRequestOffers);
+
 // Add logging middleware
 router.use((req, res, next) => {
   console.log('📡 Request route accessed:', {
