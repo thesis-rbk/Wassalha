@@ -46,7 +46,7 @@ export default function HomeScreen() {
 
   const handleBestTraveler = async () => {
     try {
-      const result = await axiosInstance.get("/api/fecth/besttarveler");
+      const result = await axiosInstance.get("/api/besttarveler");
       setTravelers(result.data.traveler);
       setSponsors(result.data.sponsor);
     } catch (err) {
@@ -73,7 +73,7 @@ export default function HomeScreen() {
     {
       title: "Subscription",
       icon: <Crown size={40} color="white" />,
-      route: "../test/Subscription" as const,
+      route: "../verification/fetchAll" as const,
     },
   ];
 

@@ -574,14 +574,14 @@ model Sponsorship {
   duration    Int
   platform    SponsorshipPlatform
   categoryId  Int
-  category    Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  category    Category?           @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   isActive    Boolean             @default(true)
 
   // New fields from your schema
   sponsorId   Int
   sponsor     ServiceProvider @relation("ServiceProviderSponsors", fields: [sponsorId], references: [id])
   recipientId Int
-  recipient   User            @relation("SponsorshipRecipients", fields: [recipientId], references: [id])
+  recipient   User?           @relation("SponsorshipRecipients", fields: [recipientId], references: [id])
   product     String
   amount      Float
   status      String          @default("pending")

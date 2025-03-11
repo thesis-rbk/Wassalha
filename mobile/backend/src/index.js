@@ -40,7 +40,7 @@ app.use(express.json());
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve static files
 // console.log("pathsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", path.join(__dirname, 'src/uploads'));
 app.use('/api/uploads', express.static(path.join(__dirname, '/uploads'))); // Serve static files
-app.use("/api/fecth", fetchRoute)
+app.use("/api", fetchRoute)
 // Routes
 
 // API Routes
