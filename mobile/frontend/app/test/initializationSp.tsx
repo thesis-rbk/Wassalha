@@ -75,6 +75,7 @@ export default function InitializationSp() {
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentUser, setCurrentUser] = React.useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { role, loading: roleLoading } = useRoleDetection(
     currentUser?.id ? parseInt(currentUser.id) : undefined
@@ -149,42 +150,55 @@ export default function InitializationSp() {
 
   const handleSubmitOffer = async () => {
     try {
-      // Comment out the actual API call for now
-      /*
-      const response = await axiosInstance.post('/api/offers', {
-        requestId: Array.isArray(params.id) ? params.id[0] : params.id,
-        price: parseFloat(Array.isArray(offerDetails.price) ? offerDetails.price[0] : offerDetails.price),
-        deliveryDate: offerDetails.deliveryDate,
-        message: offerDetails.message,
-        serviceProviderId: currentUser?.id,
-        serviceOwnerId: params.requesterId
-      });
-      */
+      setIsSubmitting(true);
       
-      // For testing purposes, just show a mock success message
-      console.log('Would have submitted offer with data:', {
-        requestId: Array.isArray(params.id) ? params.id[0] : params.id,
-        price: parseFloat(Array.isArray(offerDetails.price) ? offerDetails.price[0] : offerDetails.price),
-        deliveryDate: offerDetails.deliveryDate,
-        message: offerDetails.message,
-        serviceProviderId: currentUser?.id,
-        serviceOwnerId: params.requesterId
-      });
+      // Extract request ID from params
+      const requestId = Array.isArray(params.id) ? params.id[0] : params.id;
       
-      // Navigate to role test screen
-      Alert.alert(
-        'Testing',
-        'Navigating to role test screen',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.push('../role-test')
-          }
-        ]
-      );
-    } catch (error) {
-      console.error('Offer submission error:', error);
-      Alert.alert('Error', 'Failed to submit offer');
+      // Prepare order data
+      const orderData = {
+        requestId: parseInt(requestId),
+        travelerId: currentUser?.id,
+        departureDate: offerDetails.deliveryDate,
+        totalAmount: parseFloat(Array.isArray(offerDetails.price) ? offerDetails.price[0] : offerDetails.price)
+      };
+      
+      // Make API call to create order
+      const response = await axiosInstance.post('/api/orders', orderData);
+      
+      if (response.status === 201) {
+        // Navigate to order details screen with the new order ID
+        Alert.alert(
+          'Offer Submitted',
+          'Your offer has been submitted successfully.',
+          [
+            {
+              text: 'View Order',
+              onPress: () => router.push(`../order-details?id=${response.data.data.id}`)
+            }
+          ]
+        );
+      }
+    } catch (error: any) {
+      console.error('Error submitting offer:', error);
+      
+      // Check if error is due to request already having an order
+      if (error.response && error.response.data && error.response.data.error === 'An order already exists for this request') {
+        Alert.alert(
+          'Request Already Taken',
+          'This request already has an offer. Please choose another request.',
+          [
+            {
+              text: 'Back to Requests',
+              onPress: () => router.back()
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', 'Failed to submit offer. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

@@ -130,6 +130,7 @@ export default function RootLayout() {
               options={{ title: "Pickup" }}
             />
             <Stack.Screen name="test/role-test" options={{ title: "Role Test" }} />
+            <Stack.Screen name="test/order-details"  />
           </Stack>
         )}
       </Provider>

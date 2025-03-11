@@ -12,6 +12,7 @@ import { MapPin, DollarSign, Package, Activity } from 'lucide-react-native';
 import { BACKEND_URL } from '@/config';
 import { useRouter } from 'expo-router';
 import { decode as atob } from 'base-64';
+import { ProcessStatus } from '@/types/GoodsProcess';
 
 // Custom hook to ensure we have user data
 const useReliableAuth = () => {
@@ -183,6 +184,12 @@ export default function OrderPage() {
       });
     };
   
+    // Check if this request has an associated order
+    const hasOrder = item.order !== null && item.order !== undefined;
+    const processStatus = hasOrder && item.order?.goodsProcess?.status 
+      ? item.order.goodsProcess.status 
+      : undefined;
+
     return (
       <View style={styles.card}>
         <View style={styles.imageSection}>
@@ -206,61 +213,79 @@ export default function OrderPage() {
         </View>
 
         <View style={styles.content}>
-          <ThemedText style={styles.productTitle}>{item.goods.name}</ThemedText>
-          
-          {/* Add an indicator for own requests */}
-          {isOwnRequest(item.userId) && (
-            <View style={styles.ownRequestBadge}>
-              <ThemedText style={styles.ownRequestText}>Your Request</ThemedText>
-            </View>
-          )}
-          
-          <View style={styles.detailsCard}>
-            <View style={styles.detailRow}>
-              <View style={styles.iconContainer}>
-                <MapPin size={20} color="#64748b" />
+          <View style={styles.headerContent}>
+            <View style={styles.titleRow}>
+              <ThemedText style={styles.productTitle}>{item.goods.name}</ThemedText>
+              
+              <View style={styles.badgeContainer}>
+                {/* Show "Your Request" badge if it's the user's own request */}
+                {isOwnRequest(item.userId) && (
+                  <View style={styles.ownRequestBadge}>
+                    <ThemedText style={styles.badgeText}>Your Request</ThemedText>
+                  </View>
+                )}
+                
+                {/* Show status badge if it has an order */}
+                {hasOrder && (
+                  <View style={[
+                    styles.statusBadge, 
+                    { backgroundColor: getProcessStatusColor(processStatus as ProcessStatus) }
+                  ]}>
+                    <ThemedText style={styles.badgeText}>
+                      {getProcessStatusText(processStatus as ProcessStatus)}
+                    </ThemedText>
+                  </View>
+                )}
               </View>
-              <View style={styles.detailContent}>
-                <ThemedText style={styles.detailLabel}>Route</ThemedText>
-                <ThemedText style={styles.detailValue}>
-                  {item.goodsLocation} → {item.goodsDestination}
-                </ThemedText>
-              </View>
             </View>
+            
+            <View style={styles.detailsCard}>
+              <View style={styles.detailRow}>
+                <View style={styles.iconContainer}>
+                  <MapPin size={20} color="#64748b" />
+                </View>
+                <View style={styles.detailContent}>
+                  <ThemedText style={styles.detailLabel}>Route</ThemedText>
+                  <ThemedText style={styles.detailValue}>
+                    {item.goodsLocation} → {item.goodsDestination}
+                  </ThemedText>
+                </View>
+              </View>
 
-            <View style={styles.detailRow}>
-              <View style={styles.iconContainer}>
-                <DollarSign size={20} color="#64748b" />
+              <View style={styles.detailRow}>
+                <View style={styles.iconContainer}>
+                  <DollarSign size={20} color="#64748b" />
+                </View>
+                <View style={styles.detailContent}>
+                  <ThemedText style={styles.detailLabel}>Price</ThemedText>
+                  <ThemedText style={styles.priceValue}>
+                    ${item.goods.price.toFixed(2)}
+                  </ThemedText>
+                </View>
               </View>
-              <View style={styles.detailContent}>
-                <ThemedText style={styles.detailLabel}>Price</ThemedText>
-                <ThemedText style={styles.priceValue}>
-                  ${item.goods.price.toFixed(2)}
-                </ThemedText>
-              </View>
-            </View>
 
-            <View style={styles.detailRow}>
-              <View style={styles.iconContainer}>
-                <Package size={20} color="#64748b" />
+              <View style={styles.detailRow}>
+                <View style={styles.iconContainer}>
+                  <Package size={20} color="#64748b" />
+                </View>
+                <View style={styles.detailContent}>
+                  <ThemedText style={styles.detailLabel}>Quantity</ThemedText>
+                  <ThemedText style={styles.detailValue}>{item.quantity}</ThemedText>
+                </View>
               </View>
-              <View style={styles.detailContent}>
-                <ThemedText style={styles.detailLabel}>Quantity</ThemedText>
-                <ThemedText style={styles.detailValue}>{item.quantity}</ThemedText>
-              </View>
-            </View>
 
-            <View style={styles.detailRow}>
-              <View style={styles.iconContainer}>
-                <Activity size={20} color="#64748b" />
-              </View>
-              <View style={styles.detailContent}>
-                <ThemedText style={styles.detailLabel}>Status</ThemedText>
-                <View style={[
-                  styles.statusBadge, 
-                  styles[item.status.toLowerCase() as Lowercase<RequestStatus>]
-                ]}>
-                  <ThemedText style={styles.statusText}>{item.status}</ThemedText>
+              <View style={styles.detailRow}>
+                <View style={styles.iconContainer}>
+                  <Activity size={20} color="#64748b" />
+                </View>
+                <View style={styles.detailContent}>
+                  <ThemedText style={styles.detailLabel}>Status</ThemedText>
+                  <View style={[
+                    styles.statusBadge, 
+                    styles[item.status.toLowerCase() as Lowercase<RequestStatus>]
+                  ]}>
+                    <ThemedText style={styles.statusText}>{item.status}</ThemedText>
+                  </View>
                 </View>
               </View>
             </View>
@@ -275,15 +300,36 @@ export default function OrderPage() {
             </View>
           )}
 
-          {/* Only show the button for pending requests that aren't owned by the current user */}
-          {item.status === 'PENDING' && !isOwnRequest(item.userId) && (
-            <TouchableOpacity 
-              style={styles.offerButton}
-              onPress={handleMakeOffer}
-            >
-              <ThemedText style={styles.offerButtonText}>Make an Offer</ThemedText>
-            </TouchableOpacity>
-          )}
+          <View style={styles.actionRow}>
+            <ThemedText style={styles.priceText}>
+              ${item.goods.price} × {item.quantity}
+            </ThemedText>
+            
+            {/* Show different buttons based on request status */}
+            {!isOwnRequest(item.userId) && !hasOrder && (
+              <TouchableOpacity 
+                style={styles.offerButton}
+                onPress={handleMakeOffer}
+              >
+                <ThemedText style={styles.offerButtonText}>Make an Offer</ThemedText>
+              </TouchableOpacity>
+            )}
+            
+            {!isOwnRequest(item.userId) && hasOrder && (
+              <View style={styles.takenContainer}>
+                <ThemedText style={styles.takenText}>Already Taken</ThemedText>
+              </View>
+            )}
+            
+            {hasOrder && (
+              <TouchableOpacity 
+                style={styles.viewOrderButton}
+                onPress={() => router.push(`/test/order-details?id=${item.order?.id}`)}
+              >
+                <ThemedText style={styles.viewOrderButtonText}>View Order</ThemedText>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
     );
@@ -462,4 +508,68 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+  takenContainer: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+  },
+  takenText: {
+    color: '#64748b',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  headerContent: {
+    // Add any necessary styles for the header content
+  },
+  titleRow: {
+    // Add any necessary styles for the title row
+  },
+  badgeContainer: {
+    // Add any necessary styles for the badge container
+  },
+  badgeText: {
+    // Add any necessary styles for the badge text
+  },
+  actionRow: {
+    // Add any necessary styles for the action row
+  },
+  priceText: {
+    // Add any necessary styles for the price text
+  },
+  viewOrderButton: {
+    // Add any necessary styles for the view order button
+  },
+  viewOrderButtonText: {
+    // Add any necessary styles for the view order button text
+  },
 });
+
+// Add these functions to your order.tsx file
+const getProcessStatusColor = (status: ProcessStatus): string => {
+  switch (status) {
+    case 'INITIALIZED': return '#3b82f6'; // blue
+    case 'CONFIRMED': return '#8b5cf6'; // purple
+    case 'PAID': return '#10b981'; // green
+    case 'IN_TRANSIT': return '#f97316'; // orange
+    case 'PICKUP_MEET': return '#eab308'; // yellow
+    case 'FINALIZED': return '#14b8a6'; // teal
+    case 'CANCELLED': return '#ef4444'; // red
+    default: return '#6b7280'; // gray
+  }
+};
+
+const getProcessStatusText = (status: ProcessStatus): string => {
+  switch (status) {
+    case 'INITIALIZED': return 'Initialized';
+    case 'CONFIRMED': return 'Confirmed';
+    case 'PAID': return 'Paid';
+    case 'IN_TRANSIT': return 'In Transit';
+    case 'PICKUP_MEET': return 'Ready for Pickup';
+    case 'FINALIZED': return 'Completed';
+    case 'CANCELLED': return 'Cancelled';
+    default: return status;
+  }
+};

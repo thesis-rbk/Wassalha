@@ -1,5 +1,6 @@
 import { User } from "./User";
 import { Goods } from "./Goods";
+import { Order } from "./Order";
 
 export type RequestStatus = "PENDING" | "ACCEPTED" | "CANCELLED" | "REJECTED";
 
@@ -16,4 +17,5 @@ export interface Request {
   date: Date;
   status: RequestStatus;
   withBox?: boolean;
+  order?: Order | null;
 }
