@@ -74,7 +74,7 @@ const signup = async (req, res) => {
       data: {
         firstName: newUser.name,
         lastName: "",
-        User: {
+        user: {
           connect: {
             id: newUser.id
           }

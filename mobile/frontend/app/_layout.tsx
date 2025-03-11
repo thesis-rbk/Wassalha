@@ -97,6 +97,7 @@ export default function RootLayout() {
             <Stack.Screen name="test/chat" options={{ title: "Chat" }} />
             <Stack.Screen name="test/order" options={{ title: "order" }} />
             <Stack.Screen name="verification/start" options={{ title: "verification" }} />
+            <Stack.Screen name="verification/CreateSponsorPost" options={{ title: "create-sponsor-post" }} />
             <Stack.Screen
               name="processTrack/initializationSO"
               options={{ title: "Initialization" }}

@@ -1,5 +1,4 @@
 const prisma = require("../../prisma");
-const { search } = require("../routes/fetchAll");
 const fetch = {
     All: async (req, res) => {
         const traveler = []

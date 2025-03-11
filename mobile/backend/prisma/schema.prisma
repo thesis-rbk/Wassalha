@@ -265,8 +265,8 @@ model User {
   serviceProvider ServiceProvider?
   profile         Profile?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ========== PROFILE ==========
@@ -280,13 +280,11 @@ model Profile {
   country     Country? // Optional field for country
   phoneNumber String?
 
-  // Profile image stored as Media
   imageId Int?   @unique
   image   Media? @relation("ProfileImage", fields: [imageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   gender Gender?
 
-  review              String?
   isAnonymous         Boolean?        @default(false)
   isBanned            Boolean         @default(false)
   isVerified          Boolean         @default(false)
@@ -294,31 +292,41 @@ model Profile {
   preferredCategories String?
   referralSource      ReferralSource?
 
-  user User? @relation(fields: [userId], references: [id])
+  user                User            @relation(fields: [userId], references: [id])
+  reviewerReviews     ReviewSponsor[] @relation("ReviewerReviews")
+  reviewedUserReviews ReviewSponsor[] @relation("ReviewedUserReviews")
+}
+
+model ReviewSponsor {
+  review_id        Int @id @default(autoincrement())
+  reviewer_id      Int
+  reviewed_user_id Int
+  rating           Int
+
+  reviewer      Profile @relation("ReviewerReviews", fields: [reviewer_id], references: [id])
+  reviewed_user Profile @relation("ReviewedUserReviews", fields: [reviewed_user_id], references: [id])
 }
 
 // ========== SERVICE PROVIDER ==========
 model ServiceProvider {
-  id          Int     @id @default(autoincrement())
-  userId      Int     @unique
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  type        ServiceProviderType
-  isVerified  Boolean @default(false)
-  badge       String?
+  id         Int                 @id @default(autoincrement())
+  userId     Int                 @unique
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  type       ServiceProviderType
+  isVerified Boolean             @default(false)
+  badge      String?
 
   // Verification Fields
-  idCard      String? // Optional: Government ID
-  passport    String? // Optional: Passport Number
-  license     String? // Optional: Driving License
-  creditCard  String? // Optional: Last 4 digits for security
+  idCard     String? // Optional: Government ID
+  passport   String? // Optional: Passport Number
+  license    String? // Optional: Driving License
+  creditCard String? // Optional: Last 4 digits for security
 
   // Example attributes
   subscriptionLevel String?
 
-
-
   // Sponsorships relation
-  sponsorships  Sponsorship[] @relation("ServiceProviderSponsors")
+  sponsorships Sponsorship[] @relation("ServiceProviderSponsors")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -559,29 +567,29 @@ model Subscription {
 
 // ========== SPONSORSHIP ==========
 model Sponsorship {
-  id          Int     @id @default(autoincrement())
+  id          Int                 @id @default(autoincrement())
   name        String
   description String?
   price       Float
   duration    Int
   platform    SponsorshipPlatform
   categoryId  Int
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  isActive    Boolean @default(true)
+  category    Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  isActive    Boolean             @default(true)
 
   // New fields from your schema
   sponsorId   Int
   sponsor     ServiceProvider @relation("ServiceProviderSponsors", fields: [sponsorId], references: [id])
   recipientId Int
-  recipient   User @relation("SponsorshipRecipients", fields: [recipientId], references: [id])
+  recipient   User            @relation("SponsorshipRecipients", fields: [recipientId], references: [id])
   product     String
   amount      Float
-  status      String @default("pending")
+  status      String          @default("pending")
 
   users User[] @relation("UserSponsorships")
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ========== GOODS POSTS ==========
