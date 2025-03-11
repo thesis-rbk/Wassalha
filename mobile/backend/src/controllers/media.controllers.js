@@ -1,4 +1,4 @@
-const prisma = require('../../prisma');
+const prisma = require('../../prisma/index');
 const path = require('path');
 
 const uploadMedia = async (req, res) => {

@@ -1,4 +1,4 @@
-const prisma = require('../../prisma');
+const prisma = require('../../prisma/index');
 
 // Get process details for an order
 const getProcessDetails = async (req, res) => {

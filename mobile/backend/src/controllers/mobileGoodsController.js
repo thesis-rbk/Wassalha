@@ -1,4 +1,4 @@
-const prisma = require('../../prisma');
+const prisma = require('../../prisma/index');
 
 const createGoods = async (req, res) => {
   console.log('📥 Received goods creation request');

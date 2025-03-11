@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Image as RNImage } from "react-native"
-import { ChevronDown, Upload, Image as ImageIcon } from "lucide-react-native"
+import { ChevronDown, Upload, Image as ImageIcon, Calendar } from "lucide-react-native"
 import { InputField } from "@/components/InputField"
 import { BaseButton } from "@/components/ui/buttons/BaseButton"
 import { TitleLarge, TitleSection, BodyMedium } from "@/components/Typography"
@@ -15,6 +15,7 @@ import axiosInstance from "@/config"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import * as FileSystem from 'expo-file-system'
 import * as DocumentPicker from 'expo-document-picker'
+import DateTimePickerModal from 'react-native-modal-datetime-picker'
 
 const AdditionalDetails: React.FC = () => {
   const colorScheme = useColorScheme() ?? "light"
@@ -44,13 +45,16 @@ const AdditionalDetails: React.FC = () => {
   const [quantity, setQuantity] = useState("")
   const [goodsLocation, setGoodsLocation] = useState("")
   const [goodsDestination, setGoodsDestination] = useState("")
-  const [deliveryDate, setDeliveryDate] = useState("")
+  const [deliveryDate, setDeliveryDate] = useState(new Date())
 
   // Add this to handle closing dropdown when clicking outside
   const [dropdownVisible, setDropdownVisible] = useState(false);
   
   // Add loading state for image picker
   const [imageLoading, setImageLoading] = useState(false);
+
+  // Add this new state for date picker
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -329,7 +333,7 @@ const AdditionalDetails: React.FC = () => {
           // Parse and validate the date
           let requestDate = null;
           try {
-            if (deliveryDate && deliveryDate.trim() !== '') {
+            if (deliveryDate && deliveryDate.getTime() !== 0) {
               requestDate = new Date(deliveryDate);
               // Check if date is valid
               if (isNaN(requestDate.getTime())) {
@@ -565,13 +569,28 @@ const AdditionalDetails: React.FC = () => {
           style={styles.input}
         />
 
-        <InputField
-          label="Delivery Date *"
-          value={deliveryDate}
-          onChangeText={setDeliveryDate}
-          placeholder="YYYY-MM-DD"
-          style={styles.input}
-        />
+        <View style={styles.formField}>
+          <BodyMedium style={styles.label}>Delivery Date</BodyMedium>
+          <TouchableOpacity 
+            style={styles.dateInput}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <BodyMedium>
+              {deliveryDate.toLocaleDateString()}
+            </BodyMedium>
+          </TouchableOpacity>
+
+          <DateTimePickerModal
+            isVisible={showDatePicker}
+            mode="date"
+            onConfirm={(date) => {
+              setShowDatePicker(false);
+              setDeliveryDate(date);
+            }}
+            onCancel={() => setShowDatePicker(false)}
+            minimumDate={new Date()}
+          />
+        </View>
 
         <View style={styles.buttonContainer}>
           <BaseButton 
@@ -764,6 +783,21 @@ const styles = StyleSheet.create({
   changeImageText: {
     color: '#fff',
     fontSize: 14,
+  },
+  formField: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    color: Colors.light.text,
+    marginBottom: 8,
+  },
+  dateInput: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: 'white',
   },
 })
 

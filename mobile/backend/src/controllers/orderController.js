@@ -1,4 +1,4 @@
-const prisma = require('../../prisma');
+const prisma = require('../../prisma/index');
 
 // Get all orders with their process info
 const getAllOrders = async (req, res) => {
@@ -170,9 +170,88 @@ const updateOrder = async (req, res) => {
   }
 };
 
+// Add this new controller method
+const updateOrderStatus = async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.id);
+    const { status } = req.body;
+
+    // Start a transaction to handle the cancellation process
+    const result = await prisma.$transaction(async (prisma) => {
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: { 
+          goodsProcess: true,
+          request: true
+        }
+      });
+
+      if (status === 'CANCELLED') {
+        // First, delete any events associated with the process
+        await prisma.processEvent.deleteMany({
+          where: { goodsProcessId: order.goodsProcess.id }
+        });
+
+        // Then delete the goods process
+        await prisma.goodsProcess.delete({
+          where: { id: order.goodsProcess.id }
+        });
+
+        // Update request status first
+        await prisma.request.update({
+          where: { id: order.requestId },
+          data: { 
+            status: 'PENDING'
+          }
+        });
+
+        // Finally delete the order
+        await prisma.order.delete({
+          where: { id: orderId }
+        });
+
+        return {
+          success: true,
+          message: 'Order cancelled and request restored to pending state'
+        };
+      }
+
+      // Handle other status updates if not cancelled
+      const updatedProcess = await prisma.goodsProcess.update({
+        where: { orderId: orderId },
+        data: {
+          status: status,
+          events: {
+            create: {
+              fromStatus: order.goodsProcess.status,
+              toStatus: status,
+              changedByUserId: parseInt(req.body.userId),
+              note: `Status updated to ${status}`
+            }
+          }
+        }
+      });
+
+      return {
+        success: true,
+        data: updatedProcess
+      };
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to update order status'
+    });
+  }
+};
+
 module.exports = {
   getAllOrders,
   getOrderById,
   createOrder,
-  updateOrder
+  updateOrder,
+  updateOrderStatus
 };

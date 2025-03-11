@@ -1,6 +1,6 @@
 // In frontend/app/test/order-details.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Platform, SafeAreaView } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import axiosInstance from '@/config';
 import { useAuth } from '@/hooks/useAuth';
@@ -94,10 +94,10 @@ export default function OrderDetailsScreen() {
   const fetchOrderDetails = async () => {
     try {
       setLoading(true);
-      // Fetch order details with expanded traveler information
       const response = await axiosInstance.get(`/api/orders/${orderId}?include=traveler.reputation,traveler.reviews,traveler.profile`);
       console.log('=== DEBUG ORDER DETAILS ===');
       console.log('Order Data:', response.data.data);
+      console.log('Tracking Number:', response.data.data.trackingNumber);
       console.log('Traveler Info:', response.data.data.traveler);
       
       // Add default values for missing data
@@ -163,25 +163,39 @@ export default function OrderDetailsScreen() {
     debugAuth();
   }, [user]);
 
-  const updateProcessStatus = async (newStatus: ProcessStatus) => {
+  const updateProcessStatus = async (newStatus: string) => {
     try {
       setUpdating(true);
-      const response = await axiosInstance.patch(`/api/process/${orderId}/status`, {
-        status: newStatus,
-        userId: user?.id,
-        note: `Status updated to ${newStatus}`
-      });
       
-      if (response.data.success) {
-        setOrder((prev: any) => ({
-          ...prev,
-          goodsProcess: response.data.data
-        }));
-        Alert.alert('Success', `Order status updated to ${newStatus}`);
+      const response = await axiosInstance.patch(`/api/orders/${order.id}/status`, {
+        status: newStatus,
+        userId: user?.id
+      });
+
+      if (response.status === 200) {
+        if (newStatus === 'CANCELLED') {
+          Alert.alert(
+            'Order Cancelled',
+            'The request is now available for new offers.',
+            [{ 
+              text: 'OK', 
+              onPress: () => {
+                // Navigate back to the requests list since this order no longer exists
+                router.back();
+              } 
+            }]
+          );
+        } else {
+          Alert.alert(
+            'Status Updated',
+            'Order status has been updated.',
+            [{ text: 'OK', onPress: () => fetchOrderDetails() }]
+          );
+        }
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      Alert.alert('Error', 'Failed to update order status');
+      Alert.alert('Error', 'Failed to update status. Please try again.');
     } finally {
       setUpdating(false);
     }
@@ -254,260 +268,317 @@ export default function OrderDetailsScreen() {
   const isTraveler = user?.id === order?.travelerId;
 
   return (
-    <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: 'Order Details' }} />
-      
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Order Header with Order ID and Status */}
-        <View style={styles.orderHeader}>
-          <View>
-            
-            <ThemedText style={styles.orderDate}>
-              {formatDate(order.goodsProcess?.createdAt)}
-            </ThemedText>
-          </View>
-          <View style={styles.statusBadge}>
-            <ThemedText style={styles.statusText}>
-              {currentStatus?.replace('_', ' ')}
-            </ThemedText>
-          </View>
-        </View>
-
-        {/* Order Progress Tracker */}
-        <View style={styles.trackerCard}>
-          <ProcessTracker 
-            currentStatus={currentStatus}
-            events={order.goodsProcess?.events || []}
-          />
-        </View>
-
-        {/* Requester View - Prominently showing Traveler Info */}
-        {isRequester && (
-          <>
-            {/* Traveler Info Card - Prioritized */}
-            <View style={styles.travelerSection}>
-              <ThemedText style={styles.sectionTitle}>Your Delivery Partner</ThemedText>
+    <SafeAreaView style={styles.safeArea}>
+      <ThemedView style={styles.container}>
+        <Stack.Screen options={{ title: 'Order Details' }} />
+        
+        <ScrollView 
+          style={styles.scrollView} 
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Order Header with Order ID and Status */}
+          <View style={styles.orderHeader}>
+            <View>
               
-              <View style={styles.travelerCard}>
-                {/* Traveler Avatar */}
-                <View style={styles.travelerAvatarContainer}>
-                  {order.traveler?.profile?.imageId ? (
-                    <BlurView intensity={80} style={styles.blurContainer}>
-                      <Image 
-                        source={{ uri: `${BACKEND_URL}/api/uploads/${order.traveler.profile.imageId}` }}
-                        style={styles.travelerAvatar}
-                        contentFit="cover"
-                      />
-                    </BlurView>
-                  ) : (
-                    <View style={styles.initialsContainer}>
-                      <ThemedText style={styles.initials}>
-                        {getInitials(order.traveler?.name)}
-                      </ThemedText>
-                    </View>
-                  )}
-                  
-                  {order.traveler?.profile?.isVerified && (
-                    <View style={styles.verifiedBadge}>
-                      <CheckCircle size={16} color="#10b981" />
-                    </View>
-                  )}
-                </View>
+              <ThemedText style={styles.orderDate}>
+                {formatDate(order.goodsProcess?.createdAt)}
+              </ThemedText>
+            </View>
+            <View style={styles.statusBadge}>
+              <ThemedText style={styles.statusText}>
+                {currentStatus?.replace('_', ' ')}
+              </ThemedText>
+            </View>
+          </View>
+
+          {/* Order Progress Tracker */}
+          <View style={styles.trackerCard}>
+            <ProcessTracker 
+              currentStatus={currentStatus}
+              events={order.goodsProcess?.events || []}
+            />
+          </View>
+
+          {/* Requester View - Prominently showing Traveler Info */}
+          {isRequester && (
+            <>
+              {/* Traveler Info Card - Prioritized */}
+              <View style={styles.travelerSection}>
+                <ThemedText style={styles.sectionTitle}>Your Delivery Partner</ThemedText>
                 
-                <View style={styles.travelerInfo}>
-                  <ThemedText style={styles.travelerName}>
-                    {getObfuscatedName(order.traveler?.name)}
-                  </ThemedText>
+                <View style={styles.travelerCard}>
+                  {/* Traveler Avatar */}
+                  <View style={styles.travelerAvatarContainer}>
+                    {order.traveler?.profile?.imageId ? (
+                      <BlurView intensity={80} style={styles.blurContainer}>
+                        <Image 
+                          source={{ uri: `${BACKEND_URL}/api/uploads/${order.traveler.profile.imageId}` }}
+                          style={styles.travelerAvatar}
+                          contentFit="cover"
+                        />
+                      </BlurView>
+                    ) : (
+                      <View style={styles.initialsContainer}>
+                        <ThemedText style={styles.initials}>
+                          {getInitials(order.traveler?.name)}
+                        </ThemedText>
+                      </View>
+                    )}
+                    
+                    {order.traveler?.profile?.isVerified && (
+                      <View style={styles.verifiedBadge}>
+                        <CheckCircle size={16} color="#10b981" />
+                      </View>
+                    )}
+                  </View>
                   
-                  {/* Reputation Display */}
-                  <View style={styles.reputationRow}>
-                    <View style={styles.reputationContainer}>
-                      <Star size={16} color="#f59e0b" strokeWidth={2} fill="#f59e0b" />
-                      <ThemedText style={styles.reputationText}>
-                        {order.traveler.reputation.score.toFixed(1)} ({order.traveler.reputation.totalRatings} ratings)
-                      </ThemedText>
+                  <View style={styles.travelerInfo}>
+                    <ThemedText style={styles.travelerName}>
+                      {getObfuscatedName(order.traveler?.name)}
+                    </ThemedText>
+                    
+                    {/* Reputation Display */}
+                    <View style={styles.reputationRow}>
+                      <View style={styles.reputationContainer}>
+                        <Star size={16} color="#f59e0b" strokeWidth={2} fill="#f59e0b" />
+                        <ThemedText style={styles.reputationText}>
+                          {order.traveler.reputation.score.toFixed(1)} ({order.traveler.reputation.totalRatings} ratings)
+                        </ThemedText>
+                      </View>
+                      
+                      <View style={styles.experienceBadge}>
+                        <Award size={14} color="#7c3aed" strokeWidth={2} />
+                        <ThemedText style={styles.experienceText}>
+                          Level {order.traveler.reputation.level}
+                        </ThemedText>
+                      </View>
+                    </View>
+
+                    {/* Main Stats */}
+                    <View style={styles.statsContainer}>
+                      <View style={styles.statItem}>
+                        <Package size={14} color="#64748b" strokeWidth={2} />
+                        <ThemedText style={styles.statText}>
+                          {order.traveler.stats.completedOrders} Deliveries
+                        </ThemedText>
+                      </View>
+                      <View style={styles.divider} />
+                      <View style={styles.statItem}>
+                        <CheckCircle size={14} color="#64748b" strokeWidth={2} />
+                        <ThemedText style={styles.statText}>
+                          {order.traveler.stats.successRate}% Success
+                        </ThemedText>
+                      </View>
                     </View>
                     
-                    <View style={styles.experienceBadge}>
-                      <Award size={14} color="#7c3aed" strokeWidth={2} />
-                      <ThemedText style={styles.experienceText}>
-                        Level {order.traveler.reputation.level}
-                      </ThemedText>
-                    </View>
-                  </View>
-
-                  {/* Main Stats */}
-                  <View style={styles.statsContainer}>
-                    <View style={styles.statItem}>
-                      <Package size={14} color="#64748b" strokeWidth={2} />
-                      <ThemedText style={styles.statText}>
-                        {order.traveler.stats.completedOrders} Deliveries
-                      </ThemedText>
-                    </View>
-                    <View style={styles.divider} />
-                    <View style={styles.statItem}>
-                      <CheckCircle size={14} color="#64748b" strokeWidth={2} />
-                      <ThemedText style={styles.statText}>
-                        {order.traveler.stats.successRate}% Success
-                      </ThemedText>
-                    </View>
-                  </View>
-                  
-                  <ThemedText style={styles.joinedDate}>
-                    Member since {formatDate(order.traveler?.createdAt)}
-                  </ThemedText>
-                </View>
-              </View>
-              
-              {/* Key Delivery Information */}
-              <View style={styles.deliveryDetails}>
-                <View style={styles.detailRow}>
-                  <ThemedText style={styles.detailLabel}>Delivery Date:</ThemedText>
-                  <ThemedText style={styles.detailValue}>
-                    {formatDate(order.departureDate)}
-                  </ThemedText>
-                </View>
-                
-                <View style={styles.detailRow}>
-                  <ThemedText style={styles.detailLabel}>Price:</ThemedText>
-                  <ThemedText style={styles.detailValue}>
-                    ${order.totalAmount?.toFixed(2)}
-                  </ThemedText>
-                </View>
-                
-                {order.trackingNumber && (
-                  <View style={styles.detailRow}>
-                    <ThemedText style={styles.detailLabel}>Tracking:</ThemedText>
-                    <ThemedText style={styles.detailValue}>{order.trackingNumber}</ThemedText>
-                  </View>
-                )}
-              </View>
-            </View>
-            
-            {/* Reviews Section */}
-            {order.traveler.reviews && order.traveler.reviews.length > 0 && (
-              <View style={styles.reviewsSection}>
-                <ThemedText style={styles.reviewsHeading}>Partner Reviews</ThemedText>
-                {order.traveler.reviews.slice(0, 3).map((review: Review, index: number) => (
-                  <View key={review.id || index} style={styles.reviewItem}>
-                    <View style={styles.reviewHeader}>
-                      <View style={styles.reviewRating}>
-                        {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i}
-                            size={12}
-                            color="#f59e0b"
-                            strokeWidth={2}
-                            fill={i < (review.rating || 0) ? "#f59e0b" : "transparent"}
-                          />
-                        ))}
-                      </View>
-                      {review.reviewer && (
-                        <ThemedText style={styles.reviewerName}>
-                          {review.reviewer.name}
-                        </ThemedText>
-                      )}
-                    </View>
-                    <ThemedText style={styles.reviewText} numberOfLines={3}>
-                      {review.comment || "No comment provided"}
+                    <ThemedText style={styles.joinedDate}>
+                      Member since {formatDate(order.traveler?.createdAt)}
                     </ThemedText>
                   </View>
-                ))}
-              </View>
-            )}
-          </>
-        )}
-
-        {/* Traveler View - Show Request Details */}
-        {isTraveler && (
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Request Details</ThemedText>
-            
-            {/* Request Info */}
-            <View style={styles.requestCard}>
-              {order.request?.goods?.goodsUrl && (
-                <Image 
-                  source={{ uri: `${BACKEND_URL}/api/uploads/${order.request.goods.goodsUrl}` }}
-                  style={styles.goodsImage}
-                  contentFit="cover"
-                />
-              )}
-              
-              <View style={styles.requestInfo}>
-                <ThemedText style={styles.goodsName}>{order.request?.goods?.name}</ThemedText>
-                <ThemedText style={styles.goodsDescription}>{order.request?.goods?.description}</ThemedText>
+                </View>
                 
-                <View style={styles.requestDetails}>
+                {/* Key Delivery Information */}
+                <View style={styles.deliveryDetails}>
+                  <ThemedText style={styles.deliveryTitle}>Delivery Information</ThemedText>
+                  
                   <View style={styles.detailRow}>
-                    <ThemedText style={styles.detailLabel}>Price:</ThemedText>
-                    <ThemedText style={styles.detailValue}>${order.request?.goods?.price?.toFixed(2)}</ThemedText>
+                    <ThemedText style={styles.detailLabel}>Delivery Date:</ThemedText>
+                    <ThemedText style={styles.detailValue}>
+                      {formatDate(order.departureDate)}
+                    </ThemedText>
                   </View>
                   
+                  <View style={styles.detailRow}>
+                    <ThemedText style={styles.detailLabel}>From:</ThemedText>
+                    <ThemedText style={styles.detailValue}>
+                      {order.request?.goodsLocation}
+                    </ThemedText>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <ThemedText style={styles.detailLabel}>To:</ThemedText>
+                    <ThemedText style={styles.detailValue}>
+                      {order.request?.goodsDestination}
+                    </ThemedText>
+                  </View>
+
                   <View style={styles.detailRow}>
                     <ThemedText style={styles.detailLabel}>Quantity:</ThemedText>
-                    <ThemedText style={styles.detailValue}>{order.request?.quantity}</ThemedText>
+                    <ThemedText style={styles.detailValue}>
+                      {order.request?.quantity}
+                    </ThemedText>
                   </View>
-                  
-                  <View style={styles.detailRow}>
-                    <ThemedText style={styles.detailLabel}>Location:</ThemedText>
-                    <ThemedText style={styles.detailValue}>{order.request?.goodsLocation}</ThemedText>
-                  </View>
-                  
-                  <View style={styles.detailRow}>
-                    <ThemedText style={styles.detailLabel}>Destination:</ThemedText>
-                    <ThemedText style={styles.detailValue}>{order.request?.goodsDestination}</ThemedText>
-                  </View>
-                  
+
+                  {order.trackingNumber && (
+                    <>
+                      <View style={styles.detailRow}>
+                        <ThemedText style={styles.detailLabel}>Airline:</ThemedText>
+                        <ThemedText style={styles.detailValue}>
+                          {order.trackingNumber.slice(0, 2)}
+                        </ThemedText>
+                      </View>
+                      <View style={styles.detailRow}>
+                        <ThemedText style={styles.detailLabel}>Flight Number:</ThemedText>
+                        <ThemedText style={styles.detailValue}>
+                          {order.trackingNumber.slice(2)}
+                        </ThemedText>
+                      </View>
+                    </>
+                  )}
+
                   <View style={styles.detailRow}>
                     <ThemedText style={styles.detailLabel}>Box Required:</ThemedText>
-                    <ThemedText style={styles.detailValue}>{order.request?.withBox ? 'Yes' : 'No'}</ThemedText>
+                    <ThemedText style={styles.detailValue}>
+                      {order.request?.withBox ? 'Yes' : 'No'}
+                    </ThemedText>
                   </View>
                 </View>
               </View>
+              
+              {/* Reviews Section */}
+              {order.traveler.reviews && order.traveler.reviews.length > 0 && (
+                <View style={styles.reviewsSection}>
+                  <ThemedText style={styles.reviewsHeading}>Partner Reviews</ThemedText>
+                  {order.traveler.reviews.slice(0, 3).map((review: Review, index: number) => (
+                    <View key={review.id || index} style={styles.reviewItem}>
+                      <View style={styles.reviewHeader}>
+                        <View style={styles.reviewRating}>
+                          {[...Array(5)].map((_, i) => (
+                            <Star 
+                              key={i}
+                              size={12}
+                              color="#f59e0b"
+                              strokeWidth={2}
+                              fill={i < (review.rating || 0) ? "#f59e0b" : "transparent"}
+                            />
+                          ))}
+                        </View>
+                        {review.reviewer && (
+                          <ThemedText style={styles.reviewerName}>
+                            {review.reviewer.name}
+                          </ThemedText>
+                        )}
+                      </View>
+                      <ThemedText style={styles.reviewText} numberOfLines={3}>
+                        {review.comment || "No comment provided"}
+                      </ThemedText>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </>
+          )}
+
+          {/* Traveler View - Show Request Details */}
+          {isTraveler && (
+            <View style={styles.section}>
+              <ThemedText style={styles.sectionTitle}>Request Details</ThemedText>
+              
+              {/* Request Info */}
+              <View style={styles.requestCard}>
+                {order.request?.goods?.goodsUrl && (
+                  <Image 
+                    source={{ uri: `${BACKEND_URL}/api/uploads/${order.request.goods.goodsUrl}` }}
+                    style={styles.goodsImage}
+                    contentFit="cover"
+                  />
+                )}
+                
+                <View style={styles.requestInfo}>
+                  <ThemedText style={styles.goodsName}>{order.request?.goods?.name}</ThemedText>
+                  <ThemedText style={styles.goodsDescription}>{order.request?.goods?.description}</ThemedText>
+                  
+                  <View style={styles.requestDetails}>
+                    <View style={styles.detailRow}>
+                      <ThemedText style={styles.detailLabel}>Price:</ThemedText>
+                      <ThemedText style={styles.detailValue}>${order.request?.goods?.price?.toFixed(2)}</ThemedText>
+                    </View>
+                    
+                    <View style={styles.detailRow}>
+                      <ThemedText style={styles.detailLabel}>Quantity:</ThemedText>
+                      <ThemedText style={styles.detailValue}>{order.request?.quantity}</ThemedText>
+                    </View>
+                    
+                    <View style={styles.detailRow}>
+                      <ThemedText style={styles.detailLabel}>Location:</ThemedText>
+                      <ThemedText style={styles.detailValue}>{order.request?.goodsLocation}</ThemedText>
+                    </View>
+                    
+                    <View style={styles.detailRow}>
+                      <ThemedText style={styles.detailLabel}>Destination:</ThemedText>
+                      <ThemedText style={styles.detailValue}>{order.request?.goodsDestination}</ThemedText>
+                    </View>
+                    
+                    <View style={styles.detailRow}>
+                      <ThemedText style={styles.detailLabel}>Box Required:</ThemedText>
+                      <ThemedText style={styles.detailValue}>{order.request?.withBox ? 'Yes' : 'No'}</ThemedText>
+                    </View>
+                  </View>
+                </View>
+              </View>
+              
+              {/* Requester Info */}
+              <View style={styles.requesterInfo}>
+                <ThemedText style={styles.subSectionTitle}>Requester</ThemedText>
+                <ThemedText style={styles.requesterName}>{order.request?.user?.name}</ThemedText>
+              </View>
             </View>
+          )}
+        </ScrollView>
+
+        {/* Add this spacer at the bottom of the ScrollView content */}
+        <View style={styles.bottomSpacer} />
+
+        {/* Move buttons inside the main container but after ScrollView */}
+        {canUpdateStatus && (
+          <View style={styles.bottomActions}>
+            {nextStatus && (
+              <TouchableOpacity 
+                style={styles.updateButton}
+                onPress={() => updateProcessStatus(nextStatus)}
+                disabled={updating}
+              >
+                {updating ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <ThemedText style={styles.updateButtonText}>
+                    Update to {nextStatus.replace('_', ' ')}
+                  </ThemedText>
+                )}
+              </TouchableOpacity>
+            )}
             
-            {/* Requester Info */}
-            <View style={styles.requesterInfo}>
-              <ThemedText style={styles.subSectionTitle}>Requester</ThemedText>
-              <ThemedText style={styles.requesterName}>{order.request?.user?.name}</ThemedText>
-            </View>
+            {currentStatus !== 'CANCELLED' && (
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={() => {
+                  Alert.alert(
+                    'Cancel Order',
+                    'Are you sure you want to cancel this order? The request will become available for new offers.',
+                    [
+                      {
+                        text: 'No',
+                        style: 'cancel'
+                      },
+                      {
+                        text: 'Yes, Cancel',
+                        style: 'destructive',
+                        onPress: () => updateProcessStatus('CANCELLED')
+                      }
+                    ]
+                  );
+                }}
+                disabled={updating}
+              >
+                <ThemedText style={styles.cancelButtonText}>
+                  Cancel Order
+                </ThemedText>
+              </TouchableOpacity>
+            )}
           </View>
         )}
-      </ScrollView>
-
-      {/* Fixed Bottom Action Buttons */}
-      {canUpdateStatus && (
-        <View style={styles.bottomActions}>
-          {nextStatus && (
-            <TouchableOpacity 
-              style={styles.updateButton}
-              onPress={() => updateProcessStatus(nextStatus)}
-              disabled={updating}
-            >
-              {updating ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <ThemedText style={styles.updateButtonText}>
-                  Update to {nextStatus.replace('_', ' ')}
-                </ThemedText>
-              )}
-            </TouchableOpacity>
-          )}
-          
-          {currentStatus !== 'CANCELLED' && (
-            <TouchableOpacity 
-              style={styles.cancelButton}
-              onPress={() => updateProcessStatus('CANCELLED')}
-              disabled={updating}
-            >
-              <ThemedText style={styles.cancelButtonText}>
-                Cancel Order
-              </ThemedText>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-    </ThemedView>
+      </ThemedView>
+    </SafeAreaView>
   );
 }
 
@@ -538,6 +609,10 @@ const formatDate = (date?: string | Date) => {
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
   container: {
     flex: 1,
   },
@@ -546,7 +621,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 100, // Add padding to account for bottom buttons
   },
   orderHeader: {
     flexDirection: 'row',
@@ -715,11 +789,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
+    marginBottom: 20,
+  },
+  deliveryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 12,
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
   },
   detailLabel: {
     fontSize: 14,
@@ -828,15 +912,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#475569',
   },
-  // Bottom action buttons
+  bottomSpacer: {
+    height: 100, // Height to ensure content is visible above buttons
+  },
   bottomActions: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: 'white',
     padding: 16,
-    paddingBottom: 32, // Add extra padding for bottom safe area
+    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
     shadowColor: '#000',

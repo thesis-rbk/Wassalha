@@ -1,4 +1,4 @@
-const prisma = require('../../prisma');
+const prisma = require('../../prisma/index');
 const { authenticateUser } = require('../middleware/middleware');
 
 class MobileRequestController {
