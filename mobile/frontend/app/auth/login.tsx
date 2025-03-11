@@ -39,7 +39,7 @@ export default function Login() {
     if (response) {
       console.log("Response:", JSON.stringify(response, null, 2));
       if (response?.type === "success") {
-        console.log("Access Token:", response.authentication.accessToken);
+        console.log("Access Token:", response.authentication?.accessToken);
       } else {
         console.log("Error details:", response);
       }

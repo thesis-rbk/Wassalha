@@ -426,7 +426,7 @@ model Pickup {
   userconfirmed      Boolean @default(false)
   status             PickupStatus @default(SCHEDULED)
   scheduledTime      DateTime?
-
+  
   requests      Request[]
   notifications Notification[]
 }

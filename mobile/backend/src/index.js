@@ -6,8 +6,6 @@ const cors = require("cors");
 const http = require("http");
 const path = require("path"); // Import path module
 
-
-
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
@@ -38,7 +36,6 @@ app.use(express.json());
 
 // Serve static files from the "uploads" directory
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve static files
-// console.log("pathsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", path.join(__dirname, 'src/uploads'));
 app.use("/api/fecth", fetchRoute)
 // Routes
 
@@ -75,8 +72,7 @@ app.use((err, req, res, next) => {
 
 
 // Initialize socket
-// trackingSocket(server);
-notifsocket(server);
+trackingSocket(server);
 // Start server
 // Use `server.listen()` instead of `app.listen()`
 // **Why:**

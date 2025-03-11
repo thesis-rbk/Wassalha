@@ -163,6 +163,10 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
       gap: 10,
       justifyContent: 'space-between',
     },
+    buttonText: {
+      color: Colors[colorScheme].text,
+      fontSize: 16,
+    },
     airportInput: {
       borderWidth: 1,
       borderColor: Colors[colorScheme].text + '40',
@@ -229,9 +233,9 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
       setAirportSuggestions(results);
     } catch (error) {
       console.error('Error fetching airports from Google Places:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
+        status: (error as any).response?.status,
+        data: (error as any).response?.data,
+        message: (error as any).message,
       });
       Alert.alert('Error', 'Failed to fetch airport suggestions');
     } finally {
