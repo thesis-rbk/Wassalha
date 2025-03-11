@@ -1,36 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-import { faker } from '@faker-js/faker';
+import { PrismaClient } from "@prisma/client";
+import { faker } from "@faker-js/faker";
 
 const prisma = new PrismaClient();
 
 async function seed() {
-  // Clean existing data
-  await prisma.$transaction([
-    prisma.processEvent.deleteMany(),
-    prisma.goodsProcess.deleteMany(),
-    prisma.reputationTransaction.deleteMany(),
-    prisma.reputation.deleteMany(),
-    prisma.promoPost.deleteMany(),
-    prisma.goodsPost.deleteMany(),
-    prisma.message.deleteMany(),
-    prisma.chat.deleteMany(),
-    prisma.sponsorship.deleteMany(),
-    prisma.subscription.deleteMany(),
-    prisma.review.deleteMany(),
-    prisma.notification.deleteMany(),
-    prisma.pickup.deleteMany(),
-    prisma.payment.deleteMany(),
-    prisma.order.deleteMany(),
-    prisma.request.deleteMany(),
-    prisma.goods.deleteMany(),
-    prisma.category.deleteMany(),
-    prisma.media.deleteMany(),
-    prisma.serviceProvider.deleteMany(),
-    prisma.profile.deleteMany(),
-    prisma.user.deleteMany(),
-  ]);
-
-  // Create Users
   // Clean existing data
   await prisma.$transaction([
     prisma.processEvent.deleteMany(),
@@ -71,10 +44,6 @@ async function seed() {
     })
   );
 
-  // Create Profiles
-  const profiles = await Promise.all(
-    users.map((user) =>
-      prisma.profile.create({
   // Create Profiles
   const profiles = await Promise.all(
     users.map((user) =>
@@ -131,9 +100,7 @@ async function seed() {
   );
 
   // Create Categories
-  // Create Categories
   const categories = await Promise.all(
-    Array.from({ length: 5 }).map(async () => {
     Array.from({ length: 5 }).map(async () => {
       return prisma.category.create({
         data: {
@@ -390,13 +357,8 @@ async function seed() {
   );
 
   // Create Sponsorships
-  // Create Sponsorships
   const sponsorships = await Promise.all(
     Array.from({ length: 5 }).map(async () => {
-      const sponsor = faker.helpers.arrayElement(serviceProviders);
-      const recipient = faker.helpers.arrayElement(users);
-      const category = faker.helpers.arrayElement(categories);
-
       const sponsor = faker.helpers.arrayElement(serviceProviders);
       const recipient = faker.helpers.arrayElement(users);
       const category = faker.helpers.arrayElement(categories);
@@ -556,20 +518,19 @@ async function seed() {
           publisherId: faker.helpers.arrayElement(users).id,
           categoryId: faker.helpers.arrayElement(categories).id,
           isPublished: faker.datatype.boolean(),
-          isPublished: faker.datatype.boolean(),
         },
       });
     })
   );
 
-  console.log('Seeding completed successfully!');
+  console.log("Seeding completed successfully!");
 }
 
 async function main() {
   try {
     await seed();
   } catch (e) {
-    console.error('Error seeding database:', e);
+    console.error("Error seeding database:", e);
   } finally {
     await prisma.$disconnect();
   }

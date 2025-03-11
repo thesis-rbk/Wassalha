@@ -4,14 +4,11 @@ const morgan = require("morgan");
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
-const path = require("path"); // Import path module
-
 const path = require("path");
 
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
-const fetchRoute = require("./routes/fetchAll");
 const fetchRoute = require("./routes/fetchAll");
 const productRoutes = require("./routes/productRoutes");
 const scrapeRoutes = require("./routes/scrapeRoutes");
@@ -39,9 +36,6 @@ app.use(express.json());
 
 // Serve static files from the "uploads" directory
 app.use("/api/uploads", express.static(path.join(__dirname, "uploads"))); // Serve static files
-// console.log("pathsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", path.join(__dirname, 'src/uploads'));
-app.use("/api/fecth", fetchRoute);
-app.use("/api/uploads", express.static(path.join(__dirname, "/uploads"))); // Serve static files
 app.use("/api/fecth", fetchRoute);
 
 // Routes
