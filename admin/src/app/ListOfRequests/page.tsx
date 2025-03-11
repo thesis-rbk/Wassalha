@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Nav from "../components/Nav";
-import navStyles from '../styles/Nav.module.css';
-import tableStyles from '../styles/Table.module.css';
-import { Request } from '../types/Request';
+import Nav from "../../components/Nav";
+import navStyles from '../../styles/Nav.module.css';
+import tableStyles from '../../styles/Table.module.css';
+import { Request } from '../../types/Request';
 
 
 const ListOfRequests: React.FC = () => {

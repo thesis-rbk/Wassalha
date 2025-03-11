@@ -1,9 +1,9 @@
 'use client'
 import React, { useEffect, useState } from 'react';
-import Nav from "../components/Nav";
-import navStyles from '../styles/Nav.module.css';
-import tableStyles from '../styles/Table.module.css';
-import { Payment } from '../types/Payment';
+import Nav from "../../components/Nav";
+import navStyles from '../../styles/Nav.module.css';
+import tableStyles from '../../styles/Table.module.css';
+import { Payment } from '../../types/Payment';
 
 
 const ListOfPayments: React.FC = () => {

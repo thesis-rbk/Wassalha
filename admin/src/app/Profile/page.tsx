@@ -3,12 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
-import styles from '../styles/Profile.module.css';
-import navStyles from '../styles/Nav.module.css';
-import Nav from "../components/Nav";
+import styles from '../../styles/Profile.module.css';
+import navStyles from '../../styles/Nav.module.css';
+import Nav from "../../components/Nav";
 import Image from 'next/image';
-import { UserProfile } from "../types/UserProfile";
-import { User } from "../types/User";
+import { UserProfile } from "../../types/UserProfile";
+import { User } from "../../types/User";
 
 // Create a type for partial profile that makes nested properties optional
 type PartialUserProfile = Partial<Omit<UserProfile, 'profile'>> & {
@@ -35,6 +35,8 @@ const Profile: React.FC = () => {
             verified: false
         }
     });
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     // Handle mounting to prevent hydration mismatch
     useEffect(() => {
@@ -43,12 +45,10 @@ const Profile: React.FC = () => {
 
     // Fetch user data
     useEffect(() => {
-        if (id && mounted) {
+        if (mounted && id) {
             const fetchUserProfile = async () => {
                 try {
-                    setLoading(true);
                     const token = localStorage.getItem('adminToken');
-                    
                     if (!token) {
                         window.location.href = '/AdminLogin';
                         return;
@@ -58,47 +58,43 @@ const Profile: React.FC = () => {
                         `${process.env.NEXT_PUBLIC_API_URL}/api/users/${id}`,
                         {
                             headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
+                                'Authorization': `Bearer ${token}`
                             }
                         }
                     );
-                    
-                    const userData = response.data;
-                    console.log('Full user data:', userData);
-                    
-                    if (userData.profile && !userData.profile.image) {
-                        console.warn('Profile found but no image data:', userData.profile);
+
+                    if (response.data) {
+                        setUserProfile(response.data);
+                        // Initialize updatedProfile with the fetched data
+                        setUpdatedProfile({
+                            name: response.data.name || '',
+                            email: response.data.email || '',
+                            phoneNumber: response.data.phoneNumber || '',
+                            role: response.data.role || '',
+                            profile: {
+                                firstName: response.data.profile?.firstName || '',
+                                lastName: response.data.profile?.lastName || '',
+                                bio: response.data.profile?.bio || '',
+                                review: response.data.profile?.review || '',
+                                country: response.data.profile?.country || '',
+                                gender: response.data.profile?.gender || '',
+                                isBanned: response.data.profile?.isBanned || false,
+                                verified: response.data.profile?.verified || false,
+                                image: response.data.profile?.image || null
+                            }
+                        });
                     }
-                    
-                    setUserProfile(userData);
-                    setUpdatedProfile({
-                        name: userData.name,
-                        email: userData.email,
-                        phoneNumber: userData.phoneNumber,
-                        role: userData.role,
-                        profile: {
-                            firstName: userData.profile?.firstName || '',
-                            lastName: userData.profile?.lastName || '',
-                            bio: userData.profile?.bio || '',
-                            review: userData.profile?.review || '',
-                            country: userData.profile?.country || '',
-                            gender: userData.profile?.gender || '',
-                            isBanned: userData.profile?.isBanned || false,
-                            verified: userData.profile?.verified || false,
-                            image: userData.profile?.image || null
+                } catch (err) {
+                    console.error("Error fetching user profile:", err);
+                    if (axios.isAxiosError(err)) {
+                        if (err.response?.status === 401) {
+                            window.location.href = '/AdminLogin';
+                            return;
                         }
-                    });
-                } catch (error) {
-                    console.error('Error fetching user profile:', error);
-                    if (axios.isAxiosError(error) && error.response?.status === 401) {
-                        // Token expired or invalid
-                        localStorage.removeItem('adminToken');
-                        localStorage.removeItem('userData');
-                        window.location.href = '/AdminLogin';
-                        return;
+                        setError(err.response?.data?.error || 'Failed to load user profile');
+                    } else {
+                        setError('Failed to load user profile');
                     }
-                    setError('Failed to load user profile');
                 } finally {
                     setLoading(false);
                 }
@@ -190,6 +186,14 @@ const Profile: React.FC = () => {
         });
     };
 
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setSelectedImage(file);
+            setPreviewUrl(URL.createObjectURL(file));
+        }
+    };
+
     const handleUpdateUser = async () => {
         if (!userProfile?.id) return;
 
@@ -200,59 +204,55 @@ const Profile: React.FC = () => {
                 return;
             }
 
+            // Create the update data object
             const updateData = {
-                id: userProfile.id, // Ensure ID is included
-                name: updatedProfile?.name || userProfile.name,
-                email: updatedProfile?.email || userProfile.email,
-                phoneNumber: updatedProfile?.phoneNumber || userProfile.phoneNumber,
-                role: updatedProfile?.role || userProfile.role,
-                profile: {
-                    firstName: updatedProfile?.profile?.firstName || userProfile.profile?.firstName || '',
-                    lastName: updatedProfile?.profile?.lastName || userProfile.profile?.lastName || '',
-                    bio: updatedProfile?.profile?.bio || userProfile.profile?.bio || '',
-                    review: updatedProfile?.profile?.review || userProfile.profile?.review || '',
-                    country: updatedProfile?.profile?.country || userProfile.profile?.country || '',
-                    gender: updatedProfile?.profile?.gender || userProfile.profile?.gender || '',
-                    isBanned: userProfile.profile?.isBanned || false,
-                    verified: userProfile.profile?.verified || false,
-                    image: updatedProfile?.profile?.image || userProfile.profile?.image || null
-                }
+                id: userProfile.id, // Explicitly include the ID
+                name: updatedProfile.name,
+                email: updatedProfile.email,
+                phoneNumber: updatedProfile.phoneNumber,
+                role: updatedProfile.role,
+                firstName: updatedProfile.profile?.firstName,
+                lastName: updatedProfile.profile?.lastName,
+                bio: updatedProfile.profile?.bio,
+                country: updatedProfile.profile?.country,
+                gender: updatedProfile.profile?.gender
             };
 
-            console.log('Sending update with data:', updateData);
-
-            const response = await axios.put(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}`,
-                updateData,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-            
-            if (response.data) {
-                setUserProfile(response.data);
-                setUpdatedProfile({
-                    name: response.data.name,
-                    email: response.data.email,
-                    phoneNumber: response.data.phoneNumber,
-                    role: response.data.role,
-                    profile: {
-                        firstName: response.data.profile?.firstName || '',
-                        lastName: response.data.profile?.lastName || '',
-                        bio: response.data.profile?.bio || '',
-                        review: response.data.profile?.review || '',
-                        country: response.data.profile?.country || '',
-                        gender: response.data.profile?.gender || '',
-                        isBanned: response.data.profile?.isBanned || false,
-                        verified: response.data.profile?.verified || false,
-                        image: response.data.profile?.image || null
+            // If there's a new image, create FormData
+            if (selectedImage) {
+                const formData = new FormData();
+                // Add all update data to FormData
+                Object.entries(updateData).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null) {
+                        formData.append(key, value.toString());
                     }
                 });
-                setIsEditing(false);
-                alert("User profile updated successfully!");
+                formData.append('image', selectedImage);
+
+                const response = await axios.put(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}`,
+                    formData,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }
+                );
+                handleUpdateSuccess(response);
+            } else {
+                // If no new image, send JSON data
+                const response = await axios.put(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}`,
+                    updateData,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+                handleUpdateSuccess(response);
             }
         } catch (err) {
             let errorMessage = "Failed to update user profile";
@@ -264,11 +264,43 @@ const Profile: React.FC = () => {
         }
     };
 
+    // Separate function to handle successful update
+    const handleUpdateSuccess = (response: any) => {
+        if (response.data) {
+            setUserProfile(response.data.data.user);
+            setUpdatedProfile({
+                name: response.data.data.user.name,
+                email: response.data.data.user.email,
+                phoneNumber: response.data.data.user.phoneNumber,
+                role: response.data.data.user.role,
+                profile: {
+                    firstName: response.data.data.user.profile?.firstName || '',
+                    lastName: response.data.data.user.profile?.lastName || '',
+                    bio: response.data.data.user.profile?.bio || '',
+                    country: response.data.data.user.profile?.country || '',
+                    gender: response.data.data.user.profile?.gender || '',
+                    isBanned: response.data.data.user.profile?.isBanned || false,
+                    verified: response.data.data.user.profile?.verified || false,
+                    image: response.data.data.user.profile?.image || null
+                }
+            });
+            setIsEditing(false);
+            setSelectedImage(null);
+            setPreviewUrl(null);
+            alert("User profile updated successfully!");
+        }
+    };
+
     const handleDeleteAccount = async () => {
-        if (!userProfile?.id) return;
+        if (!userProfile?.id) {
+            alert("No user selected for deletion");
+            return;
+        }
 
         // Add confirmation dialog
-        const isConfirmed = window.confirm("Are you sure you want to delete this account? This action cannot be undone.");
+        const isConfirmed = window.confirm(
+            "Are you sure you want to delete this account? This action cannot be undone."
+        );
         
         if (!isConfirmed) return;
 
@@ -283,34 +315,34 @@ const Profile: React.FC = () => {
                 `${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}`,
                 {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${token}`
                     }
                 }
             );
-            const data = response.data;
-            console.log('Deleted user profile:', data); // Debug log
-            setUserProfile(null);
-            setUpdatedProfile({
-                profile: {
-                    firstName: '',
-                    lastName: '',
-                    isBanned: false,
-                    verified: false
-                }
-            });
-            alert(data.message || "User account deleted successfully");
-            // Optionally redirect to another page after successful deletion
-            window.location.href = 'ListOfUsers'; // Adjust the path as needed
-        } catch (err) {
-            if (axios.isAxiosError(err)) {
-                alert(err.response?.data?.error || "Failed to delete user account");
+
+            if (response.data.success) {
+                alert(response.data.message || "User account deleted successfully");
+                // Redirect to users list page
+                window.location.href = '/ListOfUsers';
             } else {
-                alert("Failed to delete user account");
+                throw new Error(response.data.error || "Failed to delete user account");
             }
+        } catch (err) {
             console.error("Error deleting user account:", err);
+            
+            if (axios.isAxiosError(err)) {
+                const errorMessage = err.response?.data?.error || 
+                                   err.response?.data?.details || 
+                                   "Failed to delete user account";
+                alert(`Error: ${errorMessage}`);
+            } else {
+                alert("An unexpected error occurred while deleting the account");
+            }
         }
     };
+
+    // In your page.tsx file, add a condition to check if the profile is for an admin
+    const isAdminProfile = userProfile?.role === "ADMIN";
 
     if (loading) {
         return (
@@ -353,15 +385,33 @@ const Profile: React.FC = () => {
                     <div className={styles.card}>
                         <div className={styles.leftsection}>
                             <div className={styles.imageWrapper}>
-                                <img
-                                    src={userProfile?.profile?.image?.url }
-                                    alt={`${userProfile?.name}'s profile`}
-                                    className={styles.img}
-                                    onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        // target.src = "/default-profile.png";
-                                    }}
-                                />
+                                {isEditing ? (
+                                    <>
+                                        <img
+                                            src={previewUrl || (userProfile?.profile?.image?.url ?? '')}
+                                            alt={`${userProfile?.name || 'User'}'s profile`}
+                                            className={styles.img}
+                                        />
+                                        <div className={styles.imageUploadContainer}>
+                                            <label htmlFor="imageUpload" className={styles.imageUploadLabel}>
+                                                Change Profile Picture
+                                            </label>
+                                            <input
+                                                id="imageUpload"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageChange}
+                                                className={styles.imageUploadInput}
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <img
+                                        src={userProfile?.profile?.image?.url ?? ''}
+                                        alt={`${userProfile?.name || 'User'}'s profile`}
+                                        className={styles.img}
+                                    />
+                                )}
                             </div>
                             <div className={styles.label}>ID: {userProfile?.id}</div>
                             
@@ -426,73 +476,74 @@ const Profile: React.FC = () => {
                         </div>
                         <div className={styles.rightsection}>
                             {isEditing ? (
-                                <form onSubmit={(e) => e.preventDefault()}>
-                                    <div className={styles.formContent}>
-                                        <div className={styles.formGroup}>
-                                            <label className={styles.label}>First Name:</label>
-                                            <input
-                                                type="text"
-                                                name="firstName"
-                                                value={updatedProfile?.profile?.firstName || ''}
-                                                onChange={handleInputChange}
-                                                className={styles.input}
-                                            />
+                                <>
+                                    <form onSubmit={(e) => e.preventDefault()}>
+                                        <div className={styles.formContent}>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>First Name:</label>
+                                                <input
+                                                    type="text"
+                                                    name="firstName"
+                                                    value={updatedProfile?.profile?.firstName || ''}
+                                                    onChange={handleInputChange}
+                                                    className={styles.input}
+                                                />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Last Name:</label>
+                                                <input
+                                                    type="text"
+                                                    name="lastName"
+                                                    value={updatedProfile?.profile?.lastName || ''}
+                                                    onChange={handleInputChange}
+                                                    className={styles.input}
+                                                />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Email:</label>
+                                                <input
+                                                    type="email"
+                                                    name="email"
+                                                    value={updatedProfile?.email || ''}
+                                                    onChange={handleInputChange}
+                                                    className={styles.input}
+                                                />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Phone Number:</label>
+                                                <input
+                                                    type="text"
+                                                    name="phoneNumber"
+                                                    value={updatedProfile?.phoneNumber || ''}
+                                                    onChange={handleInputChange}
+                                                    className={styles.input}
+                                                />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Country:</label>
+                                                <input
+                                                    type="text"
+                                                    name="country"
+                                                    value={updatedProfile?.profile?.country || ''}
+                                                    onChange={handleInputChange}
+                                                    className={styles.input}
+                                                />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Gender:</label>
+                                                <select
+                                                    name="gender"
+                                                    value={updatedProfile?.profile?.gender || ''}
+                                                    onChange={handleInputChange}
+                                                    className={styles.input}
+                                                >
+                                                    <option value="">Select Gender</option>
+                                                    <option value="MALE">Male</option>
+                                                    <option value="FEMALE">Female</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div className={styles.formGroup}>
-                                            <label className={styles.label}>Last Name:</label>
-                                            <input
-                                                type="text"
-                                                name="lastName"
-                                                value={updatedProfile?.profile?.lastName || ''}
-                                                onChange={handleInputChange}
-                                                className={styles.input}
-                                            />
-                                        </div>
-                                        <div className={styles.formGroup}>
-                                            <label className={styles.label}>Email:</label>
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                value={updatedProfile?.email || ''}
-                                                onChange={handleInputChange}
-                                                className={styles.input}
-                                            />
-                                        </div>
-                                        <div className={styles.formGroup}>
-                                            <label className={styles.label}>Phone Number:</label>
-                                            <input
-                                                type="text"
-                                                name="phoneNumber"
-                                                value={updatedProfile?.phoneNumber || ''}
-                                                onChange={handleInputChange}
-                                                className={styles.input}
-                                            />
-                                        </div>
-                                        <div className={styles.formGroup}>
-                                            <label className={styles.label}>Country:</label>
-                                            <input
-                                                type="text"
-                                                name="country"
-                                                value={updatedProfile?.profile?.country || ''}
-                                                onChange={handleInputChange}
-                                                className={styles.input}
-                                            />
-                                        </div>
-                                        <div className={styles.formGroup}>
-                                            <label className={styles.label}>Gender:</label>
-                                            <select
-                                                name="gender"
-                                                value={updatedProfile?.profile?.gender || ''}
-                                                onChange={handleInputChange}
-                                                className={styles.input}
-                                            >
-                                                <option value="">Select Gender</option>
-                                                <option value="MALE">Male</option>
-                                                <option value="FEMALE">Female</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    
+                                    </form>
                                     {/* Fixed position button container */}
                                     <div className={styles.buttonContainer}>
                                         <div className={styles.buttonRow}>
@@ -510,15 +561,15 @@ const Profile: React.FC = () => {
                                             >
                                                 Cancel
                                             </button>
+                                            <button
+                                                onClick={handleDeleteAccount}
+                                                className={`${styles.button} ${styles.buttonDelete}`}
+                                            >
+                                                Delete Account
+                                            </button>
                                         </div>
-                                        <button
-                                            onClick={handleDeleteAccount}
-                                            className={`${styles.button} ${styles.buttonDelete}`}
-                                        >
-                                            Delete Account
-                                        </button>
                                     </div>
-                                </form>
+                                </>
                             ) : (
                                 <>
                                     <div className={styles.infoRow}>
@@ -551,28 +602,33 @@ const Profile: React.FC = () => {
                                             {userProfile?.profile?.review || 'No review available'}
                                         </div>
                                     </div>
-                                    <div className={styles.buttonRow}>
-                                        <button
-                                            onClick={handleEditToggle}
-                                            className={`${styles.button} ${styles.buttonedit} ${userProfile?.role === 'ADMIN' ? styles.fullWidth : ''}`}
-                                        >
-                                            Edit Profile
-                                        </button>
-                                        {userProfile?.role !== 'ADMIN' && (
+                                    <div className={styles.actionButtons}>
+                                        <div className={styles.buttonRow}>
                                             <button
-                                                onClick={handleBanUnban}
-                                                className={`${styles.button} ${styles.buttonban}`}
+                                                onClick={handleEditToggle}
+                                                className={`${styles.buttonedit} ${isAdminProfile ? styles.fullWidth : ''}`}
                                             >
-                                                {userProfile?.profile?.isBanned ? 'Unban User' : 'Ban User'}
+                                                {isEditing ? "Cancel" : "Edit Profile"}
                                             </button>
-                                        )}
+                                            
+                                            {/* Only show ban button for non-admin profiles */}
+                                            {!isAdminProfile && (
+                                                <button
+                                                    onClick={handleBanUnban}
+                                                    className={`${styles.buttonban} ${userProfile?.profile?.isBanned ? styles.unban : ''}`}
+                                                >
+                                                    {userProfile?.profile?.isBanned ? "Unban User" : "Ban User"}
+                                                </button>
+                                            )}
+                                            
+                                            <button
+                                                onClick={handleDeleteAccount}
+                                                className={styles.buttonDelete}
+                                            >
+                                                Delete Account
+                                            </button>
+                                        </div>
                                     </div>
-                                    <button
-                                        onClick={handleDeleteAccount}
-                                        className={`${styles.button} ${styles.buttonDelete}`}
-                                    >
-                                        Delete Account
-                                    </button>
                                 </>
                             )}
                         </div>

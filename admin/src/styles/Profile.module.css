@@ -114,87 +114,75 @@
 }
 
 .verified {
-  background-color: #28a746a2;
+  background-color: var(--color-success);
   color: white;
 }
 
 .unverified {
-  background-color: #ffc1079f;
+  background-color: var(--color-warning);
   color: #000;
 }
 
 .banned {
-  background-color: #f3041c78;
+  background-color: var(--color-danger);
   color: white;
 }
 
 /* Action buttons */
 .actionButtons {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
   margin-top: 20px;
   width: 100%;
 }
 
-/* Action buttons container */
 .buttonRow {
   display: flex;
   gap: 10px;
   width: 100%;
-  margin-bottom: 10px;
+  justify-content: center; /* Center all buttons */
 }
 
-/* Style for edit and ban buttons */
 .buttonedit, 
-.buttonban {
+.buttonban,
+.buttonDelete {
   padding: 10px 20px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
-  flex: 1;
-  text-align: center;
   transition: background-color 0.3s;
   font-size: 14px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
   height: 40px;
-  margin: 0;
-  background-color: #007bff;
-  color: white;
-  width: calc(50% - 5px); /* Each button takes up half of the row minus half the gap */
+  width: 200px; /* Consistent width for all buttons */
 }
 
-/* Delete button style */
+.buttonedit {
+  background-color: var(--color-warning);
+  color: white;
+}
+
+.buttonban {
+  background-color: var(--color-warning);
+  color: #000;
+}
+
 .buttonDelete {
   background-color: var(--color-danger);
   color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  width: 100%;
-  text-align: center;
-  transition: background-color 0.3s;
-  font-size: 14px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  height: 40px;
-  margin: 0;
+}
+
+/* For admin profile where there's no ban button */
+.buttonedit.fullWidth {
+  width: 200px; /* Same width as other buttons */
 }
 
 /* Button hover states */
-.buttonedit:hover { background-color: #0056b3; }
-.buttonban:hover { background-color: #0056b3; }
-.buttonDelete:hover { background-color: #c82333; }
+.buttonedit:hover { background-color: var(--color-dark); }
+.buttonban:hover { background-color: var(--color-dark); }
+.buttonDelete:hover { background-color: var(--color-danger); }
 
 /* Specific color for unban button */
 .buttonban.unban {
-  background-color: #007bff;
+  background-color: var(--color-primary);
 }
 
 /* Loading and error states */
@@ -212,7 +200,7 @@
 
 .error {
   background-color: #fff3f3;
-  color: #dc3545;
+  color: var(--color-danger);
 }
 
 .updateForm {
@@ -311,7 +299,7 @@
 
 .input:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
 }
 
@@ -337,12 +325,12 @@ select.input {
 }
 
 .button_submit {
-    background-color: #28a745;
+    background-color: var(--color-success);
     color: white;
 }
 
 .button_cancel {
-    background-color: #dc3545;
+    background-color: var(--color-danger);
     color: white;
 }
 
@@ -361,7 +349,7 @@ select.input {
 }
 
 .error {
-    color: #dc3545;
+    color: var(--color-danger);
 }
 
 .title {
@@ -392,7 +380,7 @@ select.input {
 }
 
 .button_edit {
-    background-color: #007bff;
+    background-color: var(--color-primary);
     color: white;
 }
 
@@ -401,7 +389,7 @@ select.input {
 }
 
 .button_submit {
-    background-color: #28a745;
+    background-color: var(--color-success);
     color: white;
     margin-top: 8px;
 }
@@ -419,7 +407,7 @@ select.input {
 }
 
 .verified {
-    background-color: #28a745;
+    background-color: var(--color-success);
     color: white;
     padding: 5px 10px;
     border-radius: 4px;
@@ -428,7 +416,7 @@ select.input {
 }
 
 .unverified {
-    background-color: #ffc107;
+    background-color: var(--color-warning);
     color: #000;
     padding: 5px 10px;
     border-radius: 4px;
@@ -437,7 +425,7 @@ select.input {
 }
 
 .banned {
-    background-color: #dc3545;
+    background-color: var(--color-danger);
     color: white;
     padding: 5px 10px;
     border-radius: 4px;
@@ -523,11 +511,11 @@ select.input {
 }
 
 .buttonDelete:hover {
-    background-color: #c82333;
+    background-color: #880606;
 }
 
 .buttonDelete:active {
-    background-color: #bd2130;
+    background-color: #880606;
 }
 
 .bioSection {
@@ -599,13 +587,29 @@ select.input {
 
 /* Button container */
 .buttonContainer {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #ddd;
+    padding: 20px;
     background-color: #f8f9fa;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: auto; /* Push to bottom of rightsection */
+}
+
+.buttonRow {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+.button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
 }
 
 .buttonsubmit {
@@ -618,6 +622,11 @@ select.input {
     color: white;
 }
 
+.buttonDelete {
+    background-color: var(--color-danger);
+    color: white;
+}
+
 .buttonsubmit:hover {
     background-color: #006d82;
 }
@@ -627,7 +636,7 @@ select.input {
 }
 
 .buttonDelete:hover {
-    background-color: #dc3545;
+    background-color: #880606;
 }
 
 /* Dark mode styles */
@@ -694,7 +703,7 @@ select.input {
 
 :global(.dark-mode) .error {
   background-color: rgba(220, 53, 69, 0.1);
-  color: #ff6b6b;
+  color: #f62b2b;
 }
 
 :global(.dark-mode) .buttonContainer {
@@ -734,8 +743,75 @@ select.input {
 
 :global(.dark-mode) .banned {
   background-color: rgba(220, 53, 69, 0.2);
-  color: #ff6b6b;
+  color: #fb2929;
 }
 .fullWidth {
   width: 100% !important;
+}
+/* Add to your existing CSS module */
+.imagePreview {
+  margin-top: 10px;
+  max-width: 200px;
+  max-height: 200px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.previewImage {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.imageWrapper {
+    position: relative;
+    width: 200px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.imageUploadContainer {
+    margin-top: 10px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.imageUploadLabel {
+    background-color: var(--color-primary);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    text-align: center;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.imageUploadLabel:hover {
+    background-color: var(--color-dark);
+}
+
+.imageUploadInput {
+    display: none;
+}
+
+/* Dark mode styles */
+:global(.dark-mode) .imageUploadLabel {
+    background-color: var(--color-primary);
+    color: var(--color-text);
+}
+
+:global(.dark-mode) .imageUploadLabel:hover {
+    background-color: var(--color-hover);
+}
+
+.formContent {
+    padding: 20px;
+    margin-bottom: 20px; /* Reduced margin since buttons are not fixed anymore */
 }

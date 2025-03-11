@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; // Use next/navigation for App Router
-import tableStyles from '../styles/Table.module.css';
+import tableStyles from '../../styles/Table.module.css';
 
-import navStyles from '../styles/Nav.module.css'; // Import Nav styles
-import Nav from "../components/Nav";
-import { User } from "../types/User";
+import navStyles from '../../styles/Nav.module.css'; // Import Nav styles
+import Nav from "../../components/Nav";
+import { User } from "../../types/User";
 
 export default function ListOfUsers() {
   const router = useRouter(); // Initialize useRouter

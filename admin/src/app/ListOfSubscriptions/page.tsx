@@ -1,10 +1,10 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Nav from "../components/Nav";
-import navStyles from '../styles/Nav.module.css';
-import tableStyles from '../styles/Table.module.css';
-import { Subscription } from '../types/Subscription';
+import Nav from "../../components/Nav";
+import navStyles from '../../styles/Nav.module.css';
+import tableStyles from '../../styles/Table.module.css';
+import { Subscription } from '../../types/Subscription';
 
 const ListOfSubscriptions: React.FC = () => {
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);

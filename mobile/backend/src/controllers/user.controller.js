@@ -23,7 +23,7 @@ const generateRandomCode = () => {
 };
 
 const signup = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
 
   try {
     if (!name || !email || !password) {
@@ -61,35 +61,39 @@ const signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: role || 'USER',
-      },
-    });
-
-    // Automatically create profile for new user
-    await prisma.profile.create({
-      data: {
-        firstName: newUser.name,
-        lastName: "",
-        User: {
-          connect: {
-            id: newUser.id
-          }
+    // Create user with transaction to ensure both user and profile are created
+    const result = await prisma.$transaction(async (prisma) => {
+      const newUser = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
         },
-      },
+      });
+
+      // Create profile with proper data structure
+      const profile = await prisma.profile.create({
+        data: {
+          userId: newUser.id,
+          firstName: name.split(' ')[0] || name, // Get first name or full name
+          lastName: name.split(' ').slice(1).join(' ') || '', // Get rest of name or empty string
+          country: "OTHER",
+          isAnonymous: false,
+          isBanned: false,
+          isVerified: false,
+          isOnline: false,
+        },
+      });
+
+      return { newUser, profile };
     });
 
     res.status(201).json({
       message: "User registered successfully",
       user: {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
+        id: result.newUser.id,
+        name: result.newUser.name,
+        email: result.newUser.email,
       },
     });
   } catch (error) {
@@ -117,7 +121,7 @@ const loginUser = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user.id, email: user.email },
       process.env.JWT_SECRET || "secretkey",
       { expiresIn: "1h" }
     );
@@ -129,7 +133,7 @@ const loginUser = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        hasCompletedOnboarding: user.hasCompletedOnboarding,
       },
     });
   } catch (error) {
@@ -139,6 +143,7 @@ const loginUser = async (req, res) => {
     await prisma.$disconnect();
   }
 };
+
 
 const loginAdmin = async (req, res) => {
   const { email, password } = req.body;
@@ -568,39 +573,133 @@ const getUserById = async (req, res) => {
 
 // Update a user and their profile
 const updateUser = async (req, res) => {
-  const { id, name, role, firstName, lastName } = req.body;
+  const { 
+    id,
+    // User model fields
+    name,
+    email,
+    phoneNumber,
+    role,
+    hasCompletedOnboarding,
+    isSponsor,
+    serviceProviderId,
+    googleId,
+    password,
+
+    // Profile model fields
+    firstName,
+    lastName,
+    bio,
+    country,
+    imageId,
+    gender,
+    review,
+    isAnonymous,
+    isBanned,
+    isVerified,
+    isOnline,
+    preferredCategories,
+    referralSource
+  } = req.body;
 
   try {
     if (!id) {
       return res.status(400).json({ error: "User ID is required" });
     }
 
-    // Update user name and role
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data: {
-        name,
-        role,
-      },
-    });
+    // Use transaction to ensure both user and profile updates succeed or fail together
+    const result = await prisma.$transaction(async (prisma) => {
+      // First update user data
+      const userUpdateData = {
+        ...(name && { name }),
+        ...(email && { email }),
+        ...(phoneNumber && { phoneNumber }),
+        ...(role && { role }),
+        ...(hasCompletedOnboarding !== undefined && { hasCompletedOnboarding }),
+        ...(isSponsor !== undefined && { isSponsor }),
+        ...(serviceProviderId && { serviceProviderId }),
+        ...(googleId && { googleId }),
+        ...(password && { password: await bcrypt.hash(password, saltRounds) }),
+      };
 
-    // Update profile firstName and lastName
-    const updatedProfile = await prisma.profile.update({
-      where: { userId: id },
-      data: {
-        firstName,
-        lastName,
-      },
+      const updatedUser = await prisma.user.update({
+        where: { id },
+        data: userUpdateData,
+      });
+
+      // Check if profile exists
+      const existingProfile = await prisma.profile.findUnique({
+        where: { userId: id },
+      });
+
+      // Prepare profile data ensuring required fields
+      const profileData = {
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
+        ...(bio && { bio }),
+        ...(country && { country }),
+        ...(phoneNumber && { phoneNumber }),
+        ...(imageId && { imageId }),
+        ...(gender && { gender }),
+        ...(review && { review }),
+        ...(isAnonymous !== undefined && { isAnonymous }),
+        ...(isBanned !== undefined && { isBanned }),
+        ...(isVerified !== undefined && { isVerified }),
+        ...(isOnline !== undefined && { isOnline }),
+        ...(preferredCategories && { preferredCategories }),
+        ...(referralSource && { referralSource }),
+      };
+
+      let updatedProfile;
+      if (existingProfile) {
+        // Update existing profile
+        updatedProfile = await prisma.profile.update({
+          where: { userId: id },
+          data: profileData,
+          include: {
+            image: true,
+          },
+        });
+      } else {
+        // Create new profile if it doesn't exist
+        updatedProfile = await prisma.profile.create({
+          data: {
+            ...profileData,
+            userId: id,
+            firstName: firstName || updatedUser.name,
+            lastName: lastName || "",
+            country: country || "OTHER",
+            isAnonymous: isAnonymous || false,
+            isBanned: isBanned || false,
+            isVerified: isVerified || false,
+            isOnline: isOnline || false,
+          },
+          include: {
+            image: true,
+          },
+        });
+      }
+
+      return { updatedUser, updatedProfile };
     });
 
     res.status(200).json({
+      success: true,
       message: "User updated successfully",
-      user: updatedUser,
-      profile: updatedProfile,
+      data: {
+        user: result.updatedUser,
+        profile: result.updatedProfile,
+      },
     });
   } catch (error) {
     console.error("Update user error:", error);
-    res.status(500).json({ error: "Failed to update user" });
+    res.status(500).json({ 
+      success: false,
+      error: "Failed to update user", 
+      details: error.message 
+    });
+  } finally {
+    await prisma.$disconnect();
   }
 };
 
@@ -609,29 +708,227 @@ const deleteUser = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // First delete the profile (due to foreign key constraints)
-    await prisma.profile.delete({
-      where: { userId: parseInt(id) }
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: "User ID is required"
+      });
+    }
+
+    const userId = parseInt(id);
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid user ID format"
+      });
+    }
+
+    // Start a transaction
+    await prisma.$transaction(async (prisma) => {
+      // Check if user exists first
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          profile: {
+            include: { image: true }
+          }
+        }
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      try {
+        // 1. Delete profile and image first
+        if (user.profile) {
+          if (user.profile.image) {
+            await prisma.media.delete({
+              where: { id: user.profile.image.id }
+            }).catch(error => {
+              console.error("Error deleting media:", error);
+              // Continue with deletion even if media deletion fails
+            });
+          }
+
+          await prisma.profile.delete({
+            where: { userId }
+          }).catch(error => {
+            console.error("Error deleting profile:", error);
+            throw error;
+          });
+        }
+
+        // 2. Delete user preferences and settings
+        await Promise.all([
+          prisma.userPreference.deleteMany({ where: { userId } }),
+          prisma.userCategory.deleteMany({ where: { userId } })
+        ]).catch(error => {
+          console.error("Error deleting user preferences:", error);
+          throw error;
+        });
+
+        // 3. Delete reputation data
+        await Promise.all([
+          prisma.reputationTransaction.deleteMany({
+            where: { reputation: { userId } }
+          }),
+          prisma.reputation.deleteMany({ where: { userId } })
+        ]).catch(error => {
+          console.error("Error deleting reputation data:", error);
+          throw error;
+        });
+
+        // 4. Delete notifications
+        await prisma.notification.deleteMany({
+          where: { userId }
+        }).catch(error => {
+          console.error("Error deleting notifications:", error);
+          throw error;
+        });
+
+        // 5. Delete service provider data
+        await prisma.serviceProvider.deleteMany({
+          where: { userId }
+        }).catch(error => {
+          console.error("Error deleting service provider data:", error);
+          throw error;
+        });
+
+        // 6. Delete messages and chats
+        await Promise.all([
+          prisma.message.deleteMany({
+            where: {
+              OR: [
+                { senderId: userId },
+                { receiverId: userId }
+              ]
+            }
+          }),
+          prisma.chat.deleteMany({
+            where: {
+              OR: [
+                { requesterId: userId },
+                { providerId: userId }
+              ]
+            }
+          })
+        ]).catch(error => {
+          console.error("Error deleting messages and chats:", error);
+          throw error;
+        });
+
+        // 7. Delete reviews
+        await prisma.review.deleteMany({
+          where: {
+            OR: [
+              { reviewerId: userId },
+              { reviewedId: userId }
+            ]
+          }
+        }).catch(error => {
+          console.error("Error deleting reviews:", error);
+          throw error;
+        });
+
+        // 8. Delete posts
+        await Promise.all([
+          prisma.goodsPost.deleteMany({ where: { travelerId: userId } }),
+          prisma.promoPost.deleteMany({ where: { publisherId: userId } })
+        ]).catch(error => {
+          console.error("Error deleting posts:", error);
+          throw error;
+        });
+
+        // 9. Delete orders and related processes
+        await Promise.all([
+          prisma.processEvent.deleteMany({ where: { changedByUserId: userId } }),
+          prisma.goodsProcess.deleteMany({
+            where: {
+              order: {
+                OR: [
+                  { buyerId: userId },
+                  { sellerId: userId }
+                ]
+              }
+            }
+          }),
+          prisma.order.deleteMany({
+            where: {
+              OR: [
+                { buyerId: userId },
+                { sellerId: userId }
+              ]
+            }
+          })
+        ]).catch(error => {
+          console.error("Error deleting orders and processes:", error);
+          throw error;
+        });
+
+        // 10. Delete payments
+        await prisma.payment.deleteMany({
+          where: {
+            OR: [
+              { payerId: userId },
+              { receiverId: userId }
+            ]
+          }
+        }).catch(error => {
+          console.error("Error deleting payments:", error);
+          throw error;
+        });
+
+        // 11. Finally delete the user
+        await prisma.user.delete({
+          where: { id: userId }
+        }).catch(error => {
+          console.error("Error deleting user:", error);
+          throw error;
+        });
+
+      } catch (error) {
+        console.error("Transaction error:", error);
+        throw error;
+      }
     });
 
-    // Then delete the user
-    await prisma.user.delete({
-      where: { id: parseInt(id) }
-    });
-
-    res.status(200).json({ 
+    res.status(200).json({
       success: true,
-      message: "User and associated profile deleted successfully" 
+      message: "User and all associated data deleted successfully"
     });
+
   } catch (error) {
-    console.error("Error deleting user:", error);
-    res.status(500).json({ 
+    console.error("Error in delete operation:", error);
+    
+    if (error.message === 'User not found') {
+      return res.status(404).json({
+        success: false,
+        error: "User not found"
+      });
+    }
+
+    if (error.code === 'P2003') {
+      return res.status(400).json({
+        success: false,
+        error: "Cannot delete user due to existing references",
+        details: error.message,
+        hint: "Please try again or contact support if the issue persists"
+      });
+    }
+
+    res.status(500).json({
       success: false,
       error: "Failed to delete user",
-      details: error.message 
+      details: error.message,
+      hint: "An unexpected error occurred during deletion"
     });
   } finally {
-    await prisma.$disconnect();
+    try {
+      await prisma.$disconnect();
+    } catch (error) {
+      console.error("Error disconnecting from database:", error);
+    }
   }
 };
 

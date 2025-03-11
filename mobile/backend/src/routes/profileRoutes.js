@@ -6,9 +6,9 @@ const upload = require('../middleware/multerMiddleware');
 const router = express.Router();
 
 // Get user profile
-router.get('/:id', authenticateUser, getProfile);
+router.get('/:id' , authenticateUser, getProfile);
 
 // Update user profile
-router.put('/:id', authenticateUser, upload.single('image'), updateProfile);
+router.put('/:id', authenticateUser, upload.single('image'),  updateProfile);
 
 module.exports = router; 

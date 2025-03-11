@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Nav from "../components/Nav";
-import navStyles from '../styles/Nav.module.css';
-import tableStyles from '../styles/Table.module.css';
-import { Good } from '../types/Good';
+import Nav from "../../components/Nav";
+import navStyles from '../../styles/Nav.module.css';
+import tableStyles from '../../styles/Table.module.css';
+import { Good } from '../../types/Good';
 
 const ListOfGoods: React.FC = () => {
   const [goods, setGoods] = useState<Good[]>([]);

@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Nav from "../components/Nav";
-import navStyles from '../styles/Nav.module.css';
-import tableStyles from '../styles/Table.module.css';
-import { PromoPost } from '../types/PromoPost';
+import Nav from "../../components/Nav";
+import navStyles from '../../styles/Nav.module.css';
+import tableStyles from '../../styles/Table.module.css';
+import { PromoPost } from '../../types/PromoPost';
 
 const ListOfPromoPosts: React.FC = () => {
   const [promoPosts, setPromoPosts] = useState<PromoPost[]>([]);

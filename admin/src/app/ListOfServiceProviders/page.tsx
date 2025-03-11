@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
-import Nav from "../components/Nav";        
-import navStyles from '../styles/Nav.module.css';
-import tableStyles from '../styles/Table.module.css';
-import { ServiceProvider } from '../types/ServiceProvider';
+import Nav from "../../components/Nav";        
+import navStyles from '../../styles/Nav.module.css';
+import tableStyles from '../../styles/Table.module.css';
+import { ServiceProvider } from '../../types/ServiceProvider';
+import { UserProfile } from '../../types/UserProfile';
 
 const ListOfServiceProviders: React.FC = () => {
     const router = useRouter();
@@ -26,8 +27,8 @@ const ListOfServiceProviders: React.FC = () => {
             .filter((provider) => {
                 const searchMatch = searchTerm.toLowerCase() === '' || 
                     provider.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    provider.user.profile.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    provider.user.profile.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    provider.user.profile?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    provider.user.profile?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     provider.brandName?.toLowerCase().includes(searchTerm.toLowerCase());
 
                 const typeMatch = typeFilter === "ALL" || provider.type === typeFilter;

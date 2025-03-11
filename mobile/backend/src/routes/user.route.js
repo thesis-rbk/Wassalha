@@ -37,11 +37,11 @@ router.put("/change-password", authenticateUser, changePassword);
 router.get("/messages", getMessages);
 
 // User CRUD routes
-router.get("/", authenticateUserOrAdmin, getUsers); // Get all users
-router.get("/:id", authenticateUserOrAdmin, getUserById); // Get a single user
-router.put("/:id", authenticateUserOrAdmin, updateUser); // Update user
+router.get("/",  getUsers); // Get all users
+router.get("/:id",  getUserById); // Get a single user
+router.put("/:id",  updateUser); // Update user
 router.put("/:id/ban",authenticateAdmin,  banUser); // Ban/Unban a user
 router.put("/:id/unban",authenticateAdmin, unbanUser); // Unban a user
-router.delete("/:id", authenticateUserOrAdmin, deleteUser); // Delete user route
+router.delete("/:id", authenticateAdmin, deleteUser); // Only admins can delete users
 
 module.exports = router;

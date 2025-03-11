@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from 'next/navigation';
 import styles from "../styles/Nav.module.css";
 import { 
@@ -38,15 +38,17 @@ export default function Nav() {
   } | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
     if (token) {
       try {
         const userData = JSON.parse(localStorage.getItem("userData") || "null");
-        console.log("Nav - Loaded user data:", userData); // Debug log
         if (!userData?.id) {
-          console.error("Nav - No user ID in stored data"); // Debug log
+          console.error("Nav - No user ID in stored data");
         }
         setUser(userData);
       } catch (error) {
@@ -73,23 +75,17 @@ export default function Nav() {
   };
 
   const handleProfileClick = () => {
-    console.log("Profile click - Current user:", user); // Debug log
     try {
       if (user?.id) {
-        console.log("Nav - Navigating to profile with ID:", user.id); // Debug log
         const profileUrl = `/Profile?id=${user.id}`;
-        console.log("Nav - Profile URL:", profileUrl); // Debug log
         router.push(profileUrl);
         setIsDropdownOpen(false);
       } else {
         console.error("Nav - No user ID found in user data:", user);
-        // Try to recover the ID from localStorage directly
         const storedData = localStorage.getItem("userData");
-        console.log("Nav - Stored user data:", storedData); // Debug log
         if (storedData) {
           const parsedData = JSON.parse(storedData);
           if (parsedData?.id) {
-            console.log("Nav - Found ID in localStorage:", parsedData.id); // Debug log
             router.push(`/Profile?id=${parsedData.id}`);
             setIsDropdownOpen(false);
           }
@@ -105,69 +101,47 @@ export default function Nav() {
     setIsDarkMode(newDarkMode);
     localStorage.setItem("darkMode", String(newDarkMode));
     
-    // Apply dark mode to root element for global styling
     if (newDarkMode) {
       document.documentElement.classList.add("dark-mode");
     } else {
       document.documentElement.classList.remove("dark-mode");
     }
 
-    // Dispatch a custom event for other components
     window.dispatchEvent(new Event('themeChange'));
   };
 
+  const handleSidebarHover = (isEntering: boolean) => {
+    if (isEntering) {
+      setIsHovered(true);
+      setIsCollapsed(false);
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    } else {
+      hoverTimeoutRef.current = setTimeout(() => {
+        setIsHovered(false);
+        setIsCollapsed(true);
+      }, 300);
+    }
+  };
+
+  useEffect(() => {
+    // Set initial collapsed state
+    setIsCollapsed(true);
+    
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className={`${styles.layout} ${isDarkMode ? styles.darkMode : ''}`}>
-      {/* Sidebar with updated icons */}
-      <div className={styles.sidebar}>
-        <Link href="/AdminDashboard" className={styles.sidebarItem}>
-          <Home size={20} /> Dashboard
-        </Link>
-        <Link href="/ListOfUsers" className={styles.sidebarItem}>
-          <Users size={20} /> List of Users
-        </Link>
-        <Link href="/ListOfServiceProviders" className={styles.sidebarItem}>
-          <Users size={20} /> List of Service Providers
-        </Link>
-        <Link href="/ListOfCategories" className={styles.sidebarItem}>
-          <Tag size={20} /> List of Categories
-        </Link>
-        <Link href="/ListOfPayments" className={styles.sidebarItem}>
-          <CreditCard size={20} /> List of Payments
-        </Link>
-        <Link href="/ListOfOrders" className={styles.sidebarItem}>
-          <ShoppingCart size={20} /> List of Orders
-        </Link>
-        <Link href="/ListOfRequests" className={styles.sidebarItem}>
-          <FileText size={20} /> List of Requests
-        </Link>
-        <Link href="/ListOfGoods" className={styles.sidebarItem}>
-          <Package size={20} /> List of Goods
-        </Link>
-        <Link href="/ListOfGoodPosts" className={styles.sidebarItem}>
-          <FileText size={20} /> List of Goods Posts
-        </Link>
-        <Link href="/ListOfPromoPosts" className={styles.sidebarItem}>
-          <FileText size={20} /> List of PromoPosts
-        </Link>
-      
-        <Link href="/ListOfPickups" className={styles.sidebarItem}>
-          <Truck size={20} /> List of Pickups
-        </Link>
-       
-        <Link href="/ListOfSponsorships" className={styles.sidebarItem}>
-          <Award size={20} /> List of Sponsorships
-        </Link>
-        <Link href="/ListOfSubscriptions" className={styles.sidebarItem}>
-          <Bookmark size={20} /> List of Subscriptions
-        </Link>
-      </div>
-
-      {/* Top Navbar */}
       <nav className={styles.nav}>
         <div className={styles.logo}>
-          {/* Admin Dashboard */}
-          </div>
+          Admin Dashboard 
+        </div>
         <div className={styles.navItems}>
           <Bell className={`${styles.bellIcon} ${styles.icon}`} />
           <div 
@@ -187,14 +161,11 @@ export default function Nav() {
             {user ? (
               <div className={styles.userProfile}>
                 <img 
-                  src={user.profile?.image?.url 
-                    // ||  "/images/default-profile.png"
-                  }
+                  src={user.profile?.image?.url}
                   alt="User" 
                   className={styles.userImage}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    // target.src = "/images/default-profile.png";
                   }}
                 />
                 <div className={styles.userInfo}>
@@ -230,6 +201,69 @@ export default function Nav() {
           </div>
         </div>
       </nav>
+
+      <div 
+        className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''} ${isHovered ? styles.hovered : ''}`}
+        onMouseEnter={() => handleSidebarHover(true)}
+        onMouseLeave={() => handleSidebarHover(false)}
+      >
+        <Link href="/AdminDashboard" className={styles.sidebarItem}>
+          <Home size={20} />
+          <span className={styles.itemText}>Dashboard</span>
+        </Link>
+        <Link href="/ListOfUsers" className={styles.sidebarItem}>
+          <Users size={20} />
+          <span className={styles.itemText}>List of Users</span>
+        </Link>
+        <Link href="/ListOfServiceProviders" className={styles.sidebarItem}>
+          <Users size={20} />
+          <span className={styles.itemText}>List of Service Providers</span>
+        </Link>
+        <Link href="/ListOfCategories" className={styles.sidebarItem}>
+          <Tag size={20} />
+          <span className={styles.itemText}>List of Categories</span>
+        </Link>
+        <Link href="/ListOfPayments" className={styles.sidebarItem}>
+          <CreditCard size={20} />
+          <span className={styles.itemText}>List of Payments</span>
+        </Link>
+        <Link href="/ListOfOrders" className={styles.sidebarItem}>
+          <ShoppingCart size={20} />
+          <span className={styles.itemText}>List of Orders</span>
+        </Link>
+        <Link href="/ListOfRequests" className={styles.sidebarItem}>
+          <FileText size={20} />
+          <span className={styles.itemText}>List of Requests</span>
+        </Link>
+        <Link href="/ListOfGoods" className={styles.sidebarItem}>
+          <Package size={20} />
+          <span className={styles.itemText}>List of Goods</span>
+        </Link>
+        <Link href="/ListOfGoodPosts" className={styles.sidebarItem}>
+          <FileText size={20} />
+          <span className={styles.itemText}>List of Goods Posts</span>
+        </Link>
+        <Link href="/ListOfPromoPosts" className={styles.sidebarItem}>
+          <FileText size={20} />
+          <span className={styles.itemText}>List of PromoPosts</span>
+        </Link>
+        <Link href="/ListOfPickups" className={styles.sidebarItem}>
+          <Truck size={20} />
+          <span className={styles.itemText}>List of Pickups</span>
+        </Link>
+        <Link href="/ListOfSponsorships" className={styles.sidebarItem}>
+          <Award size={20} />
+          <span className={styles.itemText}>List of Sponsorships</span>
+        </Link>
+        <Link href="/ListOfSubscriptions" className={styles.sidebarItem}>
+          <Bookmark size={20} />
+          <span className={styles.itemText}>List of Subscriptions</span>
+        </Link>
+      </div>
+
+      <div className={`${styles.mainContent} ${(!isCollapsed || isHovered) ? styles.mainContentExpanded : ''}`}>
+        {/* Your main content goes here */}
+      </div>
     </div>
   );
 }

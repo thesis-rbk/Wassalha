@@ -6,12 +6,12 @@
   --color-text: #000000;
   --color-border: #e5e7eb;
   --color-hover: #f0f7ff;
-  --color-primary: #008098;
-  --color-secondary: #2BB3CD;
-  --color-dark: #01013D;
-  --color-success: #00C500;
-  --color-danger: #F70000;
-  --color-warning: #F77900;
+  --color-primary: #018ABE;
+  --color-secondary: #05AFF0;
+  --color-dark: #3703C8;
+  --color-success: #23d400;
+  --color-danger: #e30008;
+  --color-warning: #FFE900;
   
   /* Border Radius */
   --radius-full: 100%;
@@ -41,8 +41,8 @@
   --color-text: #ffffff;
   --color-border: #2d2d2d;
   --color-hover: #2d2d2d;
-  --color-primary: #66b2ff;
-  --color-secondary: #4d94ff;
+  --color-primary: #018ABE;
+  --color-secondary: #05AFF0;
 }
 
 /* Typography classes */

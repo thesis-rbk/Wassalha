@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation"; // ✅ Use next/navigation in App Router
 import axios from "axios"; // Import Axios
 import { Moon, Sun, Eye, EyeOff } from "lucide-react"; // Import icons
-import styles from "../styles/AdminLogin.module.css"; // Import the new CSS module
+import styles from "../../styles/AdminLogin.module.css"; // Import the new CSS module
 
 const AdminLogin = () => {
   const router = useRouter();

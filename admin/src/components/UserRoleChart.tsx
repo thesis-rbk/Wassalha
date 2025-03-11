@@ -31,7 +31,7 @@ const UserRoleChart: React.FC = () => {
     responsive: true,
     plugins: {
       legend: {
-        position: "right",
+        position: 'right' as const,
       },
       tooltip: {
         callbacks: {
@@ -41,7 +41,7 @@ const UserRoleChart: React.FC = () => {
         },
       },
     },
-    cutout: "70%", // Makes it a donut chart
+    cutout: '70%',
   };
 
   return (

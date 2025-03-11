@@ -64,7 +64,7 @@
 }
 
 .td {
-  padding: 12px;
+  padding: 9px;
   color: var(--color-text);
   border-bottom: 1px solid var(--color-border);
   transition: all 0.3s ease;
@@ -149,12 +149,12 @@
 }
 
 .formButtons button[type="submit"] {
-    background-color: #007bff;
+    background-color: var(--color-primary);
     color: white;
 }
 
 .formButtons button[type="button"] {
-    background-color: #6c757d;
+    background-color: var(--color-secondary);
     color: white;
 }
 
@@ -168,12 +168,12 @@
 }
 
 .editButton {
-    background-color: #007bff;
+    background-color: var(--color-warning);
     color: white;
 }
 
 .deleteButton {
-    background-color: #ff4444;
+    background-color: var(--color-danger);
     color: white;
     border: none;
     padding: 5px 10px;
@@ -187,7 +187,7 @@
 }
 
 .editButton:hover {
-    background-color: #0056b3;
+    background-color: #b3aa00;
 }
 
 /* Controls Section */
@@ -269,34 +269,34 @@
 }
 
 .viewButton {
-  background-color: #3b82f6;
+  background-color: var(--color-primary);
   color: white;
 }
 
 .viewButton:hover {
-  background-color: #2563eb;
+  background-color: var(--color-dark);
 }
 
 .editButton {
-  background-color: #10b981;
+  background-color: var(--color-primary);
   color: white;
 }
 
 .editButton:hover {
-  background-color: #059669;
+  background-color: var(--color-danger);
 }
 
 .deleteButton {
-  background-color: #ef4444;
+  background-color: var(--color-danger);
   color: white;
 }
 
 .deleteButton:hover {
-  background-color: #dc2626;
+  background-color: #b40f0f;
 }
 
 .banButton {
-  background-color: #f59e0b;
+  background-color: var(--color-warning);
   color: white;
 }
 
@@ -315,22 +315,22 @@
 
 .badgePending {
   background-color: #fef3c7;
-  color: #d97706;
+  color: var(--color-warning);
 }
 
 .badgeCompleted {
   background-color: #d1fae5;
-  color: #059669;
+  color: var(--color-success);
 }
 
 .badgeProcessing {
   background-color: #e0e7ff;
-  color: #4f46e5;
+  color: var(--color-primary);
 }
 
 .badgeFailed {
   background-color: #fee2e2;
-  color: #dc2626;
+  color: var(--color-danger);
 }
 
 /* Confirmation Dialog */
@@ -468,25 +468,23 @@
 }
 
 .viewButton {
-  background-color: #3b82f6;
+  background-color: var(--color-primary);
   color: white;
 }
 
 .viewButton:hover {
-  background-color: #2563eb;
+  background-color: var(--color-dark);
 }
 
 .editButton {
-  background-color: #10b981;
+  background-color: var(--color-primary);
   color: white;
 }
 
-.editButton:hover {
-  background-color: #059669;
-}
+
 
 .deleteButton {
-  background-color: #ef4444;
+  background-color: var(--color-danger);
   color: white;
 }
 
@@ -559,7 +557,7 @@
 /* Error and Loading States */
 .error {
   background-color: #fee2e2;
-  color: #dc2626;
+  color: var(--color-danger);
   padding: 12px 16px;
   border-radius: 6px;
   margin-bottom: 16px;
@@ -671,28 +669,28 @@
 }
 
 .formError {
-  color: #dc2626;
+  color: var(--color-danger);
   font-size: 14px;
   margin-bottom: 12px;
 }
 
 /* Disable Button Styles */
 .disableButton {
-  background-color: #ef4444;
+  background-color: var(--color-danger);
   color: white;
 }
 
 .disableButton:hover {
-  background-color: #dc2626;
+  background-color: #8b0d0d;
 }
 
 .enableButton {
-  background-color: #10b981;
+  background-color: var(--color-primary);
   color: white;
 }
 
 .enableButton:hover {
-  background-color: #059669;
+  background-color: #018205;
 }
 
 /* Optional: Add shadow indicators for scroll */
@@ -806,7 +804,7 @@
 }
 
 .darkMode .actionButton {
-  background-color: var(--color-primary);
+  /* background-color: var(--color-primary); */
   color: white;
 }
 
