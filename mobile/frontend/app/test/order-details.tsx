@@ -14,34 +14,8 @@ import { CheckCircle, Star, Award, Package } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { BACKEND_URL } from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Add these interfaces at the top of the file
-interface TravelerStats {
-  completedOrders: number;
-  successRate: number;
-}
-
-interface TravelerReputation {
-  score: number;
-  totalRatings: number;
-  level: number;
-}
-
-interface TravelerProfile {
-  isVerified: boolean;
-  imageId: string | null;
-}
-
-interface Traveler {
-  id: number;
-  name: string;
-  email: string;
-  createdAt: string;
-  reputation: TravelerReputation;
-  profile: TravelerProfile;
-  stats: TravelerStats;
-  reviews: Review[];
-}
+// Import Traveler types from types directory
+import { Traveler, TravelerProfile, TravelerReputation, TravelerStats } from '@/types';
 
 export default function OrderDetailsScreen() {
   const params = useLocalSearchParams();
