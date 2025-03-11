@@ -434,6 +434,61 @@ const getUsers = async (req, res) => {
   }
 };
 
+const verifyIdCard = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        message: "No ID Card image uploaded"
+      });
+    }
+
+    // Hash the file path/content for security
+    const fileHash = crypto
+      .createHash('sha256')
+      .update(file.path)
+      .digest('hex');
+
+    // Update or create ServiceProvider record
+    const serviceProvider = await prisma.serviceProvider.upsert({
+      where: {
+        userId: userId
+      },
+      update: {
+        idCard: fileHash,
+        isVerified: false // Requires manual verification
+      },
+      create: {
+        userId: userId,
+        type: "SUBSCRIBER",
+        idCard: fileHash,
+        isVerified: false,
+        subscriptionLevel: "BASIC"
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "ID Card uploaded successfully",
+      data: {
+        idCard: fileHash,
+        isVerified: serviceProvider.isVerified
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in ID verification:', error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to process ID Card",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   signup,
   loginUser,
@@ -445,4 +500,5 @@ module.exports = {
   completeOnboarding,
   changePassword,
   getUsers,
+  verifyIdCard,
 };
