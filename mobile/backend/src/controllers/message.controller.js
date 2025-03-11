@@ -1,4 +1,4 @@
-const prisma = require("../../prisma");
+const prisma = require("../../prisma/index");
 
 // Fetch messages for the current user
 exports.getMessages = async (req, res) => {
