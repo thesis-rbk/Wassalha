@@ -1,5 +1,9 @@
 import { Request } from './Request';
 import { User } from './User';
+import { GoodsProcess } from './GoodsProcess';
+
+export type OrderStatus = 'PENDING' | 'ACCEPTED' | 'COMPLETED' | 'CANCELLED';
+export type PaymentStatus = 'ON_HOLD' | 'PAID' | 'REFUNDED' | 'CANCELLED';
 
 export interface Order {
     id: number;
@@ -11,6 +15,7 @@ export interface Order {
     arrivalDate?: Date;
     trackingNumber?: string;
     totalAmount?: number;
-    paymentStatus: 'ON_HOLD' | 'PAYED' | 'REFUNDED';
-    orderStatus: 'PENDING' | 'IN_TRANSIT' | 'DELIVERED';
+    paymentStatus: PaymentStatus;
+    orderStatus: OrderStatus;
+    goodsProcess?: GoodsProcess | null;
 }

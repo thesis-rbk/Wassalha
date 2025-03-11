@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../../prisma/index');
+
 
 const alltick = {
     allorders: async (req, res) => {
