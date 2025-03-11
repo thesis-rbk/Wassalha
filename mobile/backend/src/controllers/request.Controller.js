@@ -383,6 +383,59 @@ class RequestController {
             });
         }
     }
+
+    // Get Offers for a Request
+    async getRequestOffers(req, res) {
+        try {
+            const requestId = parseInt(req.params.id);
+            console.log('🔍 Getting offers for request:', requestId);
+            
+            // Since there's no direct Offer model in your schema,
+            // we'll query for orders that are in PENDING state
+            // which effectively represent offers
+            const offers = await prisma.order.findMany({
+                where: {
+                    requestId: requestId,
+                    orderStatus: 'PENDING'
+                },
+                include: {
+                    traveler: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            profile: {
+                                select: {
+                                    imageId: true,
+                                    isVerified: true
+                                }
+                            },
+                            reputation: {
+                                select: {
+                                    score: true,
+                                    totalRatings: true,
+                                    level: true
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            console.log(`📦 Found ${offers.length} offers for request ${requestId}`);
+
+            res.status(200).json({
+                success: true,
+                data: offers
+            });
+        } catch (error) {
+            console.error('Error in getRequestOffers:', error);
+            res.status(500).json({
+                success: false,
+                error: error.message
+            });
+        }
+    }
 }
 
 module.exports = new RequestController(); 
