@@ -1,20 +1,58 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import axiosInstance from '@/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from 'jwt-decode';
 
 const IdCard = () => {
   const router = useRouter();
   const [image, setImage] = useState<string | null>(null);
 
-  const handleDocumentReadable = () => {
-    // Logic for when the document is readable
-    console.log("Document is readable");
-    // Navigate to the next step or page
-    ; // Adjust the route as needed
+  const handleDocumentReadable = async () => {
+    if (!image) {
+      Alert.alert('Error', 'Please take a photo first');
+      return;
+    }
+
+    try {
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (!token) throw new Error('No token found');
+
+      const decoded: any = jwtDecode(token);
+      const formData = new FormData();
+
+      // Create file object from image URI
+      const imageFile = {
+        uri: image,
+        type: 'image/jpeg',
+        name: 'id-card.jpg',
+      };
+
+      formData.append('idCard', imageFile as any);
+
+      const response = await axiosInstance.post(
+        `/api/users/verify-id/${decoded.id}`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (response.data.success) {
+        Alert.alert('Success', 'ID Card verified successfully');
+        router.push('/verification/start');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to verify ID Card');
+    }
   };
 
   const handleRetakePhoto = () => {
