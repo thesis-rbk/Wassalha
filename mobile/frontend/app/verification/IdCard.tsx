@@ -48,7 +48,7 @@ const IdCard = () => {
 
       if (response.data.success) {
         Alert.alert('Success', 'ID Card verified successfully');
-        router.push('/verification/start');
+        router.push('/verification/TakeSelfie');
       }
     } catch (error: any) {
       Alert.alert('Error', error.response?.data?.message || 'Failed to verify ID Card');

@@ -11,6 +11,7 @@ const {
   changePassword,
   getUsers,
   verifyIdCard,
+  verifySelfie,
 } = require("../controllers/user.controller");
 const { authenticateUser } = require("../middleware/middleware");
 const { getMessages } = require("../controllers/message.controller");
@@ -36,6 +37,12 @@ router.post(
   authenticateUser,
   upload.single('idCard'),
   verifyIdCard
+);
+router.post(
+  '/verify-selfie/:id',
+  authenticateUser,
+  upload.single('selfie'),
+  verifySelfie
 );
 
 module.exports = router;
