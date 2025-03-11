@@ -588,6 +588,7 @@ import Card from "../../components/cards/ProcessCard";
 import { RootState } from "@/store";
 import { useSelector } from "react-redux";
 import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
+import { BaseButton } from "@/components/ui/buttons/BaseButton";
 
 // Replace with your backend URL
 const API_URL = "http://192.168.1.165:3000";
@@ -820,7 +821,7 @@ export default function PaymentScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[styles.payButton, isProcessing && styles.disabledButton]}
           onPress={handlePayment}
           disabled={isProcessing}
@@ -828,7 +829,18 @@ export default function PaymentScreen() {
           <Text style={styles.payButtonText}>
             {isProcessing ? "Processing..." : "Complete Payment"}
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
+        <BaseButton
+          style={styles.payButton}
+          onPress={handlePayment}
+          size="large"
+          variant="primary"
+          disabled={isProcessing}
+        >
+          <Text style={styles.payButtonText}>
+            {isProcessing ? "Processing..." : "Complete Payment"}
+          </Text>
+        </BaseButton>
       </View>
     </ScrollView>
   );
@@ -995,15 +1007,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   payButton: {
-    backgroundColor: "#3b82f6",
-    borderRadius: 8,
-    padding: 16,
-    alignItems: "center",
+    padding: 12,
+    alignSelf: "center",
   },
   payButtonText: {
+    color: "#ffffff",
     fontFamily: "Inter-Bold",
     fontSize: 16,
-    color: "#ffffff",
   },
   disabledButton: {
     backgroundColor: "#9ca3af",
