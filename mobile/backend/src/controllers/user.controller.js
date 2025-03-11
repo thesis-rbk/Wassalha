@@ -69,16 +69,17 @@ const signup = async (req, res) => {
       },
     });
 
-    // Automatically create profile for new user
+    // Fix: Create profile with correct relation syntax
     await prisma.profile.create({
       data: {
         firstName: newUser.name,
         lastName: "",
-        User: {
-          connect: {
-            id: newUser.id
-          }
-        },
+        userId: newUser.id,  // Use userId instead of user.connect
+        country: "OTHER",    // Add a default country
+        isAnonymous: false,
+        isBanned: false,
+        isVerified: false,
+        isOnline: false
       },
     });
 

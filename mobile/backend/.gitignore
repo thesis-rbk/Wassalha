@@ -6,3 +6,4 @@ node_modules/
 prisma/migrations
 
 illegal_items.json
+uploads/
