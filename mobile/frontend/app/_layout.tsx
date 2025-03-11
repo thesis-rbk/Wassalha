@@ -130,7 +130,8 @@ export default function RootLayout() {
               name="processTrack/pickupSP"
               options={{ title: "Pickup" }}
             />
-
+            <Stack.Screen name="test/role-test" options={{ title: "Role Test" }} />
+            <Stack.Screen name="test/order-details"  />
           </Stack>
         )}
       </Provider>

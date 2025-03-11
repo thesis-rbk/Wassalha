@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-import { faker } from "@faker-js/faker";
+import { PrismaClient } from '@prisma/client';
+import { faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient();
 
@@ -61,8 +61,13 @@ async function seed() {
       return prisma.serviceProvider.create({
         data: {
           userId: user.id,
-          type: faker.helpers.arrayElement(["SPONSOR", "SUBSCRIBER"]),
-          subscriptionLevel: faker.helpers.arrayElement(["BASIC", "PREMIUM"]),
+          firstName: faker.person.firstName(),
+          lastName: faker.person.lastName(),
+          bio: faker.lorem.sentence(),
+          country: faker.helpers.arrayElement([
+            'USA', 'CANADA', 'UK', 'TUNISIA', 'FRANCE', 'GERMANY'
+          ]),
+          gender: faker.helpers.arrayElement(['MALE', 'FEMALE']),
           isVerified: faker.datatype.boolean(),
           badge: faker.system.fileName(),
           idCard: faker.string.uuid(),
@@ -79,9 +84,25 @@ async function seed() {
   console.log("Seeding categories...");
   const categories = await Promise.all(
     Array.from({ length: 5 }).map(async () => {
+    Array.from({ length: 5 }).map(async () => {
       return prisma.category.create({
         data: {
           name: faker.commerce.department(),
+          description: faker.lorem.sentence(),
+        },
+      });
+    })
+  );
+
+  // Create Goods
+  const goods = await Promise.all(
+    Array.from({ length: 15 }).map(async () => {
+      return prisma.goods.create({
+        data: {
+          name: faker.commerce.productName(),
+          size: `${faker.number.int({ min: 1, max: 100 })}x${faker.number.int({ min: 1, max: 100 })}`,
+          weight: faker.number.float({ min: 0.1, max: 50 }),
+          price: faker.number.float({ min: 1, max: 1000 }),
           description: faker.commerce.productDescription(),
           isDisabled: false,
         },
@@ -94,9 +115,10 @@ async function seed() {
   console.log("Seeding sponsorships...");
   const sponsorships = await Promise.all(
     Array.from({ length: 5 }).map(async () => {
-      const serviceProvider = faker.helpers.arrayElement(serviceProviders);
-      const recipient = faker.helpers.arrayElement(users.filter(u => u.id !== serviceProvider.userId));
-      
+      const sponsor = faker.helpers.arrayElement(serviceProviders);
+      const recipient = faker.helpers.arrayElement(users);
+      const category = faker.helpers.arrayElement(categories);
+
       return prisma.sponsorship.create({
         data: {
           name: faker.company.name(),
