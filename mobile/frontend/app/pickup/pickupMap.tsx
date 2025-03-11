@@ -8,17 +8,10 @@ import { Colors } from "@/constants/Colors";
 import MapView, { Marker } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import * as Location from 'expo-location';
+import {SafeLocation} from "@/types/Pickup";
+import {PickupMapProps} from "@/types/Pickup";
 
-interface PickupMapProps {
-  setCoordinates: (coords: { latitude: number; longitude: number } | null) => void;
-  setManualAddress: (address: string) => void;
-}
 
-interface SafeLocation {
-  name: string;
-  latitude: number;
-  longitude: number;
-}
 
 export default function PickupMap({ setCoordinates, setManualAddress }: PickupMapProps) {
   const colorScheme = useColorScheme() ?? 'light';

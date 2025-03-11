@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Modal, Alert } from "react-native";
+import { View, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert, TextInput, FlatList } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { InputField } from "@/components/InputField";
@@ -7,14 +7,14 @@ import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import { FontAwesome5 } from "@expo/vector-icons";
-import axiosInstance from "../../config";
+import axios from 'axios'; // Import plain axios
 import * as Location from 'expo-location';
 import { useRouter } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import PickupMap from "./pickupMap"; // Import the new component
+import PickupMap from "./pickupMap";
+import axiosInstance from "@/config";
 
 export default function Pickup({ pickupId }: { pickupId?: number }) {
-  console.log(pickupId, "pickuuupId"); // pickupId is optional
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
   const [location, setLocation] = useState<string>('');
@@ -31,6 +31,11 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
   const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [selectedOptionInfo, setSelectedOptionInfo] = useState<string>('');
+  const [airportSuggestions, setAirportSuggestions] = useState<string[]>([]);
+  const [isFetchingAirports, setIsFetchingAirports] = useState<boolean>(false);
+
+  // Replace with your Google Places API key
+  const GOOGLE_PLACES_API_KEY = 'AIzaSyB5gnUWjb84t6klt5vcPjMOQylhQRFB5Wc'; 
 
   const styles = StyleSheet.create({
     container: {
@@ -41,12 +46,6 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
       flexGrow: 1,
       justifyContent: "center",
       padding: 20,
-    },
-    logo: {
-      width: 150,
-      height: 150,
-      alignSelf: "center",
-      marginBottom: 20,
     },
     headerText: {
       fontSize: 24,
@@ -63,16 +62,6 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
     },
     actionButton: {
       marginTop: 20,
-    },
-    mapButton: {
-      marginTop: 20,
-      flexDirection: "row",
-      gap: 10,
-      justifyContent: "center",
-      backgroundColor: Colors[colorScheme].googleButton,
-    },
-    buttonText: {
-      color: Colors[colorScheme].text,
     },
     pickupOptionsContainer: {
       gap: 12,
@@ -174,7 +163,91 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
       gap: 10,
       justifyContent: 'space-between',
     },
+    airportInput: {
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].text + '40',
+      borderRadius: 8,
+      padding: 10,
+      fontSize: 16,
+      color: Colors[colorScheme].text,
+      backgroundColor: Colors[colorScheme].background,
+      marginTop: 15,
+    },
+    suggestionContainer: {
+      maxHeight: 150,
+      width: '100%',
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].text + '20',
+      borderRadius: 8,
+      backgroundColor: Colors[colorScheme].background,
+      marginTop: 5,
+    },
+    suggestionItem: {
+      padding: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: Colors[colorScheme].text + '10',
+    },
+    suggestionText: {
+      fontSize: 16,
+      color: Colors[colorScheme].text,
+    },
   });
+
+  // Fetch airport suggestions using Google Places API (New)
+  const fetchAirportSuggestions = async (query: string) => {
+    if (!query || query.length < 2) {
+      setAirportSuggestions([]);
+      return;
+    }
+  
+    setIsFetchingAirports(true);
+    try {
+      const requestBody = {
+        textQuery: `${query} airport`,
+        includedType: 'airport',
+        languageCode: 'en',
+      };
+      const requestHeaders = {
+        'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+        'Content-Type': 'application/json',
+        'X-Goog-FieldMask': 'places.displayName,places.types,places.formattedAddress',
+      };
+      console.log('Request URL:', 'https://places.googleapis.com/v1/places:searchText');
+      console.log('Request Headers:', requestHeaders);
+      console.log('Request Body:', requestBody);
+  
+      const response = await axios.post(
+        'https://places.googleapis.com/v1/places:searchText',
+        requestBody,
+        { headers: requestHeaders }
+      );
+      console.log('Response:', response.data);
+  
+      const results = response.data.places
+        .filter((place: any) => place.types.includes('airport'))
+        .map((place: any) => place.displayName.text || place.formattedAddress);
+      setAirportSuggestions(results);
+    } catch (error) {
+      console.error('Error fetching airports from Google Places:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+      Alert.alert('Error', 'Failed to fetch airport suggestions');
+    } finally {
+      setIsFetchingAirports(false);
+    }
+  };
+
+  const handleAirportInputChange = (text: string) => {
+    setAirportName(text);
+    fetchAirportSuggestions(text);
+  };
+
+  const handleSuggestionSelect = (suggestion: string) => {
+    setAirportName(suggestion);
+    setAirportSuggestions([]);
+  };
 
   const getCurrentLocation = async () => {
     try {
@@ -419,12 +492,27 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
                 <ThemedText style={styles.importantTextSafe}>
                   IMPORTANT: This process is managed by our team for your convenience and safety.
                 </ThemedText>
-                <InputField
-                  label="Airport Name"
+                <TextInput
+                  style={styles.airportInput}
                   placeholder="Enter airport name"
                   value={airportName}
-                  onChangeText={setAirportName}
+                  onChangeText={handleAirportInputChange}
                 />
+                {airportSuggestions.length > 0 && (
+                  <FlatList
+                    data={airportSuggestions}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={styles.suggestionItem}
+                        onPress={() => handleSuggestionSelect(item)}
+                      >
+                        <ThemedText style={styles.suggestionText}>{item}</ThemedText>
+                      </TouchableOpacity>
+                    )}
+                    keyExtractor={(item) => item}
+                    style={styles.suggestionContainer}
+                  />
+                )}
               </>
             )}
 

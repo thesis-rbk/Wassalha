@@ -3,27 +3,12 @@ import ProgressBar from "../../components/ProgressBar";
 import React, { useState, useEffect } from 'react';
 import { View, Text, Button, FlatList, StyleSheet, ScrollView } from 'react-native';
 import axiosInstance from '../../config';
-import Pickup from '../pickup/pickup';
+import Pickups from '../pickup/pickup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
+import { Pickup } from "../../types/Pickup";
 
-interface Pickup {
-  id: number;
-  orderId: number;
-  pickupType: 'AIRPORT' | 'IN_PERSON' | 'PICKUPPOINT' | 'DELIVERY';
-  location: string;
-  address: string;
-  coordinates: string;
-  contactPhoneNumber: string;
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'DELAYED' | 'DELIVERED';
-  scheduledTime: string;
-  travelerconfirmed: boolean;
-  userconfirmed: boolean;
-  order: {
-    travelerId: number;
-  };
-}
 
 export default function PickupOwner() {
   const router = useRouter();
@@ -187,7 +172,7 @@ export default function PickupOwner() {
       </View>
 
       {showPickup ? (
-        <Pickup pickupId={pickupId} /> // Removed onClose prop
+        <Pickups pickupId={pickupId} /> // Removed onClose prop
       ) : (
         <FlatList
           data={pickups}
