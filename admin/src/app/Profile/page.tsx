@@ -118,8 +118,8 @@ const Profile: React.FC = () => {
             }
 
             const isBanned = userProfile.profile?.isBanned;
-            const response = await axios.put(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}/${isBanned ? 'unban' : 'ban'}`,
+            const response = await api.put(
+                `/api/users/${userProfile.id}/${isBanned ? 'unban' : 'ban'}`,
                 {},
                 {
                     headers: {
@@ -193,7 +193,12 @@ const Profile: React.FC = () => {
     };
 
     const handleUpdateUser = async () => {
-        if (!userProfile?.id) return;
+        if (!userProfile?.id) {
+            alert("No user selected for update");
+            return;
+        }
+
+        console.log("Updating user with ID:", userProfile.id); // Debugging line
 
         try {
             const token = localStorage.getItem('adminToken');
@@ -204,7 +209,7 @@ const Profile: React.FC = () => {
 
             // Create the update data object
             const updateData = {
-                id: userProfile.id, // Explicitly include the ID
+                id: userProfile.id, // Ensure ID is included
                 name: updatedProfile.name,
                 email: updatedProfile.email,
                 phoneNumber: updatedProfile.profile?.phoneNumber,
@@ -227,8 +232,8 @@ const Profile: React.FC = () => {
                 });
                 formData.append('image', selectedImage);
 
-                const response = await axios.put(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}`,
+                const response = await api.put(
+                    `/api/users/${userProfile.id}`,
                     formData,
                     {
                         headers: {
@@ -240,8 +245,8 @@ const Profile: React.FC = () => {
                 handleUpdateSuccess(response);
             } else {
                 // If no new image, send JSON data
-                const response = await axios.put(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}`,
+                const response = await api.put(
+                    `/api/users/${userProfile.id}`,
                     updateData,
                     {
                         headers: {
@@ -310,8 +315,10 @@ const Profile: React.FC = () => {
                 return;
             }
 
-            const response = await axios.delete(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/users/${userProfile.id}`,
+            console.log("Attempting to delete user with ID:", userProfile.id); // Debugging line
+
+            const response = await api.delete(
+                `/api/users/${userProfile.id}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`
