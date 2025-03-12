@@ -4,7 +4,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { FileText, UserCircle2, Phone } from 'lucide-react-native';
+import { FileText, UserCircle2, Phone, CreditCard } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { VerificationOption } from '@/types/VerificationOption';
 
@@ -27,10 +27,10 @@ const VerificationScreen = () => {
       icon: <UserCircle2 size={24} color={Colors[colorScheme].text} />,
     },
     {
-      id: 'phone',
-      title: 'Phone Verification',
-      description: 'We will send you the confirmation SMS',
-      icon: <Phone size={24} color={Colors[colorScheme].text} />,
+      id: 'creditCard',
+      title: 'Credit Card',
+      description: 'We will link your credit card to your account',
+      icon: <CreditCard size={24} color={Colors[colorScheme].text} />,
     },
     {
       id: 'questionnaire',
