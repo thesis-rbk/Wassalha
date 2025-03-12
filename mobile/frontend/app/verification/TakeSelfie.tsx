@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image, Alert, Dimensions } from 'react-native';
-import { Camera } from 'expo-camera';
-import * as FaceDetector from 'expo-face-detector';
+import { Camera, CameraView } from 'expo-camera';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
@@ -10,10 +9,23 @@ import axiosInstance from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
 import { MaterialIcons } from '@expo/vector-icons';
+import { CameraType } from 'expo-camera';
+import { Ionicons } from '@expo/vector-icons';
 
 const FRAME_SIZE = 250;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
+
+type FaceDetection = {
+  faces: Array<{
+    bounds: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+  }>;
+};
 
 const TakeSelfie = () => {
   const router = useRouter();
@@ -21,13 +33,14 @@ const TakeSelfie = () => {
   const [image, setImage] = useState<string | null>(null);
   const [faceDetected, setFaceDetected] = useState(false);
   const [faceInFrame, setFaceInFrame] = useState(false);
-  const cameraRef = useRef<Camera>(null);
+  const cameraRef = useRef<any>(null);
   const frameRef = useRef({
     x: (SCREEN_WIDTH - FRAME_SIZE) / 2,
     y: (SCREEN_HEIGHT - FRAME_SIZE) / 2,
     width: FRAME_SIZE,
     height: FRAME_SIZE,
   });
+  const [manualMode, setManualMode] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -36,24 +49,22 @@ const TakeSelfie = () => {
     })();
   }, []);
 
-  const handleFacesDetected = ({ faces }: { faces: any[] }) => {
-    if (faces.length > 0) {
+  const handleFaceDetected = ({ faces }: { faces: any[] }) => {
+    if (faces && faces.length > 0) {
       setFaceDetected(true);
       const face = faces[0];
       const frame = frameRef.current;
-
-      // Check if face bounds are within the frame
-      const faceInBounds = 
+      
+      const isInFrame = 
         face.bounds.x > frame.x &&
         face.bounds.y > frame.y &&
         (face.bounds.x + face.bounds.width) < (frame.x + frame.width) &&
         (face.bounds.y + face.bounds.height) < (frame.y + frame.height);
 
-      setFaceInFrame(faceInBounds);
+      setFaceInFrame(isInFrame);
 
-      // Auto capture when face is properly positioned
-      if (faceInBounds) {
-        setTimeout(() => takePicture(), 500);
+      if (isInFrame && !image && !manualMode) {
+        setTimeout(() => takePicture(), 1500);
       }
     } else {
       setFaceDetected(false);
@@ -62,7 +73,7 @@ const TakeSelfie = () => {
   };
 
   const takePicture = async () => {
-    if (!faceDetected || !cameraRef.current) return;
+    if (!cameraRef.current) return;
 
     try {
       const photo = await cameraRef.current.takePictureAsync({
@@ -92,9 +103,11 @@ const TakeSelfie = () => {
         uri: image,
         type: 'image/jpeg',
         name: 'selfie.jpg',
-      };
+      } as any;
 
-      formData.append('selfie', imageFile as any);
+      formData.append('selfie', imageFile);
+
+      Alert.alert('Uploading', 'Please wait while we upload your selfie...');
 
       const response = await axiosInstance.post(
         `/api/users/verify-selfie/${decoded.id}`,
@@ -108,11 +121,16 @@ const TakeSelfie = () => {
       );
 
       if (response.data.success) {
-        Alert.alert('Success', 'Selfie verified successfully');
-        router.push('/verification/start');
+        Alert.alert('Success', 'Selfie verified successfully', [
+          { text: 'OK', onPress: () => router.push('/verification/CreditCardVerification') }
+        ]);
       }
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to verify selfie');
+      console.error('Error submitting selfie:', error);
+      Alert.alert(
+        'Error', 
+        error.response?.data?.message || 'Failed to verify selfie. Please try again.'
+      );
     }
   };
 
@@ -127,16 +145,15 @@ const TakeSelfie = () => {
     <ThemedView style={styles.container}>
       {!image ? (
         <View style={styles.cameraContainer}>
-          <Camera
+          <CameraView
             ref={cameraRef}
             style={styles.camera}
-            type={Camera.Constants.Type.front}
-            onFacesDetected={handleFacesDetected}
+            facing="front"
+            onFacesDetected={handleFaceDetected}
             faceDetectorSettings={{
-              mode: FaceDetector.FaceDetectorMode.fast,
-              detectLandmarks: FaceDetector.FaceDetectorLandmarks.all,
-              runClassifications: FaceDetector.FaceDetectorClassifications.all,
-              minDetectionInterval: 100,
+              minDetectionInterval: 300,
+              detectLandmarks: "none",
+              mode: "fast",
               tracking: true,
             }}
           >
@@ -151,19 +168,37 @@ const TakeSelfie = () => {
                 )}
                 <ThemedText style={styles.guideText}>
                   {faceInFrame 
-                    ? "Perfect! Taking photo..." 
+                    ? (manualMode ? "Ready to capture!" : "Perfect! Taking photo...") 
                     : "Position your face in the circle"}
                 </ThemedText>
               </View>
+              
+              {manualMode && (
+                <TouchableOpacity 
+                  style={styles.manualCaptureButton} 
+                  onPress={takePicture}
+                >
+                  <Ionicons name="camera" size={40} color="white" />
+                </TouchableOpacity>
+              )}
             </View>
-          </Camera>
+          </CameraView>
         </View>
       ) : (
         <Image source={{ uri: image }} style={styles.camera} />
       )}
 
       <View style={styles.buttonContainer}>
-        {image && (
+        {!image ? (
+          <TouchableOpacity 
+            style={styles.switchModeButton} 
+            onPress={() => setManualMode(!manualMode)}
+          >
+            <ThemedText style={styles.buttonText}>
+              {manualMode ? "Auto Mode" : "Manual Mode"}
+            </ThemedText>
+          </TouchableOpacity>
+        ) : (
           <>
             <TouchableOpacity style={styles.button} onPress={() => setImage(null)}>
               <ThemedText style={styles.buttonText}>Retake</ThemedText>
@@ -243,6 +278,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginTop: 10,
+  },
+  manualCaptureButton: {
+    position: 'absolute',
+    bottom: 30,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  switchModeButton: {
+    backgroundColor: Colors.light.primary,
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 10,
+    width: '90%',
+    alignItems: 'center',
   },
 });
 
