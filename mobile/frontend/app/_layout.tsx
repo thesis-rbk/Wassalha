@@ -9,7 +9,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import WelcomeAnimation from "@/components/WelcomeAnimation";
 import MainLoading from "@/components/MainLoading";
 import { StripeProvider } from '@stripe/stripe-react-native';
-
+import { STRIPE_PUBLISHABLE_KEY } from "@/config";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -32,7 +32,7 @@ export default function RootLayout() {
 
   return (
     <StripeProvider
-      publishableKey="pk_test_51OxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+      publishableKey={STRIPE_PUBLISHABLE_KEY}
       urlScheme="wassalha"
       merchantIdentifier="merchant.com.wassalha"
     >
