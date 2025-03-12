@@ -7,6 +7,8 @@ const crypto = require("crypto");
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 const saltRounds = parseInt(process.env.SALT_ROUNDS, 10) || 10;
+const multer = require('multer');
+const upload = multer();
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
@@ -22,10 +24,12 @@ const generateRandomCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
 };
 
+// Signup with Multer middleware applied
 const signup = async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
+    // Validation
     if (!name || !email || !password) {
       return res
         .status(400)
@@ -47,9 +51,6 @@ const signup = async (req, res) => {
         .status(400)
         .json({ error: "Password must contain at least one uppercase letter" });
     }
-    /*if (!/\d/.test(password)) {
-      return res.status(400).json({ error: 'Password must contain at least one number' });
-    }*/
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -61,6 +62,32 @@ const signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
+    // Handle image upload (same logic as updateProfile)
+    let imageId = null; // Initialize imageId
+    if (req.file) {
+      console.log(`File uploaded: ${req.file.originalname}`); // Log the name of the uploaded file
+      console.log(`File path: ${req.file.path}`); // Log the path where the file is saved
+
+      // Save the image metadata to the Media table
+      const mediaData = {
+        url: req.file.path, // Assuming the path is the URL (adjust if serving differently)
+        type: 'IMAGE', // Static value as in updateProfile
+        filename: req.file.filename, // Generated filename from Multer
+        extension: "PNG", // Static as in updateProfile (could be dynamic from req.file.mimetype)
+        size: req.file.size, // File size in bytes
+        width: 100, // Static as in updateProfile (could use image processing for accuracy)
+        height: 100, // Static as in updateProfile
+      };
+
+      const media = await prisma.media.create({
+        data: mediaData,
+      });
+      imageId = media.id; // Get the ID of the newly created media entry
+    } else {
+      console.log("No file uploaded."); // Log if no file was uploaded
+    }
+
+    // Create the user
     const newUser = await prisma.user.create({
       data: {
         name,
@@ -69,16 +96,13 @@ const signup = async (req, res) => {
       },
     });
 
-    // Automatically create profile for new user
+    // Create profile with image if uploaded (same as updateProfile logic)
     await prisma.profile.create({
       data: {
         firstName: newUser.name,
         lastName: "",
-        User: {
-          connect: {
-            id: newUser.id
-          }
-        },
+        userId: newUser.id,
+        imageId: imageId, // Save the image ID if uploaded
       },
     });
 
