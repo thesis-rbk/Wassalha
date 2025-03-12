@@ -24,7 +24,6 @@ const orderRoutes = require("./routes/orderRoutes");
 const processRoutes = require("./routes/processRoutes");
 const pickupRoutes = require("./routes/pickup.route");
 // Import socket
-const notifsocket= require("./sockets/notifsocket");
 const trackingSocket = require("./sockets/trackingSocket");
 const app = express();
 const server = http.createServer(app);

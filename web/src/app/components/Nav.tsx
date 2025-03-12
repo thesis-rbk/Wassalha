@@ -4,7 +4,7 @@ import styles from "../styles/Nav.module.css"; // Import the updated CSS module
 export default function Nav() {
   return (
     <nav className={styles.nav}>
-      <Link href="/" className={styles.logo}>Wasslha</Link>
+      <Link href="/" className={styles.logo}>Wassalha</Link>
       <div className={styles.navItems}>
         <Link href="/">Home</Link>
         <Link href="/orders">Orders</Link>

@@ -47,13 +47,22 @@ export default function PickupTraveler() {
   const fetchPickups = async (): Promise<void> => {
     try {
       setIsLoading(true);
+      const token = await AsyncStorage.getItem("jwtToken");
+      if (!token) throw new Error("No authentication token found");
+
       const response = await axiosInstance.get<{ success: boolean; data: Pickup[] }>(
-        `/api/pickup/${userId}`
+        `/api/pickup/traveler`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Added token to headers
+          },
+        }
       );
       setPickups(response.data.data);
       console.log("Pickups:", response.data.data);
     } catch (error) {
       console.error("Error fetching pickups:", error);
+      alert("Failed to fetch pickups. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -398,20 +407,20 @@ const getStatusColor = (status: string): string => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc", // Matches PaymentScreen
+    backgroundColor: "#f8fafc",
   },
   content: {
     padding: 16,
     paddingBottom: 40,
   },
   title: {
-    fontFamily: "Poppins-Bold", // Matches PaymentScreen
+    fontFamily: "Poppins-Bold",
     fontSize: 24,
     color: "#1e293b",
     marginBottom: 4,
   },
   subtitle: {
-    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontFamily: "Inter-Regular",
     fontSize: 14,
     color: "#64748b",
     marginBottom: 20,
@@ -422,7 +431,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    fontFamily: "Inter-Medium", // Matches PaymentScreen
+    fontFamily: "Inter-Medium",
     fontSize: 16,
     color: "#64748b",
   },
@@ -432,7 +441,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "white",
     borderRadius: 12,
-    padding: 16, // Matches Card padding in PaymentScreen
+    padding: 16,
     marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -441,7 +450,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   sectionTitle: {
-    fontFamily: "Poppins-SemiBold", // Matches PaymentScreen
+    fontFamily: "Poppins-SemiBold",
     fontSize: 18,
     color: "#1e293b",
     marginBottom: 16,
@@ -460,12 +469,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   orderLabel: {
-    fontFamily: "Inter-Medium", // Matches PaymentScreen
+    fontFamily: "Inter-Medium",
     fontSize: 14,
     color: "#64748b",
   },
   orderValue: {
-    fontFamily: "Inter-Medium", // Matches PaymentScreen
+    fontFamily: "Inter-Medium",
     fontSize: 14,
     color: "#1e293b",
   },
@@ -475,7 +484,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   badgeText: {
-    fontFamily: "Inter-Medium", // Matches PaymentScreen typography
+    fontFamily: "Inter-Medium",
     fontSize: 12,
     color: "white",
     fontWeight: "500",
@@ -485,26 +494,26 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   waitingText: {
-    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontFamily: "Inter-Regular",
     fontSize: 14,
     color: "#666",
     fontStyle: "italic",
   },
   successText: {
-    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontFamily: "Inter-Regular",
     fontSize: 14,
     color: "#10b981",
     fontWeight: "600",
     marginBottom: 8,
   },
   cancelledText: {
-    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontFamily: "Inter-Regular",
     fontSize: 14,
     color: "#ef4444",
     fontWeight: "600",
   },
   warningText: {
-    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontFamily: "Inter-Regular",
     fontSize: 14,
     color: "#ff9800",
     fontWeight: "600",
@@ -527,7 +536,7 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
   noImageText: {
-    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontFamily: "Inter-Regular",
     fontSize: 12,
     textAlign: "center",
     color: "#666",
@@ -542,7 +551,7 @@ const styles = StyleSheet.create({
     width: "80%",
     maxHeight: "60%",
     backgroundColor: "white",
-    borderRadius: 12, // Matches PaymentScreen card
+    borderRadius: 12,
     padding: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -551,7 +560,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalTitle: {
-    fontFamily: "Poppins-SemiBold", // Matches PaymentScreen
+    fontFamily: "Poppins-SemiBold",
     fontSize: 18,
     color: "#1e293b",
     marginBottom: 15,
@@ -563,18 +572,18 @@ const styles = StyleSheet.create({
   statusOption: {
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0", // Matches PaymentScreen divider
+    borderBottomColor: "#e2e8f0",
   },
   selectedStatusOption: {
-    backgroundColor: "#eff6ff", // Matches PaymentScreen selected option
+    backgroundColor: "#eff6ff",
   },
   statusText: {
-    fontFamily: "Inter-Medium", // Matches PaymentScreen
+    fontFamily: "Inter-Medium",
     fontSize: 14,
     color: "#1e293b",
   },
   cancelModalButton: {
-    backgroundColor: "#FF4444", // Red for cancel, distinct from primary
+    backgroundColor: "#FF4444",
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,

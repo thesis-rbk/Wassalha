@@ -37,13 +37,22 @@ export default function PickupOwner() {
   const fetchPickups = async (): Promise<void> => {
     try {
       setIsLoading(true);
+      const token = await AsyncStorage.getItem("jwtToken");
+      if (!token) throw new Error("No authentication token found");
+
       const response = await axiosInstance.get<{ success: boolean; data: Pickup[] }>(
-        `/api/pickup/${userId}`
+        `/api/pickup/requester`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Added token to headers
+          },
+        }
       );
       setPickups(response.data.data);
       console.log("Pickups:", response.data.data);
     } catch (error) {
       console.error("Error fetching pickups:", error);
+      alert("Failed to fetch pickups. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -75,11 +84,6 @@ export default function PickupOwner() {
     }
   };
 
-  const handleSuggest = async (pickupId: number): Promise<void> => {
-    setPickupId(pickupId);
-    setShowPickup(true);
-  };
-
   const handleCancel = async (pickupId: number): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("jwtToken");
@@ -102,6 +106,11 @@ export default function PickupOwner() {
       console.error("Error cancelling pickup:", error);
       alert("Failed to cancel pickup. Please try again.");
     }
+  };
+
+  const handleSuggest = async (pickupId: number): Promise<void> => {
+    setPickupId(pickupId);
+    setShowPickup(true);
   };
 
   const isTraveler = (pickup: Pickup) => userId === pickup.order.travelerId;
@@ -283,20 +292,20 @@ const getStatusColor = (status: string): string => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc", // Matches PaymentScreen
+    backgroundColor: "#f8fafc",
   },
   content: {
     padding: 16,
     paddingBottom: 40,
   },
   title: {
-    fontFamily: "Poppins-Bold", // Matches PaymentScreen
+    fontFamily: "Poppins-Bold",
     fontSize: 24,
     color: "#1e293b",
     marginBottom: 4,
   },
   subtitle: {
-    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontFamily: "Inter-Regular",
     fontSize: 14,
     color: "#64748b",
     marginBottom: 20,
@@ -307,7 +316,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    fontFamily: "Inter-Medium", // Matches PaymentScreen
+    fontFamily: "Inter-Medium",
     fontSize: 16,
     color: "#64748b",
   },
@@ -317,7 +326,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "white",
     borderRadius: 12,
-    padding: 16, // Matches Card padding in PaymentScreen
+    padding: 16,
     marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -326,7 +335,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   sectionTitle: {
-    fontFamily: "Poppins-SemiBold", // Matches PaymentScreen
+    fontFamily: "Poppins-SemiBold",
     fontSize: 18,
     color: "#1e293b",
     marginBottom: 16,
@@ -345,12 +354,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   orderLabel: {
-    fontFamily: "Inter-Medium", // Matches PaymentScreen
+    fontFamily: "Inter-Medium",
     fontSize: 14,
     color: "#64748b",
   },
   orderValue: {
-    fontFamily: "Inter-Medium", // Matches PaymentScreen
+    fontFamily: "Inter-Medium",
     fontSize: 14,
     color: "#1e293b",
   },
@@ -360,7 +369,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   badgeText: {
-    fontFamily: "Inter-Medium", // Matches PaymentScreen typography
+    fontFamily: "Inter-Medium",
     fontSize: 12,
     color: "white",
     fontWeight: "500",
@@ -370,32 +379,32 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   waitingText: {
-    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontFamily: "Inter-Regular",
     fontSize: 14,
     color: "#666",
     fontStyle: "italic",
   },
   successText: {
-    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontFamily: "Inter-Regular",
     fontSize: 14,
     color: "#10b981",
     fontWeight: "600",
   },
   cancelledText: {
-    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontFamily: "Inter-Regular",
     fontSize: 14,
     color: "#ef4444",
     fontWeight: "600",
   },
   warningText: {
-    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontFamily: "Inter-Regular",
     fontSize: 14,
     color: "#ff9800",
     fontWeight: "600",
   },
   actionRow: {
     paddingBottom: 16,
-    alignItems: "center", // Center buttons horizontally
+    alignItems: "center",
   },
   buttonContainer: {
     width: "100%",
@@ -415,7 +424,7 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
   noImageText: {
-    fontFamily: "Inter-Regular", // Matches PaymentScreen
+    fontFamily: "Inter-Regular",
     fontSize: 12,
     textAlign: "center",
     color: "#666",
