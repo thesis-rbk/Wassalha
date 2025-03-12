@@ -13,6 +13,7 @@ const {
   verifyIdCard,
   verifySelfie,
   verifyCreditCard,
+  submitQuestionnaire,
 } = require("../controllers/user.controller");
 const { authenticateUser } = require("../middleware/middleware");
 const { getMessages } = require("../controllers/message.controller");
@@ -49,6 +50,11 @@ router.post(
   '/verify-credit-card/:id',
   authenticateUser,
   verifyCreditCard
+);
+router.post(
+  '/submit-questionnaire/:id',
+  authenticateUser,
+  submitQuestionnaire
 );
 
 module.exports = router;

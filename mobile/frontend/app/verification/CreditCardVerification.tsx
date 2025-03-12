@@ -112,7 +112,7 @@ const CreditCardVerification = () => {
 
       if (response.data.success) {
         Alert.alert('Success', 'Credit card verified successfully', [
-          { text: 'OK', onPress: () => router.push('/verification/start') }
+          { text: 'OK', onPress: () => router.push('/verification/Questionnaire') }
         ]);
       }
     } catch (error: any) {

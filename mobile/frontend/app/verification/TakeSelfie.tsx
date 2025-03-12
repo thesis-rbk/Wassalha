@@ -16,16 +16,7 @@ const FRAME_SIZE = 250;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
-type FaceDetection = {
-  faces: Array<{
-    bounds: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    };
-  }>;
-};
+
 
 const TakeSelfie = () => {
   const router = useRouter();

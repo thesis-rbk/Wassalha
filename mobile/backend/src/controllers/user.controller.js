@@ -603,6 +603,37 @@ const verifyCreditCard = async (req, res) => {
   }
 };
 
+const submitQuestionnaire = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { answers } = req.body;
+
+    // Update service provider with questionnaire answers
+    const serviceProvider = await prisma.serviceProvider.update({
+      where: { userId: parseInt(userId) },
+      data: {
+        questionnaireAnswers: answers, // Store directly in the JSON field
+        isVerified: false // Set verification status
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Questionnaire submitted successfully',
+      data: {
+        isVerified: serviceProvider.isVerified
+      }
+    });
+  } catch (error) {
+    console.error('Error submitting questionnaire:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to submit questionnaire',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   signup,
   loginUser,
@@ -616,5 +647,6 @@ module.exports = {
   getUsers,
   verifyIdCard,
   verifySelfie,
-  verifyCreditCard
+  verifyCreditCard,
+  submitQuestionnaire
 };
