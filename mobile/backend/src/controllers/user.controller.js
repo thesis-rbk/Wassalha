@@ -69,16 +69,17 @@ const signup = async (req, res) => {
       },
     });
 
-    // Automatically create profile for new user
+    // Fix: Create profile with correct relation syntax
     await prisma.profile.create({
       data: {
         firstName: newUser.name,
         lastName: "",
-        User: {
-          connect: {
-            id: newUser.id
-          }
-        },
+        userId: newUser.id,  // Use userId instead of user.connect
+        country: "OTHER",    // Add a default country
+        isAnonymous: false,
+        isBanned: false,
+        isVerified: false,
+        isOnline: false
       },
     });
 
@@ -433,6 +434,206 @@ const getUsers = async (req, res) => {
   }
 };
 
+const verifyIdCard = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        message: "No ID Card image uploaded"
+      });
+    }
+
+    // Hash the file path/content for security
+    const fileHash = crypto
+      .createHash('sha256')
+      .update(file.path)
+      .digest('hex');
+
+    // Update or create ServiceProvider record
+    const serviceProvider = await prisma.serviceProvider.upsert({
+      where: {
+        userId: userId
+      },
+      update: {
+        idCard: fileHash,
+        isVerified: false // Requires manual verification
+      },
+      create: {
+        userId: userId,
+        type: "SUBSCRIBER",
+        idCard: fileHash,
+        isVerified: false,
+        subscriptionLevel: "BASIC"
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "ID Card uploaded successfully",
+      data: {
+        idCard: fileHash,
+        isVerified: serviceProvider.isVerified
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in ID verification:', error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to process ID Card",
+      error: error.message
+    });
+  }
+};
+
+const verifySelfie = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        message: "No selfie uploaded"
+      });
+    }
+
+    // Hash the file path/content for security
+    const fileHash = crypto
+      .createHash('sha256')
+      .update(file.path)
+      .digest('hex');
+
+    // Update ServiceProvider record with selfie
+    const serviceProvider = await prisma.serviceProvider.update({
+      where: {
+        userId: userId
+      },
+      data: {
+        selfie: fileHash,
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Selfie uploaded successfully",
+      data: {
+        selfie: fileHash
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in selfie verification:', error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to process selfie",
+      error: error.message
+    });
+  }
+};
+
+const verifyCreditCard = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { cardholderName, last4, brand, expiryMonth, expiryYear } = req.body;
+
+    // Validate the user exists
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+      include: { serviceProvider: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+
+    // Create or update service provider record
+    let serviceProvider;
+    if (user.serviceProvider) {
+      serviceProvider = await prisma.serviceProvider.update({
+        where: { id: user.serviceProvider.id },
+        data: {
+          creditCard: `${brand} **** **** **** ${last4}`,
+          isVerified: true,
+          updatedAt: new Date()
+        }
+      });
+    } else {
+      serviceProvider = await prisma.serviceProvider.create({
+        data: {
+          userId: parseInt(userId),
+          type: 'SPONSOR',
+          creditCard: `${brand} **** **** **** ${last4}`,
+          isVerified: true,
+          updatedAt: new Date()
+        }
+      });
+
+      // Update user to be a sponsor
+      await prisma.user.update({
+        where: { id: parseInt(userId) },
+        data: {
+          isSponsor: true,
+          serviceProviderId: serviceProvider.id.toString()
+        }
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Credit card verified successfully',
+      data: {
+        isVerified: true,
+        last4
+      }
+    });
+  } catch (error) {
+    console.error('Error verifying credit card:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify credit card',
+      error: error.message
+    });
+  }
+};
+
+const submitQuestionnaire = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { answers } = req.body;
+
+    // Update service provider with questionnaire answers
+    const serviceProvider = await prisma.serviceProvider.update({
+      where: { userId: parseInt(userId) },
+      data: {
+        questionnaireAnswers: answers, // Store directly in the JSON field
+        isVerified: false // Set verification status
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Questionnaire submitted successfully',
+      data: {
+        isVerified: serviceProvider.isVerified
+      }
+    });
+  } catch (error) {
+    console.error('Error submitting questionnaire:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to submit questionnaire',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   signup,
   loginUser,
@@ -444,4 +645,8 @@ module.exports = {
   completeOnboarding,
   changePassword,
   getUsers,
+  verifyIdCard,
+  verifySelfie,
+  verifyCreditCard,
+  submitQuestionnaire
 };
