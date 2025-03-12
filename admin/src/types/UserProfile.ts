@@ -1,13 +1,12 @@
-
 export interface UserProfile {
     id: number;
     name: string;
     email: string;
-    phoneNumber?: string;
     role: string;
     profile: {
         firstName: string;
         lastName: string;
+        phoneNumber?: string;
         image?: {
             url: string;
             type?: string;
@@ -16,7 +15,7 @@ export interface UserProfile {
         country?: string;
         gender?: string;
         isBanned: boolean;
-        verified: boolean;
+        isVerified: boolean;
         bio?: string;
         review?: string;
     };

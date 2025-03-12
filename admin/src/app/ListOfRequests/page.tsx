@@ -6,7 +6,7 @@ import Nav from "../../components/Nav";
 import navStyles from '../../styles/Nav.module.css';
 import tableStyles from '../../styles/Table.module.css';
 import { Request } from '../../types/Request';
-
+import api from '../../lib/api';
 
 const ListOfRequests: React.FC = () => {
   const [requests, setRequests] = useState<Request[]>([]);
@@ -40,7 +40,7 @@ const ListOfRequests: React.FC = () => {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/requests`);
+        const response = await api.get('/api/requests');
         const data = response.data.data;
         setRequests(data);
         const filtered = filterAndSortRequests(data);
@@ -82,7 +82,7 @@ const ListOfRequests: React.FC = () => {
     if (!requestToDelete) return;
 
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/requests/${requestToDelete}`);
+      await api.delete(`/api/requests/${requestToDelete}`);
       setRequests(requests.filter(request => request.id !== requestToDelete));
       setShowConfirmation(false);
       alert('Request deleted successfully');

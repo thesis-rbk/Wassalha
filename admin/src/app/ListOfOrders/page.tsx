@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import api from '../../types/api';  // Update import path
+import api from '../../lib/api';  // Update import path
 import Nav from "../../components/Nav";
 import navStyles from '../../styles/Nav.module.css';
 import tableStyles from '../../styles/Table.module.css';

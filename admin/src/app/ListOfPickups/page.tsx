@@ -1,11 +1,12 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+
 import Nav from "../../components/Nav";
 import navStyles from '../../styles/Nav.module.css';
 import tableStyles from '../../styles/Table.module.css';
 import { Pickup } from '../../types/Pickup';
-
+import api from '../../lib/api';
 const PickupList: React.FC = () => {
     const [pickups, setPickups] = useState<Pickup[]>([]);
     const [displayedPickups, setDisplayedPickups] = useState<Pickup[]>([]);
@@ -43,8 +44,8 @@ const PickupList: React.FC = () => {
     useEffect(() => {
         const fetchPickups = async () => {
             try {
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/pickups`);
-                if (response.data.success) {
+                const response = await api.get('/api/pickups');
+                if (response.status === 200) {
                     const pickupsData = response.data.data;
                     // Extract unique pickup types
                     const types = [...new Set(pickupsData.map((pickup: Pickup) => pickup.pickupType))];

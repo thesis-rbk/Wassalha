@@ -1,7 +1,6 @@
 'use client';
-import api from '../../types/api';
+import api from '../../lib/api';
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import Nav from "../../components/Nav";
 import navStyles from '../../styles/Nav.module.css';
 import tableStyles from '../../styles/Table.module.css';
@@ -52,7 +51,7 @@ const ListOfGoodsPosts: React.FC = () => {
 
   const fetchGoodsPosts = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/goods-posts`);
+      const response = await api.get('/api/goods-posts');
       setGoodsPosts(response.data.data);
     } catch (error) {
       console.error('Error fetching goods posts:', error);
@@ -76,7 +75,7 @@ const ListOfGoodsPosts: React.FC = () => {
     if (!postToDelete) return;
 
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/goods-posts/${postToDelete}`);
+      await api.delete(`/api/goods-posts/${postToDelete}`);
       setGoodsPosts(goodsPosts.filter(post => post.id !== postToDelete));
       setShowConfirmation(false);
       alert('Goods post deleted successfully');

@@ -1,11 +1,11 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+
 import Nav from "../../components/Nav";
 import navStyles from '../../styles/Nav.module.css';
 import tableStyles from '../../styles/Table.module.css';
 import { Subscription } from '../../types/Subscription';
-
+import api from '../../lib/api';
 const ListOfSubscriptions: React.FC = () => {
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [displayedSubscriptions, setDisplayedSubscriptions] = useState<Subscription[]>([]);
@@ -69,8 +69,8 @@ const ListOfSubscriptions: React.FC = () => {
     useEffect(() => {
         const fetchSubscriptions = async () => {
             try {
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions`);
-                if (response.data.success) {
+                const response = await api.get('/api/subscriptions');
+                if (response.status === 200) {
                     const subscriptionsData = response.data.data;
                     
                     // Extract unique types and durations
@@ -104,7 +104,7 @@ const ListOfSubscriptions: React.FC = () => {
         if (!subscriptionToDelete) return;
 
         try {
-            await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/${subscriptionToDelete}`);
+            await api.delete(`/api/subscriptions/${subscriptionToDelete}`);
             setSubscriptions(subscriptions.filter(subscription => subscription.id !== subscriptionToDelete));
             setShowConfirmation(false);
             alert('Subscription deleted successfully');

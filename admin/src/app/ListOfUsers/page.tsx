@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; // Use next/navigation for App Router
 import tableStyles from '../../styles/Table.module.css';
-
+import api from "../../lib/api";
 import navStyles from '../../styles/Nav.module.css'; // Import Nav styles
 import Nav from "../../components/Nav";
 import { User } from "../../types/User";
@@ -22,25 +22,21 @@ export default function ListOfUsers() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        // Get the token from localStorage
         const token = localStorage.getItem('adminToken');
         
         if (!token) {
-          // Redirect to login if no token exists
           router.push('/AdminLogin');
           return;
         }
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
+        const response = await api.get('/api/users?role=USER', {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${token}`
           }
         });
 
-        if (!response.ok) {
+        if (response.status !== 200) {
           if (response.status === 401) {
-            // Token might be expired - redirect to login
             localStorage.removeItem('adminToken');
             localStorage.removeItem('userData');
             router.push('/AdminLogin');
@@ -49,7 +45,7 @@ export default function ListOfUsers() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data = await response.json();
+        const data = response.data;
         console.log("Fetched users:", data);
         setUsers(data.data);
         
@@ -161,6 +157,52 @@ export default function ListOfUsers() {
     }
   };
 
+  const handleVerifyProfile = async (userId: number) => {
+    try {
+      const response = await api.put(`/api/users/${userId}/verify-profile`);
+      if (response.data.success) {
+        setUsers(users.map(user => 
+          user.id === userId ? { 
+            ...user, 
+            profile: { 
+              ...user.profile, 
+              isVerified: true,
+              firstName: user.profile?.firstName || '',
+              lastName: user.profile?.lastName || '',
+              bio: user.profile?.bio || '',
+              country: user.profile?.country || '',
+              phoneNumber: user.profile?.phoneNumber || '',
+              image: user.profile?.image || { url: '' },
+              gender: user.profile?.gender || '',
+              isBanned: user.profile?.isBanned || false
+            } 
+          } : user
+        ));
+        setDisplayedUsers(displayedUsers.map(user => 
+          user.id === userId ? { 
+            ...user, 
+            profile: { 
+              ...user.profile, 
+              isVerified: true,
+              firstName: user.profile?.firstName || '',
+              lastName: user.profile?.lastName || '',
+              bio: user.profile?.bio || '',
+              country: user.profile?.country || '',
+              phoneNumber: user.profile?.phoneNumber || '',
+              image: user.profile?.image || { url: '' },
+              gender: user.profile?.gender || '',
+              isBanned: user.profile?.isBanned || false
+            } 
+          } : user
+        ));
+        alert('User profile verified successfully');
+      }
+    } catch (error) {
+      console.error("Error verifying user profile:", error);
+      alert('Failed to verify user profile');
+    }
+  };
+
   return (
     <div className={`${navStyles.layout} ${isDarkMode ? navStyles.darkMode : ''}`}>
       <Nav />
@@ -200,14 +242,11 @@ export default function ListOfUsers() {
                   <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>ID</th>
                   <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Image</th>
                   <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Name</th>
-          
                   <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Email</th>
                   <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Phone Number</th>
-                  <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Role</th>
-                  {/* <th className={tableStyles.th}>First Name</th>
-                  <th className={tableStyles.th}>Last Name</th> */}
                   <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Country</th>
                   <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Gender</th>
+                  <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Verified</th>
                   <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Actions</th>
                 </tr>
               </thead>
@@ -215,33 +254,45 @@ export default function ListOfUsers() {
                 {displayedUsers.map((user) => (
                   <tr key={user.id} className={`${tableStyles.tr} ${isDarkMode ? tableStyles.darkMode : ''}`}>
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.id}</td>
-                   
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
-                      <img
-                        src={user.profile?.image?.url}
-                        alt="Profile"
-                        style={{
-                          width: "40px",
-                          height: "40px",
-                          borderRadius: "50%",
-                          objectFit: "cover"
-                        }}
-                      />
+                      {user.profile?.image?.url ? (
+                        <img
+                          src={user.profile.image.url}
+                          alt="Profile"
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "50%",
+                            objectFit: "cover"
+                          }}
+                        />
+                      ) : (
+                        <span>No Image</span>
+                      )}
                     </td>
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.name}</td>
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.email}</td>
-                    <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.phoneNumber || 'N/A'}</td>
-                    <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.role}</td>
-                    {/* <td className={tableStyles.td}>{user.profile?.firstName || 'N/A'}</td>
-                    <td className={tableStyles.td}>{user.profile?.lastName || 'N/A'}</td> */}
+                    <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.profile?.phoneNumber || 'N/A'}</td>
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.profile?.country || 'N/A'}</td>
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.profile?.gender || 'N/A'}</td>
+                    <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                      <span className={`${tableStyles.badge} ${user.profile?.isVerified ? tableStyles.badgeCompleted : tableStyles.badgePending}`}>
+                        {user.profile?.isVerified ? 'Yes' : 'No'}
+                      </span>
+                    </td>
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
                       <button
                         onClick={() => handleViewProfile(user.id)}
                         className={`${tableStyles.actionButton} ${tableStyles.editButton} ${isDarkMode ? tableStyles.darkMode : ''}`}
                       >
                         View Profile
+                      </button>
+                      <button
+                        onClick={() => !user.profile?.isVerified && handleVerifyProfile(user.id)}
+                        className={`${tableStyles.actionButton} ${user.profile?.isVerified ? tableStyles.verifiedButton : tableStyles.verifyButton}`}
+                        disabled={user.profile?.isVerified}
+                      >
+                        {user.profile?.isVerified ? 'Verified' : 'Verify'}
                       </button>
                     </td>
                   </tr>

@@ -183,4 +183,29 @@ exports.deleteGood = async (req, res) => {
       error: error.message,
     });
   }
+};
+
+// Verify a good
+exports.verifyGood = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const updatedGood = await prisma.goods.update({
+      where: { id: parseInt(id) },
+      data: { isVerified: true },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Good verified successfully",
+      data: updatedGood,
+    });
+  } catch (error) {
+    console.error("Error verifying good:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to verify good",
+      error: error.message,
+    });
+  }
 }; 

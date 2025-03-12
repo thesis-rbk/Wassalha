@@ -64,7 +64,7 @@
 }
 
 .td {
-  padding: 9px;
+  padding: 6px;
   color: var(--color-text);
   border-bottom: 1px solid var(--color-border);
   transition: all 0.3s ease;
@@ -311,6 +311,17 @@
   font-size: 12px;
   font-weight: 500;
   display: inline-block;
+  transition: background-color 0.3s ease;
+}
+
+.verified {
+  background-color: rgba(35, 212, 0, 0.1); /* Slightly transparent green */
+  color: var(--color-success);
+}
+
+.unverified {
+  background-color: rgba(255, 233, 0, 0.1); /* Slightly transparent yellow */
+  color: var(--color-warning);
 }
 
 .badgePending {
@@ -506,6 +517,17 @@
   font-size: 12px;
   font-weight: 500;
   display: inline-block;
+  transition: background-color 0.3s ease;
+}
+
+.verified {
+  background-color: rgba(35, 212, 0, 0.1); /* Slightly transparent green */
+  color: var(--color-success);
+}
+
+.unverified {
+  background-color: rgba(255, 233, 0, 0.1); /* Slightly transparent yellow */
+  color: var(--color-warning);
 }
 
 .badgePending {
@@ -881,5 +903,27 @@
 
 .loginButton:hover {
     background-color: #0056b3;
+}
+
+/* Add this new class for button container */
+.buttonContainer {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Space between buttons */
+}
+
+.verifyButton {
+    background-color: var(--color-success);
+    color: white;
+}
+
+.verifyButton:hover {
+    background-color: #1db300; /* Darker green on hover */
+}
+
+.verifiedButton {
+    background-color: var(--color-border); /* Gray for 'Verified' */
+    color: white;
+    cursor: not-allowed; /* Indicate non-clickable */
 }
 

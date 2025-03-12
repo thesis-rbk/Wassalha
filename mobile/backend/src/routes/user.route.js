@@ -16,9 +16,15 @@ const {
   getUsers,
   banUser,
   unbanUser,
+  verifyIdCard,
+  verifySelfie,
+  verifyCreditCard,
+  submitQuestionnaire,
+  verifyUserProfile,
 } = require("../controllers/user.controller");
 const { getMessages } = require("../controllers/message.controller");
 const { authenticateUser, authenticateAdmin, authenticateUserOrAdmin } = require("../middleware/middleware");
+const upload = require('../middleware/multerMiddleware');
 
 const router = express.Router();
 
@@ -35,6 +41,28 @@ router.post("/update-preferred-categories", updatePreferredCategories);
 router.post("/complete-onboarding", completeOnboarding);
 router.put("/change-password", authenticateUser, changePassword);
 router.get("/messages", getMessages);
+router.post(
+  '/verify-id/:id',
+  authenticateUser,
+  upload.single('idCard'),
+  verifyIdCard
+);
+router.post(
+  '/verify-selfie/:id',
+  authenticateUser,
+  upload.single('selfie'),
+  verifySelfie
+);
+router.post(
+  '/verify-credit-card/:id',
+  authenticateUser,
+  verifyCreditCard
+);
+router.post(
+  '/submit-questionnaire/:id',
+  authenticateUser,
+  submitQuestionnaire
+);
 
 // User CRUD routes
 router.get("/",  getUsers); // Get all users
@@ -43,5 +71,6 @@ router.put("/:id",  updateUser); // Update user
 router.put("/:id/ban",authenticateAdmin,  banUser); // Ban/Unban a user
 router.put("/:id/unban",authenticateAdmin, unbanUser); // Unban a user
 router.delete("/:id", authenticateAdmin, deleteUser); // Only admins can delete users
+router.put("/:id/verify-profile", authenticateAdmin, verifyUserProfile);
 
 module.exports = router;

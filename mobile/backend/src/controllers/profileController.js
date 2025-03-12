@@ -28,58 +28,63 @@ const updateProfile = async (req, res) => {
     const userId = req.params.id;
     const { firstName, lastName, bio, country, phoneNumber } = req.body;
 
-    console.log("Request body:", req.body); // Log the entire request body
-    console.log("Uploaded file:", req.file); // Log the uploaded file
+    console.log("Request body:", req.body);
+    console.log("Uploaded file:", req.file);
 
-    let imageId = null; // Initialize imageId
+    try {
+        // Prepare update data object
+        let updateData = {};
 
-    if (req.file) {
-        console.log(`File uploaded: ${req.file.originalname}`); // Log the name of the uploaded file
-        console.log(`File path: ${req.file.path}`); // Log the path where the file is saved
+        // Only add fields that are provided in the request
+        if (firstName !== undefined) updateData.firstName = firstName;
+        if (lastName !== undefined) updateData.lastName = lastName;
+        if (bio !== undefined) updateData.bio = bio;
+        if (country !== undefined) updateData.country = country;
+        if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
 
-        // Save the image metadata to the Media table
-        const mediaData = {
-            url: req.file.path, // Assuming the path is the URL
-            type: 'IMAGE', // Get the MIME type of the file
-            filename: req.file.filename, // Original filename
-            // Add any other fields you want to save
-            extension: "PNG", // Get the file extension from the MIME type
-            size: req.file.size, // Get the size of the file
-            width: 100, // Get the width of the image
-            height: 100, // Get the height of the image
+        // Handle image upload if present
+        if (req.file) {
+            console.log(`File uploaded: ${req.file.originalname}`);
+            
+            const mediaData = {
+                url: req.file.path,
+                type: 'IMAGE',
+                filename: req.file.filename,
+                extension: "PNG",
+                size: req.file.size,
+                width: 100,
+                height: 100,
+            };
 
-        };
-
-        try {
             const media = await prisma.media.create({
                 data: mediaData,
             });
-            imageId = media.id; // Get the ID of the newly created media entry
-        } catch (error) {
-            console.error('Error saving media:', error);
-            return res.status(500).json({ success: false, error: 'Failed to save media' });
-        }
-    } else {
-        console.log("No file uploaded."); // Log if no file was uploaded
-    }
 
-    try {
+            updateData.imageId = media.id;
+        }
+
+        // Update profile with only the provided fields
         const updatedProfile = await prisma.profile.update({
             where: { userId: parseInt(userId) },
-            data: { 
-                firstName, 
-                lastName, 
-                bio, 
-                country, 
-                phoneNumber,
-                imageId: imageId // Save the image ID if uploaded
+            data: updateData,
+            include: {
+                image: true, // Include the image in response
             },
         });
 
-        res.status(200).json({ success: true, data: updatedProfile });
+        res.status(200).json({ 
+            success: true, 
+            data: updatedProfile,
+            message: 'Profile updated successfully'
+        });
+
     } catch (error) {
         console.error('Error updating profile:', error);
-        res.status(500).json({ success: false, error: 'Failed to update profile' });
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to update profile',
+            message: error.message 
+        });
     }
 };
 

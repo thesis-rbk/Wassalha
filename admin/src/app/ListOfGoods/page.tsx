@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+
 import Nav from "../../components/Nav";
 import navStyles from '../../styles/Nav.module.css';
 import tableStyles from '../../styles/Table.module.css';
 import { Good } from '../../types/Good';
-
+import api from '../../lib/api';
 const ListOfGoods: React.FC = () => {
   const [goods, setGoods] = useState<Good[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -40,7 +40,7 @@ const ListOfGoods: React.FC = () => {
   useEffect(() => {
     const fetchGoods = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/goods`);
+        const response = await api.get('/api/goods');
         const data = response.data.data;
         setGoods(data);
         const filtered = filterAndSortGoods(data);
@@ -57,7 +57,7 @@ const ListOfGoods: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`);
+        const response = await api.get('/api/categories');
         const data = response.data.data;
         setCategories(data);
       } catch (error) {
@@ -77,7 +77,7 @@ const ListOfGoods: React.FC = () => {
     if (!goodToDelete) return;
 
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/goods/${goodToDelete}`);
+      await api.delete(`/api/goods/${goodToDelete}`);
       setGoods(goods.filter(good => good.id !== goodToDelete));
       setShowConfirmation(false);
       alert('Good deleted successfully');
@@ -98,6 +98,24 @@ const ListOfGoods: React.FC = () => {
       setDisplayedGoods(nextGoods);
       setCurrentCount(nextCount);
       setIsShowingAll(nextCount >= goods.length);
+    }
+  };
+
+  const handleVerify = async (goodId: number) => {
+    try {
+      const response = await api.put(`/api/goods/${goodId}/verify`);
+      if (response.data.success) {
+        setGoods(goods.map(good => 
+          good.id === goodId ? { ...good, isVerified: true } : good
+        ));
+        setDisplayedGoods(displayedGoods.map(good => 
+          good.id === goodId ? { ...good, isVerified: true } : good
+        ));
+        alert('Good verified successfully');
+      }
+    } catch (error) {
+      console.error("Error verifying good:", error);
+      alert('Failed to verify good');
     }
   };
 
@@ -201,12 +219,21 @@ const ListOfGoods: React.FC = () => {
                     </span>
                   </td>
                   <td className={tableStyles.td}>
-                    <button 
-                      onClick={() => handleDelete(good.id)}
-                      className={`${tableStyles.actionButton} ${tableStyles.deleteButton}`}
-                    >
-                      Delete
-                    </button>
+                    <div className={tableStyles.buttonContainer}>
+                      <button 
+                        onClick={() => handleDelete(good.id)}
+                        className={`${tableStyles.actionButton} ${tableStyles.deleteButton}`}
+                      >
+                        Delete
+                      </button>
+                      <button 
+                        onClick={() => !good.isVerified && handleVerify(good.id)}
+                        className={`${tableStyles.actionButton} ${good.isVerified ? tableStyles.verifiedButton : tableStyles.verifyButton}`}
+                        disabled={good.isVerified}
+                      >
+                        {good.isVerified ? 'Verified' : 'Verify'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

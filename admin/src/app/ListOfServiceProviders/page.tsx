@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../../types/api';
+import api from '../../lib/api';
 import Nav from "../../components/Nav";
 import navStyles from '../../styles/Nav.module.css';
 import tableStyles from '../../styles/Table.module.css';
@@ -88,7 +88,12 @@ export default function ListOfServiceProviders() {
     };
 
     const handleViewProfile = (userId: number) => {
-        router.push(`/Profile/${userId}`);
+        try {
+            router.push(`/Profile?id=${userId}`);
+        } catch (error) {
+            console.error("Navigation error:", error);
+            setError("Failed to navigate to profile page.");
+        }
     };
 
     const filterProviders = () => {
@@ -138,6 +143,41 @@ export default function ListOfServiceProviders() {
     useEffect(() => {
         filterProviders();
     }, [searchTerm, typeFilter, verificationFilter, subscriptionFilter, providers]);
+
+    const handleVerifyProvider = async (userId: number) => {
+        try {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                router.push('/AdminLogin');
+                return;
+            }
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/service-providers/verify-sponsor/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to verify service provider');
+            }
+
+            const data = await response.json();
+            console.log('Verification successful:', data);
+
+            // Update the provider's verification status in the state
+            setProviders((prevProviders) =>
+                prevProviders.map((provider) =>
+                    provider.userId === userId ? { ...provider, isVerified: data.data.isVerified } : provider
+                )
+            );
+        } catch (error) {
+            console.error('Error verifying provider:', error);
+            setError('Failed to verify service provider');
+        }
+    };
 
     if (error) {
         return (
@@ -279,12 +319,21 @@ export default function ListOfServiceProviders() {
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.passportNumber || 'N/A'}</td>
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{new Date(provider.createdAt).toLocaleDateString()}</td>
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
-                                            <button
-                                                onClick={() => handleViewProfile(provider.userId)}
-                                                className={`${tableStyles.actionButton} ${tableStyles.viewButton} ${isDarkMode ? tableStyles.darkMode : ''}`}
-                                            >
-                                                View
-                                            </button>
+                                            <div className={tableStyles.buttonContainer}>
+                                                <button
+                                                    onClick={() => handleViewProfile(provider.userId)}
+                                                    className={`${tableStyles.actionButton} ${tableStyles.viewButton} ${isDarkMode ? tableStyles.darkMode : ''}`}
+                                                >
+                                                    View
+                                                </button>
+                                                <button
+                                                    onClick={() => !provider.isVerified && handleVerifyProvider(provider.userId)}
+                                                    className={`${tableStyles.actionButton} ${provider.isVerified ? tableStyles.verifiedButton : tableStyles.verifyButton} ${isDarkMode ? tableStyles.darkMode : ''}`}
+                                                    disabled={provider.isVerified}
+                                                >
+                                                    {provider.isVerified ? 'Verified' : 'Verify'}
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

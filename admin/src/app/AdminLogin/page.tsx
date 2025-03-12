@@ -1,24 +1,24 @@
-"use client"; // ✅ Ensure it's a client component
+"use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation"; // ✅ Use next/navigation in App Router
-import axios from "axios"; // Import Axios
-import { Moon, Sun, Eye, EyeOff } from "lucide-react"; // Import icons
-import styles from "../../styles/AdminLogin.module.css"; // Import the new CSS module
+import { useRouter } from "next/navigation"; 
 
+import { Moon, Sun, Eye, EyeOff } from "lucide-react";
+import styles from "../../styles/AdminLogin.module.css"; 
+import api from "../../lib/api";
 const AdminLogin = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isDarkMode, setIsDarkMode] = useState(false); // State for dark mode
-  const [showPassword, setShowPassword] = useState(false); // State for password visibility
+  const [isDarkMode, setIsDarkMode] = useState(false); 
+  const [showPassword, setShowPassword] = useState(false); 
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/users/admin/login`,
+      const response = await api.post(
+        '/api/users/admin/login',
         { email, password }
       );
 

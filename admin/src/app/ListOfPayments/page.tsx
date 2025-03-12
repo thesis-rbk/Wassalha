@@ -4,7 +4,7 @@ import Nav from "../../components/Nav";
 import navStyles from '../../styles/Nav.module.css';
 import tableStyles from '../../styles/Table.module.css';
 import { Payment } from '../../types/Payment';
-
+import api from '../../lib/api';
 
 const ListOfPayments: React.FC = () => {
     const [payments, setPayments] = useState<Payment[]>([]);
@@ -37,9 +37,9 @@ const ListOfPayments: React.FC = () => {
 
     useEffect(() => {
         const fetchPayments = async () => {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payments`);
-            const data = await response.json();
-            if (data.success) {
+            const response = await api.get('/api/payments');
+            const data = response.data;
+            if (response.status === 200) {
                 // Extract unique currencies from payments
                 const currencies = [...new Set(data.data.map((payment: Payment) => payment.currency))];
                 setAvailableCurrencies(currencies as string[]);

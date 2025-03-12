@@ -6,7 +6,7 @@ import Nav from "../../components/Nav";
 import navStyles from '../../styles/Nav.module.css';
 import tableStyles from '../../styles/Table.module.css';
 import { PromoPost } from '../../types/PromoPost';
-
+import api from '../../lib/api';
 const ListOfPromoPosts: React.FC = () => {
   const [promoPosts, setPromoPosts] = useState<PromoPost[]>([]);
   const [displayedPosts, setDisplayedPosts] = useState<PromoPost[]>([]);
@@ -42,7 +42,7 @@ const ListOfPromoPosts: React.FC = () => {
   useEffect(() => {
     const fetchPromoPosts = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/promo-posts`);
+        const response = await api.get('/api/promo-posts');
         const data = response.data.data;
         setPromoPosts(data);
         const filtered = filterAndSortPosts(data);
@@ -85,7 +85,7 @@ const ListOfPromoPosts: React.FC = () => {
     if (!postToDelete) return;
 
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/promo-posts/${postToDelete}`);
+      await api.delete(`/api/promo-posts/${postToDelete}`);
       setPromoPosts(promoPosts.filter(post => post.id !== postToDelete));
       setShowConfirmation(false);
       alert('Promo post deleted successfully');

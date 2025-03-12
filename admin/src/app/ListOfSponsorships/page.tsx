@@ -1,11 +1,11 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+
 import Nav from "../../components/Nav";
 import navStyles from '../../styles/Nav.module.css';
 import tableStyles from '../../styles/Table.module.css';
 import { Sponsorship } from '../../types/Sponsorship';
-
+import api from '../../lib/api';
 const ListOfSponsorships: React.FC = () => {
     const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
     const [displayedSponsorships, setDisplayedSponsorships] = useState<Sponsorship[]>([]);
@@ -65,8 +65,8 @@ const ListOfSponsorships: React.FC = () => {
     useEffect(() => {
         const fetchSponsorships = async () => {
             try {
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/sponsorships`);
-                if (response.data.success) {
+                const response = await api.get('/api/sponsorships');
+                if (response.status === 200) {
                     const sponsorshipsData = response.data.data;
                     
                     const platforms = [...new Set(sponsorshipsData.map((sub: Sponsorship) => sub.platform))];
@@ -97,7 +97,7 @@ const ListOfSponsorships: React.FC = () => {
         if (!sponsorshipToDelete) return;
 
         try {
-            await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/sponsorships/${sponsorshipToDelete}`);
+            await api.delete(`/api/sponsorships/${sponsorshipToDelete}`);
             setSponsorships(sponsorships.filter(sponsorship => sponsorship.id !== sponsorshipToDelete));
             setShowConfirmation(false);
             alert('Sponsorship deleted successfully');

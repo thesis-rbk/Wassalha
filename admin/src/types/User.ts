@@ -3,18 +3,22 @@ export interface User {
     name: string;
     email: string;
     password: string; 
-    phoneNumber?: string;
+   
     role: string;
     profile?: {
         firstName: string;
         lastName: string;
-        bio?: string;
-        country?: string;
-        gender?: string;
-        image?: {
-            id?: number;
-            url: string;
-            type?: string;
-        };
+         bio?: string;
+         country?: string;
+         phoneNumber?: string;
+    image?: {
+        url: string;
+        type?: string;
+        mimeType?: string;
+    };
+    gender?: string;
+    isBanned: boolean;
+    isVerified: boolean;
+    review?: string;
     }
 }

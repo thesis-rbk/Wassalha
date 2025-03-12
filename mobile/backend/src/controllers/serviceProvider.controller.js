@@ -182,6 +182,34 @@ class ServiceProviderController {
             });
         }
     }
+
+    async verifySponsor(req, res) {
+        try {
+            const { userId } = req.params;
+            
+            const updatedProvider = await prisma.serviceProvider.update({
+                where: { userId: parseInt(userId) },
+                data: {
+                    isVerified: true,
+                    updatedAt: new Date()
+                }
+            });
+
+            res.json({
+                success: true,
+                data: {
+                    isVerified: updatedProvider.isVerified
+                }
+            });
+        } catch (error) {
+            console.error('Error verifying sponsor:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to verify sponsor',
+                error: error.message
+            });
+        }
+    }
 }
 
 module.exports = new ServiceProviderController(); 

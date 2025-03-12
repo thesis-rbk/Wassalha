@@ -30,6 +30,7 @@ const pickupRoutes = require("./routes/pickup.route");
 const serviceProviderRoutes = require("./routes/serviceProvider.Routes");
 const sponsorshipRoutes = require("./routes/sponsorship.route");
 const subscriptionRoutes = require("./routes/subscription.route");
+const stripeRoutes = require('./routes/stripe.route');
 
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
@@ -74,6 +75,7 @@ app.use("/api", all);
 app.use("/api/mobile/requests", mobileRequestRoutes);
 app.use("/api/mobile/goods", mobileGoodsRoutes);
 app.use("/api/process", processRoutes);
+app.use('/api/stripe', stripeRoutes);
 
 // Add error logging middleware
 app.use((err, req, res, next) => {

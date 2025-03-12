@@ -318,7 +318,8 @@ model ServiceProvider {
   passport    String? // Optional: Passport Number
   license     String? // Optional: Driving License
   creditCard  String? // Optional: Last 4 digits for security
-
+  selfie      String? // Optional: Selfie
+  questionnaireAnswers Json?
   // Example attributes
   subscriptionLevel String?
 

@@ -14,7 +14,7 @@ import {
 import styles from '../../styles/Dashboard.module.css';
 import Nav from '../../components/Nav';
 import WorldMap from '../../components/WorldMap';
-import api from '../../types/api';
+import api from '../../lib/api';
 
 // Register ChartJS components
 ChartJS.register(
@@ -32,6 +32,11 @@ const Dashboard = () => {
   const [orderData, setOrderData] = useState([]);
   const [requestData, setRequestData] = useState([]);
   const [promoPostData, setPromoPostData] = useState([]);
+
+  // Fetch user, service provider, and traveler data
+  const [users, setUsers] = useState([]);
+  const [serviceProviders, setServiceProviders] = useState([]);
+  const [travelers, setTravelers] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,8 +58,39 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const [usersResponse, serviceProvidersResponse, travelersResponse] = await Promise.all([
+          api.get('/api/users'),
+          api.get('/api/service-providers'),
+          api.get('/api/travelers')
+        ]);
+
+        setUsers(usersResponse.data.data);
+        setServiceProviders(serviceProvidersResponse.data.data);
+        setTravelers(travelersResponse.data.data);
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+      }
+    };
+
+    fetchCounts();
+  }, []);
+
+  // For testing purposes, set default values
+  const userCount = users.length || 100; // Default to 100 if no data
+  const serviceProviderCount = serviceProviders.length || 50; // Default to 50 if no data
+  const travelerCount = travelers.length || 30; // Default to 30 if no data
+
+  // Calculate total and percentages
+  const totalUsers = userCount + serviceProviderCount + travelerCount;
+  const userPercentage = ((userCount / totalUsers) * 100).toFixed(2);
+  const serviceProviderPercentage = ((serviceProviderCount / totalUsers) * 100).toFixed(2);
+  const travelerPercentage = ((travelerCount / totalUsers) * 100).toFixed(2);
+
   // Function to aggregate data by date
-  const aggregateDataByDate = (data, dateField) => {
+  const aggregateDataByDate = (data: { [key: string]: any }[], dateField: string) => {
     return data.reduce((acc, item) => {
       const date = new Date(item[dateField]).toLocaleDateString();
       acc[date] = (acc[date] || 0) + 1;
@@ -97,12 +133,16 @@ const Dashboard = () => {
     churnRate: '2%'
   };
 
-  // Pie chart data
-  const pieData = {
-    labels: ['Direct Plan', 'Pro Plan', 'Advanced Plan', 'Enterprise Plan'],
+  // Update pie chart data for user distribution
+  const userChartData = {
+    labels: [
+      `Customers (${userPercentage}%)`,
+      `Service Providers (${serviceProviderPercentage}%)`,
+      `Travelers (${travelerPercentage}%)`
+    ],
     datasets: [{
-      data: [120, 90, 80, 52],
-      backgroundColor: ['#36A2EB', '#4BC0C0', '#FF6384', '#9966FF']
+      data: [userCount, serviceProviderCount, travelerCount],
+      backgroundColor: ['#36A2EB', '#4BC0C0', '#FF6384']
     }]
   };
 
@@ -166,7 +206,7 @@ const Dashboard = () => {
             <h2>${metrics.currentMRR}</h2>
           </div>
           <div className={styles.metricCard}>
-            <h3>Current Customers</h3>
+            <h3>Current users</h3>
             <h2>{metrics.currentCustomers}</h2>
           </div>
           <div className={styles.metricCard}>
@@ -183,14 +223,14 @@ const Dashboard = () => {
         <div className={styles.chartsContainer}>
           {/* Trend Chart */}
           <div className={styles.chartCard}>
-            <h3>Trend</h3>
+            <h3>Posts Overview</h3>
             <Bar data={barData} options={chartOptions} />
           </div>
 
-          {/* Sales Chart */}
+          {/* User Chart */}
           <div className={styles.chartCard}>
-            <h3>Sales</h3>
-            <Pie data={pieData} options={{
+            <h3>User Distribution</h3>
+            <Pie data={userChartData} options={{
               ...chartOptions,
               maintainAspectRatio: false
             }} />

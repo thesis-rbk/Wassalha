@@ -1,14 +1,13 @@
 "use client";
-
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import axios from "axios";
 import styles from '../../styles/Profile.module.css';
 import navStyles from '../../styles/Nav.module.css';
 import Nav from "../../components/Nav";
 import Image from 'next/image';
 import { UserProfile } from "../../types/UserProfile";
-import { User } from "../../types/User";
+import api from "../../lib/api";
 
 // Create a type for partial profile that makes nested properties optional
 type PartialUserProfile = Partial<Omit<UserProfile, 'profile'>> & {
@@ -32,7 +31,7 @@ const Profile: React.FC = () => {
             country: '',
             gender: '',
             isBanned: false,
-            verified: false
+            isVerified: false
         }
     });
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -54,10 +53,8 @@ const Profile: React.FC = () => {
                         return;
                     }
 
-                    const response = await axios.get(
-                        `${process.env.NEXT_PUBLIC_API_URL}/api/users/${id}`,
-                        {
-                            headers: {
+                    const response = await api.get(`/api/users/${id}`, {
+                        headers: {
                                 'Authorization': `Bearer ${token}`
                             }
                         }
@@ -69,17 +66,18 @@ const Profile: React.FC = () => {
                         setUpdatedProfile({
                             name: response.data.name || '',
                             email: response.data.email || '',
-                            phoneNumber: response.data.phoneNumber || '',
+                           
                             role: response.data.role || '',
                             profile: {
                                 firstName: response.data.profile?.firstName || '',
                                 lastName: response.data.profile?.lastName || '',
+                                phoneNumber: response.data.phoneNumber || '',
                                 bio: response.data.profile?.bio || '',
                                 review: response.data.profile?.review || '',
                                 country: response.data.profile?.country || '',
                                 gender: response.data.profile?.gender || '',
                                 isBanned: response.data.profile?.isBanned || false,
-                                verified: response.data.profile?.verified || false,
+                                isVerified: response.data.profile?.isVerified || false,
                                 image: response.data.profile?.image || null
                             }
                         });
@@ -162,7 +160,7 @@ const Profile: React.FC = () => {
                     firstName: '',
                     lastName: '',
                     isBanned: false,
-                    verified: false
+                    isVerified: false
                 }
             });
         }
@@ -209,7 +207,7 @@ const Profile: React.FC = () => {
                 id: userProfile.id, // Explicitly include the ID
                 name: updatedProfile.name,
                 email: updatedProfile.email,
-                phoneNumber: updatedProfile.phoneNumber,
+                phoneNumber: updatedProfile.profile?.phoneNumber,
                 role: updatedProfile.role,
                 firstName: updatedProfile.profile?.firstName,
                 lastName: updatedProfile.profile?.lastName,
@@ -271,16 +269,17 @@ const Profile: React.FC = () => {
             setUpdatedProfile({
                 name: response.data.data.user.name,
                 email: response.data.data.user.email,
-                phoneNumber: response.data.data.user.phoneNumber,
+                
                 role: response.data.data.user.role,
                 profile: {
                     firstName: response.data.data.user.profile?.firstName || '',
                     lastName: response.data.data.user.profile?.lastName || '',
                     bio: response.data.data.user.profile?.bio || '',
                     country: response.data.data.user.profile?.country || '',
+                    phoneNumber: response.data.data.user.profile?.phoneNumber || '',
                     gender: response.data.data.user.profile?.gender || '',
                     isBanned: response.data.data.user.profile?.isBanned || false,
-                    verified: response.data.data.user.profile?.verified || false,
+                    isVerified: response.data.data.user.profile?.isVerified || false,
                     image: response.data.data.user.profile?.image || null
                 }
             });
@@ -445,7 +444,7 @@ const Profile: React.FC = () => {
 
                             {userProfile?.profile && userProfile.profile.isBanned ? (
                                 <div className={styles.banned}>User is banned</div>
-                            ) : userProfile?.profile && userProfile.profile.verified ? (
+                            ) : userProfile?.profile && userProfile.profile.isVerified ? (
                                 <div className={styles.verified}>Verified</div>
                             ) : (
                                 <div className={styles.unverified}>Not Verified</div>
@@ -514,7 +513,7 @@ const Profile: React.FC = () => {
                                                 <input
                                                     type="text"
                                                     name="phoneNumber"
-                                                    value={updatedProfile?.phoneNumber || ''}
+                                                    value={updatedProfile?.profile?.phoneNumber || ''}
                                                     onChange={handleInputChange}
                                                     className={styles.input}
                                                 />
@@ -586,7 +585,7 @@ const Profile: React.FC = () => {
                                     </div>
                                     <div className={styles.infoRow}>
                                         <div className={styles.label}>Phone Number:</div>
-                                        <div className={styles.value}>{userProfile?.phoneNumber || 'N/A'}</div>
+                                        <div className={styles.value}>{userProfile?.profile?.phoneNumber || 'N/A'}</div>
                                     </div>
                                     <div className={styles.infoRow}>
                                         <div className={styles.label}>Country:</div>
