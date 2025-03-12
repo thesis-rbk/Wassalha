@@ -27,12 +27,15 @@ import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/context/ThemeContext";
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home");
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
   const { theme } = useTheme();
+  const notifications = useSelector((state: RootState) => state.notifications?.unreadCount ?? 0);
 
   // Add debug log for initial render
   console.log("HomeScreen rendered");
@@ -75,12 +78,15 @@ export default function HomeScreen() {
     }
   };
 
+  const handleNotificationPress = () => {
+    router.push('/screens/NotificationsScreen');
+  };
+
   return (
     <ThemedView style={styles.container}>
       <TopNavigation
-        title="Wassalha" // Ensure the title is explicitly set to "Wassalah"
-        onMenuPress={() => { }}
-        onNotificationPress={() => { }}
+        title="Wassalha"
+        notificationsRoute="/screens/NotificationsScreen"
       />
 
       <ScrollView style={styles.content}>

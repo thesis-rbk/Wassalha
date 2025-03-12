@@ -1,7 +1,7 @@
 export interface TopNavigationProps {
   title: string;
+  onProfilePress?: () => void;
   onMenuPress?: () => void;
   onNotificationPress?: () => void;
-  onProfilePress?: () => void;
-  profileName?: string;
+  notificationsRoute?: string;
 }

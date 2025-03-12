@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -26,7 +25,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { useTheme } from '@/context/ThemeContext';
 import { TopNavigationProps } from '@/types/TopNavigationProps';
 import { useSelector } from 'react-redux';
-import { useRouter, Link } from 'expo-router';
+import { useRouter, Link, Route } from 'expo-router';
 import { SideMenu } from '@/types/Sidemenu';
 import { RootState } from '@/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -41,8 +40,8 @@ const MENU_WIDTH = SCREEN_WIDTH * 0.8;
 
 export function TopNavigation({
   title,
-  onNotificationPress,
   onProfilePress,
+  notificationsRoute = '/screens/NotificationsScreen',
 }: TopNavigationProps) {
   const colorScheme = useColorScheme() ?? "light";
   const { toggleTheme } = useTheme();
@@ -50,6 +49,7 @@ export function TopNavigation({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const { user, token } = useSelector((state: RootState) => state.auth);
+  const notifications = useSelector((state: RootState) => state.notifications?.unreadCount ?? 0);
   console.log("User:", user);
 
   const handleLogout = async () => {
@@ -120,6 +120,11 @@ export function TopNavigation({
     }
   };
 
+  const handleNotificationPress = () => {
+    console.log('TopNavigation - handleNotificationPress - notificationsRoute:', notificationsRoute);
+    router.push('/screens/NotificationsScreen');
+  };
+
   return (
     <>
       <View
@@ -138,8 +143,13 @@ export function TopNavigation({
           {title}
         </ThemedText>
 
-        <TouchableOpacity onPress={onNotificationPress}>
+        <TouchableOpacity onPress={handleNotificationPress} style={styles.notificationContainer}>
           <Bell color={Colors[colorScheme].background} size={24} />
+          {notifications > 0 && (
+            <View style={styles.badge}>
+              <ThemedText style={styles.badgeText}>{notifications}</ThemedText>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -302,5 +312,24 @@ const styles = StyleSheet.create({
   darkModeText: {
     fontSize: 16,
     marginLeft: 15,
+  },
+  notificationContainer: {
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
