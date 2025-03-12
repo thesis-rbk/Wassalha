@@ -535,6 +535,74 @@ const verifySelfie = async (req, res) => {
   }
 };
 
+const verifyCreditCard = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { cardholderName, last4, brand, expiryMonth, expiryYear } = req.body;
+
+    // Validate the user exists
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+      include: { serviceProvider: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+
+    // Create or update service provider record
+    let serviceProvider;
+    if (user.serviceProvider) {
+      serviceProvider = await prisma.serviceProvider.update({
+        where: { id: user.serviceProvider.id },
+        data: {
+          creditCard: `${brand} **** **** **** ${last4}`,
+          isVerified: true,
+          updatedAt: new Date()
+        }
+      });
+    } else {
+      serviceProvider = await prisma.serviceProvider.create({
+        data: {
+          userId: parseInt(userId),
+          type: 'SPONSOR',
+          creditCard: `${brand} **** **** **** ${last4}`,
+          isVerified: true,
+          updatedAt: new Date()
+        }
+      });
+
+      // Update user to be a sponsor
+      await prisma.user.update({
+        where: { id: parseInt(userId) },
+        data: {
+          isSponsor: true,
+          serviceProviderId: serviceProvider.id.toString()
+        }
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Credit card verified successfully',
+      data: {
+        isVerified: true,
+        last4
+      }
+    });
+  } catch (error) {
+    console.error('Error verifying credit card:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify credit card',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   signup,
   loginUser,
@@ -548,4 +616,5 @@ module.exports = {
   getUsers,
   verifyIdCard,
   verifySelfie,
+  verifyCreditCard
 };
