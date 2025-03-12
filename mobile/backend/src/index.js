@@ -22,6 +22,7 @@ const mobileGoodsRoutes = require("./routes/mobileGoodsRoutes");
 const serviceProviderRoutes = require("./routes/serviceProvider.Routes");
 const orderRoutes = require("./routes/orderRoutes");
 const processRoutes = require("./routes/processRoutes");
+const stripeRoutes = require("./routes/stripe.route");
 const paymentRoutes = require("./routes/payment.route");
 
 // Import socket
@@ -56,6 +57,7 @@ app.use("/api/mobile/goods", mobileGoodsRoutes);
 app.use("/api/service-provider", serviceProviderRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/process", processRoutes);
+app.use("/api/stripe", stripeRoutes);
 app.use("/api/payment", paymentRoutes);
 
 // Error handling middleware
