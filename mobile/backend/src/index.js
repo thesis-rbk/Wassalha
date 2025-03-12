@@ -1,74 +1,73 @@
 require("dotenv").config();
-
+const morgan = require("morgan");
 // Import dependencies
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
 const path = require("path"); // Import path module
 
+
+
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
-const goodsRoutes = require("./routes/goods.route"); // Import goods routes
-const fetchRoute = require("./routes/fetchAll")
-require("dotenv").config();
-
-// const userRoutes = require("./routes/userRoutes");
-
-// Import routes
+const goodsRoutes = require("./routes/goods.route");
+const fetchRoute = require("./routes/fetchAll");
 const productRoutes = require("./routes/productRoutes");
 const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
 const profileRoutes = require("./routes/profileRoutes");
-const goodsPostRoutes = require("./routes/goodsPost.route"); // Import goods post routes
-const orderRoutes = require("./routes/order.route"); // Import order routes
-const promoPostRoutes = require("./routes/promoPost.route"); // Import promo post routes
-const paymentRoutes = require("./routes/payment.route"); // Import payment routes
-const pickupRoutes = require("./routes/pickup.route"); // Import pickup routes
-const serviceProviderRoutes = require("./routes/serviceProvider.route"); // Import service provider routes
+const mediaRoutes = require("./routes/media.route");
+const all = require("./routes/alltravNpost");
+const mobileRequestRoutes = require("./routes/mobileRequestRoutes");
+const mobileGoodsRoutes = require("./routes/mobileGoodsRoutes");
+const orderRoutes = require("./routes/orderRoutes");
+const processRoutes = require("./routes/processRoutes");
+const goodsPostRoutes = require("./routes/goodsPost.route");
+const promoPostRoutes = require("./routes/promoPost.route");
+const paymentRoutes = require("./routes/payment.route");
+const pickupRoutes = require("./routes/pickup.route");
+const serviceProviderRoutes = require("./routes/serviceProvider.Routes");
+const sponsorshipRoutes = require("./routes/sponsorship.route");
+const subscriptionRoutes = require("./routes/subscription.route");
 
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
-const all = require("./routes/alltravNpost");
 const app = express();
 const server = http.createServer(app);
+app.use(morgan("dev"));
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // Serve static files from the "uploads" directory
-app.use('/api/uploads', express.static(path.join(__dirname, '/uploads'))); // Serve static files
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve static files
 // console.log("pathsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", path.join(__dirname, 'src/uploads'));
 app.use("/api/fecth", fetchRoute)
 // Routes
 
-// Routes (REST API will still work)
+// API Routes
 app.use("/api/products", productRoutes);
 app.use("/api/scrape", scrapeRoutes);
-app.use("/api", all);
-// Routes
 app.use("/api/requests", requestRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/goods", goodsRoutes); // Set up goods routes
-app.use("/api/goods-posts", goodsPostRoutes); // Set up goods post routes
+app.use("/api/goods", goodsRoutes);
+app.use("/api/goods-posts", goodsPostRoutes);
 app.use("/api/categories", categoryRoutes);
-app.use("/api/users/profile", profileRoutes); // Set up profile routes
-app.use("/api/orders", orderRoutes); // Set up order routes
-app.use("/api/promo-posts", promoPostRoutes); // Set up promo post routes
-app.use("/api/payments", paymentRoutes); // Set up payment routes
-app.use("/api/pickups", pickupRoutes); // Set up pickups route
-app.use("/api/service-providers", serviceProviderRoutes); // Set up service provider routes
-
-// Import sponsorship routes
-const sponsorshipRoutes = require("./routes/sponsorship.route");
-
-app.use("/api/sponsorships", sponsorshipRoutes); // Set up sponsorship routes
-
-// Import subscription routes
-const subscriptionRoutes = require("./routes/subscription.route"); // Import subscription routes
-
-app.use("/api/subscriptions", subscriptionRoutes); // Set up subscription routes
+app.use("/api/users/profile", profileRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/promo-posts", promoPostRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/pickups", pickupRoutes);
+app.use("/api/service-providers", serviceProviderRoutes);
+app.use("/api/sponsorships", sponsorshipRoutes);
+app.use("/api/subscriptions", subscriptionRoutes);
+app.use("/api/media", mediaRoutes);
+app.use("/api", all);
+app.use("/api/mobile/requests", mobileRequestRoutes);
+app.use("/api/mobile/goods", mobileGoodsRoutes);
+app.use("/api/process", processRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -78,6 +77,8 @@ app.use((err, req, res, next) => {
     error: "Something went wrong!",
   });
 });
+
+
 
 // Initialize socket
 trackingSocket(server);

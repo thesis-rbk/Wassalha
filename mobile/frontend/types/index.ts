@@ -20,3 +20,4 @@ export * from './InfoItemProps';
 export * from './ProfileState';
 export * from './ProfileImage';
 
+export * from './Role';

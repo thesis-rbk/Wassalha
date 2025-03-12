@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const prisma = require('../../prisma/index');
 
 const authenticateUser = async (req, res, next) => {
+  console.log("req.headers", req.headers);
   try {
     // 1. Get token from headers
     const token = req.headers.authorization?.split(' ')[1];
@@ -22,7 +23,7 @@ const authenticateUser = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
     }
-
+    console.log("user", user);
     // 4. Attach user to request object
     req.user = user;
     next();

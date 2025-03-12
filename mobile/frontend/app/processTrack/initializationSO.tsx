@@ -1,219 +1,493 @@
-import React from "react";
-import { View, Text, StyleSheet, Image, ScrollView } from "react-native";
-import { MapPin, Clock, DollarSign, User } from "lucide-react-native";
-import ProgressBar from "../../components/ProgressBar";
-import Card from "../../components/cards/ProcessCard";
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { TitleLarge, BodyMedium } from '@/components/Typography';
+import { BaseButton } from '@/components/ui/buttons/BaseButton';
+import { MapPin, Package, Calendar, DollarSign, Clock, User, Star, Bell, MessageCircle } from 'lucide-react-native';
+import { Image } from 'expo-image';
+import axiosInstance from '@/config';
+import ProgressBar from '@/components/ProgressBar';
+import { ProgressBarProps } from '@/types/ProgressBarProps';
+
+// Backend URL for images
+const BACKEND_URL = "http://192.168.1.11:5000";
+
+// Mock data for testing
+const MOCK_OFFER = {
+  id: 1,
+  price: 120,
+  estimatedDeliveryDate: new Date().toISOString(),
+  notes: "I can deliver this item within a week. I'll be traveling directly from the source location.",
+  status: 'PENDING',
+  serviceProvider: {
+    id: 2,
+    name: "John Traveler",
+    profile: {
+      image: null,
+      isVerified: true
+    },
+    reputation: {
+      rating: 4.8,
+      count: 24
+    }
+  },
+  request: {
+    id: 1,
+    goods: {
+      name: "iPhone 13 Pro",
+      price: 999,
+      image: {
+        filename: "iphone.jpg"
+      }
+    },
+    goodsLocation: "New York, USA",
+    goodsDestination: "Miami, USA",
+    quantity: 1
+  }
+};
 
 export default function OrderDetailsScreen() {
-  const progressSteps = [
-    { id: 1, title: "Initialization", icon: "initialization" },
-    { id: 2, title: "Verification", icon: "verification" },
-    { id: 3, title: "Payment", icon: "payment" },
-    { id: 4, title: "Pickup", icon: "pickup" },
-  ];
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const colorScheme = useColorScheme() ?? 'light';
+  const router = useRouter();
+  const [offer, setOffer] = useState<any>(MOCK_OFFER);
+  const [loading, setLoading] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  
+  // Progress tracking
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 5;
+  
+  const progressData: ProgressBarProps = {
+    steps: [
+      { id: 1, title: 'Review', icon: 'check-circle' },
+      { id: 2, title: 'Verification', icon: 'shield' },
+      { id: 3, title: 'Payment', icon: 'credit-card' },
+      { id: 4, title: 'Pickup', icon: 'package' },
+      { id: 5, title: 'Delivery', icon: 'truck' }
+    ],
+    currentStep: currentStep
+  };
+
+  useEffect(() => {
+    // In a real implementation, fetch the offer data
+    // For testing, we'll use the mock data
+    setLoading(false);
+  }, [id]);
+
+  const handleAcceptOffer = async () => {
+    try {
+      setProcessing(true);
+      
+      // In a real implementation, make an API call
+      // For testing, we'll simulate a successful response
+      setTimeout(() => {
+        Alert.alert(
+          "Offer Accepted",
+          "You've accepted this offer. The traveler will be notified.",
+          [{ 
+            text: "Proceed to Verification", 
+            onPress: () => router.push(`/processTrack/verificationSO?orderId=1`) 
+          }]
+        );
+        setProcessing(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Error accepting offer:', error);
+      Alert.alert("Error", "Failed to accept offer. Please try again.");
+      setProcessing(false);
+    }
+  };
+
+  const handleRejectOffer = async () => {
+    try {
+      setProcessing(true);
+      
+      // In a real implementation, make an API call
+      // For testing, we'll simulate a successful response
+      setTimeout(() => {
+        Alert.alert(
+          "Offer Rejected",
+          "You've rejected this offer. The traveler will be notified.",
+          [{ text: "OK", onPress: () => router.back() }]
+        );
+        setProcessing(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Error rejecting offer:', error);
+      Alert.alert("Error", "Failed to reject offer. Please try again.");
+      setProcessing(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+        <Text style={styles.loadingText}>Loading offer details...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Image
-        source={{
-          uri: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8",
-        }}
-        style={styles.image}
-        resizeMode="cover"
-      />
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TitleLarge style={styles.headerTitle}>Review Offer</TitleLarge>
+        <View style={styles.headerIcons}>
+          <Bell size={24} color={Colors[colorScheme].primary} />
+          <MessageCircle size={24} color={Colors[colorScheme].primary} />
+          <User size={24} color={Colors[colorScheme].primary} />
+        </View>
+      </View>
 
-      <View style={styles.content}>
-        <Text style={styles.title}>MacBook Pro Laptop</Text>
+      {/* Progress Bar */}
+      <View style={styles.progressContainer}>
+        <ProgressBar 
+          steps={progressData.steps}
+          currentStep={progressData.currentStep}
+        />
+      </View>
 
-        <ProgressBar currentStep={1} steps={progressSteps} />
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* Product Image */}
+        <View style={styles.imageContainer}>
+          <Image
+            source={{ uri: `${BACKEND_URL}/api/uploads/${offer.request.goods.image?.filename}` }}
+            style={styles.productImage}
+            contentFit="cover"
+            onError={(error) => console.error("Image loading error:", error)}
+          />
+        </View>
 
-        <Card style={styles.detailsCard}>
-          <Text style={styles.sectionTitle}>Delivery Details</Text>
-
-          <View style={styles.detailRow}>
-            <MapPin size={20} color="#64748b" />
-            <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>Route</Text>
-              <Text style={styles.detailValue}>New York → Tunis</Text>
+        {/* Request Details */}
+        <View style={styles.detailsContainer}>
+          <Text style={styles.productName}>{offer.request.goods.name}</Text>
+          <Text style={styles.price}>${offer.price}</Text>
+          
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Request Details</Text>
+            
+            <View style={styles.detailRow}>
+              <MapPin size={16} color="#64748b" />
+              <Text style={styles.detailText}>From: {offer.request.goodsLocation}</Text>
             </View>
-          </View>
-
-          <View style={styles.detailRow}>
-            <Clock size={20} color="#64748b" />
-            <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>Posted On</Text>
-              <Text style={styles.detailValue}>
-                {new Date("2025-05-10T10:30:00Z").toLocaleDateString()}
+            <View style={styles.detailRow}>
+              <MapPin size={16} color="#64748b" />
+              <Text style={styles.detailText}>To: {offer.request.goodsDestination}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Package size={16} color="#64748b" />
+              <Text style={styles.detailText}>Quantity: {offer.request.quantity}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Clock size={16} color="#64748b" />
+              <Text style={styles.detailText}>
+                Estimated Delivery: {new Date(offer.estimatedDeliveryDate).toLocaleDateString()}
               </Text>
             </View>
           </View>
 
-          <View style={styles.detailRow}>
-            <DollarSign size={20} color="#64748b" />
-            <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>Offered Price</Text>
-              <Text style={styles.priceValue}>$150</Text>
-            </View>
-          </View>
-
-          <View style={styles.detailRow}>
-            <User size={20} color="#64748b" />
-            <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>Status</Text>
-              <View style={[styles.statusBadge, getStatusStyle("pending")]}>
-                <Text style={styles.statusText}>{formatStatus("pending")}</Text>
+          {/* Traveler Profile */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Traveler</Text>
+            
+            <View style={styles.travelerCard}>
+              <View style={styles.travelerHeader}>
+                <View style={styles.avatarContainer}>
+                  {offer.serviceProvider.profile.image ? (
+                    <Image 
+                      source={{ uri: offer.serviceProvider.profile.image }} 
+                      style={styles.avatar}
+                    />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <Text style={styles.avatarInitials}>
+                        {getInitials(offer.serviceProvider.name)}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                
+                <View style={styles.travelerInfo}>
+                  <Text style={styles.travelerName}>{offer.serviceProvider.name}</Text>
+                  <View style={styles.ratingContainer}>
+                    <Star size={16} color="#FFD700" fill="#FFD700" />
+                    <Text style={styles.ratingText}>
+                      {offer.serviceProvider.reputation.rating} 
+                      ({offer.serviceProvider.reputation.count} reviews)
+                    </Text>
+                    {offer.serviceProvider.profile.isVerified && (
+                      <View style={styles.verifiedBadge}>
+                        <Text style={styles.verifiedText}>Verified</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
               </View>
             </View>
           </View>
-        </Card>
 
-        <Card style={styles.descriptionCard}>
-          <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.description}>
-            Looking for someone to deliver my handmade jewelry collection from
-            Miami to Chicago. Careful handling required.
-          </Text>
-        </Card>
-      </View>
-    </ScrollView>
+          {/* Notes */}
+          {offer.notes && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Additional Notes</Text>
+              <Text style={styles.notesText}>{offer.notes}</Text>
+            </View>
+          )}
+
+          {/* Order Status */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Order Status</Text>
+            <View style={[styles.statusBadge, getStatusStyle(offer.status)]}>
+              <Text style={styles.statusText}>{formatStatus(offer.status)}</Text>
+            </View>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            <BaseButton
+              size="large"
+              onPress={handleAcceptOffer}
+              style={styles.acceptButton}
+              disabled={processing || offer.status !== 'PENDING'}
+            >
+              {processing ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <BodyMedium style={styles.buttonText}>Accept Offer</BodyMedium>
+              )}
+            </BaseButton>
+            
+            <BaseButton
+              size="large"
+              onPress={handleRejectOffer}
+              style={styles.rejectButton}
+              disabled={processing || offer.status !== 'PENDING'}
+            >
+              <BodyMedium style={styles.rejectButtonText}>Reject Offer</BodyMedium>
+            </BaseButton>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
+// Helper function to get initials from name
+const getInitials = (name: string) => {
+  return name
+    .split(' ')
+    .map(part => part.charAt(0))
+    .join('')
+    .toUpperCase();
+};
+
+// Helper function to get status style
 const getStatusStyle = (status: string) => {
   switch (status) {
-    case "pending":
-      return styles.pendingStatus;
-    case "accepted":
-      return styles.acceptedStatus;
-    case "in-progress":
-      return styles.inProgressStatus;
-    case "completed":
-      return styles.completedStatus;
+    case 'ACCEPTED':
+      return { backgroundColor: '#dcfce7', borderColor: '#86efac' };
+    case 'REJECTED':
+      return { backgroundColor: '#fee2e2', borderColor: '#fca5a5' };
+    case 'PENDING':
+      return { backgroundColor: '#f1f5f9', borderColor: '#cbd5e1' };
     default:
-      return styles.pendingStatus;
+      return { backgroundColor: '#f1f5f9', borderColor: '#cbd5e1' };
   }
 };
 
+// Helper function to format status
 const formatStatus = (status: string) => {
   switch (status) {
-    case "pending":
-      return "Pending";
-    case "accepted":
-      return "Accepted";
-    case "in-progress":
-      return "In Progress";
-    case "completed":
-      return "Completed";
+    case 'ACCEPTED':
+      return 'Accepted';
+    case 'REJECTED':
+      return 'Rejected';
+    case 'PENDING':
+      return 'Pending';
     default:
-      return status.charAt(0).toUpperCase() + status.slice(1);
+      return status;
   }
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  headerTitle: {
+    fontSize: 20,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  progressContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 24,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
-    fontFamily: "Inter-Medium",
+    marginTop: 10,
     fontSize: 16,
-    color: "#64748b",
   },
-  image: {
-    width: "100%",
+  imageContainer: {
+    width: '100%',
     height: 250,
   },
-  content: {
-    padding: 16,
-    paddingBottom: 40,
+  productImage: {
+    width: '100%',
+    height: '100%',
   },
-  title: {
-    fontFamily: "Poppins-Bold",
-    fontSize: 24,
-    color: "#1e293b",
+  detailsContainer: {
+    padding: 16,
+  },
+  productName: {
+    fontSize: 22,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  price: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: Colors.light.primary,
     marginBottom: 16,
   },
-  detailsCard: {
-    marginTop: 16,
+  section: {
+    marginBottom: 24,
   },
   sectionTitle: {
-    fontFamily: "Poppins-SemiBold",
     fontSize: 18,
-    color: "#1e293b",
-    marginBottom: 16,
+    fontWeight: '600',
+    marginBottom: 12,
   },
   detailRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
   },
-  detailContent: {
-    marginLeft: 12,
+  detailText: {
+    fontSize: 16,
+    color: '#64748b',
+  },
+  travelerCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
+  },
+  travelerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarContainer: {
+    marginRight: 12,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  avatarPlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#e2e8f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarInitials: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  travelerInfo: {
     flex: 1,
   },
-  detailLabel: {
-    fontFamily: "Inter-Regular",
+  travelerName: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  ratingText: {
     fontSize: 14,
-    color: "#64748b",
-    marginBottom: 2,
+    color: '#64748b',
   },
-  detailValue: {
-    fontFamily: "Inter-Medium",
-    fontSize: 16,
-    color: "#1e293b",
+  verifiedBadge: {
+    backgroundColor: '#dcfce7',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    marginLeft: 8,
   },
-  priceValue: {
-    fontFamily: "Inter-Bold",
+  verifiedText: {
+    fontSize: 12,
+    color: '#166534',
+    fontWeight: '500',
+  },
+  notesText: {
     fontSize: 16,
-    color: "#16a34a",
+    color: '#64748b',
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
   },
   statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 12,
-    alignSelf: "flex-start",
+    borderWidth: 1,
   },
   statusText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 12,
-    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: '500',
   },
-  pendingStatus: {
-    backgroundColor: "#f59e0b",
-  },
-  acceptedStatus: {
-    backgroundColor: "#3b82f6",
-  },
-  inProgressStatus: {
-    backgroundColor: "#8b5cf6",
-  },
-  completedStatus: {
-    backgroundColor: "#10b981",
-  },
-  descriptionCard: {
+  actionButtons: {
     marginTop: 16,
   },
-  description: {
-    fontFamily: "Inter-Regular",
-    fontSize: 16,
-    color: "#334155",
-    lineHeight: 24,
+  acceptButton: {
+    marginBottom: 12,
+    backgroundColor: Colors.light.primary,
   },
-  offersCard: {
-    marginTop: 16,
+  rejectButton: {
+    backgroundColor: '#f1f5f9',
   },
-  offersCount: {
-    fontFamily: "Inter-Regular",
-    fontSize: 16,
-    color: "#334155",
-    marginBottom: 16,
+  buttonText: {
+    color: '#fff',
+    fontWeight: '600',
   },
-  viewOffersButton: {
-    marginTop: 8,
+  rejectButtonText: {
+    color: '#64748b',
+    fontWeight: '600',
   },
 });
