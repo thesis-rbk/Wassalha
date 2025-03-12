@@ -18,6 +18,7 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
   const [mapModalVisible, setMapModalVisible] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<SafeLocation | null>(null);
   const [currentPosition, setCurrentPosition] = useState<{ latitude: number; longitude: number } | null>(null);
+  const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   // Predefined safe locations in Tunisia
   const safeLocations: SafeLocation[] = [
@@ -166,7 +167,7 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
                 <MapViewDirections
                   origin={currentPosition}
                   destination={{ latitude: selectedLocation.latitude, longitude: selectedLocation.longitude }}
-                  apikey="YOUR_GOOGLE_MAPS_API_KEY" // Replace with your Google Maps API key
+                  apikey={GOOGLE_KEY || ''} // Replace with your Google Maps API key
                   strokeWidth={3}
                   strokeColor="blue"
                   mode="DRIVING" // Can be WALKING, BICYCLING, TRANSIT, etc.

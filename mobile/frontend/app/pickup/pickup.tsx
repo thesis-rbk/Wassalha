@@ -33,9 +33,9 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
   const [selectedOptionInfo, setSelectedOptionInfo] = useState<string>('');
   const [airportSuggestions, setAirportSuggestions] = useState<string[]>([]);
   const [isFetchingAirports, setIsFetchingAirports] = useState<boolean>(false);
+  const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   // Replace with your Google Places API key
-  const GOOGLE_PLACES_API_KEY = 'AIzaSyB5gnUWjb84t6klt5vcPjMOQylhQRFB5Wc'; 
 
   const styles = StyleSheet.create({
     container: {
