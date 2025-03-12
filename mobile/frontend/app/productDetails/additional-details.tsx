@@ -1,55 +1,68 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Image as RNImage } from "react-native"
-import { ChevronDown, Upload, Image as ImageIcon, Calendar } from "lucide-react-native"
-import { InputField } from "@/components/InputField"
-import { BaseButton } from "@/components/ui/buttons/BaseButton"
-import { TitleLarge, TitleSection, BodyMedium } from "@/components/Typography"
-import { Colors } from "@/constants/Colors"
-import { useColorScheme } from "@/hooks/useColorScheme"
-import { useRouter, useLocalSearchParams } from "expo-router"
-import { Category } from '@/types/Category'
-import axiosInstance from "@/config"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import * as FileSystem from 'expo-file-system'
-import * as DocumentPicker from 'expo-document-picker'
-import DateTimePickerModal from 'react-native-modal-datetime-picker'
+import type React from "react";
+import { useState, useEffect } from "react";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Platform,
+  Image as RNImage,
+} from "react-native";
+import {
+  ChevronDown,
+  Upload,
+  Image as ImageIcon,
+  Calendar,
+} from "lucide-react-native";
+import { InputField } from "@/components/InputField";
+import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import { TitleLarge, TitleSection, BodyMedium } from "@/components/Typography";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { Category } from "@/types/Category";
+import axiosInstance from "@/config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as FileSystem from "expo-file-system";
+import * as DocumentPicker from "expo-document-picker";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 const AdditionalDetails: React.FC = () => {
-  const colorScheme = useColorScheme() ?? "light"
-  const router = useRouter()
-  const params = useLocalSearchParams()
+  const colorScheme = useColorScheme() ?? "light";
+  const router = useRouter();
+  const params = useLocalSearchParams();
 
   // Update the productDetails conversion to include all passed data
   const [productDetails, setProductDetails] = useState({
     name: params.name as string,
     price: parseFloat(params.price as string),
     details: params.details as string,
-    withBox: params.withBox === 'true',
-    imageUri: params.imageUri as string | undefined
+    withBox: params.withBox === "true",
+    imageUri: params.imageUri as string | undefined,
   });
 
-  console.log('Received and converted data:', productDetails)
+  console.log("Received and converted data:", productDetails);
 
-  const [categoryId, setCategoryId] = useState<number | null>(null)
-  const [size, setSize] = useState("")
-  const [weight, setWeight] = useState("")
-  const [categories, setCategories] = useState<Category[]>([])
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
-  const [notes, setNotes] = useState("")
-  const [categoryError, setCategoryError] = useState<string>("")
+  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [size, setSize] = useState("");
+  const [weight, setWeight] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [categoryError, setCategoryError] = useState<string>("");
 
   // Add new state for request details
-  const [quantity, setQuantity] = useState("")
-  const [goodsLocation, setGoodsLocation] = useState("")
-  const [goodsDestination, setGoodsDestination] = useState("")
-  const [deliveryDate, setDeliveryDate] = useState(new Date())
+  const [quantity, setQuantity] = useState("");
+  const [goodsLocation, setGoodsLocation] = useState("");
+  const [goodsDestination, setGoodsDestination] = useState("");
+  const [deliveryDate, setDeliveryDate] = useState(new Date());
 
   // Add this to handle closing dropdown when clicking outside
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  
+
   // Add loading state for image picker
   const [imageLoading, setImageLoading] = useState(false);
 
@@ -59,53 +72,60 @@ const AdditionalDetails: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axiosInstance.get("/api/categories")
+        const response = await axiosInstance.get("/api/categories");
         if (response.status === 200) {
-          setCategories(response.data.data)
+          setCategories(response.data.data);
         }
       } catch (error) {
-        console.error("Error fetching categories:", error)
+        console.error("Error fetching categories:", error);
       }
-    }
+    };
 
-    fetchCategories()
-  }, [])
+    fetchCategories();
+  }, []);
 
   const handleCategorySelect = (id: number) => {
-    setCategoryId(id)
-    setShowCategoryDropdown(false)
-  }
+    setCategoryId(id);
+    setShowCategoryDropdown(false);
+  };
 
   // Document picker function
   const pickDocument = async () => {
     try {
       setImageLoading(true);
-      console.log('📄 Opening document picker...');
-      
+      console.log("📄 Opening document picker...");
+
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['image/*'], // Limit to image files
-        copyToCacheDirectory: true
+        type: ["image/*"], // Limit to image files
+        copyToCacheDirectory: true,
       });
-      
-      console.log('📄 Document picker result:', result);
-      
-      if (result.canceled === false && result.assets && result.assets.length > 0) {
+
+      console.log("📄 Document picker result:", result);
+
+      if (
+        result.canceled === false &&
+        result.assets &&
+        result.assets.length > 0
+      ) {
         const selectedFile = result.assets[0];
-        console.log('📄 Selected file:', selectedFile);
-        
+        console.log("📄 Selected file:", selectedFile);
+
         // Update state with the selected file URI
-        setProductDetails(prev => ({
+        setProductDetails((prev) => ({
           ...prev,
-          imageUri: selectedFile.uri
+          imageUri: selectedFile.uri,
         }));
-        
-        console.log('📄 Updated product details with new image URI:', selectedFile.uri);
+
+        console.log(
+          "📄 Updated product details with new image URI:",
+          selectedFile.uri
+        );
       } else {
-        console.log('📄 Document picking cancelled or no file selected');
+        console.log("📄 Document picking cancelled or no file selected");
       }
     } catch (error) {
-      console.error('❌ Error picking document:', error);
-      Alert.alert('Error', 'Failed to pick document');
+      console.error("❌ Error picking document:", error);
+      Alert.alert("Error", "Failed to pick document");
     } finally {
       setImageLoading(false);
     }
@@ -113,16 +133,16 @@ const AdditionalDetails: React.FC = () => {
 
   // Add this right before your handleSubmit function
   const debugFormData = (formData: FormData) => {
-    console.log('🔍 DEBUG: FormData contents:');
+    console.log("🔍 DEBUG: FormData contents:");
     // @ts-ignore - accessing _parts which exists in React Native's FormData
     const parts = formData._parts || [];
     parts.forEach((part: [string, any], index: number) => {
-      if (part[0] === 'file' && part[1] && typeof part[1] === 'object') {
+      if (part[0] === "file" && part[1] && typeof part[1] === "object") {
         console.log(`📎 Part ${index} (File):`, {
           fieldName: part[0],
           fileName: part[1].name,
           type: part[1].type,
-          uri: part[1].uri ? `${part[1].uri.substring(0, 30)}...` : undefined
+          uri: part[1].uri ? `${part[1].uri.substring(0, 30)}...` : undefined,
         });
       } else {
         console.log(`📝 Part ${index}:`, part);
@@ -133,99 +153,110 @@ const AdditionalDetails: React.FC = () => {
   // Then modify your handleSubmit function to include debugging
   const handleSubmit = async () => {
     try {
-      console.log('🚀 Starting submission process...');
-      let jwtToken = await AsyncStorage.getItem('jwtToken');
-      console.log('🔑 Token retrieved:', jwtToken ? 'Found' : 'Not found');
-      
+      console.log("🚀 Starting submission process...");
+      let jwtToken = await AsyncStorage.getItem("jwtToken");
+      console.log("🔑 Token retrieved:", jwtToken ? "Found" : "Not found");
+
       // Make sure we have a token
       if (!jwtToken) {
-        Alert.alert('Error', 'You need to be logged in to create a request');
+        Alert.alert("Error", "You need to be logged in to create a request");
         return;
       }
 
       // Check if token is expired and refresh if needed
       try {
         // Try a simple API call to check token validity
-        await axiosInstance.get('/api/categories', {
+        await axiosInstance.get("/api/categories", {
           headers: {
-            'Authorization': `Bearer ${jwtToken}`
-          }
+            Authorization: `Bearer ${jwtToken}`,
+          },
         });
       } catch (tokenError: any) {
         // If token is expired, try to refresh it
-        if (tokenError.response?.status === 401 && 
-            tokenError.response?.data?.message === 'jwt expired') {
-          console.log('🔄 Token expired, attempting to refresh...');
+        if (
+          tokenError.response?.status === 401 &&
+          tokenError.response?.data?.message === "jwt expired"
+        ) {
+          console.log("🔄 Token expired, attempting to refresh...");
           try {
             // Call your refresh token endpoint
-            const refreshResponse = await axiosInstance.post('/api/auth/refresh-token');
+            const refreshResponse = await axiosInstance.post(
+              "/api/auth/refresh-token"
+            );
             if (refreshResponse.data.success) {
               const newToken = refreshResponse.data.token;
               if (newToken) {
                 jwtToken = newToken;
-                await AsyncStorage.setItem('jwtToken', newToken);
-                console.log('🔑 Token refreshed successfully');
+                await AsyncStorage.setItem("jwtToken", newToken);
+                console.log("🔑 Token refreshed successfully");
               }
             } else {
               // If refresh fails, redirect to login
-              Alert.alert('Session Expired', 'Please log in again');
-              router.replace('../login');
+              Alert.alert("Session Expired", "Please log in again");
+              router.replace("../login");
               return;
             }
           } catch (refreshError) {
-            console.error('❌ Token refresh failed:', refreshError);
-            Alert.alert('Session Expired', 'Please log in again');
-            router.replace('../login');
+            console.error("❌ Token refresh failed:", refreshError);
+            Alert.alert("Session Expired", "Please log in again");
+            router.replace("../login");
             return;
           }
         }
       }
-      
+
       // If the image is a remote URL, download it first
-      if (productDetails.imageUri && productDetails.imageUri.startsWith('http')) {
-        console.log('📥 Downloading remote image before submission...');
+      if (
+        productDetails.imageUri &&
+        productDetails.imageUri.startsWith("http")
+      ) {
+        console.log("📥 Downloading remote image before submission...");
         setImageLoading(true);
-        
+
         try {
-          const filename = productDetails.imageUri.split('/').pop() || 'image.jpg';
+          const filename =
+            productDetails.imageUri.split("/").pop() || "image.jpg";
           const fileUri = `${FileSystem.cacheDirectory}${filename}`;
-          
-          const result = await FileSystem.downloadAsync(productDetails.imageUri, fileUri);
-          
+
+          const result = await FileSystem.downloadAsync(
+            productDetails.imageUri,
+            fileUri
+          );
+
           if (result.status === 200) {
-            console.log('✅ Remote image downloaded successfully');
-            setProductDetails(prev => ({
+            console.log("✅ Remote image downloaded successfully");
+            setProductDetails((prev) => ({
               ...prev,
-              imageUri: fileUri
+              imageUri: fileUri,
             }));
           } else {
-            throw new Error('Failed to download image');
+            throw new Error("Failed to download image");
           }
         } catch (error) {
-          console.error('❌ Image download error:', error);
+          console.error("❌ Image download error:", error);
           Alert.alert(
-            'Image Download Failed',
-            'We couldn\'t download the web image. Would you like to continue without an image or go back and select a local image?',
+            "Image Download Failed",
+            "We couldn't download the web image. Would you like to continue without an image or go back and select a local image?",
             [
               {
-                text: 'Continue Without Image',
+                text: "Continue Without Image",
                 onPress: () => {
-                  setProductDetails(prev => ({
+                  setProductDetails((prev) => ({
                     ...prev,
-                    imageUri: undefined
+                    imageUri: undefined,
                   }));
                   // Continue with submission
                   if (jwtToken) {
                     submitForm(jwtToken);
                   } else {
-                    Alert.alert('Error', 'Authentication token is missing');
+                    Alert.alert("Error", "Authentication token is missing");
                   }
-                }
+                },
               },
               {
-                text: 'Go Back',
-                style: 'cancel'
-              }
+                text: "Go Back",
+                style: "cancel",
+              },
             ]
           );
           return;
@@ -233,16 +264,19 @@ const AdditionalDetails: React.FC = () => {
           setImageLoading(false);
         }
       }
-      
+
       // Continue with form submission
       if (jwtToken) {
         submitForm(jwtToken);
       } else {
-        Alert.alert('Error', 'Authentication token is missing');
+        Alert.alert("Error", "Authentication token is missing");
       }
     } catch (error) {
-      console.error('❌ Outer error:', error);
-      Alert.alert('Error', (error as Error).message || 'An unknown error occurred');
+      console.error("❌ Outer error:", error);
+      Alert.alert(
+        "Error",
+        (error as Error).message || "An unknown error occurred"
+      );
     }
   };
 
@@ -250,84 +284,91 @@ const AdditionalDetails: React.FC = () => {
   async function submitForm(jwtToken: string) {
     try {
       // Create FormData for goods with image
-      console.log('📤 Creating goods with image...');
-      
+      console.log("📤 Creating goods with image...");
+
       const formData = new FormData();
-      
+
       // Add all the goods data
-      formData.append('name', productDetails.name);
-      formData.append('price', productDetails.price.toString());
-      formData.append('description', productDetails.details);
-      formData.append('categoryId', categoryId!.toString());
-      formData.append('isVerified', 'false');
-      
+      formData.append("name", productDetails.name);
+      formData.append("price", productDetails.price.toString());
+      formData.append("description", productDetails.details);
+      formData.append("categoryId", categoryId!.toString());
+      formData.append("isVerified", "false");
+
       // Add image if available - using document picker approach
       if (productDetails.imageUri) {
-        console.log('📄 Processing selected image:', productDetails.imageUri);
-        
+        console.log("📄 Processing selected image:", productDetails.imageUri);
+
         // Get file info
         const fileInfo = await FileSystem.getInfoAsync(productDetails.imageUri);
-        console.log('📄 File info:', fileInfo);
-        
+        console.log("📄 File info:", fileInfo);
+
         // Determine file type based on URI
-        const uriParts = productDetails.imageUri.split('.');
+        const uriParts = productDetails.imageUri.split(".");
         const fileExtension = uriParts[uriParts.length - 1];
-        
-        let fileType = 'image/jpeg'; // Default
+
+        let fileType = "image/jpeg"; // Default
         if (fileExtension) {
-          if (fileExtension.toLowerCase() === 'png') {
-            fileType = 'image/png';
-          } else if (fileExtension.toLowerCase() === 'gif') {
-            fileType = 'image/gif';
-          } else if (fileExtension.toLowerCase() === 'webp') {
-            fileType = 'image/webp';
+          if (fileExtension.toLowerCase() === "png") {
+            fileType = "image/png";
+          } else if (fileExtension.toLowerCase() === "gif") {
+            fileType = "image/gif";
+          } else if (fileExtension.toLowerCase() === "webp") {
+            fileType = "image/webp";
           }
         }
-        
+
         // Get filename from URI
-        const fileName = productDetails.imageUri.split('/').pop() || `image.${fileExtension || 'jpg'}`;
-        
-        console.log('📄 Creating file object with:', {
+        const fileName =
+          productDetails.imageUri.split("/").pop() ||
+          `image.${fileExtension || "jpg"}`;
+
+        console.log("📄 Creating file object with:", {
           uri: productDetails.imageUri,
           type: fileType,
-          name: fileName
+          name: fileName,
         });
-        
+
         const imageFile = {
           uri: productDetails.imageUri,
           type: fileType,
           name: fileName,
         };
-        
-        formData.append('file', imageFile as any);
-        console.log('📎 Appended image to FormData');
+
+        formData.append("file", imageFile as any);
+        console.log("📎 Appended image to FormData");
       } else {
-        console.log('⚠️ No image selected');
+        console.log("⚠️ No image selected");
       }
-      
+
       // Debug the FormData
       debugFormData(formData);
-      
+
       try {
         // Use fetch instead of axios for more direct control
-        console.log('📤 Using fetch API for file upload...');
-        
-        const response = await fetch(`${axiosInstance.defaults.baseURL}/api/goods`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${jwtToken}`,
-            // Don't set Content-Type - let fetch set it automatically with the boundary
-          },
-          body: formData
-        });
-        
+        console.log("📤 Using fetch API for file upload...");
+
+        const response = await fetch(
+          `${axiosInstance.defaults.baseURL}/api/goods`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${jwtToken}`,
+              // Don't set Content-Type - let fetch set it automatically with the boundary
+            },
+            body: formData,
+          }
+        );
+
         if (!response.ok) {
-          throw new Error(`Server returned ${response.status}: ${await response.text()}`);
+          throw new Error(
+            `Server returned ${response.status}: ${await response.text()}`
+          );
         }
-        
+
         const goodsResponse = await response.json();
-        console.log('✅ Goods created:', goodsResponse);
-        
+        console.log("✅ Goods created:", goodsResponse);
+
         // Create request with the new goods ID
         if (goodsResponse.success) {
           // Parse and validate the date
@@ -337,68 +378,83 @@ const AdditionalDetails: React.FC = () => {
               requestDate = new Date(deliveryDate);
               // Check if date is valid
               if (isNaN(requestDate.getTime())) {
-                console.warn('⚠️ Invalid date format, using null instead');
+                console.warn("⚠️ Invalid date format, using null instead");
                 requestDate = null;
               } else {
-                console.log('📅 Using date:', requestDate.toISOString());
+                console.log("📅 Using date:", requestDate.toISOString());
               }
             }
           } catch (dateError) {
-            console.warn('⚠️ Date parsing error:', dateError);
+            console.warn("⚠️ Date parsing error:", dateError);
             requestDate = null;
           }
-          
-        const requestData = {
+
+          const requestData = {
             goodsId: goodsResponse.data.id,
             quantity: parseInt(quantity) || 1,
-          goodsLocation,
-          goodsDestination,
+            goodsLocation,
+            goodsDestination,
             date: requestDate,
-          withBox: productDetails.withBox
-        };
+            withBox: productDetails.withBox,
+          };
 
-          console.log('📤 Creating request with data:', requestData);
-          
-          const requestResponse = await axiosInstance.post('/api/requests', requestData, {
-            headers: {
-              'Authorization': `Bearer ${jwtToken}`
+          console.log("📤 Creating request with data:", requestData);
+
+          const requestResponse = await axiosInstance.post(
+            "/api/requests",
+            requestData,
+            {
+              headers: {
+                Authorization: `Bearer ${jwtToken}`,
+              },
             }
-          });
-          console.log('✅ Request created:', requestResponse.data);
-        
-        if (requestResponse.data.success) {
-          router.replace({
-            pathname: '/screens/RequestSuccessScreen',
-            params: {
-              requestId: requestResponse.data.data.id,
-              goodsName: productDetails.name
-            }
-          });
+          );
+          console.log("✅ Request created:", requestResponse.data);
+
+          if (requestResponse.data.success) {
+            router.replace({
+              pathname: "/screens/RequestSuccessScreen",
+              params: {
+                requestId: requestResponse.data.data.id,
+                goodsName: productDetails.name,
+              },
+            });
+          }
         }
-      }
-    } catch (error: any) {
-        console.error('❌ Error:', error);
-        console.error('❌ Error details:', {
+      } catch (error: any) {
+        console.error("❌ Error:", error);
+        console.error("❌ Error details:", {
           message: error.message,
-          response: error.response ? {
-            status: error.response.status,
-            data: error.response.data
-          } : 'No response',
-          request: error.request ? 'Request was made but no response received' : 'Request setup failed'
+          response: error.response
+            ? {
+                status: error.response.status,
+                data: error.response.data,
+              }
+            : "No response",
+          request: error.request
+            ? "Request was made but no response received"
+            : "Request setup failed",
         });
-        Alert.alert('Error', error.message || 'An unknown error occurred');
+        Alert.alert("Error", error.message || "An unknown error occurred");
       }
     } catch (error: any) {
-      console.error('❌ Error:', error);
-      console.error('❌ Error details:', {
+      console.error("❌ Error:", error);
+      console.error("❌ Error details:", {
         message: error.message,
-        response: error.response ? {
-          status: error.response.status,
-          data: error.response.data
-        } : 'No response',
-        request: error.request ? 'Request was made but no response received' : 'Request setup failed'
+        response: error.response
+          ? {
+              status: error.response.status,
+              data: error.response.data,
+            }
+          : "No response",
+        request: error.request
+          ? "Request was made but no response received"
+          : "Request setup failed",
       });
-      Alert.alert('Error', (error as Error).message || 'An unknown error occurred');
+      Alert.alert(
+        "Error",
+        (error as Error).message || "An unknown error occurred"
+      );
     }
   }
 
@@ -409,29 +465,27 @@ const AdditionalDetails: React.FC = () => {
 
         {/* Image Selection Section */}
         <View style={styles.imageSection}>
-          <TitleSection style={styles.sectionTitle}>
-            Product Image
-          </TitleSection>
-          
+          <TitleSection style={styles.sectionTitle}>Product Image</TitleSection>
+
           {productDetails.imageUri ? (
             <View style={styles.selectedImageContainer}>
-              <RNImage 
+              <RNImage
                 source={{ uri: productDetails.imageUri }}
                 style={styles.selectedImage}
                 resizeMode="cover"
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.changeImageButton}
                 onPress={pickDocument}
                 disabled={imageLoading}
               >
                 <BodyMedium style={styles.changeImageText}>
-                  {imageLoading ? 'Loading...' : 'Change Image'}
+                  {imageLoading ? "Loading..." : "Change Image"}
                 </BodyMedium>
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.pickDocumentButton}
               onPress={pickDocument}
               disabled={imageLoading}
@@ -454,65 +508,72 @@ const AdditionalDetails: React.FC = () => {
 
         {/* Category Dropdown */}
         <View style={styles.dropdownContainer}>
-        <TitleSection style={styles.sectionTitle}>
-          Category * {/* Asterisk indicates required field */}
-        </TitleSection>
-        <TouchableOpacity 
-          style={[
-            styles.dropdownTrigger,
+          <TitleSection style={styles.sectionTitle}>
+            Category * {/* Asterisk indicates required field */}
+          </TitleSection>
+          <TouchableOpacity
+            style={[
+              styles.dropdownTrigger,
               categoryError ? styles.errorBorder : null,
-              dropdownVisible ? styles.dropdownTriggerActive : null
-          ]} 
+              dropdownVisible ? styles.dropdownTriggerActive : null,
+            ]}
             onPress={() => setDropdownVisible(!dropdownVisible)}
             activeOpacity={0.7}
-        >
-          <BodyMedium 
-            style={categoryId ? styles.selectedText : styles.placeholderText}
           >
-            {categories.find(c => c.id === categoryId)?.name || "Select a category"}
-          </BodyMedium>
-            <ChevronDown 
-              size={20} 
+            <BodyMedium
+              style={categoryId ? styles.selectedText : styles.placeholderText}
+            >
+              {categories.find((c) => c.id === categoryId)?.name ||
+                "Select a category"}
+            </BodyMedium>
+            <ChevronDown
+              size={20}
               color={Colors[colorScheme].primary}
               style={[
                 styles.dropdownIcon,
-                dropdownVisible ? styles.dropdownIconActive : null
-              ]} 
+                dropdownVisible ? styles.dropdownIconActive : null,
+              ]}
             />
-        </TouchableOpacity>
-        
-        {/* Error message */}
-        {categoryError ? (
-          <BodyMedium style={styles.errorText}>{categoryError}</BodyMedium>
-        ) : null}
+          </TouchableOpacity>
+
+          {/* Error message */}
+          {categoryError ? (
+            <BodyMedium style={styles.errorText}>{categoryError}</BodyMedium>
+          ) : null}
 
           {dropdownVisible && (
-          <View style={styles.dropdownMenu}>
-              <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={true}>
-            {categories.map((category) => (
-                  <TouchableOpacity 
-                    key={category.id} 
+            <View style={styles.dropdownMenu}>
+              <ScrollView
+                style={styles.dropdownScroll}
+                nestedScrollEnabled={true}
+              >
+                {categories.map((category) => (
+                  <TouchableOpacity
+                    key={category.id}
                     style={[
                       styles.dropdownItem,
-                      categoryId === category.id && styles.dropdownItemSelected
-                    ]} 
+                      categoryId === category.id && styles.dropdownItemSelected,
+                    ]}
                     onPress={() => {
                       handleCategorySelect(category.id);
                       setDropdownVisible(false);
                     }}
                     activeOpacity={0.7}
                   >
-                    <BodyMedium style={[
-                      styles.dropdownItemText,
-                      categoryId === category.id && styles.dropdownItemTextSelected
-                    ]}>
+                    <BodyMedium
+                      style={[
+                        styles.dropdownItemText,
+                        categoryId === category.id &&
+                          styles.dropdownItemTextSelected,
+                      ]}
+                    >
                       {category.name}
                     </BodyMedium>
-              </TouchableOpacity>
-            ))}
+                  </TouchableOpacity>
+                ))}
               </ScrollView>
-          </View>
-        )}
+            </View>
+          )}
         </View>
 
         {/* Size Input */}
@@ -576,13 +637,11 @@ const AdditionalDetails: React.FC = () => {
 
         <View style={styles.formField}>
           <BodyMedium style={styles.label}>Delivery Date</BodyMedium>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.dateInput}
             onPress={() => setShowDatePicker(true)}
           >
-            <BodyMedium>
-              {deliveryDate.toLocaleDateString()}
-            </BodyMedium>
+            <BodyMedium>{deliveryDate.toLocaleDateString()}</BodyMedium>
           </TouchableOpacity>
 
           <DateTimePickerModal
@@ -598,10 +657,12 @@ const AdditionalDetails: React.FC = () => {
         </View>
 
         <View style={styles.buttonContainer}>
-          <BaseButton 
-            size="large" 
+          <BaseButton
+            size="large"
             onPress={handleSubmit}
-            disabled={!categoryId || !quantity || !goodsLocation || !goodsDestination}
+            disabled={
+              !categoryId || !quantity || !goodsLocation || !goodsDestination
+            }
           >
             <BodyMedium style={styles.buttonText}>
               Create Product & Request
@@ -610,8 +671,8 @@ const AdditionalDetails: React.FC = () => {
         </View>
       </View>
     </ScrollView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -647,7 +708,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   dropdownContainer: {
-    position: 'relative',
+    position: "relative",
     zIndex: 1000,
     marginBottom: 16,
   },
@@ -667,14 +728,14 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   dropdownIcon: {
-    transform: [{ rotate: '0deg' }],
+    transform: [{ rotate: "0deg" }],
   },
   dropdownIconActive: {
-    transform: [{ rotate: '180deg' }],
+    transform: [{ rotate: "180deg" }],
   },
   dropdownMenu: {
-    position: 'absolute',
-    top: 'auto', // Changed from fixed value
+    position: "absolute",
+    top: "auto", // Changed from fixed value
     marginTop: 4, // Add some space between trigger and menu
     left: 0,
     right: 0,
@@ -703,21 +764,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   dropdownItemSelected: {
-    backgroundColor: Colors.light.primary + '10', // Add slight tint for selected item
+    backgroundColor: Colors.light.primary + "10", // Add slight tint for selected item
   },
   dropdownItemText: {
     color: "#333",
   },
   dropdownItemTextSelected: {
     color: Colors.light.primary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   placeholderText: {
     color: "#999",
   },
   selectedText: {
     color: "#333",
-    fontWeight: '500',
+    fontWeight: "500",
   },
   buttonContainer: {
     alignItems: "center",
@@ -729,11 +790,11 @@ const styles = StyleSheet.create({
     color: "#ffffff",
   },
   errorBorder: {
-    borderColor: '#FF3B30',
+    borderColor: "#FF3B30",
     borderWidth: 1,
   },
   errorText: {
-    color: '#FF3B30',
+    color: "#FF3B30",
     fontSize: 12,
     marginTop: -12,
     marginBottom: 16,
@@ -744,7 +805,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
     marginVertical: 20,
   },
   // New styles for image picker
@@ -752,41 +813,41 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   pickDocumentButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: Colors.light.primary,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
     borderRadius: 8,
     padding: 16,
-    backgroundColor: Colors.light.primary + '10',
+    backgroundColor: Colors.light.primary + "10",
     gap: 8,
   },
   pickDocumentText: {
     color: Colors.light.primary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   selectedImageContainer: {
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 8,
   },
   selectedImage: {
-    width: '100%',
+    width: "100%",
     height: 200,
     borderRadius: 8,
   },
   changeImageButton: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: "rgba(0,0,0,0.6)",
     padding: 8,
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     right: 0,
     borderTopLeftRadius: 8,
   },
   changeImageText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
   },
   formField: {
@@ -799,12 +860,11 @@ const styles = StyleSheet.create({
   },
   dateInput: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: "#e2e8f0",
     borderRadius: 8,
     padding: 12,
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
-})
+});
 
-export default AdditionalDetails
-
+export default AdditionalDetails;
