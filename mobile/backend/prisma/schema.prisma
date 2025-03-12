@@ -318,13 +318,14 @@ model ServiceProvider {
   badge      String?
 
   // Verification Fields
-  idCard     String? // Optional: Government ID
-  passport   String? // Optional: Passport Number
-  license    String? // Optional: Driving License
-  creditCard String? // Optional: Last 4 digits for security
-
+  idCard               String? // Optional: Government ID
+  passport             String? // Optional: Passport Number
+  license              String? // Optional: Driving License
+  creditCard           String? // Optional: Last 4 digits for security
+  selfie               String? // Optional: Selfie
+  questionnaireAnswers Json?
   // Example attributes
-  subscriptionLevel String?
+  subscriptionLevel    String?
 
   // Sponsorships relation
   sponsorships Sponsorship[] @relation("ServiceProviderSponsors")
