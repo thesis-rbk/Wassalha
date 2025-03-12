@@ -1,5 +1,5 @@
 "use client"; // ✅ Ensure it's a client component
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bar, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -14,6 +14,7 @@ import {
 import styles from '../../styles/Dashboard.module.css';
 import Nav from '../../components/Nav';
 import WorldMap from '../../components/WorldMap';
+import api from '../../types/api';
 
 // Register ChartJS components
 ChartJS.register(
@@ -27,34 +28,73 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
+  // State to hold fetched data
+  const [orderData, setOrderData] = useState([]);
+  const [requestData, setRequestData] = useState([]);
+  const [promoPostData, setPromoPostData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [ordersResponse, requestsResponse, promoPostsResponse] = await Promise.all([
+          api.get('/api/orders'),
+          api.get('/api/requests'),
+          api.get('/api/promo-posts')
+        ]);
+
+        setOrderData(ordersResponse.data.data);
+        setRequestData(requestsResponse.data.data);
+        setPromoPostData(promoPostsResponse.data.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Function to aggregate data by date
+  const aggregateDataByDate = (data, dateField) => {
+    return data.reduce((acc, item) => {
+      const date = new Date(item[dateField]).toLocaleDateString();
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {});
+  };
+
+  // Aggregate data
+  const ordersByDate = aggregateDataByDate(orderData, 'createdAt');
+  const requestsByDate = aggregateDataByDate(requestData, 'createdAt');
+  const promoPostsByDate = aggregateDataByDate(promoPostData, 'createdAt');
+
+  // Prepare bar chart data
+  const barData = {
+    labels: Object.keys(ordersByDate),
+    datasets: [
+      {
+        label: 'Orders',
+        data: Object.values(ordersByDate),
+        backgroundColor: '#36A2EB'
+      },
+      {
+        label: 'Requests',
+        data: Object.values(requestsByDate),
+        backgroundColor: '#4BC0C0'
+      },
+      {
+        label: 'Promo Posts',
+        data: Object.values(promoPostsByDate),
+        backgroundColor: '#FF6384'
+      }
+    ]
+  };
+
   // Sample data for the metrics
   const metrics = {
     currentMRR: '12.4k',
     currentCustomers: '16,601',
     activeCustomers: '33%',
     churnRate: '2%'
-  };
-
-  // Bar chart data
-  const barData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-    datasets: [
-      {
-        label: 'New',
-        data: [12, 8, 6, 5, 12, 8, 10],
-        backgroundColor: '#36A2EB'
-      },
-      {
-        label: 'Renewal',
-        data: [8, 5, 4, 3, 8, 5, 7],
-        backgroundColor: '#4BC0C0'
-      },
-      {
-        label: 'Churn',
-        data: [4, 3, 2, 2, 4, 3, 3],
-        backgroundColor: '#FF6384'
-      }
-    ]
   };
 
   // Pie chart data

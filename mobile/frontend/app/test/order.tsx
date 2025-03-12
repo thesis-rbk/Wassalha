@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator, Dimensions, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, FlatList, ActivityIndicator, Dimensions, Text, TouchableOpacity, Alert } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Stack } from 'expo-router';
@@ -105,11 +105,9 @@ export default function OrderPage() {
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
-      const response = await axiosInstance.get('/api/requests');
-      
-      // Log user ID for debugging
+      // Add include=offers to get offer data with requests
+      const response = await axiosInstance.get('/api/requests?include=offers');
       console.log('Current user ID:', user?.id);
-      
       setRequests(response.data.data);
     } catch (error: any) {
       console.error('Error details:', error);
@@ -153,35 +151,46 @@ export default function OrderPage() {
     };
 
     const handleMakeOffer = () => {
-      console.log('Making offer for request:', {
-        requestId: item.id,
-        user: item.user,
-        reputation: item.user?.reputation
+      console.log('=== handleMakeOffer START ===');
+      console.log('Request item:', {
+        id: item.id,
+        goodsName: item.goods.name,
+        price: item.goods.price,
+        location: item.goodsLocation,
+        destination: item.goodsDestination
       });
       
-      router.push({
-        pathname: '/test/initializationSp',
-        params: {
-          id: item.id.toString(),
-          imageUrl: getImageUrl(item.goods),
-          goodsName: item.goods.name,
-          price: item.goods.price.toString(),
-          location: item.goodsLocation,
-          destination: item.goodsDestination,
-          quantity: item.quantity.toString(),
-          description: item.goods.description || '',
-          withBox: item.withBox?.toString() || 'false',
-          // Add requester information
-          requesterId: item.userId.toString(),
-          requesterName: item.user?.name || 'Anonymous',
-          // Reputation data
-          requesterRating: item.user?.reputation?.score?.toString() || '0',
-          requesterLevel: item.user?.reputation?.level?.toString() || '1',
-          requesterTotalRatings: item.user?.reputation?.totalRatings?.toString() || '0',
-          requesterVerified: item.user?.profile?.isVerified?.toString() || 'false',
-          totalOrders: item.user?.requests?.length?.toString() || '0'
-        }
-      });
+      const params = {
+        id: item.id.toString(),
+        imageUrl: getImageUrl(item.goods),
+        goodsName: item.goods.name,
+        price: item.goods.price.toString(),
+        location: item.goodsLocation,
+        destination: item.goodsDestination,
+        quantity: item.quantity.toString(),
+        description: item.goods.description || '',
+        withBox: item.withBox?.toString() || 'false',
+        requesterId: item.userId.toString(),
+        requesterName: item.user?.name || 'Anonymous',
+        requesterRating: item.user?.reputation?.score?.toString() || '0',
+        requesterLevel: item.user?.reputation?.level?.toString() || '1',
+        requesterTotalRatings: item.user?.reputation?.totalRatings?.toString() || '0',
+        requesterVerified: item.user?.profile?.isVerified?.toString() || 'false',
+        totalOrders: item.user?.requests?.length?.toString() || '0'
+      };
+
+      console.log('Navigation params:', params);
+      
+      try {
+        console.log('Attempting navigation to /processTrack/initializationSP');
+        router.push({
+          pathname: '/processTrack/initializationSP',
+          params: params
+        });
+        console.log('Navigation push completed');
+      } catch (error) {
+        console.error('Navigation error:', error);
+      }
     };
   
     // Check if this request has an associated order
@@ -321,18 +330,96 @@ export default function OrderPage() {
               </View>
             )}
             
+            {/* Show View Order button for any order */}
             {hasOrder && (
               <TouchableOpacity 
                 style={styles.viewOrderButton}
-                onPress={() => router.push(`/test/order-details?id=${item.order?.id}`)}
+                onPress={() => router.push({
+                  pathname: '/processTrack/initializationSO',
+                  params: { id: item.order?.id.toString() }
+                })}
               >
                 <ThemedText style={styles.viewOrderButtonText}>View Order</ThemedText>
+              </TouchableOpacity>
+            )}
+            
+            {/* Add Confirm Order button for orders that need confirmation */}
+            {isOwnRequest(item.userId) && hasOrder && 
+              item.order?.orderStatus === 'PENDING' && (
+              <TouchableOpacity 
+                style={styles.confirmButton}
+                onPress={() => handleConfirmOrder(item.order?.id)}
+              >
+                <ThemedText style={styles.confirmButtonText}>Confirm Order</ThemedText>
+              </TouchableOpacity>
+            )}
+
+            {isOwnRequest(item.userId) && !item.order && (
+              <TouchableOpacity 
+                style={styles.viewOfferButton}
+                onPress={() => fetchOffersForRequest(item.id)}
+              >
+                <ThemedText style={styles.viewOfferButtonText}>Check for Offers</ThemedText>
               </TouchableOpacity>
             )}
           </View>
         </View>
       </View>
     );
+  };
+
+  // Add this function to fetch offers for a specific request
+  const fetchOffersForRequest = async (requestId: number) => {
+    try {
+      setIsLoading(true);
+      console.log(`Fetching offers for request ID: ${requestId}`);
+      
+      const response = await axiosInstance.get(`/api/requests/${requestId}/offers`);
+      console.log('Offers API response:', JSON.stringify(response.data, null, 2));
+      
+      if (response.data.data && response.data.data.length > 0) {
+        const offerId = response.data.data[0].id;
+        console.log(`Found offer ID: ${offerId}, navigating...`);
+        
+        router.push({
+          pathname: '/processTrack/initializationSO',
+          params: { offerId: offerId.toString() }
+        });
+      } else {
+        console.log('No offers found for this request');
+        Alert.alert("No Offers", "There are no offers for this request yet.");
+      }
+    } catch (error) {
+      console.error('Error fetching offers:', error);
+      Alert.alert("Error", "Failed to load offers for this request.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Add this function to handle order confirmation
+  const handleConfirmOrder = async (orderId?: number) => {
+    if (!orderId) {
+      Alert.alert("Error", "Order ID is missing.");
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      console.log(`Confirming order ID: ${orderId}`);
+      
+      const response = await axiosInstance.patch(`/api/orders/${orderId}/confirm`);
+      console.log('Confirm order response:', JSON.stringify(response.data, null, 2));
+      
+      Alert.alert("Success", "Order confirmed successfully!");
+      // Refresh the requests list to show updated status
+      fetchRequests();
+    } catch (error) {
+      console.error('Error confirming order:', error);
+      Alert.alert("Error", "Failed to confirm order. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -540,10 +627,40 @@ const styles = StyleSheet.create({
     // Add any necessary styles for the price text
   },
   viewOrderButton: {
-    // Add any necessary styles for the view order button
+    backgroundColor: '#3b82f6', // blue
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
   },
   viewOrderButtonText: {
-    // Add any necessary styles for the view order button text
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  viewOfferButton: {
+    backgroundColor: '#3b82f6', // blue
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  viewOfferButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  confirmButton: {
+    backgroundColor: '#8b5cf6', // purple
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

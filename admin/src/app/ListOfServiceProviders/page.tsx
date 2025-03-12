@@ -1,227 +1,301 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from "next/navigation";
-import Nav from "../../components/Nav";        
+import { useRouter } from 'next/navigation';
+import api from '../../types/api';
+import Nav from "../../components/Nav";
 import navStyles from '../../styles/Nav.module.css';
 import tableStyles from '../../styles/Table.module.css';
 import { ServiceProvider } from '../../types/ServiceProvider';
-import { UserProfile } from '../../types/UserProfile';
+import Image from 'next/image';
 
-const ListOfServiceProviders: React.FC = () => {
+export default function ListOfServiceProviders() {
     const router = useRouter();
-    const [serviceProviders, setServiceProviders] = useState<ServiceProvider[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [providers, setProviders] = useState<ServiceProvider[]>([]);
     const [displayedProviders, setDisplayedProviders] = useState<ServiceProvider[]>([]);
     const [currentCount, setCurrentCount] = useState(5);
     const [isShowingAll, setIsShowingAll] = useState(false);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [typeFilter, setTypeFilter] = useState("ALL");
-    const [eligibilityFilter, setEligibilityFilter] = useState("ALL");
+    const [verificationFilter, setVerificationFilter] = useState("ALL");
     const [subscriptionFilter, setSubscriptionFilter] = useState("ALL");
-    const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [isDarkMode, setIsDarkMode] = useState(false);
 
-    const filterAndSortProviders = (providers: ServiceProvider[]) => {
-        return providers
-            .filter((provider) => {
-                const searchMatch = searchTerm.toLowerCase() === '' || 
-                    provider.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    provider.user.profile?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    provider.user.profile?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    provider.brandName?.toLowerCase().includes(searchTerm.toLowerCase());
-
-                const typeMatch = typeFilter === "ALL" || provider.type === typeFilter;
-                const eligibilityMatch = eligibilityFilter === "ALL" || 
-                    (eligibilityFilter === "ELIGIBLE" ? provider.isEligible : !provider.isEligible);
-                const subscriptionMatch = subscriptionFilter === "ALL" || 
-                    provider.subscriptionLevel === subscriptionFilter;
-
-                return searchMatch && typeMatch && eligibilityMatch && subscriptionMatch;
-            })
-            .sort((a, b) => {
-                if (sortOrder === 'desc') {
-                    return (b.followerCount || 0) - (a.followerCount || 0);
-                }
-                return (a.followerCount || 0) - (b.followerCount || 0);
-            });
-    };
-
-    useEffect(() => {
-        const fetchServiceProviders = async () => {
-            try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/service-providers`);
-                const data = await response.json();
-                if (data.success) {
-                    setServiceProviders(data.data);
-                    const filtered = filterAndSortProviders(data.data);
-                    setDisplayedProviders(filtered.slice(0, 5));
-                    setIsShowingAll(filtered.length <= 5);
-                } else {
-                    setError(data.message);
-                }
-            } catch (error) {
-                setError(error instanceof Error ? error.message : "An unknown error occurred");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchServiceProviders();
-    }, []);
-
-    useEffect(() => {
-        const filtered = filterAndSortProviders(serviceProviders);
-        setDisplayedProviders(filtered.slice(0, currentCount));
-        setIsShowingAll(filtered.length <= currentCount);
-    }, [serviceProviders, searchTerm, typeFilter, eligibilityFilter, subscriptionFilter, sortOrder, currentCount]);
-
-    const handleViewProfile = (userId: number) => {
+    const fetchProviders = async () => {
         try {
-            router.push(`/Profile?id=${userId}`);
-        } catch (error) {
-            console.error("Navigation error:", error);
-            setError("Failed to navigate to profile page.");
+            setIsLoading(true);
+            setError(null);
+
+            const adminToken = localStorage.getItem('adminToken');
+            if (!adminToken) {
+                router.push('/AdminLogin');
+                return;
+            }
+
+            const response = await api.get('/api/service-providers');
+            console.log('API Response:', response.data);
+            
+            if (response.data.success) {
+                const sortedProviders = [...response.data.data].sort((a, b) => b.id - a.id);
+                setProviders(sortedProviders);
+                setDisplayedProviders(sortedProviders.slice(0, currentCount));
+                setIsShowingAll(sortedProviders.length <= currentCount);
+            } else {
+                throw new Error(response.data.message || 'Failed to fetch providers');
+            }
+        } catch (error: any) {
+            console.error('Error fetching providers:', error);
+            if (error.response?.status === 401) {
+                router.push('/AdminLogin');
+            } else {
+                setError(error.message || 'Failed to fetch providers');
+            }
+        } finally {
+            setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchProviders();
+    }, [router]);
+
+    useEffect(() => {
+        const darkMode = localStorage.getItem("darkMode") === "true";
+        setIsDarkMode(darkMode);
+
+        const handleThemeChange = () => {
+            const darkMode = localStorage.getItem("darkMode") === "true";
+            setIsDarkMode(darkMode);
+        };
+
+        window.addEventListener('themeChange', handleThemeChange);
+        return () => window.removeEventListener('themeChange', handleThemeChange);
+    }, []);
 
     const handleSeeMore = () => {
         if (isShowingAll) {
-            setDisplayedProviders(serviceProviders.slice(0, 5));
             setCurrentCount(5);
+            setDisplayedProviders(providers.slice(0, 5));
             setIsShowingAll(false);
         } else {
-            const nextCount = currentCount + 5;
-            const nextProviders = serviceProviders.slice(0, nextCount);
-            setDisplayedProviders(nextProviders);
-            setCurrentCount(nextCount);
-            setIsShowingAll(nextCount >= serviceProviders.length);
+            setCurrentCount(providers.length);
+            setDisplayedProviders(providers);
+            setIsShowingAll(true);
         }
     };
 
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error}</div>;
+    const handleViewProfile = (userId: number) => {
+        router.push(`/Profile/${userId}`);
+    };
+
+    const filterProviders = () => {
+        let filtered = providers;
+
+        if (searchTerm) {
+            filtered = filtered.filter(provider =>
+                provider.user.profile?.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                provider.user.profile?.lastName.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        if (typeFilter !== "ALL") {
+            filtered = filtered.filter(provider => provider.type === typeFilter);
+        }
+
+        if (verificationFilter !== "ALL") {
+            const isVerified = verificationFilter === "VERIFIED";
+            filtered = filtered.filter(provider => provider.isVerified === isVerified);
+        }
+
+        if (subscriptionFilter !== "ALL") {
+            filtered = filtered.filter(provider => provider.subscriptionLevel === subscriptionFilter);
+        }
+
+        const sortedFiltered = sortProviders(filtered, sortOrder);
+        setDisplayedProviders(sortedFiltered.slice(0, currentCount));
+        setIsShowingAll(sortedFiltered.length <= currentCount);
+    };
+
+    const sortProviders = (providersToSort: ServiceProvider[], order: 'asc' | 'desc') => {
+        return [...providersToSort].sort((a, b) => {
+            return order === 'desc' ? b.id - a.id : a.id - b.id;
+        });
+    };
+
+    const handleSort = () => {
+        const newOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+        setSortOrder(newOrder);
+        const sortedProviders = sortProviders(
+            searchTerm ? displayedProviders : providers,
+            newOrder
+        );
+        setDisplayedProviders(sortedProviders.slice(0, currentCount));
+    };
+
+    useEffect(() => {
+        filterProviders();
+    }, [searchTerm, typeFilter, verificationFilter, subscriptionFilter, providers]);
+
+    if (error) {
+        return (
+            <div className={`${navStyles.layout} ${isDarkMode ? navStyles.darkMode : ''}`}>
+                <Nav />
+                <div className={`${navStyles.mainContent} ${isDarkMode ? navStyles.darkMode : ''}`}>
+                    <div className={`${tableStyles.container} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                        <h1>Error</h1>
+                        <p className={tableStyles.error}>{error}</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <div className={`${navStyles.layout} ${isDarkMode ? navStyles.darkMode : ''}`}>
+                <Nav />
+                <div className={`${navStyles.mainContent} ${isDarkMode ? navStyles.darkMode : ''}`}>
+                    <div className={`${tableStyles.container} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                        <h1>Loading service providers...</h1>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className={navStyles.layout}>
+        <div className={`${navStyles.layout} ${isDarkMode ? navStyles.darkMode : ''}`}>
             <Nav />
-            <div className={navStyles.mainContent}>
-                <div className={tableStyles.container}>
-                    <h1>List of Service Providers</h1>
-
-                    {/* Search and Filter Controls */}
+            <div className={`${navStyles.mainContent} ${isDarkMode ? navStyles.darkMode : ''}`}>
+                <div className={`${tableStyles.container} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                    <h1 className={`${tableStyles.title} ${isDarkMode ? tableStyles.darkMode : ''}`}>Service Providers</h1>
+                    
                     <div className={tableStyles.controls}>
                         <div className={tableStyles.searchContainer}>
                             <input
                                 type="text"
-                                placeholder="Search by name, brand name..."
+                                placeholder="Search providers..."
+                                className={`${tableStyles.searchInput} ${isDarkMode ? tableStyles.darkMode : ''}`}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className={tableStyles.searchInput}
                             />
                         </div>
                         <div className={tableStyles.filterContainer}>
                             <select
+                                className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}
                                 value={typeFilter}
                                 onChange={(e) => setTypeFilter(e.target.value)}
-                                className={tableStyles.filterSelect}
                             >
                                 <option value="ALL">All Types</option>
-                                {Array.from(new Set(serviceProviders.map(provider => provider.type)))
-                                    .map(type => (
-                                        <option key={type} value={type}>{type}</option>
-                                    ))}
+                                <option value="SPONSOR">Sponsor</option>
+                                <option value="SUBSCRIBER">Subscriber</option>
                             </select>
-
                             <select
-                                value={eligibilityFilter}
-                                onChange={(e) => setEligibilityFilter(e.target.value)}
-                                className={tableStyles.filterSelect}
+                                className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}
+                                value={verificationFilter}
+                                onChange={(e) => setVerificationFilter(e.target.value)}
                             >
-                                <option value="ALL">All Eligibility</option>
-                                <option value="ELIGIBLE">Eligible</option>
-                                <option value="NOT_ELIGIBLE">Not Eligible</option>
+                                <option value="ALL">All Verification Status</option>
+                                <option value="VERIFIED">Verified</option>
+                                <option value="UNVERIFIED">Not Verified</option>
                             </select>
-
                             <select
+                                className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}
                                 value={subscriptionFilter}
                                 onChange={(e) => setSubscriptionFilter(e.target.value)}
-                                className={tableStyles.filterSelect}
                             >
-                                <option value="ALL">All Subscriptions</option>
-                                {Array.from(new Set(serviceProviders.map(provider => provider.subscriptionLevel)))
-                                    .filter(Boolean)
-                                    .map(level => (
-                                        <option key={level} value={level}>{level}</option>
-                                    ))}
+                                <option value="ALL">All Subscription Levels</option>
+                                <option value="BASIC">Basic</option>
+                                <option value="PREMIUM">Premium</option>
+                                <option value="VIP">VIP</option>
                             </select>
-
                             <select
+                                className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}
                                 value={sortOrder}
-                                onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
-                                className={tableStyles.filterSelect}
+                                onChange={handleSort}
                             >
-                                <option value="desc">Most Followers</option>
-                                <option value="asc">Least Followers</option>
+                                <option value="desc">Newest First</option>
+                                <option value="asc">Oldest First</option>
                             </select>
                         </div>
                     </div>
 
-                    <table className={tableStyles.table}>
-                        <thead>
-                            <tr>
-                                <th className={tableStyles.th}>ID</th>
-                                <th className={tableStyles.th}> Image</th>
-                                <th className={tableStyles.th}>User Name</th>
-                                <th className={tableStyles.th}>First Name</th>
-                                <th className={tableStyles.th}>Last Name</th>
-                                <th className={tableStyles.th}>Type</th>
-                                <th className={tableStyles.th}>Brand Name</th>
-                                <th className={tableStyles.th}>Subscription Level</th>
-                                <th className={tableStyles.th}>Is Eligible</th>
-                                <th className={tableStyles.th}>Followers Count</th>
-                                <th className={tableStyles.th}>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {displayedProviders.map(provider => (
-                                <tr key={provider.id} className={tableStyles.tr}>
-                                    <td className={tableStyles.td}>{provider.id}</td>
-                                    <td className={tableStyles.td}>
-                                        <img
-                                            src={provider.user.profile?.image?.url || "/default-profile.png"}
-                                            alt="Profile"
-                                            style={{
-                                                width: "30px",
-                                                height: "30px",
-                                                borderRadius: "50%",
-                                            }}
-                                        />
-                                    </td>
-                                    <td className={tableStyles.td}>{provider.user.name}</td>
-                                    <td className={tableStyles.td}>{provider.user.profile?.firstName || 'N/A'}</td>
-                                    <td className={tableStyles.td}>{provider.user.profile?.lastName || 'N/A'}</td>
-                                    <td className={tableStyles.td}>{provider.type}</td>
-                                    <td className={tableStyles.td}>{provider.brandName}</td>
-                                    <td className={tableStyles.td}>{provider.subscriptionLevel}</td>
-                                    <td className={tableStyles.td}>{provider.isEligible ? 'Yes' : 'No'}</td>
-                                    <td className={tableStyles.td}>{provider.followerCount}</td>
-                                    <td className={tableStyles.td}>
-                                        <button 
-                                            className={`${tableStyles.actionButton} ${tableStyles.editButton}`}
-                                            onClick={() => handleViewProfile(provider.user.id)}
-                                        >
-                                            View Profile
-                                        </button>
-                                    </td>
+                    <div className={`${tableStyles.tableWrapper} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                        <table className={`${tableStyles.table} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                            <thead>
+                                <tr>
+                                <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>ID</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Profile</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Name</th>
+                           
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Type</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Badge</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Subscription</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Status</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Credit Card</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>ID Card</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>License</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Passport</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Created At</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {serviceProviders.length > 5 && (
+                            </thead>
+                            <tbody>
+                                {displayedProviders.map((provider) => (
+                                    <tr key={provider.id} className={`${tableStyles.tr} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.id}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                                            
+                                            {provider.user.profile?.image ? (
+                                                <Image
+                                                    src={provider.user.profile.image.url}
+                                                    alt="Profile"
+                                                    width={40}
+                                                    height={40}
+                                                    className={tableStyles.userImage}
+                                                />
+                                            ) : (
+                                                <div className={tableStyles.noImage}>No Image</div>
+                                            )}
+                                        </td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                                            {provider.user.profile?.firstName} {provider.user.profile?.lastName}
+                                        </td>
+                                       
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.type}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.badge || 'N/A'}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.subscriptionLevel || 'N/A'}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                                            <span className={`${tableStyles.badge} ${provider.isVerified ? tableStyles.verified : tableStyles.unverified}`}>
+                                                {provider.isVerified ? 'Verified' : 'Not Verified'}
+                                            </span>
+                                        </td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.creditCardId || 'N/A'}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.idCardNumber || 'N/A'}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.licenseNumber || 'N/A'}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.passportNumber || 'N/A'}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{new Date(provider.createdAt).toLocaleDateString()}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                                            <button
+                                                onClick={() => handleViewProfile(provider.userId)}
+                                                className={`${tableStyles.actionButton} ${tableStyles.viewButton} ${isDarkMode ? tableStyles.darkMode : ''}`}
+                                            >
+                                                View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {providers.length > 5 && (
                         <div className={tableStyles.seeMoreContainer}>
                             <button 
-                                className={tableStyles.seeMoreButton}
+                                className={`${tableStyles.seeMoreButton} ${isDarkMode ? tableStyles.darkMode : ''}`}
                                 onClick={handleSeeMore}
                             >
                                 {isShowingAll ? 'See Less' : 'See More'}
@@ -232,6 +306,4 @@ const ListOfServiceProviders: React.FC = () => {
             </div>
         </div>
     );
-};
-
-export default ListOfServiceProviders;
+}

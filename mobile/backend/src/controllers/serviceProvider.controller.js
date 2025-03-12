@@ -52,6 +52,7 @@ class ServiceProviderController {
     // Fetch all service providers with required fields
     async getAllServiceProviders(req, res) {
         try {
+            console.log('Fetching all service providers...');
             const serviceProviders = await prisma.serviceProvider.findMany({
                 include: {
                     user: {
@@ -63,18 +64,24 @@ class ServiceProviderController {
                             }
                         }
                     }
+                },
+                orderBy: {
+                    createdAt: 'desc'
                 }
             });
+            
+            console.log(`Found ${serviceProviders.length} service providers`);
+            
             res.status(200).json({
                 success: true,
-                data: serviceProviders,
+                data: serviceProviders
             });
         } catch (error) {
             console.error("Error fetching service providers:", error);
             res.status(500).json({
                 success: false,
                 message: "Failed to fetch service providers",
-                error: error.message,
+                error: error.message
             });
         }
     }
@@ -143,6 +150,35 @@ class ServiceProviderController {
                 success: false,
                 message: "Failed to fetch service provider",
                 error: error.message
+            });
+        }
+    }
+
+    // Add a delete service provider method
+    async deleteServiceProvider(req, res) {
+        const { id } = req.params;
+        try {
+            const deletedProvider = await prisma.serviceProvider.delete({
+                where: { id: parseInt(id) },
+            });
+
+            if (deletedProvider) {
+                return res.status(200).json({
+                    success: true,
+                    message: 'Service provider deleted successfully',
+                });
+            } else {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Service provider not found',
+                });
+            }
+        } catch (error) {
+            console.error('Error deleting service provider:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to delete service provider',
+                error: error.message,
             });
         }
     }

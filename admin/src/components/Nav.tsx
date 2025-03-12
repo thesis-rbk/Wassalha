@@ -161,11 +161,12 @@ export default function Nav() {
             {user ? (
               <div className={styles.userProfile}>
                 <img 
-                  src={user.profile?.image?.url}
-                  alt="User" 
+                  src={user.profile?.image?.url }
+                  alt="Admin" 
                   className={styles.userImage}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
+                    target.src = '/default-admin-image.png';
                   }}
                 />
                 <div className={styles.userInfo}>

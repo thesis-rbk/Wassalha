@@ -1,11 +1,30 @@
 import { User } from './User';
+
 export interface ServiceProvider {
     id: number;
     userId: number;
-    type: string;
-    brandName?: string;
+    type: 'SPONSOR' | 'SUBSCRIBER';  // From ServiceProviderType enum
+    isVerified: boolean;
+    badge?: string;
     subscriptionLevel?: string;
-    isEligible: boolean;
-    followerCount?: number;
-    user: User; // Include user data with profile
+    creditCardId?: string;
+    idCardNumber?: string;
+    licenseNumber?: string;
+    passportNumber?: string;
+    user: {
+        name: string;
+        email: string;
+        profile?: {
+            firstName: string;
+            lastName: string;
+            bio?: string;
+            isBanned: boolean;
+            isVerified: boolean;
+            image?: {
+                url: string;
+            };
+        };
+    };
+    createdAt: string;
+    updatedAt: string;
 }

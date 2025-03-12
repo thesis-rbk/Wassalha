@@ -38,7 +38,13 @@ const server = http.createServer(app);
 app.use(morgan("dev"));
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Authorization']
+}));
 app.use(express.json());
 
 // Serve static files from the "uploads" directory
@@ -69,12 +75,13 @@ app.use("/api/mobile/requests", mobileRequestRoutes);
 app.use("/api/mobile/goods", mobileGoodsRoutes);
 app.use("/api/process", processRoutes);
 
-// Error handling middleware
+// Add error logging middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Error:', err);
   res.status(500).json({
     success: false,
     error: "Something went wrong!",
+    message: err.message
   });
 });
 

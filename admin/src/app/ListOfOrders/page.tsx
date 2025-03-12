@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../types/api';  // Update import path
 import Nav from "../../components/Nav";
 import navStyles from '../../styles/Nav.module.css';
 import tableStyles from '../../styles/Table.module.css';
 import { Order } from '../../types/Order';
 
 export default function ListOfOrders() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [displayedOrders, setDisplayedOrders] = useState<Order[]>([]);
   const [currentCount, setCurrentCount] = useState(5);
@@ -20,8 +22,12 @@ export default function ListOfOrders() {
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   const filterAndSortOrders = (orders: Order[]) => {
+    if (!orders.length) return [];
+    
     return orders
       .filter((order) => {
+        if (!order?.traveler?.profile) return false;
+        
         const searchMatch = searchTerm.toLowerCase() === '' || 
           `${order.traveler.profile.firstName} ${order.traveler.profile.lastName}`
             .toLowerCase()
@@ -29,7 +35,7 @@ export default function ListOfOrders() {
 
         const statusMatch = statusFilter === "ALL" || order.orderStatus === statusFilter;
         const paymentMatch = paymentFilter === "ALL" || 
-          order.payment[0]?.status === paymentFilter;
+          (order.payment?.[0]?.status === paymentFilter);
 
         return searchMatch && statusMatch && paymentMatch;
       })
@@ -43,26 +49,38 @@ export default function ListOfOrders() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`);
+        setIsLoading(true);
+        setError(null);
+        const response = await api.get('/api/orders');
+        console.log('API Response:', response); // Debug log
+        
+        if (!response.data.success) {
+          throw new Error(response.data.error || 'Failed to fetch orders');
+        }
+        
         const data = response.data.data;
         setOrders(data);
         const filtered = filterAndSortOrders(data);
         setDisplayedOrders(filtered.slice(0, currentCount));
         setIsShowingAll(filtered.length <= currentCount);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching orders:", error);
+        setError(error.message || 'Failed to fetch orders');
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchOrders();
-  }, [searchTerm, statusFilter, paymentFilter, sortOrder, currentCount]);
+  }, []);
 
-  // Update displayed orders when filters change
   useEffect(() => {
-    const filtered = filterAndSortOrders(orders);
-    setDisplayedOrders(filtered.slice(0, currentCount));
-    setIsShowingAll(filtered.length <= currentCount);
-  }, [searchTerm, statusFilter, paymentFilter, sortOrder, orders, currentCount]);
+    if (!isLoading) {
+      const filtered = filterAndSortOrders(orders);
+      setDisplayedOrders(filtered.slice(0, currentCount));
+      setIsShowingAll(filtered.length <= currentCount);
+    }
+  }, [searchTerm, statusFilter, paymentFilter, sortOrder, orders, currentCount, isLoading]);
 
   const handleDelete = async (orderId: number) => {
     setOrderToDelete(orderId);
@@ -72,7 +90,7 @@ export default function ListOfOrders() {
   const confirmDelete = async () => {
     if (!orderToDelete) return;
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/${orderToDelete}`);
+      await api.delete(`/api/orders/${orderToDelete}`);
       setOrders(orders.filter(order => order.id !== orderToDelete));
       setShowConfirmation(false);
       alert('Order deleted successfully');
@@ -94,6 +112,33 @@ export default function ListOfOrders() {
       setIsShowingAll(nextCount >= orders.length);
     }
   };
+
+  if (error) {
+    return (
+      <div className={navStyles.layout}>
+        <Nav />
+        <div className={navStyles.mainContent}>
+          <div className={tableStyles.container}>
+            <h1>Error</h1>
+            <p className={tableStyles.error}>{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className={navStyles.layout}>
+        <Nav />
+        <div className={navStyles.mainContent}>
+          <div className={tableStyles.container}>
+            <h1>Loading orders...</h1>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={navStyles.layout}>

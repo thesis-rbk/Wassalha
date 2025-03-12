@@ -10,6 +10,8 @@ export interface Order {
     request: {
       goodsLocation: string;
       goodsDestination: string;
+      goods: any;
+      user: any;
     };
     totalAmount: number;
     createdAt: string;
@@ -18,9 +20,13 @@ export interface Order {
       status: 'PENDING' | 'COMPLETED' | 'REFUND' | 'FAILED' | 'PROCCESSING';
     }[];
     orderStatus: 'PENDING' | 'IN_TRANSIT' | 'DELIVERED';
-    pickup: {
+    pickup?: {
       location: string;
-      scheduledTime: string;
+      scheduledTime: string | null;
+    } | null;
+    goodsProcess?: {
+      status: string;
+      events: any[];
     };
   }
   

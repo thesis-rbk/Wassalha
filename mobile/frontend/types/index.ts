@@ -21,3 +21,5 @@ export * from './ProfileState';
 export * from './ProfileImage';
 
 export * from './Role';
+
+export * from './Traveler';

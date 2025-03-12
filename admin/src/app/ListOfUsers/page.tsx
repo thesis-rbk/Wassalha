@@ -198,8 +198,9 @@ export default function ListOfUsers() {
               <thead>
                 <tr>
                   <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>ID</th>
+                  <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Image</th>
                   <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Name</th>
-                  <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}> Image</th>
+          
                   <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Email</th>
                   <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Phone Number</th>
                   <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Role</th>
@@ -214,10 +215,10 @@ export default function ListOfUsers() {
                 {displayedUsers.map((user) => (
                   <tr key={user.id} className={`${tableStyles.tr} ${isDarkMode ? tableStyles.darkMode : ''}`}>
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.id}</td>
-                    <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.name}</td>
+                   
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
                       <img
-                        src={user.profile?.image?.url }
+                        src={user.profile?.image?.url}
                         alt="Profile"
                         style={{
                           width: "40px",
@@ -227,6 +228,7 @@ export default function ListOfUsers() {
                         }}
                       />
                     </td>
+                    <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.name}</td>
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.email}</td>
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.phoneNumber || 'N/A'}</td>
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.role}</td>

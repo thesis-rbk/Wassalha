@@ -1,5 +1,5 @@
 'use client';
-
+import api from '../../types/api';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Nav from "../../components/Nav";

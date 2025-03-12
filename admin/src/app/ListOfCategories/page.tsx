@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../types/api';
 import Nav from "../../components/Nav";
 import navStyles from '../../styles/Nav.module.css';
 import tableStyles from '../../styles/Table.module.css';
@@ -40,7 +40,7 @@ const ListOfCategories: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`);
+        const response = await api.get('/api/categories');
         const data = response.data.data;
         setCategories(data);
         const filtered = filterAndSortCategories(data);
@@ -76,7 +76,7 @@ const ListOfCategories: React.FC = () => {
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/categories/create`, newCategory);
+      const response = await api.post('/api/categories/create', newCategory);
       setCategories([...categories, response.data.data]);
       setNewCategory({ name: '', description: '' });
       setError('');
@@ -88,7 +88,7 @@ const ListOfCategories: React.FC = () => {
 
   const handleToggleDisable = async (id: number, currentState: boolean) => {
     try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/categories/disable`, { id });
+      await api.put('/api/categories/disable', { id });
       setCategories(categories.map(category => 
         category.id === id 
           ? { ...category, isDisabled: !currentState }

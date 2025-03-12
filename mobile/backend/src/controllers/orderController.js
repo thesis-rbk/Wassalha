@@ -20,13 +20,27 @@ const getAllOrders = async (req, res) => {
             }
           }
         },
-        traveler: true
+        traveler: {
+          include: {
+            profile: {
+              include: {
+                image: true
+              }
+            }
+          }
+        },
+        payment: true,
+        pickup: true
       }
     });
     res.json({ success: true, data: orders });
   } catch (error) {
     console.error('Error fetching orders:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch orders' });
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch orders',
+      details: error.message 
+    });
   }
 };
 
@@ -85,12 +99,6 @@ const createOrder = async (req, res) => {
         error: 'An order already exists for this request' 
       });
     }
-    
-    // Also update the request status to ACCEPTED
-    await prisma.request.update({
-      where: { id: parseInt(requestId) },
-      data: { status: 'ACCEPTED' }
-    });
     
     // Create order with GoodsProcess
     const order = await prisma.order.create({
@@ -170,22 +178,51 @@ const updateOrder = async (req, res) => {
   }
 };
 
-// Add this new controller method
+// Update this controller method to add authorization
 const updateOrderStatus = async (req, res) => {
   try {
     const orderId = parseInt(req.params.id);
     const { status } = req.body;
+    const userId = req.user.id; // Get the authenticated user's ID
 
-    // Start a transaction to handle the cancellation process
-    const result = await prisma.$transaction(async (prisma) => {
-      const order = await prisma.order.findUnique({
-        where: { id: orderId },
-        include: { 
-          goodsProcess: true,
-          request: true
-        }
+    // First, get the order with related data
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { 
+        goodsProcess: true,
+        request: true,
+        traveler: true
+      }
+    });
+
+    if (!order) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Order not found' 
       });
+    }
 
+    // Check authorization based on the action
+    if (status === 'CANCELLED') {
+      // Only the request owner (service owner) or the traveler can cancel
+      if (order.request.userId !== userId && order.travelerId !== userId) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'You are not authorized to cancel this order' 
+        });
+      }
+    } else {
+      // For other status updates, only the traveler can update
+      if (order.travelerId !== userId) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Only the traveler can update this order status' 
+        });
+      }
+    }
+
+    // Start a transaction to handle the status update process
+    const result = await prisma.$transaction(async (prisma) => {
       if (status === 'CANCELLED') {
         // First, delete any events associated with the process
         await prisma.processEvent.deleteMany({
@@ -225,7 +262,7 @@ const updateOrderStatus = async (req, res) => {
             create: {
               fromStatus: order.goodsProcess.status,
               toStatus: status,
-              changedByUserId: parseInt(req.body.userId),
+              changedByUserId: userId,
               note: `Status updated to ${status}`
             }
           }
@@ -245,6 +282,67 @@ const updateOrderStatus = async (req, res) => {
       success: false, 
       error: 'Failed to update order status'
     });
+  }
+};
+
+// Confirm order (for service owner)
+const confirmOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    
+    // Get the order
+    const order = await prisma.order.findUnique({
+      where: { id: parseInt(id) },
+      include: { request: true, goodsProcess: true }
+    });
+    
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    
+    // Check if user is the request owner
+    if (order.request.userId !== userId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Only the request owner can confirm this order' 
+      });
+    }
+    
+    // Update order status - now we can use CONFIRMED
+    const updatedOrder = await prisma.order.update({
+      where: { id: parseInt(id) },
+      data: { orderStatus: 'CONFIRMED' }
+    });
+    
+    // Update request status to ACCEPTED
+    await prisma.request.update({
+      where: { id: order.requestId },
+      data: { status: 'ACCEPTED' }
+    });
+    
+    // Update goods process if needed
+    if (order.goodsProcessId) {
+      await prisma.goodsProcess.update({
+        where: { id: order.goodsProcessId },
+        data: { 
+          status: 'CONFIRMED',
+          events: {
+            create: {
+              fromStatus: order.goodsProcess.status,
+              toStatus: 'CONFIRMED',
+              changedByUserId: userId,
+              note: 'Order confirmed by service owner'
+            }
+          }
+        }
+      });
+    }
+    
+    res.json({ success: true, data: updatedOrder });
+  } catch (error) {
+    console.error('Error confirming order:', error);
+    res.status(500).json({ success: false, message: 'Failed to confirm order' });
   }
 };
 
@@ -274,5 +372,6 @@ module.exports = {
   createOrder,
   updateOrder,
   updateOrderStatus,
-  deleteOrder
+  deleteOrder,
+  confirmOrder
 };
