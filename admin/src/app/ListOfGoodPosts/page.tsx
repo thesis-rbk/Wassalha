@@ -78,7 +78,7 @@ const ListOfGoodsPosts: React.FC = () => {
       await api.delete(`/api/goods-posts/${postToDelete}`);
       setGoodsPosts(goodsPosts.filter(post => post.id !== postToDelete));
       setShowConfirmation(false);
-      alert('Goods post deleted successfully');
+      // alert('Goods post deleted successfully');
     } catch (error) {
       console.error("Error deleting goods post:", error);
       alert('Failed to delete goods post');

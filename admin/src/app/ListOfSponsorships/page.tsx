@@ -19,6 +19,8 @@ const ListOfSponsorships: React.FC = () => {
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
     const [availablePlatforms, setAvailablePlatforms] = useState<string[]>([]);
     const [availableDurations, setAvailableDurations] = useState<number[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const getDurationCategory = (days: number): string => {
         if (days <= 30) return "Monthly";
@@ -79,9 +81,14 @@ const ListOfSponsorships: React.FC = () => {
                     setSponsorships(sponsorshipsData);
                     setDisplayedSponsorships(filtered.slice(0, 5));
                     setIsShowingAll(filtered.length <= 5);
+                } else {
+                    setError('Failed to fetch sponsorships');
                 }
             } catch (error) {
                 console.error('Error fetching sponsorships:', error);
+                setError('Error fetching sponsorships');
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -98,9 +105,17 @@ const ListOfSponsorships: React.FC = () => {
 
         try {
             await api.delete(`/api/sponsorships/${sponsorshipToDelete}`);
-            setSponsorships(sponsorships.filter(sponsorship => sponsorship.id !== sponsorshipToDelete));
+            
+            // Update the sponsorships state
+            const updatedSponsorships = sponsorships.filter(sponsorship => sponsorship.id !== sponsorshipToDelete);
+            setSponsorships(updatedSponsorships);
+
+            // Re-filter and sort the sponsorships
+            const filtered = filterAndSortSponsorships(updatedSponsorships);
+            setDisplayedSponsorships(filtered.slice(0, currentCount));
+            setIsShowingAll(filtered.length <= currentCount);
+
             setShowConfirmation(false);
-            alert('Sponsorship deleted successfully');
         } catch (error) {
             console.error("Error deleting sponsorship:", error);
             alert('Failed to delete sponsorship');
@@ -121,7 +136,8 @@ const ListOfSponsorships: React.FC = () => {
         }
     };
 
-    if (sponsorships.length === 0) return <div>Loading...</div>;
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error}</div>;
 
     return (
         <div className={navStyles.layout}>

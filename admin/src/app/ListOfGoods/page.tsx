@@ -78,9 +78,17 @@ const ListOfGoods: React.FC = () => {
 
     try {
       await api.delete(`/api/goods/${goodToDelete}`);
-      setGoods(goods.filter(good => good.id !== goodToDelete));
+      
+      // Update the goods state
+      const updatedGoods = goods.filter(good => good.id !== goodToDelete);
+      setGoods(updatedGoods);
+
+      // Re-filter and sort the goods
+      const filtered = filterAndSortGoods(updatedGoods);
+      setDisplayedGoods(filtered.slice(0, currentCount));
+      setIsShowingAll(filtered.length <= currentCount);
+
       setShowConfirmation(false);
-      alert('Good deleted successfully');
     } catch (error) {
       console.error("Error deleting good:", error);
       alert('Failed to delete good');

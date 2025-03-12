@@ -79,16 +79,27 @@ const ListOfRequests: React.FC = () => {
   };
 
   const confirmDelete = async () => {
-    if (!requestToDelete) return;
+    if (!requestToDelete) {
+        console.error("No request ID to delete");
+        return;
+    }
 
     try {
-      await api.delete(`/api/requests/${requestToDelete}`);
-      setRequests(requests.filter(request => request.id !== requestToDelete));
-      setShowConfirmation(false);
-      alert('Request deleted successfully');
+        console.log("Attempting to delete request with ID:", requestToDelete);
+
+        await api.delete(`/api/requests/${requestToDelete}`);
+        
+        const updatedRequests = requests.filter(request => request.id !== requestToDelete);
+        setRequests(updatedRequests);
+
+        const filtered = filterAndSortRequests(updatedRequests);
+        setDisplayedRequests(filtered.slice(0, currentCount));
+        setIsShowingAll(filtered.length <= currentCount);
+
+        setShowConfirmation(false);
     } catch (error) {
-      console.error("Error deleting request:", error);
-      alert('Failed to delete request');
+        console.error("Error deleting request:", error);
+        alert('Failed to delete request');
     }
   };
 

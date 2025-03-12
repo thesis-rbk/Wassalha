@@ -105,9 +105,17 @@ const ListOfSubscriptions: React.FC = () => {
 
         try {
             await api.delete(`/api/subscriptions/${subscriptionToDelete}`);
-            setSubscriptions(subscriptions.filter(subscription => subscription.id !== subscriptionToDelete));
+            
+            // Update the subscriptions state
+            const updatedSubscriptions = subscriptions.filter(subscription => subscription.id !== subscriptionToDelete);
+            setSubscriptions(updatedSubscriptions);
+
+            // Re-filter and sort the subscriptions
+            const filtered = filterAndSortSubscriptions(updatedSubscriptions);
+            setDisplayedSubscriptions(filtered.slice(0, currentCount));
+            setIsShowingAll(filtered.length <= currentCount);
+
             setShowConfirmation(false);
-            alert('Subscription deleted successfully');
         } catch (error) {
             console.error("Error deleting subscription:", error);
             alert('Failed to delete subscription');

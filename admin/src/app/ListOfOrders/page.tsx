@@ -93,7 +93,7 @@ export default function ListOfOrders() {
       await api.delete(`/api/orders/${orderToDelete}`);
       setOrders(orders.filter(order => order.id !== orderToDelete));
       setShowConfirmation(false);
-      alert('Order deleted successfully');
+      // alert('Order deleted successfully');
     } catch (error) {
       console.error("Error deleting order:", error);
       alert('Failed to delete order');

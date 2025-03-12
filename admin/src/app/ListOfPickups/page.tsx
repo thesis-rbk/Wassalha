@@ -84,9 +84,17 @@ const PickupList: React.FC = () => {
 
         try {
             await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/pickups/${pickupToDelete}`);
-            setPickups(pickups.filter(pickup => pickup.id !== pickupToDelete));
+            
+            // Update the pickups state
+            const updatedPickups = pickups.filter(pickup => pickup.id !== pickupToDelete);
+            setPickups(updatedPickups);
+
+            // Re-filter and sort the pickups
+            const filtered = filterAndSortPickups(updatedPickups);
+            setDisplayedPickups(filtered.slice(0, currentCount));
+            setIsShowingAll(filtered.length <= currentCount);
+
             setShowConfirmation(false);
-            alert('Pickup deleted successfully');
         } catch (error) {
             console.error("Error deleting pickup:", error);
             alert('Failed to delete pickup');

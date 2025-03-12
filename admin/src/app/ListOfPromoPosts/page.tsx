@@ -88,7 +88,7 @@ const ListOfPromoPosts: React.FC = () => {
       await api.delete(`/api/promo-posts/${postToDelete}`);
       setPromoPosts(promoPosts.filter(post => post.id !== postToDelete));
       setShowConfirmation(false);
-      alert('Promo post deleted successfully');
+      // alert('Promo post deleted successfully');
     } catch (error) {
       console.error("Error deleting promo post:", error);
       alert('Failed to delete promo post');
