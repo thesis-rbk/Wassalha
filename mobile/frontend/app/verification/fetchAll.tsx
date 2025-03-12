@@ -1,107 +1,223 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import axiosInstance from '@/config';
+import { useNavigation } from '@react-navigation/native';
 
-interface Sponsor {
+type Sponsorship = {
     id: number;
     name: string;
-    description?: string;
     price: number;
-    duration: number;
-    type: string; // Assuming SubscriptionType is a string
-    categoryId: number;
+    description: string;
+    status: string;
     isActive: boolean;
-}
+    sponsor: {
+        user: {
+            name: string;
+            category: string;  // Changed 'type' to 'category'
+        };
+    };
+    recipient?: {
+        name: string; // Optional because we won't fetch recipient if active
+    };
+};
 
-const SponsorCard: React.FC<{ sponsorId: number }> = ({ sponsorId }) => {
-    const [sponsor, setSponsor] = useState<Sponsor | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+const SponsorshipsScreen = () => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [minPrice, setMinPrice] = useState('');
+    const [maxPrice, setMaxPrice] = useState('');
+    const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
+    const [loading, setLoading] = useState(false);
+    const navigation = useNavigation();
+
+    // Fetch sponsorship data from the API
+    const fetchSponsorships = async () => {
+        setLoading(true);
+        try {
+            const response = await axiosInstance.get('api/search', {
+                params: {
+                    nameContains: searchQuery,
+                    minPrice: minPrice || undefined,
+                    maxPrice: maxPrice || undefined,
+                },
+            });
+            setSponsorships(response.data);
+        } catch (error) {
+            console.error('Error fetching sponsorships:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchSponsor = async () => {
-            try {
-                const response = await fetch(`http://localhost:5000/api/allSub`);
-                console.log("hellooooo", response)
-                if (!response.ok) {
-                    throw new Error('Failed to fetch sponsor data');
-                }
-                const data: Sponsor = await response.json();
-                setSponsor(data);
-            } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-                setError(errorMessage);
-            } finally {
-                setLoading(false);
-            }
-        };
+        fetchSponsorships();
+    }, [searchQuery, minPrice, maxPrice]);
 
-        fetchSponsor();
-    }, [sponsorId]);
+    // Handle "Buy" button press (for now, it's just a placeholder function)
+    const handleBuyPress = (sponsorshipId: number) => {
+        alert(`Buying Sponsorship with ID: ${sponsorshipId}`);
+    };
 
-    if (loading) {
-        return <ActivityIndicator size="large" color="#0000ff" />;
-    }
-    if (error) {
-        return <Text style={styles.errorText}>{error}</Text>;
-    }
-    if (!sponsor) {
-        return null;
-    }
+    // Navigate to the "Add Sponsorship" screen when the plus button is pressed
+    const handleAddSponsorshipPress = () => {
+        navigation.push('verification/CreateSponsorPost'); // Use `navigate()` here
+    };
+
+    // Render the sponsorship card
+    const renderItem = ({ item }: { item: Sponsorship }) => (
+        <View
+            style={[
+                styles.card,
+                { borderColor: item.isActive ? 'green' : '#ccc' }, // If active, green border, otherwise gray
+            ]}
+        >
+            <Text style={styles.cardTitle}>{item.name}</Text>
+            <Text style={styles.cardDetails}>Price: ${item.price}</Text>
+            <Text style={styles.cardDetails}>Sponsor Category: {item.sponsor.user.category}</Text>
+            {item.status === 'inactive' && item.recipient && (
+                <Text style={styles.cardDetails}>Recipient: {item.recipient.name}</Text>
+            )}
+            <Text style={styles.cardDetails}>Description: {item.description}</Text>
+
+            <View style={styles.statusContainer}>
+                <Text
+                    style={[
+                        styles.cardStatus,
+                        { color: item.isActive ? 'green' : 'gray' }, // Active = green, inactive = gray
+                    ]}
+                >
+                    {item.isActive ? 'Active' : 'Inactive'}
+                </Text>
+            </View>
+
+            <TouchableOpacity
+                style={styles.buyButton}
+                onPress={() => handleBuyPress(item.id)} // Handle buy press with the sponsorship ID
+            >
+                <Text style={styles.buyButtonText}>Buy</Text>
+            </TouchableOpacity>
+        </View>
+    );
 
     return (
-        <View style={styles.card}>
-            <Text style={styles.name}>{sponsor.name}</Text>
-            {sponsor.description && <Text style={styles.description}>{sponsor.description}</Text>}
-            <Text style={styles.price}>Price: ${sponsor.price.toFixed(2)}</Text>
-            <Text style={styles.duration}>Duration: {sponsor.duration} days</Text>
-            <Text style={styles.type}>Type: {sponsor.type}</Text>
-            <Text style={styles.status}>Status: {sponsor.isActive ? 'Active' : 'Inactive'}</Text>
+        <View style={styles.container}>
+            {/* Search Bar */}
+            <View style={styles.searchContainer}>
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search Sponsorships"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                />
+                <TouchableOpacity onPress={handleAddSponsorshipPress}>
+                    <Text style={styles.plusButton}>+</Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* Price Range Inputs */}
+            <View style={styles.priceRangeContainer}>
+                <TextInput
+                    style={styles.priceInput}
+                    placeholder="Min Price"
+                    value={minPrice}
+                    keyboardType="numeric"
+                    onChangeText={setMinPrice}
+                />
+                <TextInput
+                    style={styles.priceInput}
+                    placeholder="Max Price"
+                    value={maxPrice}
+                    keyboardType="numeric"
+                    onChangeText={setMaxPrice}
+                />
+            </View>
+
+            {/* Sponsorships List */}
+            {loading ? (
+                <Text>Loading...</Text>
+            ) : (
+                <FlatList
+                    data={sponsorships}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item.id.toString()}
+                />
+            )}
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    card: {
-        padding: 16,
-        margin: 16,
-        borderRadius: 8,
-        backgroundColor: '#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
+    container: {
+        flex: 1,
+        padding: 20,
     },
-    name: {
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    searchInput: {
+        flex: 1,
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 5,
+        paddingLeft: 10,
+    },
+    plusButton: {
+        fontSize: 30,
+        marginLeft: 10,
+        color: '#000',
+    },
+    priceRangeContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
+    priceInput: {
+        width: '45%',
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 5,
+        paddingLeft: 10,
+    },
+    card: {
+        padding: 15,
+        marginBottom: 15,
+        borderWidth: 2,
+        borderRadius: 10,
+    },
+    cardTitle: {
         fontSize: 18,
         fontWeight: 'bold',
     },
-    description: {
+    cardDetails: {
         fontSize: 14,
-        color: '#666',
-        marginVertical: 8,
+        marginTop: 5,
     },
-    price: {
+    cardStatus: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginTop: 10,
+    },
+    statusContainer: {
+        marginTop: 10,
+    },
+    buyButton: {
+        backgroundColor: 'blue',
+        padding: 10,
+        marginTop: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+        position: 'absolute',
+        bottom: 15,
+        right: 15,
+    },
+    buyButtonText: {
+        color: '#fff',
         fontSize: 16,
         fontWeight: 'bold',
     },
-    duration: {
-        fontSize: 14,
-        color: '#666',
-    },
-    type: {
-        fontSize: 14,
-        color: '#666',
-    },
-    status: {
-        fontSize: 14,
-        color: '#666',
-    },
-    errorText: {
-        color: 'red',
-        textAlign: 'center',
-        marginTop: 20,
-    },
 });
 
-export default SponsorCard;
+export default SponsorshipsScreen;

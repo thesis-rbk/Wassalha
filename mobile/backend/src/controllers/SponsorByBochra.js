@@ -13,7 +13,7 @@ const sponsor = {
                     duration,
                     platform,
                     category: {
-                        connect: { id: categoryId }
+                        connect: { id: 11 }
                     },
                     sponsor: {
                         connect: { id: sponsorId }
@@ -21,8 +21,8 @@ const sponsor = {
                     recipient: recipientId ? {
                         connect: { id: recipientId }
                     } : undefined,
-                    product,
-                    amount,
+                    product: "hellloooo",
+                    amount: 23,
                     status: "pending",
                 },
             });
@@ -93,11 +93,153 @@ const sponsor = {
     },
     allSub: async (req, res) => {
         try {
-            const subscriptions = await prisma.subscription.findMany({})
+            const subscriptions = await prisma.sponsorship.findMany({ include: { category: true } })
             res.status(200).send(subscriptions)
         } catch (err) {
             console.log("errrrr", err)
             res.status(400).send({ errrrr: err })
+        }
+    },
+    search: async (req, res) => {
+        const {
+            nameContains,
+            descriptionContains,
+            platformContains,
+            productContains,
+            statusContains,
+            minPrice,
+            maxPrice,
+            minDuration,
+            maxDuration,
+            minAmount,
+            maxAmount,
+            sponsorNameContains,
+            recipientNameContains
+        } = req.query;
+
+        try {
+            console.log("helloooo query", req.query);
+
+            // If no filters provided, return all sponsorships
+            if (!nameContains && !descriptionContains && !platformContains && !productContains &&
+                !statusContains && !minPrice && !maxPrice && !minDuration && !maxDuration &&
+                !minAmount && !maxAmount && !sponsorNameContains && !recipientNameContains) {
+                const allSponsorships = await prisma.sponsorship.findMany({
+                    include: {
+                        category: true,
+                        sponsor: { include: { user: true } },
+                        recipient: true,
+                        users: true
+                    }
+                });
+                return res.status(200).json(allSponsorships);
+            }
+
+            // Filtered search
+            const filteredSponsorships = await prisma.sponsorship.findMany({
+                where: {
+                    OR: [
+                        nameContains && {
+                            name: {
+                                contains: nameContains,
+                            }
+                        },
+                        descriptionContains && {
+                            description: {
+                                contains: descriptionContains,
+                            }
+                        },
+                        platformContains && {
+                            platform: {
+                                contains: platformContains,
+                            }
+                        },
+                        productContains && {
+                            product: {
+                                contains: productContains,
+                            }
+                        },
+                        statusContains && {
+                            status: {
+                                contains: statusContains,
+                            }
+                        },
+                        sponsorNameContains && {
+                            sponsor: {
+                                user: {
+                                    name: {
+                                        contains: sponsorNameContains,
+                                    }
+                                }
+                            }
+                        },
+                        recipientNameContains && {
+                            recipient: {
+                                name: {
+                                    contains: recipientNameContains,
+                                }
+                            }
+                        }
+                    ].filter(Boolean),
+                    AND: [
+                        minPrice && {
+                            price: { gte: Number(minPrice) }
+                        },
+                        maxPrice && {
+                            price: { lte: Number(maxPrice) }
+                        },
+                        minDuration && {
+                            duration: { gte: Number(minDuration) }
+                        },
+                        maxDuration && {
+                            duration: { lte: Number(maxDuration) }
+                        },
+                        minAmount && {
+                            amount: { gte: Number(minAmount) }
+                        },
+                        maxAmount && {
+                            amount: { lte: Number(maxAmount) }
+                        }
+                    ].filter(Boolean)
+                },
+                include: {
+                    category: {
+                        select: { id: true, name: true }
+                    },
+                    sponsor: {
+                        select: {
+                            id: true,
+                            userId: true,
+                            type: true,
+                            isVerified: true,
+                            badge: true,
+                            user: {
+                                select: { id: true, name: true, email: true }
+                            }
+                        }
+                    },
+                    recipient: {
+                        select: { id: true, name: true, email: true }
+                    },
+                    users: {
+                        select: { id: true, name: true }
+                    }
+                }
+            });
+
+            return res.status(200).send(filteredSponsorships);
+        } catch (err) {
+            console.log("errrrrrrrrrrrr", err);
+            return res.status(400).send({ message: 'Something went wrong' });
+        }
+    },
+    getAllCategories: async (req, res) => {
+        try {
+            const categories = await prisma.category.findMany();
+            return res.status(200).send(categories)
+        } catch (error) {
+            console.error("Error fetching categories:", error);
+            throw new Error("Could not fetch categories.");
         }
     }
 }

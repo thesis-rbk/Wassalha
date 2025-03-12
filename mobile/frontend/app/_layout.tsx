@@ -152,8 +152,7 @@ export default function RootLayout() {
 
               }}
             />
-            <Stack.Screen name="test/order-details" />
-            <Stack.Screen name="verification/fetchAll" />
+            <Stack.Screen name="verification/fetchAll" options={{ title: "fetch sub" }} />
           </Stack>
         )}
       </Provider>

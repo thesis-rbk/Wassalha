@@ -9,4 +9,6 @@ router.post("/createSub", sponsor.createSubscription)
 router.get("/allreview/:id", sponsor.rewiewSubscription)
 router.post("/createReview", sponsor.reviewCreate)
 router.get("/allSub", sponsor.allSub)
+router.get("/search", sponsor.search)
+router.get("/allCat", sponsor.getAllCategories)
 module.exports = router
