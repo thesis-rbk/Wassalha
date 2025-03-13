@@ -312,7 +312,7 @@ const AdditionalDetails: React.FC = () => {
         // Use fetch instead of axios for more direct control
         console.log('📤 Using fetch API for file upload...');
 
-        const response = await fetch(`${axiosInstance.defaults.baseURL}api/goods`, {
+        const response = await fetch(`${axiosInstance.defaults.baseURL}/api/goods`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${jwtToken}`,

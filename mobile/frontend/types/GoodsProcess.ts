@@ -1,15 +1,7 @@
 import { Order } from './Order';
 import { ProcessEvent } from './ProcessEvent';
 
-export enum ProcessStatus {
-    INITIALIZED = 'INITIALIZED',
-    CONFIRMED = 'CONFIRMED',
-    PAID = 'PAID',
-    IN_TRANSIT = 'IN_TRANSIT',
-    PICKUP_MEET = 'PICKUP_MEET',
-    FINALIZED = 'FINALIZED',
-    CANCELLED = 'CANCELLED'
-}
+export type ProcessStatus = 'INITIALIZED' | 'CONFIRMED' | 'PAID' | 'IN_TRANSIT' | 'PICKUP_MEET' | 'FINALIZED' | 'CANCELLED';
 
 export interface GoodsProcess {
     id: number;

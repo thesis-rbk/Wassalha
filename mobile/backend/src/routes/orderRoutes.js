@@ -8,6 +8,10 @@ router.get('/', orderController.getAllOrders);
 router.get('/:id', orderController.getOrderById);
 router.post('/', orderController.createOrder);
 router.patch('/:id', orderController.updateOrder);
+<<<<<<< HEAD
+=======
+router.delete('/:id', orderController.deleteOrder);
+>>>>>>> 1c8050f2f326b7b4e6eec9aeffeed1c8a1ebb9aa
 // Add new route for status updates
 router.patch('/:id/status', authenticateUser, orderController.updateOrderStatus);
 // Add this route for confirming an order

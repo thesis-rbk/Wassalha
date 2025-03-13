@@ -10,6 +10,8 @@ import WelcomeAnimation from "@/components/WelcomeAnimation";
 import MainLoading from "@/components/MainLoading";
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { STRIPE_PUBLISHABLE_KEY } from "@/config";
+import { StripeProvider } from '@stripe/stripe-react-native';
+import { STRIPE_PUBLISHABLE_KEY } from "@/config";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {

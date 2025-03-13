@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const requestController = require('../controllers/request.Controller');
-const { authenticateUser } = require('../middleware/middleware');
+const { authenticateUser, authenticateUserOrAdmin } = require('../middleware/middleware');
 
 // Public routes
 router.get('/', requestController.getAllRequests); // Anyone can view requests
@@ -10,9 +10,9 @@ router.get('/:id', requestController.getRequestById);
 // Protected routes - require authentication
 router.post('/', authenticateUser, requestController.createRequest);
 router.get('/user', authenticateUser, requestController.getUserRequests);
-router.put('/:id', authenticateUser, requestController.updateRequest);
-router.delete('/:id', authenticateUser, requestController.deleteRequest);
-router.patch('/:id/status', authenticateUser, requestController.updateRequestStatus);
+router.put('/:id', authenticateUserOrAdmin, requestController.updateRequest);
+router.delete('/:id', requestController.deleteRequest);
+router.patch('/:id/status', authenticateUserOrAdmin, requestController.updateRequestStatus);
 
 // Add this route to get offers for a specific request
 router.get('/:id/offers', requestController.getRequestOffers);

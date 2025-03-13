@@ -2,6 +2,7 @@ const express = require("express");
 const {
   signup,
   loginUser,
+  loginAdmin,
   googleLogin,
   requestPasswordReset,
   resetPassword,
@@ -9,14 +10,20 @@ const {
   updatePreferredCategories,
   completeOnboarding,
   changePassword,
+  getUserById,
+  updateUser,
+  deleteUser,
   getUsers,
+  banUser,
+  unbanUser,
   verifyIdCard,
   verifySelfie,
   verifyCreditCard,
   submitQuestionnaire,
+  verifyUserProfile,
 } = require("../controllers/user.controller");
-const { authenticateUser } = require("../middleware/middleware");
 const { getMessages } = require("../controllers/message.controller");
+const { authenticateUser, authenticateAdmin, authenticateUserOrAdmin } = require("../middleware/middleware");
 const upload = require('../middleware/multerMiddleware');
 
 const router = express.Router();
@@ -24,6 +31,7 @@ const router = express.Router();
 // Public routes
 router.post("/register", signup);
 router.post("/login", loginUser);
+router.post("/admin/login", loginAdmin);
 router.post("/google-login", googleLogin); // New Google login endpoint
 router.post("/reset-password/request", requestPasswordReset);
 router.post("/reset-password", resetPassword);
@@ -32,7 +40,6 @@ router.post("/update-referral-source", updateReferralSource);
 router.post("/update-preferred-categories", updatePreferredCategories);
 router.post("/complete-onboarding", completeOnboarding);
 router.put("/change-password", authenticateUser, changePassword);
-router.get("/", getUsers);
 router.get("/messages", getMessages);
 router.post(
   '/verify-id/:id',
@@ -56,5 +63,14 @@ router.post(
   authenticateUser,
   submitQuestionnaire
 );
+
+// User CRUD routes
+router.get("/", getUsers); // Get all users
+router.get("/:id", getUserById); // Get a single user
+router.put("/:id", updateUser); // Update user
+router.put("/:id/ban", authenticateAdmin, banUser); // Ban/Unban a user
+router.put("/:id/unban", authenticateAdmin, unbanUser); // Unban a user
+router.delete("/:id", authenticateAdmin, deleteUser); // Only admins can delete users
+router.put("/:id/verify-profile", authenticateAdmin, verifyUserProfile);
 
 module.exports = router;

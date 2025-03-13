@@ -72,6 +72,7 @@ enum RequestStatus {
 enum OrderStatus {
   PENDING
   CONFIRMED
+  CONFIRMED
   IN_TRANSIT
   DELIVERED
 }
@@ -225,6 +226,12 @@ enum ProcessStatus {
   CANCELLED
 }
 
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
 // ------------------ MODELS ------------------ //
 
 // ========== USER ==========
@@ -236,6 +243,9 @@ model User {
   googleId               String?
   password               String?
   hasCompletedOnboarding Boolean @default(false)
+  role                   Role    @default(USER)
+  isSponsor              Boolean @default(false)
+  serviceProviderId      String?
   isSponsor              Boolean @default(false)
   serviceProviderId      String?
 
@@ -256,6 +266,9 @@ model User {
   // New relation for user as recipient
   sponsorshipsReceived Sponsorship[] @relation("SponsorshipRecipients")
 
+  // New relation for user as recipient
+  sponsorshipsReceived Sponsorship[] @relation("SponsorshipRecipients")
+
   // Reputation
   reputation Reputation?
 
@@ -267,6 +280,9 @@ model User {
   processEvents   ProcessEvent[]   @relation("UserChangedProcessState")
   serviceProvider ServiceProvider?
   profile         Profile?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -326,9 +342,26 @@ model ServiceProvider {
   creditCard           String? // Optional: Last 4 digits for security
   selfie               String? // Optional: Selfie
   questionnaireAnswers Json?
+  id                   Int                 @id @default(autoincrement())
+  userId               Int                 @unique
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  type                 ServiceProviderType
+  isVerified           Boolean             @default(false)
+  badge                String?
+
+  // Verification Fields
+  idCard               String? // Optional: Government ID
+  passport             String? // Optional: Passport Number
+  license              String? // Optional: Driving License
+  creditCard           String? // Optional: Last 4 digits for security
+  selfie               String? // Optional: Selfie
+  questionnaireAnswers Json?
   // Example attributes
   subscriptionLevel    String?
+  subscriptionLevel    String?
 
+  // Sponsorships relation
+  sponsorships Sponsorship[] @relation("ServiceProviderSponsors")
   // Sponsorships relation
   sponsorships Sponsorship[] @relation("ServiceProviderSponsors")
 
@@ -578,8 +611,19 @@ model Sponsorship {
   duration    Int
   platform    SponsorshipPlatform
   categoryId  Int
-  category    Category?           @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  category    Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   isActive    Boolean             @default(true)
+
+  // New fields from your schema
+  sponsorId   Int
+  sponsor     ServiceProvider @relation("ServiceProviderSponsors", fields: [sponsorId], references: [id])
+  recipientId Int
+  recipient   User            @relation("SponsorshipRecipients", fields: [recipientId], references: [id])
+  product     String
+  amount      Float
+  status      String          @default("pending")
+  category    Category?       @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  isActive    Boolean         @default(true)
 
   // New fields from your schema
   sponsorId   Int
@@ -591,6 +635,9 @@ model Sponsorship {
   status      String          @default("pending")
 
   users User[] @relation("UserSponsorships")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

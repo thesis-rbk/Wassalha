@@ -19,6 +19,7 @@ export * from './PromoPost';
 export * from './InfoItemProps';
 export * from './ProfileState';
 export * from './ProfileImage';
+
 export * from './Role';
 
 export * from './Traveler';

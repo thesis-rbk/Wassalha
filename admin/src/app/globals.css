@@ -1,0 +1,150 @@
+/* Base styles and CSS variables */
+:root {
+  /* Light theme colors */
+  --color-background: #ffffff;
+  --color-card-bg: #ffffff;
+  --color-text: #000000;
+  --color-border: #e5e7eb;
+  --color-hover: #f0f7ff;
+  --color-primary: #018ABE;
+  --color-secondary: #05AFF0;
+  --color-dark: #3703C8;
+  --color-success: #23d400;
+  --color-danger: #e30008;
+  --color-warning: #FFE900;
+  
+  /* Border Radius */
+  --radius-full: 100%;
+  --radius-large: 12px;
+  --radius-medium: 8px;
+  --radius-small: 4px;
+
+  /* Dark theme colors */
+  --dark-background: #1a1a1a;
+  --dark-card-bg: #1a1a1a;
+  --dark-text: #ffffff;
+  --dark-border: #404040;
+  --dark-hover: #3a3a3a;
+  --dark-table-header: #2d2d2d;
+  --dark-table-row: #333333;
+  --dark-table-row-hover: #404040;
+  --dark-input-bg: #333333;
+  --dark-input-text: #ffffff;
+  --dark-button-bg: #404040;
+  --dark-button-text: #ffffff;
+}
+
+/* Dark theme colors */
+:root.dark-mode {
+  --color-background: #121212;
+  --color-card-bg: #1a1a1a;
+  --color-text: #ffffff;
+  --color-border: #2d2d2d;
+  --color-hover: #2d2d2d;
+  --color-primary: #018ABE;
+  --color-secondary: #05AFF0;
+  --color-dark: #3703C8;
+  --color-success: #23d400;
+  --color-danger: #e30008;
+  --color-warning: #FFE900;
+}
+
+/* Typography classes */
+.title-large {
+  font-size: 32px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.title-section {
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.title-sub {
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.body-large {
+  font-size: 18px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.body-medium {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.body-small {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.caption {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+.footnote {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  overflow-y: auto;
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+/* Add these styles for better layout handling */
+main {
+  min-height: 100vh;
+  width: 100%;
+  overflow-y: auto;
+}
+
+/* Ensure smooth transitions */
+* {
+  transition: background-color 0.3s ease, 
+              color 0.3s ease, 
+              border-color 0.3s ease,
+              box-shadow 0.3s ease;
+}
+
+/* Light mode scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #0081985d;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f0f7ff;
+}
+
+/* Dark mode scrollbar */
+.dark-mode ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+  background-color: #66b2ff5d;
+  border-radius: 6px;
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
