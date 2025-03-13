@@ -18,7 +18,6 @@ const {
 const upload = require('../middleware/multerMiddleware');
 const { authenticateUser } = require("../middleware/middleware");
 const { getMessages } = require("../controllers/message.controller");
-const upload = require('../middleware/multerMiddleware');
 
 const router = express.Router();
 

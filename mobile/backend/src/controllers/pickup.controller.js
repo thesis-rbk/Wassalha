@@ -371,7 +371,66 @@ const updatePickupStatus = async (req, res) => {
     return res.status(500).json({ message: 'An error occurred while updating the pickup status' });
   }
 };
+const getPickupSuggestionsByPickupId = async (req, res) => {
+  try {
+    // Get pickupId from route parameter
+    const { pickupId } = req.params;
 
+    // Validate input
+    if (!pickupId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Pickup ID is required',
+      });
+    }
+
+    // Query PickupSuggestion records by pickupId only
+    const suggestions = await prisma.pickupSuggestion.findMany({
+      where: {
+        pickupId: parseInt(pickupId, 10), // Convert to integer
+      },
+      include: {
+        pickup: {
+          select: {
+            id: true,
+            pickupType: true,
+            status: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc', // Latest suggestions first
+      },
+    });
+
+    // Check if any suggestions were found
+    if (suggestions.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No suggestions found for this pickup',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: suggestions,
+    });
+  } catch (error) {
+    console.error('Error fetching pickup suggestions:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+};
 // Export the controller with updated handlePickup
 module.exports = { 
   getPickupsRequesterByUserIdHandler, 
@@ -380,5 +439,6 @@ module.exports = {
   acceptPickup, 
   updatePickupStatus,
   getPickupsTravelerByUserId,
-  getPickupsTravelerByUserIdHandler
+  getPickupsTravelerByUserIdHandler,
+  getPickupSuggestionsByPickupId
 };

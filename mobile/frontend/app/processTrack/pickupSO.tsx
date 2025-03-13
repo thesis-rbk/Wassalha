@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import ProgressBar from "../../components/ProgressBar";
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, FlatList, ActivityIndicator, Text } from "react-native";
+import { View, StyleSheet, FlatList, ActivityIndicator, Text, TouchableOpacity } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import axiosInstance from "../../config";
@@ -27,6 +27,8 @@ export default function PickupOwner() {
   const [pickups, setPickups] = useState<Pickup[]>([]);
   const [showPickup, setShowPickup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<any[]>([]); // State for suggestions
+  const [showSuggestions, setShowSuggestions] = useState(false); // Toggle suggestions view
   const { user } = useSelector((state: RootState) => state.auth);
   const userId = user?.id;
 
@@ -44,7 +46,7 @@ export default function PickupOwner() {
         `/api/pickup/requester`,
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Added token to headers
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -113,6 +115,34 @@ export default function PickupOwner() {
     setShowPickup(true);
   };
 
+  const fetchSuggestions = async (pickupId: number) => {
+    try {
+      setIsLoading(true);
+      const token = await AsyncStorage.getItem("jwtToken");
+      if (!token) throw new Error("No authentication token found");
+
+      const response = await axiosInstance.get(
+        `/api/pickup/history/${pickupId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },        }
+      );
+
+      if (response.data.success) {
+        setSuggestions(response.data.data);
+        setShowSuggestions(true);
+      } else {
+        alert("No suggestions found for this pickup.");
+      }
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+      alert("Failed to fetch suggestions. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const isTraveler = (pickup: Pickup) => userId === pickup.order.travelerId;
 
   const renderItem = ({ item }: { item: Pickup }) => {
@@ -121,9 +151,18 @@ export default function PickupOwner() {
 
     return (
       <View style={styles.card}>
+        <View style={styles.cardHeader}>
         <Text style={styles.sectionTitle}>
           Order #{item.orderId} - {item.pickupType}
         </Text>
+        <TouchableOpacity
+          style={styles.suggestionsLink}
+          onPress={() => fetchSuggestions(item.id)}
+        >
+          <Text style={styles.suggestionsText}>See Previous</Text>
+          <Text style={styles.suggestionsText}>Suggestions</Text>
+        </TouchableOpacity>
+      </View>
 
         <View style={styles.orderRow}>
           <View style={styles.iconContainer}>
@@ -245,35 +284,82 @@ export default function PickupOwner() {
     );
   };
 
-  return (
-    <ThemedView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Pickup Options</Text>
-        <Text style={styles.subtitle}>
-          Choose how you'd like to receive your item.
-        </Text>
-        <ProgressBar currentStep={4} steps={progressSteps} />
-      </View>
-
-      {showPickup ? (
-        <Pickups pickupId={pickupId} />
-      ) : isLoading && pickups.length === 0 ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" />
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
+  const renderSuggestions = () => (
+    <ThemedView style={styles.suggestionsContainer}>
+      <Text style={styles.suggestionsTitle}>Previous Suggestions</Text>
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#64748b" />
+      ) : suggestions.length === 0 ? (
+        <Text style={styles.noSuggestionsText}>No previous suggestions found.</Text>
       ) : (
         <FlatList
-          data={pickups}
-          renderItem={renderItem}
+          data={suggestions}
+          renderItem={({ item }) => (
+            <View style={styles.suggestionItem}>
+              <Text style={styles.suggestionText}>
+                {item.pickupType} by {item.user.name}
+              </Text>
+              <Text style={styles.suggestionDetail}>
+                Location: {item.location || "N/A"}, {item.address || "N/A"}
+              </Text>
+              <Text style={styles.suggestionDetail}>
+                Scheduled: {item.scheduledTime ? new Date(item.scheduledTime).toLocaleString() : "N/A"}
+              </Text>
+              <Text style={styles.suggestionDetail}>
+                Created: {new Date(item.createdAt).toLocaleString()}
+              </Text>
+            </View>
+          )}
           keyExtractor={(item) => item.id.toString()}
-          refreshing={isLoading}
-          onRefresh={fetchPickups}
-          contentContainerStyle={styles.listContainer}
-          ListEmptyComponent={
-            <Text style={styles.noImageText}>No pickup requests found.</Text>
-          }
+          contentContainerStyle={styles.suggestionsList}
         />
+      )}
+      <BaseButton
+        variant="primary"
+        size="small"
+        style={styles.backButton}
+        onPress={() => setShowSuggestions(false)}
+      >
+        Back to Pickups
+      </BaseButton>
+    </ThemedView>
+  );
+
+  return (
+    <ThemedView style={styles.container}>
+      {showSuggestions ? (
+        renderSuggestions()
+      ) : showPickup ? (
+        <Pickups pickupId={pickupId} />
+      ) : (
+        <>
+          <View style={styles.content}>
+            <Text style={styles.title}>Pickup Options</Text>
+            <Text style={styles.subtitle}>
+              Choose how you'd like to receive your item.
+            </Text>
+            <ProgressBar currentStep={4} steps={progressSteps} />
+          </View>
+
+          {isLoading && pickups.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" />
+              <Text style={styles.loadingText}>Loading...</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={pickups}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id.toString()}
+              refreshing={isLoading}
+              onRefresh={fetchPickups}
+              contentContainerStyle={styles.listContainer}
+              ListEmptyComponent={
+                <Text style={styles.noImageText}>No pickup requests found.</Text>
+              }
+            />
+          )}
+        </>
       )}
     </ThemedView>
   );
@@ -334,11 +420,26 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontFamily: "Poppins-SemiBold",
     fontSize: 18,
     color: "#1e293b",
-    marginBottom: 16,
+  },
+  suggestionsLink: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  suggestionsText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 12,
+    color: "#007AFF",
+    textDecorationLine: "underline",
   },
   orderRow: {
     flexDirection: "row",
@@ -428,5 +529,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     color: "#666",
+  },
+  suggestionsContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  suggestionsTitle: {
+    fontFamily: "Poppins-Bold",
+    fontSize: 20,
+    color: "#1e293b",
+    marginBottom: 16,
+  },
+  suggestionsList: {
+    paddingBottom: 20,
+  },
+  suggestionItem: {
+    backgroundColor: "white",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  suggestionText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 16,
+    color: "#1e293b",
+    marginBottom: 4,
+  },
+  suggestionDetail: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "#64748b",
+  },
+  backButton: {
+    marginTop: 16,
+    alignSelf: "center",
+  },
+  noSuggestionsText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 16,
+    color: "#64748b",
+    textAlign: "center",
+    marginTop: 20,
   },
 });
