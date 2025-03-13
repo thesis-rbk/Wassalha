@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const fetch = require("../controllers/fetch")
-const sponsor = require("../controllers/SponsorByBochra")
+const sponsor = require("../controllers/SponsorSubscription")
 router.get("/besttarveler", fetch.All)
 router.get("/filter", fetch.searchRequestsTraveler)
 router.post("/createSponsor", sponsor.createSponsorShip)
