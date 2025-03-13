@@ -16,7 +16,9 @@ import { SOCKET_URL } from "../../config";
 
 console.log("🚀 Connecting to backend at:", SOCKET_URL);
 
-const socket = io(SOCKET_URL, { transports: ["websocket"] });
+const socket = io(`${SOCKET_URL}/tracking`, { 
+    transports: ["websocket"] 
+});
 
 socket.on("connect", () =>
   console.log("✅ Connected to backend via Socket.IO")

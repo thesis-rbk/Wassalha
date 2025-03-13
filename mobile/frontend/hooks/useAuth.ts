@@ -16,8 +16,11 @@ export function useAuth() {
     try {
       const userData = await AsyncStorage.getItem('user');
       if (userData) {
-        setUser(JSON.parse(userData));
-        // Fetch notifications when user is authenticated
+        const parsedUser = JSON.parse(userData);
+        setUser({
+          ...parsedUser,
+          id: String(parsedUser.id)
+        });
         fetchNotifications();
       }
     } catch (error) {

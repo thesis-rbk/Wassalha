@@ -23,46 +23,37 @@ const useReliableAuth = () => {
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        // First, check if useAuth provided a user
-        if (authUser) {
-          console.log('User found from useAuth:', authUser);
-          setLoading(false);
-          return;
-        }
-
-        // Second, try to load from AsyncStorage 'user'
-        const userData = await AsyncStorage.getItem('user');
-        if (userData) {
-          const parsedUser = JSON.parse(userData);
-          console.log('User found from AsyncStorage:', parsedUser);
-          setTokenUser(parsedUser);
-          setLoading(false);
-          return;
-        }
-
-        // Third, try to decode the JWT token
+        // First try to get token and decode it (source of truth)
         const token = await AsyncStorage.getItem('jwtToken');
         if (token) {
-          try {
-            const tokenParts = token.split('.');
-            if (tokenParts.length === 3) {
-              const payload = JSON.parse(atob(tokenParts[1]));
-              console.log('User found from JWT token:', payload);
+          const tokenParts = token.split('.');
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(atob(tokenParts[1]));
+            if (payload.id) {
+              const normalizedUser = {
+                id: String(payload.id),
+                name: payload.name,
+                email: payload.email
+              };
+              console.log('✨ Token user:', normalizedUser);
               
-              if (payload.id) {
-                setTokenUser({
-                  id: payload.id.toString(),
-                  name: payload.name || 'User',
-                  email: payload.email || ''
-                });
-              }
+              // Update AsyncStorage with token data
+              await AsyncStorage.setItem('user', JSON.stringify(normalizedUser));
+              setTokenUser(normalizedUser);
+              setLoading(false);
+              return;
             }
-          } catch (e) {
-            console.error('Error decoding JWT token:', e);
           }
         }
+
+        // If no valid token, clear user data
+        console.log('⚠️ No valid token found, clearing user data');
+        await AsyncStorage.removeItem('user');
+        setTokenUser(null);
       } catch (error) {
         console.error('Error loading user data:', error);
+        await AsyncStorage.removeItem('user');
+        setTokenUser(null);
       } finally {
         setLoading(false);
       }
@@ -72,7 +63,7 @@ const useReliableAuth = () => {
   }, [authUser, authLoading]);
 
   return {
-    user: authUser || tokenUser,
+    user: tokenUser,
     loading
   };
 };
@@ -84,14 +75,9 @@ export default function OrderPage() {
   const router = useRouter();
 
   // Add a function to check if the current user is the owner of a request
-  const isOwnRequest = (requestUserId: number): boolean => {
+  const isOwnRequest = (requestUserId: number | string): boolean => {
     if (!user || !user.id) return false;
-    
-    // Convert both IDs to strings for comparison
-    const userIdStr = user.id.toString();
-    const requestUserIdStr = requestUserId.toString();
-    
-    return userIdStr === requestUserIdStr;
+    return String(user.id) === String(requestUserId);
   };
 
   // Fetch requests when component mounts or user changes

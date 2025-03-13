@@ -27,12 +27,11 @@ import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { TitleLarge, BodyMedium } from "@/components/Typography";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
-import { User as UserType, Profile, Reputation } from '@/types';
-import { ReputationDisplayProps } from '@/types/ReputationDisplayProps';
-import { useRoleDetection } from '@/hooks/useRoleDetection';
+import ProgressBar from "../../components/ProgressBar";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { decode as atob } from 'base-64';
 import { Picker } from '@react-native-picker/picker';
+import { useRoleDetection } from '@/hooks/useRoleDetection';
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -79,8 +78,13 @@ export default function InitializationSp() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
   
-  // Log received params
-  console.log('InitializationSp received params:', params);
+  // Progress steps
+  const progressSteps = [
+    { id: 1, title: "Initialization", icon: "initialization" },
+    { id: 2, title: "Verification", icon: "verification" },
+    { id: 3, title: "Payment", icon: "payment" },
+    { id: 4, title: "Pickup", icon: "pickup" },
+  ];
 
   const [requestDetails, setRequestDetails] = React.useState<any>({
     goods: {
@@ -125,48 +129,12 @@ export default function InitializationSp() {
   const { role, loading: roleLoading } = useRoleDetection(
     currentUser?.id ? parseInt(currentUser.id) : undefined
   );
-  console.log('🔍 Auth Debug:', {
-    currentUser: currentUser ? 'Exists' : 'Null',
-    userId: currentUser?.id,
-    userEmail: currentUser?.email,
-    token: AsyncStorage.getItem('jwtToken').then(token => 
-      console.log('JWT Token:', token ? 'Exists' : 'Missing')
-    )
-  });
 
   React.useEffect(() => {
     fetchRequestDetails();
   }, [params.id]);
 
   React.useEffect(() => {
-    async function loadUserFromToken() {
-      try {
-        const token = await AsyncStorage.getItem('jwtToken');
-        if (token) {
-          // Try to decode the token to get user info
-          const tokenParts = token.split('.');
-          if (tokenParts.length === 3) {
-            try {
-              const payload = JSON.parse(atob(tokenParts[1]));
-              console.log('Token payload loaded:', payload);
-              
-              if (payload.id) {
-                setCurrentUser({
-                  id: payload.id.toString(),
-                  name: payload.name || 'User from token',
-                  email: payload.email || ''
-                });
-              }
-            } catch (e) {
-              console.error('Error decoding token:', e);
-            }
-          }
-        }
-      } catch (e) {
-        console.error('Error loading user from token:', e);
-      }
-    }
-    
     loadUserFromToken();
   }, []);
 
@@ -189,6 +157,31 @@ export default function InitializationSp() {
     }
   };
 
+  async function loadUserFromToken() {
+    try {
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (token) {
+        const tokenParts = token.split('.');
+        if (tokenParts.length === 3) {
+          try {
+            const payload = JSON.parse(atob(tokenParts[1]));
+            if (payload.id) {
+              setCurrentUser({
+                id: payload.id.toString(),
+                name: payload.name || 'User from token',
+                email: payload.email || ''
+              });
+            }
+          } catch (e) {
+            console.error('Error decoding token:', e);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error loading user from token:', e);
+    }
+  }
+
   const handleMakeOffer = () => {
     setShowOfferForm(true);
   };
@@ -199,11 +192,9 @@ export default function InitializationSp() {
       
       const requestId = Array.isArray(params.id) ? params.id[0] : params.id;
       
-      // Check request status first
       const checkResponse = await axiosInstance.get(`/api/requests/${requestId}`);
       const request = checkResponse.data.data;
       
-      // Check if request is available for offers
       if (request.status !== 'PENDING' || request.order) {
         Alert.alert(
           'Request Not Available',
@@ -213,12 +204,10 @@ export default function InitializationSp() {
         return;
       }
 
-      // Create the tracking number by combining airline code and flight number
       const airlineCode = AIRLINE_CODES[offerDetails.airline];
       const flightNumber = offerDetails.flightNumber;
       const trackingNumber = `${airlineCode}${flightNumber}`;
       
-      // Create new order
       const orderData = {
         requestId: parseInt(requestId),
         travelerId: currentUser?.id,
@@ -229,21 +218,17 @@ export default function InitializationSp() {
         paymentStatus: "ON_HOLD"
       };
 
-      console.log('Submitting order with data:', orderData);
-      
       const response = await axiosInstance.post('/api/orders', orderData);
       
       if (response.status === 201) {
-        Alert.alert(
-          'Offer Submitted',
-          `Your offer has been submitted successfully.\nAirline: ${offerDetails.airline}\nFlight Number: ${trackingNumber}\nDeparture Date: ${orderData.departureDate.toLocaleDateString()}`,
-          [
-            {
-              text: 'View Order',
-              onPress: () => router.push(`../order-details?id=${response.data.data.id}`)
-            }
-          ]
-        );
+        router.replace({
+          pathname: '/screens/OrderSuccessScreen',
+          params: {
+            orderId: response.data.data.id,
+            goodsName: requestDetails.goods.name,
+            destination: requestDetails.goodsDestination
+          }
+        });
       }
     } catch (error: any) {
       console.error('Error submitting offer:', error);
@@ -265,20 +250,7 @@ export default function InitializationSp() {
     return names[0][0].toUpperCase();
   };
 
-  const getRandomGradient = (initials: string) => {
-    // Generate consistent colors based on initials
-    const colors = [
-      ['#FF6B6B', '#845EC2'],
-      ['#4D8076', '#2C73D2'],
-      ['#845EC2', '#D65DB1'],
-      ['#FF9671', '#FFC75F'],
-      ['#008F7A', '#4FFBDF'],
-    ];
-    const index = initials.charCodeAt(0) % colors.length;
-    return colors[index];
-  };
-
-  const UserAvatar = ({ user }: { user: UserType }) => {
+  const UserAvatar = ({ user }: { user: any }) => {
     return (
       <View style={styles.avatarContainer}>
         {user?.profile?.imageId ? (
@@ -304,10 +276,9 @@ export default function InitializationSp() {
     );
   };
 
-  const ReputationDisplay = ({ reputation, isVerified }: { reputation: ReputationDisplayProps; isVerified: boolean }) => {
+  const ReputationDisplay = ({ reputation, isVerified }: { reputation: any; isVerified: boolean }) => {
     return (
       <View style={styles.reputationContainer}>
-        {/* Rating Score */}
         <View style={styles.reputationItem}>
           <View style={styles.ratingHeader}>
             <Star size={16} color="#f59e0b" fill="#f59e0b" />
@@ -320,7 +291,6 @@ export default function InitializationSp() {
           </BodyMedium>
         </View>
 
-        {/* Level Badge */}
         <View style={styles.reputationItem}>
           <View style={styles.levelBadge}>
             <Award size={16} color="#7c3aed" />
@@ -330,7 +300,6 @@ export default function InitializationSp() {
           </View>
         </View>
 
-        {/* Verification Badge */}
         {isVerified && (
           <View style={styles.reputationItem}>
             <View style={styles.verifiedBadgeInline}>
@@ -348,9 +317,7 @@ export default function InitializationSp() {
     return pattern.test(code);
   };
 
-  console.log('InitializationSp requestDetails:', requestDetails);
-
-  if (loading || !requestDetails) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <BodyMedium>Loading...</BodyMedium>
@@ -360,7 +327,6 @@ export default function InitializationSp() {
 
   return (
     <View style={styles.container}>
-      {/* Header matching create-order.tsx */}
       <View style={styles.header}>
         <TitleLarge style={styles.headerTitle}>Request Details</TitleLarge>
         <View style={styles.headerIcons}>
@@ -371,21 +337,19 @@ export default function InitializationSp() {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Product Image */}
+        <ProgressBar currentStep={1} steps={progressSteps} />
+        
         <View style={styles.imageContainer}>
           <Image
             source={{ uri: `${BACKEND_URL}/api/uploads/${requestDetails.goods.image?.filename}` }}
             style={styles.productImage}
             contentFit="cover"
-            onError={(error) => console.error("Image loading error:", error)}
           />
         </View>
 
-        {/* Request Details */}
         <View style={styles.detailsContainer}>
           <TitleLarge style={styles.title}>{requestDetails.goods.name}</TitleLarge>
           
-          {/* Price and Category */}
           <View style={styles.priceCategory}>
             <View style={styles.priceContainer}>
               <DollarSign size={20} color={Colors[colorScheme].primary} />
@@ -398,7 +362,6 @@ export default function InitializationSp() {
             </BodyMedium>
           </View>
 
-          {/* Delivery Details */}
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <MapPin size={20} color={Colors[colorScheme].primary} />
@@ -406,16 +369,6 @@ export default function InitializationSp() {
                 <BodyMedium style={styles.infoLabel}>Route</BodyMedium>
                 <BodyMedium style={styles.infoValue}>
                   {requestDetails.goodsLocation} → {requestDetails.goodsDestination}
-                </BodyMedium>
-              </View>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Calendar size={20} color={Colors[colorScheme].primary} />
-              <View style={styles.infoContent}>
-                <BodyMedium style={styles.infoLabel}>Delivery Date</BodyMedium>
-                <BodyMedium style={styles.infoValue}>
-                  {new Date(requestDetails.date).toLocaleDateString()}
                 </BodyMedium>
               </View>
             </View>
@@ -439,7 +392,6 @@ export default function InitializationSp() {
             </View>
           </View>
 
-          {/* Product Description */}
           {requestDetails.goods.description && (
             <View style={styles.descriptionCard}>
               <View style={styles.sectionHeader}>
@@ -452,7 +404,6 @@ export default function InitializationSp() {
             </View>
           )}
 
-          {/* Requester Information */}
           <View style={styles.requesterSection}>
             <TitleLarge style={styles.sectionTitle}>Request by</TitleLarge>
             
@@ -481,170 +432,158 @@ export default function InitializationSp() {
                   </BodyMedium>
                 </View>
               </BlurView>
-
-              <BaseButton 
-                size="large"
-                onPress={() => Alert.alert(
-                  'Contact Available After Acceptance',
-                  'You will be able to message and coordinate with the requester once they accept your offer.'
-                )}
-                style={styles.contactButton}
-              >
-                <MessageCircle size={20} color="#ffffff" />
-                <BodyMedium style={styles.contactButtonText}>
-                  Contact after acceptance
-                </BodyMedium>
-              </BaseButton>
             </View>
           </View>
 
-          {/* Make Offer Button */}
-          {showOfferForm ? (
-            <View style={styles.offerFormContainer}>
-              <TitleLarge style={styles.formTitle}>Make an Offer</TitleLarge>
-              
-              <View style={styles.formField}>
-                <BodyMedium style={styles.label}>Departure Country</BodyMedium>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={offerDetails.departureCountry}
-                    style={styles.picker}
-                    onValueChange={(value) => setOfferDetails(prev => ({
-                      ...prev,
-                      departureCountry: value
-                    }))}
-                  >
-                    {Object.keys(COUNTRIES).map(country => (
-                      <Picker.Item 
-                        key={country} 
-                        label={country} 
-                        value={country} 
-                      />
-                    ))}
-                  </Picker>
-                </View>
-              </View>
-
-              <View style={styles.formField}>
-                <BodyMedium style={styles.label}>Arrival Country</BodyMedium>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={offerDetails.arrivalCountry}
-                    style={styles.picker}
-                    onValueChange={(value) => setOfferDetails(prev => ({
-                      ...prev,
-                      arrivalCountry: value
-                    }))}
-                  >
-                    {Object.keys(COUNTRIES).map(country => (
-                      <Picker.Item 
-                        key={country} 
-                        label={country} 
-                        value={country} 
-                      />
-                    ))}
-                  </Picker>
-                </View>
-              </View>
-
-              <View style={styles.formField}>
-                <BodyMedium style={styles.label}>Departure Flight</BodyMedium>
-                <View style={styles.flightCodeContainer}>
-                  <View style={[styles.pickerContainer, { flex: 1 }]}>
-                    <Picker
-                      selectedValue={offerDetails.airline}
-                      style={styles.picker}
-                      onValueChange={(value) => {
-                        setOfferDetails(prev => ({
-                          ...prev,
-                          airline: value,
-                          departureFlightCode: `${AIRLINE_CODES[value]}${offerDetails.flightNumber}`
-                        }));
-                      }}
-                    >
-                      {Object.keys(AIRLINE_CODES).map(airline => (
-                        <Picker.Item 
-                          key={airline} 
-                          label={airline} 
-                          value={airline} 
-                        />
-                      ))}
-                    </Picker>
-                  </View>
-                  
-                  <View style={[styles.pickerContainer, { flex: 1 }]}>
-                    <Picker
-                      selectedValue={offerDetails.flightNumber}
-                      style={styles.picker}
-                      onValueChange={(value) => {
-                        setOfferDetails(prev => ({
-                          ...prev,
-                          flightNumber: value,
-                          departureFlightCode: `${AIRLINE_CODES[prev.airline]}${value}`
-                        }));
-                      }}
-                    >
-                      {FLIGHT_NUMBERS.map(num => (
-                        <Picker.Item 
-                          key={num} 
-                          label={num} 
-                          value={num}
-                        />
-                      ))}
-                    </Picker>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.formField}>
-                <BodyMedium style={styles.label}>Estimated Delivery Date</BodyMedium>
-                <TouchableOpacity 
-                  style={styles.dateInput}
-                  onPress={() => setShowDatePicker(true)}
-                >
-                  <BodyMedium>
-                    {offerDetails.deliveryDate.toLocaleDateString()}
-                  </BodyMedium>
-                </TouchableOpacity>
-
-                <DateTimePickerModal
-                  isVisible={showDatePicker}
-                  mode="date"
-                  onConfirm={(date) => {
-                    setShowDatePicker(false);
-                    setOfferDetails(prev => ({...prev, deliveryDate: date}));
-                  }}
-                  onCancel={() => setShowDatePicker(false)}
-                  minimumDate={new Date()}
-                />
-              </View>
-
-              <View style={styles.buttonRow}>
-                <TouchableOpacity 
-                  style={[styles.button, styles.cancelButton]}
-                  onPress={() => setShowOfferForm(false)}
-                >
-                  <BodyMedium style={styles.cancelButtonText}>Cancel</BodyMedium>
-                </TouchableOpacity>
+          {/* Render offer form or "Make an Offer" button only if the current user is not the request creator */}
+          {currentUser?.id !== requestDetails.user?.id && (
+            showOfferForm ? (
+              <View style={styles.offerFormContainer}>
+                <TitleLarge style={styles.formTitle}>Make an Offer</TitleLarge>
                 
-                <BaseButton 
-                  size="large"
-                  onPress={handleSubmitOffer}
-                  style={styles.submitButton}
-                  disabled={!isValidFlightCode(offerDetails.departureFlightCode)}
-                >
-                  <BodyMedium style={styles.submitButtonText}>Submit Offer</BodyMedium>
-                </BaseButton>
+                <View style={styles.formField}>
+                  <BodyMedium style={styles.label}>Departure Country</BodyMedium>
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={offerDetails.departureCountry}
+                      style={styles.picker}
+                      onValueChange={(value) => setOfferDetails(prev => ({
+                        ...prev,
+                        departureCountry: value
+                      }))}
+                    >
+                      {Object.keys(COUNTRIES).map(country => (
+                        <Picker.Item 
+                          key={country} 
+                          label={country} 
+                          value={country} 
+                        />
+                      ))}
+                    </Picker>
+                  </View>
+                </View>
+
+                <View style={styles.formField}>
+                  <BodyMedium style={styles.label}>Arrival Country</BodyMedium>
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={offerDetails.arrivalCountry}
+                      style={styles.picker}
+                      onValueChange={(value) => setOfferDetails(prev => ({
+                        ...prev,
+                        arrivalCountry: value
+                      }))}
+                    >
+                      {Object.keys(COUNTRIES).map(country => (
+                        <Picker.Item 
+                          key={country} 
+                          label={country} 
+                          value={country} 
+                        />
+                      ))}
+                    </Picker>
+                  </View>
+                </View>
+
+                <View style={styles.formField}>
+                  <BodyMedium style={styles.label}>Flight Details</BodyMedium>
+                  <View style={styles.flightCodeContainer}>
+                    <View style={[styles.pickerContainer, { flex: 1 }]}>
+                      <Picker
+                        selectedValue={offerDetails.airline}
+                        style={styles.picker}
+                        onValueChange={(value) => {
+                          setOfferDetails(prev => ({
+                            ...prev,
+                            airline: value,
+                            departureFlightCode: `${AIRLINE_CODES[value]}${prev.flightNumber}`
+                          }));
+                        }}
+                      >
+                        {Object.keys(AIRLINE_CODES).map(airline => (
+                          <Picker.Item 
+                            key={airline} 
+                            label={airline} 
+                            value={airline} 
+                          />
+                        ))}
+                      </Picker>
+                    </View>
+                    
+                    <View style={[styles.pickerContainer, { flex: 1 }]}>
+                      <Picker
+                        selectedValue={offerDetails.flightNumber}
+                        style={styles.picker}
+                        onValueChange={(value) => {
+                          setOfferDetails(prev => ({
+                            ...prev,
+                            flightNumber: value,
+                            departureFlightCode: `${AIRLINE_CODES[prev.airline]}${value}`
+                          }));
+                        }}
+                      >
+                        {FLIGHT_NUMBERS.map(num => (
+                          <Picker.Item 
+                            key={num} 
+                            label={num} 
+                            value={num}
+                          />
+                        ))}
+                      </Picker>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.formField}>
+                  <BodyMedium style={styles.label}>Estimated Delivery Date</BodyMedium>
+                  <TouchableOpacity 
+                    style={styles.dateInput}
+                    onPress={() => setShowDatePicker(true)}
+                  >
+                    <BodyMedium>
+                      {offerDetails.deliveryDate.toLocaleDateString()}
+                    </BodyMedium>
+                  </TouchableOpacity>
+
+                  <DateTimePickerModal
+                    isVisible={showDatePicker}
+                    mode="date"
+                    onConfirm={(date) => {
+                      setShowDatePicker(false);
+                      setOfferDetails(prev => ({...prev, deliveryDate: date}));
+                    }}
+                    onCancel={() => setShowDatePicker(false)}
+                    minimumDate={new Date()}
+                  />
+                </View>
+
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity 
+                    style={[styles.button, styles.cancelButton]}
+                    onPress={() => setShowOfferForm(false)}
+                  >
+                    <BodyMedium style={styles.cancelButtonText}>Cancel</BodyMedium>
+                  </TouchableOpacity>
+                  
+                  <BaseButton 
+                    size="large"
+                    onPress={handleSubmitOffer}
+                    style={styles.submitButton}
+                    disabled={!isValidFlightCode(offerDetails.departureFlightCode)}
+                  >
+                    <BodyMedium style={styles.submitButtonText}>Submit Offer</BodyMedium>
+                  </BaseButton>
+                </View>
               </View>
-            </View>
-          ) : (
-            <BaseButton
-              size="large"
-              onPress={handleMakeOffer}
-              style={styles.makeOfferButton}
-            >
-              <BodyMedium style={styles.makeOfferButtonText}>Make an Offer</BodyMedium>
-            </BaseButton>
+            ) : (
+              <BaseButton
+                size="large"
+                onPress={handleMakeOffer}
+                style={styles.makeOfferButton}
+              >
+                <BodyMedium style={styles.makeOfferButtonText}>Make an Offer</BodyMedium>
+              </BaseButton>
+            )
           )}
         </View>
       </ScrollView>

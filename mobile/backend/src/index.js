@@ -24,9 +24,10 @@ const mobileGoodsRoutes = require("./routes/mobileGoodsRoutes");
 const serviceProviderRoutes = require("./routes/serviceProvider.Routes");
 const orderRoutes = require("./routes/orderRoutes");
 const processRoutes = require("./routes/processRoutes");
+const notificationRoutes = require("./routes/notification.route");
 
 // Import socket
-const trackingSocket = require("./sockets/trackingSocket");
+const { initializeSocket } = require('./sockets');
 const app = express();
 const server = http.createServer(app);
 app.use(morgan("dev"));
@@ -56,6 +57,7 @@ app.use("/api/mobile/goods", mobileGoodsRoutes);
 app.use("/api/service-provider", serviceProviderRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/process", processRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -69,7 +71,7 @@ app.use((err, req, res, next) => {
 
 
 // Initialize socket
-trackingSocket(server);
+initializeSocket(server);
 
 // Start server
 // Use `server.listen()` instead of `app.listen()`

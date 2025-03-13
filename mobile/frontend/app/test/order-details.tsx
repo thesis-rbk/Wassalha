@@ -15,7 +15,7 @@ import { Image } from 'expo-image';
 import { BACKEND_URL } from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Import Traveler types from types directory
-import { Traveler, TravelerProfile, TravelerReputation, TravelerStats } from '@/types';
+//import { Traveler, TravelerProfile, TravelerReputation, TravelerStats } from '@/types';
 
 export default function OrderDetailsScreen() {
   const params = useLocalSearchParams();

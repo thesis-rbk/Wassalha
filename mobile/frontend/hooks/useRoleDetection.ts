@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axiosInstance from '@/config';
 
-export const useRoleDetection = (userId: number | undefined) => {
+export const useRoleDetection = (userId: string | undefined) => {
     const [role, setRole] = useState<'TRAVELER' | 'SHOPPER' | 'BOTH' | 'NONE'>('NONE');
     const [loading, setLoading] = useState(true);
 
@@ -23,7 +23,7 @@ export const useRoleDetection = (userId: number | undefined) => {
                 // Check if user has created any requests (Shopper)
                 const allRequestsResponse = await axiosInstance.get('/api/requests');
                 const userRequests = allRequestsResponse.data?.data?.filter(
-                    (request: any) => request.userId === userId
+                    (request: any) => String(request.userId) === userId
                 ) || [];
                 const isShopper = userRequests.length > 0;
                 console.log(`🛍️ Shopper check: ${isShopper} (${userRequests.length} requests found)`);

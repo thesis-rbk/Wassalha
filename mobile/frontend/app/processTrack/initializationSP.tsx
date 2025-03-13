@@ -32,6 +32,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { decode as atob } from 'base-64';
 import { Picker } from '@react-native-picker/picker';
 import { useRoleDetection } from '@/hooks/useRoleDetection';
+import { io } from 'socket.io-client';
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -72,6 +73,10 @@ const COUNTRIES = {
   "TURKEY": "TR",
   "PORTUGAL": "PT"
 };
+
+// Add this socket initialization outside the component
+// We keep it outside to prevent multiple connections
+const socket = io(`${BACKEND_URL}/notifications`);
 
 export default function InitializationSp() {
   const params = useLocalSearchParams();
@@ -127,7 +132,10 @@ export default function InitializationSp() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { role, loading: roleLoading } = useRoleDetection(
-    currentUser?.id ? parseInt(currentUser.id) : undefined
+    currentUser?.id ? (
+      console.log('🎭 Role detection user ID:', currentUser.id, 'type:', typeof currentUser.id),
+      String(currentUser.id)
+    ) : undefined
   );
 
   React.useEffect(() => {
@@ -135,13 +143,112 @@ export default function InitializationSp() {
   }, [params.id]);
 
   React.useEffect(() => {
+    console.log('🔍 Starting loadUserFromToken effect');
     loadUserFromToken();
   }, []);
 
+  // Add useEffect for socket connection
+  React.useEffect(() => {
+    // Log when socket connects successfully
+    socket.on('connect', () => {
+      console.log('🔌 Socket connected with ID:', socket.id);
+    });
+
+    // Log any connection errors
+    socket.on('connect_error', (error) => {
+      console.error('🔴 Socket connection error:', error);
+    });
+
+    // Cleanup function to disconnect socket when component unmounts
+    return () => {
+      socket.disconnect();
+      console.log('🔌 Socket disconnected');
+    };
+  }, []); // Empty dependency array means this runs once when component mounts
+
+  // Socket connection useEffect - Handles real-time notifications
+  React.useEffect(() => {
+    // Separate async function to handle socket setup
+    const setupSocketConnection = async () => {
+      try {
+        // Safety check: Only proceed if we have a valid user ID
+        // This prevents attempting socket connection before user data loads
+        if (!currentUser?.id) {
+          console.log('⏳ Waiting for user data to load before socket setup...');
+          return; // Exit early if no user data
+        }
+
+        // Log the start of socket setup with user info
+        console.log('🔄 Starting socket setup for user:', {
+          userId: currentUser.id,
+          userName: currentUser.name,
+          socketId: socket.id
+        });
+
+        // Join user's personal notification room
+        // This creates a unique channel for this user's notifications
+        socket.emit('join', currentUser.id);
+        console.log('✅ Successfully joined notification room:', currentUser.id);
+
+        // Set up listener for offer responses
+        // This will catch any accept/reject notifications for offers this user makes
+        socket.on('offer_response_notification', (notification) => {
+          console.log('📩 Received offer response:', notification);
+          
+          // Show different notifications based on the response type
+          if (notification.type === 'OFFER_ACCEPTED') {
+            Alert.alert(
+              '🎉 Offer Accepted!',
+              notification.message || 'Your offer has been accepted.',
+              [{ text: 'OK', onPress: () => console.log('Offer accepted alert closed') }]
+            );
+          } else {
+            Alert.alert(
+              '❌ Offer Rejected',
+              notification.message || 'Your offer has been rejected.',
+              [{ text: 'OK', onPress: () => console.log('Offer rejected alert closed') }]
+            );
+          }
+        });
+
+        // Log successful setup completion
+        console.log('🎯 Socket notification listeners setup complete');
+
+      } catch (error) {
+        // Detailed error logging for debugging
+        console.error('❌ Socket setup error:', {
+          error: error.message,
+          userId: currentUser?.id,
+          socketId: socket.id
+        });
+      }
+    };
+
+    // Call the setup function
+    setupSocketConnection();
+
+    // Cleanup function - runs when component unmounts or user ID changes
+    return () => {
+      if (currentUser?.id) {
+        // Remove all listeners to prevent memory leaks
+        socket.off('offer_response_notification');
+        console.log('🧹 Cleaned up socket listeners for user:', currentUser.id);
+      }
+    };
+  }, [currentUser?.id]); // Only re-run if user ID changes
+
   const fetchRequestDetails = async () => {
     try {
-      console.log('Fetching details for request:', params.id);
+      console.log('🔍 Fetching request details for:', params.id);
       const response = await axiosInstance.get(`/api/requests/${params.id}`);
+      
+      // Log the response data to check requester info
+      console.log('📦 Request details:', {
+        requesterId: response.data.data.user?.id,
+        requesterName: response.data.data.user?.name,
+        requestData: response.data.data
+      });
+
       setRequestDetails((prev: typeof requestDetails) => ({
         ...response.data.data,
         goods: {
@@ -159,26 +266,43 @@ export default function InitializationSp() {
 
   async function loadUserFromToken() {
     try {
+      console.log('🔍 Starting user token load process');
+      
+      // First try to get token and decode it
       const token = await AsyncStorage.getItem('jwtToken');
       if (token) {
         const tokenParts = token.split('.');
         if (tokenParts.length === 3) {
-          try {
-            const payload = JSON.parse(atob(tokenParts[1]));
-            if (payload.id) {
-              setCurrentUser({
-                id: payload.id.toString(),
-                name: payload.name || 'User from token',
-                email: payload.email || ''
-              });
-            }
-          } catch (e) {
-            console.error('Error decoding token:', e);
+          const payload = JSON.parse(atob(tokenParts[1]));
+          console.log('🎫 Token payload:', payload);
+          
+          if (payload.id) {
+            // Always use token data as source of truth
+            const normalizedUser = {
+              id: String(payload.id), // ID 12 from token
+              name: payload.name || 'Najjari',
+              email: payload.email || 'Najjari@gmail.com'
+            };
+            console.log('✨ Saving normalized user:', normalizedUser);
+            
+            // Update AsyncStorage with fresh token data
+            await AsyncStorage.setItem('user', JSON.stringify(normalizedUser));
+            setCurrentUser(normalizedUser);
+            return;
           }
         }
       }
+
+      // If we reach here, either no token or invalid token
+      console.log('⚠️ No valid token found, clearing user data');
+      await AsyncStorage.removeItem('user');
+      setCurrentUser(null);
+      
     } catch (e) {
-      console.error('Error loading user from token:', e);
+      console.error('❌ Error in loadUserFromToken:', e);
+      // On error, clear user data to prevent stale state
+      await AsyncStorage.removeItem('user');
+      setCurrentUser(null);
     }
   }
 
@@ -188,10 +312,27 @@ export default function InitializationSp() {
 
   const handleSubmitOffer = async () => {
     try {
+      // Log both IDs to verify we have them before proceeding
+      console.log('🎯 Offer submission details:', {
+        travelerId: currentUser?.id,
+        requesterId: requestDetails.user?.id,
+        paramsRequesterId: params.requesterId,
+        requestDetails: {
+          user: requestDetails.user,
+          goods: {
+            name: requestDetails.goods.name,
+            destination: requestDetails.goodsDestination
+          }
+        }
+      });
+
       setIsSubmitting(true);
+      console.log('📝 Submit offer - Current user:', currentUser);
+      console.log('📝 Submit offer - User ID type:', typeof currentUser?.id);
       
       const requestId = Array.isArray(params.id) ? params.id[0] : params.id;
       
+      // First check if request is still available
       const checkResponse = await axiosInstance.get(`/api/requests/${requestId}`);
       const request = checkResponse.data.data;
       
@@ -204,13 +345,14 @@ export default function InitializationSp() {
         return;
       }
 
+      // Prepare order data
       const airlineCode = AIRLINE_CODES[offerDetails.airline];
       const flightNumber = offerDetails.flightNumber;
       const trackingNumber = `${airlineCode}${flightNumber}`;
       
       const orderData = {
         requestId: parseInt(requestId),
-        travelerId: currentUser?.id,
+        travelerId: Number(currentUser?.id),
         departureDate: offerDetails.deliveryDate,
         arrivalDate: offerDetails.deliveryDate,
         trackingNumber: trackingNumber,
@@ -218,9 +360,30 @@ export default function InitializationSp() {
         paymentStatus: "ON_HOLD"
       };
 
+      // Save order to database
       const response = await axiosInstance.post('/api/orders', orderData);
       
       if (response.status === 201) {
+        // After successful order creation, emit socket notification
+        socket.emit('offer_made', {
+          requesterId: requestDetails.user.id,  // ID of request creator
+          travelerId: currentUser?.id,         // Current user's ID (traveler)
+          requestDetails: {
+            goodsName: requestDetails.goods.name,
+            destination: requestDetails.goodsDestination,
+            price: requestDetails.goods.price,
+            orderId: response.data.data.id      // Include order ID for reference
+          }
+        });
+
+        // Log notification emission
+        console.log('📤 Emitted offer notification:', {
+          to: requestDetails.user.id,
+          from: currentUser?.id,
+          orderDetails: response.data.data.id
+        });
+
+        // Navigate to success screen
         router.replace({
           pathname: '/screens/OrderSuccessScreen',
           params: {

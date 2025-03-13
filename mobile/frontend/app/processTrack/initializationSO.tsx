@@ -13,6 +13,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Traveler, TravelerProfile, TravelerReputation, TravelerStats } from '@/types';
+import { io } from 'socket.io-client';
+
+// Initialize socket connection outside component
+const socket = io(`${BACKEND_URL}/notifications`);
 
 export default function InitializationSO() {
   const { id, offerId } = useLocalSearchParams<{ id: string, offerId: string }>();
@@ -74,14 +78,95 @@ export default function InitializationSO() {
   }, [offerId, id]);
 
   useEffect(() => {
-    console.log('InitializationSO params:', { id, offerId });
-  }, [id, offerId]);
+    console.log('🔍 InitializationSO Starting with:', {
+        orderId: id,
+        offerId: offerId,
+        currentUserId: user?.id
+    });
+  }, [id, offerId, user]);
+
+  // Socket connection for real-time notifications
+  useEffect(() => {
+    // Separate async function to handle socket setup
+    const setupSocketConnection = async () => {
+        try {
+            // Safety check: Only proceed if we have a valid user ID
+            if (!user?.id) {
+                console.log('⏳ Waiting for user data to load before socket setup...');
+                return; // Exit early if no user data
+            }
+
+            // Log the start of socket setup with user info
+            console.log('🔄 Starting socket setup for user:', {
+                userId: user.id,
+                userName: user.name,
+                socketId: socket.id
+            });
+
+            // Set up connect handler
+            socket.on('connect', () => {
+                console.log('🔌 Socket connected:', {
+                    socketId: socket.id,
+                    userId: user.id
+                });
+                // Join room after connection
+                socket.emit('join', user.id);
+            });
+
+            // Listen for room join confirmation
+            socket.on('joined', (roomId) => {
+                console.log('✅ Room joined confirmation:', {
+                    room: roomId,
+                    userId: user.id
+                });
+            });
+
+            // If already connected, join room
+            if (socket.connected) {
+                console.log('🔄 Socket already connected, joining room');
+                socket.emit('join', user.id);
+            } else {
+                // If not connected, try to connect
+                console.log('🔄 Socket not connected, attempting to connect');
+                socket.connect();
+            }
+
+            console.log('🎯 Socket notification listeners setup complete');
+
+        } catch (error) {
+            // Detailed error logging for debugging
+            console.error('❌ Socket setup error:', {
+                error: error.message,
+                userId: user?.id,
+                socketId: socket.id
+            });
+        }
+    };
+
+    // Call the setup function
+    setupSocketConnection();
+
+    // Cleanup function - runs when component unmounts or user ID changes
+    return () => {
+        if (user?.id) {
+            // Remove all listeners to prevent memory leaks
+            socket.off('connect');
+            socket.off('joined');
+            console.log('🧹 Cleaned up socket listeners for user:', user.id);
+        }
+    };
+}, [user?.id]); // Only re-run if user ID changes
 
   const fetchOfferDetails = async () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get(`/api/offers/${offerId}`);
       setOffer(response.data.data);
+      console.log('Offer details:', {
+        offerId,
+        travelerId: response.data.data?.travelerId,
+        requesterId: user?.id
+      });
     } catch (error) {
       console.error('Error fetching offer details:', error);
       Alert.alert('Error', 'Failed to load offer details');
@@ -765,4 +850,11 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+});
+
+// Add this log in InitializationSO.tsx
+console.log('🔌 Socket URL Check:', {
+    backendUrl: BACKEND_URL,
+    namespace: `${BACKEND_URL}/notifications`,
+    currentSocket: socket?.connected
 });
