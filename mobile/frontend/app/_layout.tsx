@@ -33,6 +33,8 @@ export default function RootLayout() {
   return (
     <StripeProvider
       publishableKey={STRIPE_PUBLISHABLE_KEY}
+      urlScheme="wassalha"
+      merchantIdentifier="merchant.com.wassalha"
     >
       <ThemeProvider>
         <Provider store={store}>
