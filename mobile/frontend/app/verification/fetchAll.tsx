@@ -3,7 +3,7 @@ import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity } from 'r
 import axiosInstance from '@/config';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Sponsorship } from '@/types/Sponsorship';
-import NavigationProp from "@/types/navigation"
+import NavigationProp from '@/types/navigation';
 
 const SponsorshipsScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -51,7 +51,7 @@ const SponsorshipsScreen = () => {
     };
 
     const handleAddSponsorshipPress = () => {
-        navigation.push('verification/CreateSponsorPost'); // Use `navigate()` here
+        navigation.navigate('verification/CreateSponsorPost'); // Use `navigate()` here
     };
 
     // Render the sponsorship card

@@ -11,6 +11,7 @@ declare module "@react-navigation/native-stack" {
 import { StackNavigationProp } from '@react-navigation/stack'
 type RootStackParamList = {
     'verification/CreateSponsorPost': undefined;
+    'verification/FetchAll': undefined; // Add this line
     // Add other screens as needed
 };
 type NavigationProp = StackNavigationProp<RootStackParamList>;

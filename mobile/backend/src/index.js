@@ -32,7 +32,6 @@ const app = express();
 const server = http.createServer(app);
 app.use(morgan("dev"));
 
-const { initializeApp } = require('firebase-admin/app');
 // Middleware
 app.use(cors());
 app.use(express.json());

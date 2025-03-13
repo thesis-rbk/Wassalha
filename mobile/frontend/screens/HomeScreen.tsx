@@ -1,23 +1,13 @@
-<<<<<<< HEAD
 import React, { useEffect, useState } from "react";
-=======
-import React, { useState } from "react";
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 import {
   View,
   StyleSheet,
   ScrollView,
   Image,
   TextInput,
-<<<<<<< HEAD
   Button,
 } from "react-native";
 import axiosInstance from '@/config';
-=======
-  TouchableOpacity,
-  Text,
-} from "react-native";
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 import { TopNavigation } from "@/components/navigation/TopNavigation";
 import { TabBar } from "@/components/navigation/TabBar";
 import { ThemedView } from "@/components/ThemedView";

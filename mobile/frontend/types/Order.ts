@@ -1,5 +1,6 @@
 import { Request } from './Request';
 import { User } from './User';
+import { GoodsProcess } from './GoodsProcess';
 
 export interface Order {
     id: number;
@@ -13,4 +14,5 @@ export interface Order {
     totalAmount?: number;
     paymentStatus: 'ON_HOLD' | 'PAYED' | 'REFUNDED';
     orderStatus: 'PENDING' | 'IN_TRANSIT' | 'DELIVERED';
+    goodsProcess?: GoodsProcess;
 }

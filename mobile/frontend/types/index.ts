@@ -16,3 +16,9 @@ export * from './GoodsProcess';
 export * from './GoodsPost';
 export * from './ServiceProvider';
 export * from './PromoPost';
+export * from './InfoItemProps';
+export * from './ProfileState';
+export * from './ProfileImage';
+export * from './Role';
+
+export * from './Traveler';

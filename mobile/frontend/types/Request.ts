@@ -1,5 +1,8 @@
-import { User } from './User';
-import { Goods } from './Goods';
+import { User } from "./User";
+import { Goods } from "./Goods";
+import { Order } from "./Order";
+
+export type RequestStatus = "PENDING" | "ACCEPTED" | "CANCELLED" | "REJECTED";
 
 export interface Request {
   id: number;
@@ -12,6 +15,7 @@ export interface Request {
   goodsDestination: string;
   pickupId?: number;
   date: Date;
-  status: 'PENDING' | 'ACCEPTED' | 'CANCELLED' | 'REJECTED';
+  status: RequestStatus;
   withBox?: boolean;
+  order?: Order | null;
 }

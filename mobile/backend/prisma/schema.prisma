@@ -71,10 +71,7 @@ enum RequestStatus {
 
 enum OrderStatus {
   PENDING
-  <<<<<<< HEAD
   CONFIRMED
-  =======
-  >>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
   IN_TRANSIT
   DELIVERED
 }

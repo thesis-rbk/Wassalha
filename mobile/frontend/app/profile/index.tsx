@@ -11,10 +11,10 @@ import { BaseButton } from '@/components/ui/buttons/BaseButton';
 import { TitleLarge, BodyMedium } from '@/components/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import CountryFlag from "react-native-country-flag";
-
+import { InfoItemProps, ProfileState, ProfileImage } from '@/types';
 const { width } = Dimensions.get('window');
 
-const countryToCode = {
+const countryToCode: { [key: string]: string } = {
   "USA": "US",
   "FRANCE": "FR",
   "SPAIN": "ES",
@@ -56,9 +56,12 @@ const countryToCode = {
   "OTHER": "XX"
 };
 
+// Add a type definition for the profile state
+
+
 const ProfilePage = () => {
   const { theme } = useTheme();
-  const [profile, setProfile] = useState({
+  const [profile, setProfile] = useState<ProfileState>({
     firstName: '',
     lastName: '',
     bio: '',
@@ -242,20 +245,21 @@ const ProfilePage = () => {
 };
 
 // InfoItem component
-const InfoItem = ({ icon, label, value, theme, isCountry = false }) => (
+
+const InfoItem = ({ icon, label, value, theme, isCountry = false }: InfoItemProps) => (
   <View style={styles.infoItem}>
-    <Ionicons name={icon} size={20} color={Colors[theme].text} style={styles.infoIcon} />
+    <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={20} color={Colors[theme as keyof typeof Colors].text} style={styles.infoIcon} />
     <View style={styles.infoContent}>
-      <Text style={[styles.infoLabel, { color: Colors[theme].text }]}>{label}</Text>
+      <Text style={[styles.infoLabel, { color: Colors[theme as keyof typeof Colors].text }]}>{label}</Text>
       <View style={styles.valueContainer}>
         {isCountry && value !== "Not specified" && (
           <CountryFlag
-            isoCode={countryToCode[value?.toUpperCase()] || value}
+            isoCode={countryToCode[value?.toUpperCase() as keyof typeof countryToCode] || value}
             size={20}
             style={styles.flag}
           />
         )}
-        <Text style={[styles.infoValue, { color: Colors[theme].text }]}>{value}</Text>
+        <Text style={[styles.infoValue, { color: Colors[theme as keyof typeof Colors].text }]}>{value}</Text>
       </View>
     </View>
   </View>
@@ -374,4 +378,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProfilePage;
-
