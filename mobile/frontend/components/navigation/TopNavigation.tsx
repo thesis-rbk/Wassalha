@@ -75,7 +75,7 @@ export function TopNavigation({
 
 
   const menuItems: SideMenu[] = [
-    { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/' },
+    { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/test/Notifications' },
     { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
     { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips', route: '/test/Travel' },
     { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request', route: '/productDetails/create-order' },
@@ -88,7 +88,7 @@ export function TopNavigation({
       if (item.onPress) {
         item.onPress();
       } else if (item.route) {
-        router.push(item.route);
+        router.push(item.route as any);
       }
     } catch (err) {
       console.error('Error from navigation:', err);

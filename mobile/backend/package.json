@@ -45,6 +45,7 @@
     "stripe": "^17.7.0"
   },
   "devDependencies": {
+    "@types/react-navigation": "^3.0.8",
     "prisma": "^6.4.1"
   }
 }

@@ -11,4 +11,6 @@ router.post("/createReview", sponsor.reviewCreate)
 router.get("/allSub", sponsor.allSub)
 router.get("/search", sponsor.search)
 router.get("/allCat", sponsor.getAllCategories)
+router.get("/allNot/:id", sponsor.getAllNotificationById)
+router.post("/payment", sponsor.paymentSponsore)
 module.exports = router

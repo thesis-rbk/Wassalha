@@ -104,6 +104,8 @@ enum PaymentMethod {
   BANKTRANSFER
 }
 
+//credit card and bank transfers
+
 enum PickupType {
   AIRPORT
   IN_PERSON

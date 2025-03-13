@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TextInput, Button, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { StyleSheet, View, Text, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import axiosInstance from '@/config';
-
+import { InputField } from '@/components/InputField';
+import { Dropdown } from '@/components/dropDown'; // Import the reusable Dropdown
+import { BaseButton } from "../../components/ui/buttons/BaseButton"; // Import BaseButton
+import { useNavigation } from 'expo-router';
 const SponsorshipPlatform = {
     FACEBOOK: 'Facebook',
     INSTAGRAM: 'Instagram',
@@ -13,22 +15,22 @@ const SponsorshipPlatform = {
 };
 
 const CreateRequestForm: React.FC = () => {
+    const navigate = useNavigation()
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
     const [duration, setDuration] = useState('');
-    const [platform, setPlatform] = useState(SponsorshipPlatform.FACEBOOK); // Default platform
-    const [categoryId, setCategoryId] = useState(''); // Default category ID should be empty
+    const [platform, setPlatform] = useState<string>(SponsorshipPlatform.FACEBOOK); // Default platform
+    const [categoryId, setCategoryId] = useState<number>(0); // Default category ID should be empty
     const [amount, setAmount] = useState('');
     const [categories, setCategories] = useState<any[]>([]); // Store categories fetched from the backend
     const [loading, setLoading] = useState(false); // Loading state for submission
     const [error, setError] = useState<string | null>(null); // Error state
 
-    // Default values for sponsorId and recipientId
-    const sponsorId = 13; // Example sponsorId, set this to an actual value you want to use
-    const recipientId = 86; // Example recipientId, set this to an actual value you want to use
+    const sponsorId = 3; // Example sponsorId
+    const recipientId = 7; // Example recipientId
 
-    // Fetch categories from the backend using axios
+    // Fetch categories from the backend
     useEffect(() => {
         const fetchCategories = async () => {
             try {
@@ -58,7 +60,7 @@ const CreateRequestForm: React.FC = () => {
             price: parseFloat(price),
             duration: parseInt(duration, 10),
             platform,
-            categoryId: parseInt(categoryId, 10),
+            categoryId,
             amount: parseFloat(amount),
             sponsorId, // Default sponsorId
             recipientId, // Default recipientId
@@ -73,7 +75,7 @@ const CreateRequestForm: React.FC = () => {
             });
 
             if (response.status === 200) {
-                Alert.alert('Success', 'Request created successfully');
+                navigate.goBack()
             } else {
                 setError(response.data.message || 'Something went wrong');
             }
@@ -86,74 +88,90 @@ const CreateRequestForm: React.FC = () => {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.label}>Name</Text>
-            <TextInput
-                style={styles.input}
+            <InputField
+                label="Name"
                 placeholder="Enter name"
                 value={name}
                 onChangeText={setName}
             />
-            <Text style={styles.label}>Description</Text>
-            <TextInput
-                style={styles.input}
+            <InputField
+                label="Description"
                 placeholder="Enter description"
                 value={description}
                 onChangeText={setDescription}
             />
-            <Text style={styles.label}>Price</Text>
-            <TextInput
-                style={styles.input}
+            <InputField
+                label="Price"
                 placeholder="Enter price"
                 value={price}
                 onChangeText={setPrice}
                 keyboardType="numeric"
             />
-            <Text style={styles.label}>Duration (in days)</Text>
-            <TextInput
-                style={styles.input}
+            <InputField
+                label="Duration (in days)"
                 placeholder="Enter duration"
                 value={duration}
                 onChangeText={setDuration}
                 keyboardType="numeric"
             />
-            <Text style={styles.label}>Platform</Text>
-            <Picker
-                selectedValue={platform}
-                style={styles.picker}
-                onValueChange={(itemValue) => setPlatform(itemValue)}
-            >
-                {Object.entries(SponsorshipPlatform).map(([key, value]) => (
-                    <Picker.Item key={key} label={value} value={key} />
-                ))}
-            </Picker>
-            <Text style={styles.label}>Category</Text>
-            <Picker
-                selectedValue={categoryId}
-                style={styles.picker}
-                onValueChange={(itemValue) => setCategoryId(itemValue)}
-            >
-                {categories.length > 0 ? (
-                    categories.map((category) => (
-                        <Picker.Item key={category.id} label={category.name} value={category.id.toString()} />
-                    ))
-                ) : (
-                    <Picker.Item label="Loading categories..." value="" />
-                )}
-            </Picker>
-            <Text style={styles.label}>Amount</Text>
-            <TextInput
-                style={styles.input}
+
+            {/* Amount Input moved below Duration */}
+            <InputField
+                label="Amount"
                 placeholder="Enter amount"
                 value={amount}
                 onChangeText={setAmount}
                 keyboardType="numeric"
             />
 
-            {loading ? (
-                <ActivityIndicator size="large" color="#0000ff" />
-            ) : (
-                <Button title="Submit" onPress={handleSubmit} />
-            )}
+            {/* Category Dropdown */}
+            <View style={styles.dropdownSpacing}>
+                <Text style={styles.label}>Category</Text>
+                <Dropdown
+                    options={categories.length > 0
+                        ? categories.map((category) => ({
+                            label: category.name,
+                            value: category.id.toString(),
+                        }))
+                        : [{ label: 'Loading categories...', value: '' }]}
+                    value={categoryId}
+                    onChange={(value) => setCategoryId(value as number)}
+                    placeholder="Select category"
+                    containerStyle={styles.dropdownContainer}
+                    dropdownStyle={styles.dropdownList}
+                />
+            </View>
+
+            <View style={styles.spacing} />
+
+            {/* Platform Dropdown moved below Category */}
+            <View style={styles.dropdownSpacing}>
+                <Text style={styles.label}>Platform</Text>
+                <Dropdown
+                    options={Object.entries(SponsorshipPlatform).map(([key, value]) => ({
+                        label: value,
+                        value: key,
+                    }))}
+                    value={platform}
+                    onChange={(value) => setPlatform(value as string)}
+                    placeholder="Select platform"
+                    containerStyle={styles.dropdownContainer}
+                    dropdownStyle={styles.dropdownList}
+                />
+            </View>
+
+            <View style={styles.spacing} />
+
+            {/* Submit Button centered */}
+            <View style={styles.submitButtonContainer}>
+                {loading ? (
+                    <ActivityIndicator size="large" color="#0000ff" />
+                ) : (
+                    <BaseButton variant="primary" onPress={handleSubmit}>
+                        Submit
+                    </BaseButton>
+                )}
+            </View>
 
             {error && <Text style={styles.error}>{error}</Text>}
         </ScrollView>
@@ -163,27 +181,33 @@ const CreateRequestForm: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         padding: 16,
+        flexGrow: 1,
     },
     label: {
         fontSize: 16,
         marginBottom: 4,
         fontWeight: 'bold',
     },
-    input: {
-        height: 40,
-        borderColor: '#ccc',
-        borderWidth: 1,
-        marginBottom: 12,
-        paddingHorizontal: 8,
-        borderRadius: 4,
+    dropdownContainer: {
+        marginBottom: 20,
     },
-    picker: {
-        height: 50,
-        marginBottom: 12,
+    dropdownList: {
+        maxHeight: 200,
+    },
+    dropdownSpacing: {
+        marginTop: 20, // Added margin to move dropdowns down
+    },
+    spacing: {
+        marginBottom: 20, // Added consistent spacing between elements
     },
     error: {
         color: 'red',
         marginTop: 10,
+    },
+    submitButtonContainer: {
+        marginTop: 40, // Added more margin to center the button further down
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
 

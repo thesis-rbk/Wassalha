@@ -1,25 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import axiosInstance from '@/config';
-import { useNavigation } from '@react-navigation/native';
-
-type Sponsorship = {
-    id: number;
-    name: string;
-    price: number;
-    description: string;
-    status: string;
-    isActive: boolean;
-    sponsor: {
-        user: {
-            name: string;
-            category: string;  // Changed 'type' to 'category'
-        };
-    };
-    recipient?: {
-        name: string; // Optional because we won't fetch recipient if active
-    };
-};
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { Sponsorship } from '@/types/Sponsorship';
+import NavigationProp from "@/types/navigation"
 
 const SponsorshipsScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -27,9 +11,8 @@ const SponsorshipsScreen = () => {
     const [maxPrice, setMaxPrice] = useState('');
     const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
     const [loading, setLoading] = useState(false);
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp>();
 
-    // Fetch sponsorship data from the API
     const fetchSponsorships = async () => {
         setLoading(true);
         try {
@@ -40,7 +23,10 @@ const SponsorshipsScreen = () => {
                     maxPrice: maxPrice || undefined,
                 },
             });
-            setSponsorships(response.data);
+            const sorted = response.data.sort((a: Sponsorship, b: Sponsorship) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+            setSponsorships(sorted);
         } catch (error) {
             console.error('Error fetching sponsorships:', error);
         } finally {
@@ -52,12 +38,18 @@ const SponsorshipsScreen = () => {
         fetchSponsorships();
     }, [searchQuery, minPrice, maxPrice]);
 
-    // Handle "Buy" button press (for now, it's just a placeholder function)
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchSponsorships();
+        }, [])
+    );
+
+
     const handleBuyPress = (sponsorshipId: number) => {
         alert(`Buying Sponsorship with ID: ${sponsorshipId}`);
     };
 
-    // Navigate to the "Add Sponsorship" screen when the plus button is pressed
     const handleAddSponsorshipPress = () => {
         navigation.push('verification/CreateSponsorPost'); // Use `navigate()` here
     };
@@ -67,22 +59,21 @@ const SponsorshipsScreen = () => {
         <View
             style={[
                 styles.card,
-                { borderColor: item.isActive ? 'green' : '#ccc' }, // If active, green border, otherwise gray
+                { borderColor: item.isActive ? '#ccc' : '#ccc' },
             ]}
         >
-            <Text style={styles.cardTitle}>{item.name}</Text>
+            <Text style={styles.cardTitle}>{item.platform}</Text>
             <Text style={styles.cardDetails}>Price: ${item.price}</Text>
-            <Text style={styles.cardDetails}>Sponsor Category: {item.sponsor.user.category}</Text>
+            <Text style={styles.cardDetails}>Category: {item.category.name}</Text>
             {item.status === 'inactive' && item.recipient && (
                 <Text style={styles.cardDetails}>Recipient: {item.recipient.name}</Text>
             )}
             <Text style={styles.cardDetails}>Description: {item.description}</Text>
-
             <View style={styles.statusContainer}>
                 <Text
                     style={[
                         styles.cardStatus,
-                        { color: item.isActive ? 'green' : 'gray' }, // Active = green, inactive = gray
+                        { color: item.isActive ? 'green' : 'red' }, // Active = green, inactive = gray
                     ]}
                 >
                     {item.isActive ? 'Active' : 'Inactive'}
@@ -97,10 +88,8 @@ const SponsorshipsScreen = () => {
             </TouchableOpacity>
         </View>
     );
-
     return (
         <View style={styles.container}>
-            {/* Search Bar */}
             <View style={styles.searchContainer}>
                 <TextInput
                     style={styles.searchInput}
