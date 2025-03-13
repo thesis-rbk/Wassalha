@@ -766,50 +766,77 @@ select.input {
 
 .imageWrapper {
     position: relative;
-    width: 200px;
-    margin-bottom: 20px;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.profileImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.profilePlaceholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #e0e0e0;
     display: flex;
-    flex-direction: column;
     align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+    font-weight: 500;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.darkMode .profilePlaceholder {
+    background-color: #374151;
+    color: #fff;
 }
 
 .imageUploadContainer {
-    margin-top: 10px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    margin-top: 1rem;
+    text-align: center;
 }
 
 .imageUploadLabel {
-    background-color: var(--color-primary);
+    background-color: #4a90e2;
     color: white;
     padding: 8px 16px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    display: inline-block;
     transition: background-color 0.3s;
-    text-align: center;
-    width: 100%;
-    margin-top: 8px;
 }
 
 .imageUploadLabel:hover {
-    background-color: var(--color-dark);
+    background-color: #357abd;
 }
 
 .imageUploadInput {
     display: none;
 }
 
-/* Dark mode styles */
-:global(.dark-mode) .imageUploadLabel {
-    background-color: var(--color-primary);
-    color: var(--color-text);
+/* Add smooth transitions */
+.profileImage,
+.profilePlaceholder {
+    transition: all 0.3s ease;
 }
 
-:global(.dark-mode) .imageUploadLabel:hover {
-    background-color: var(--color-hover);
+/* Add hover effect */
+.imageWrapper:hover .profileImage,
+.imageWrapper:hover .profilePlaceholder {
+    transform: scale(1.05);
+}
+
+/* Add shadow effect */
+.imageWrapper {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .formContent {

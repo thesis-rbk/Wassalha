@@ -8,6 +8,7 @@ import Nav from "../../components/Nav";
 import Image from 'next/image';
 import { UserProfile } from "../../types/UserProfile";
 import api from "../../lib/api";
+import { User, UserRole } from '../../types/User';
 
 // Create a type for partial profile that makes nested properties optional
 type PartialUserProfile = Partial<Omit<UserProfile, 'profile'>> & {
@@ -17,7 +18,7 @@ type PartialUserProfile = Partial<Omit<UserProfile, 'profile'>> & {
 const Profile: React.FC = () => {
     const searchParams = useSearchParams();
     const id = searchParams.get("id");
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [userProfile, setUserProfile] = useState<User | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -36,10 +37,23 @@ const Profile: React.FC = () => {
     });
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(null);
+    const [popupType, setPopupType] = useState<'success' | 'error'>('success');
+    const [popupMessage, setPopupMessage] = useState<string>('');
+    const [showPopup, setShowPopup] = useState<boolean>(false);
 
     // Handle mounting to prevent hydration mismatch
     useEffect(() => {
         setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        // Get current user's role from localStorage
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+            const parsedUserData = JSON.parse(userData);
+            setCurrentUserRole(parsedUserData.role);
+        }
     }, []);
 
     // Fetch user data
@@ -135,7 +149,10 @@ const Profile: React.FC = () => {
                 ...prev,
                 profile: {
                     ...prev.profile,
-                    isBanned: !isBanned
+                    isBanned: !prev.profile?.isBanned,
+                    firstName: prev.profile?.firstName || '',
+                    lastName: prev.profile?.lastName || '',
+                    isVerified: prev.profile?.isVerified || false
                 }
             } : null);
             alert(data.message || "User status updated successfully");
@@ -315,10 +332,10 @@ const Profile: React.FC = () => {
                 return;
             }
 
-            console.log("Attempting to delete user with ID:", userProfile.id); // Debugging line
+            console.log("Attempting to delete user with ID:", userProfile.id);
 
             const response = await api.delete(
-                `/api/users/${userProfile.id}`,
+                `/api/admin/users/${userProfile.id}`, // Updated endpoint
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -327,9 +344,13 @@ const Profile: React.FC = () => {
             );
 
             if (response.data.success) {
-                alert(response.data.message || "User account deleted successfully");
-                // Redirect to users list page
-                window.location.href = '/ListOfUsers';
+                setPopupType('success');
+                setPopupMessage("User account deleted successfully");
+                setShowPopup(true);
+                setTimeout(() => {
+                    setShowPopup(false);
+                    window.location.href = '/ListOfUsers';
+                }, 2000);
             } else {
                 throw new Error(response.data.error || "Failed to delete user account");
             }
@@ -338,13 +359,84 @@ const Profile: React.FC = () => {
             
             if (axios.isAxiosError(err)) {
                 const errorMessage = err.response?.data?.error || 
-                                   err.response?.data?.details || 
+                                   err.response?.data?.message || 
                                    "Failed to delete user account";
-                alert(`Error: ${errorMessage}`);
+                setPopupType('error');
+                setPopupMessage(`Error: ${errorMessage}`);
+                setShowPopup(true);
+                setTimeout(() => setShowPopup(false), 3000);
             } else {
-                alert("An unexpected error occurred while deleting the account");
+                setPopupType('error');
+                setPopupMessage("An unexpected error occurred while deleting the account");
+                setShowPopup(true);
+                setTimeout(() => setShowPopup(false), 3000);
             }
         }
+    };
+
+    // Update the permission checks
+    const canEditProfile = () => {
+        if (!userProfile?.role || !currentUserRole) return false;
+
+        // Admin can edit their own profile
+        if (userProfile.id === JSON.parse(localStorage.getItem('userData') || '{}').id) {
+            return true;
+        }
+
+        // Super admin can't edit other super admins
+        if (userProfile.role === 'SUPER_ADMIN') {
+            return false;
+        }
+        
+        // Super admin can't edit admins (only delete them)
+        if (userProfile.role === 'ADMIN' && currentUserRole === 'SUPER_ADMIN') {
+            return false;
+        }
+
+        // Regular admins can't edit other admins or super admins
+        if ((userProfile.role === ('ADMIN' as UserRole) || userProfile.role === ('SUPER_ADMIN' as UserRole)) && 
+            currentUserRole === ('ADMIN' as UserRole)) {
+            return false;
+        }
+
+        return currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
+    };
+
+    const canDeleteProfile = () => {
+        // Admin can delete their own profile
+        if (userProfile?.id === JSON.parse(localStorage.getItem('userData') || '{}').id) {
+            return true;
+        }
+
+        // Nobody can delete super admins
+        if (userProfile?.role === 'SUPER_ADMIN') {
+            return false;
+        }
+
+        // Only super admin can delete admins
+        if (userProfile?.role === 'ADMIN') {
+            return currentUserRole === 'SUPER_ADMIN';
+        }
+
+        // Both admin and super admin can delete regular users
+        return currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
+    };
+
+    // Check if current user can ban the profile
+    const canBanProfile = () => {
+        // Can't ban admin or super admin profiles
+        if (userProfile?.role === 'ADMIN' || userProfile?.role === 'SUPER_ADMIN') {
+            return false;
+        }
+
+        // Both admin and super admin can ban regular users
+        return currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
+    };
+
+    // Update the edit form section to prevent role editing for certain cases
+    const canEditRole = () => {
+        // Only super admin can change roles, and only for regular users
+        return currentUserRole === 'SUPER_ADMIN' && userProfile?.role === 'USER';
     };
 
     // In your page.tsx file, add a condition to check if the profile is for an admin
@@ -393,11 +485,20 @@ const Profile: React.FC = () => {
                             <div className={styles.imageWrapper}>
                                 {isEditing ? (
                                     <>
-                                        <img
-                                            src={previewUrl || (userProfile?.profile?.image?.url ?? '')}
-                                            alt={`${userProfile?.name || 'User'}'s profile`}
-                                            className={styles.img}
-                                        />
+                                        {previewUrl || userProfile?.profile?.image?.url ? (
+                                            <img
+                                                src={previewUrl || userProfile?.profile?.image?.url}
+                                                alt={`${userProfile?.profile?.firstName || 'User'}'s profile`}
+                                                className={styles.profileImage}
+                                            />
+                                        ) : (
+                                            <div className={styles.profilePlaceholder}>
+                                                {userProfile?.profile?.firstName?.[0] || 
+                                                 userProfile?.name?.[0] || 
+                                                 userProfile?.email?.[0]?.toUpperCase() || 
+                                                 '?'}
+                                            </div>
+                                        )}
                                         <div className={styles.imageUploadContainer}>
                                             <label htmlFor="imageUpload" className={styles.imageUploadLabel}>
                                                 Change Profile Picture
@@ -412,11 +513,22 @@ const Profile: React.FC = () => {
                                         </div>
                                     </>
                                 ) : (
-                                    <img
-                                        src={userProfile?.profile?.image?.url ?? ''}
-                                        alt={`${userProfile?.name || 'User'}'s profile`}
-                                        className={styles.img}
-                                    />
+                                    <>
+                                        {userProfile?.profile?.image?.url ? (
+                                            <img
+                                                src={userProfile.profile.image.url}
+                                                alt={`${userProfile?.name || 'User'}'s profile`}
+                                                className={styles.profileImage}
+                                            />
+                                        ) : (
+                                            <div className={styles.profilePlaceholder}>
+                                                {userProfile?.profile?.firstName?.[0] || 
+                                                 userProfile?.name?.[0] || 
+                                                 userProfile?.email?.[0]?.toUpperCase() || 
+                                                 '?'}
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                             <div className={styles.label}>ID: {userProfile?.id}</div>
@@ -437,6 +549,7 @@ const Profile: React.FC = () => {
                                         value={updatedProfile.role || userProfile?.role || ""}
                                         onChange={handleInputChange}
                                         className={styles.input}
+                                        disabled={!canEditRole()}
                                     >
                                         <option value="USER">User</option>
                                         <option value="ADMIN">Admin</option>
@@ -610,15 +723,16 @@ const Profile: React.FC = () => {
                                     </div>
                                     <div className={styles.actionButtons}>
                                         <div className={styles.buttonRow}>
-                                            <button
-                                                onClick={handleEditToggle}
-                                                className={`${styles.buttonedit} ${isAdminProfile ? styles.fullWidth : ''}`}
-                                            >
-                                                {isEditing ? "Cancel" : "Edit Profile"}
-                                            </button>
+                                            {canEditProfile() && (
+                                                <button
+                                                    onClick={handleEditToggle}
+                                                    className={`${styles.buttonedit} ${styles.fullWidth}`}
+                                                >
+                                                    Edit Profile
+                                                </button>
+                                            )}
                                             
-                                            {/* Only show ban button for non-admin profiles */}
-                                            {!isAdminProfile && (
+                                            {canBanProfile() && (
                                                 <button
                                                     onClick={handleBanUnban}
                                                     className={`${styles.buttonban} ${userProfile?.profile?.isBanned ? styles.unban : ''}`}
@@ -627,12 +741,14 @@ const Profile: React.FC = () => {
                                                 </button>
                                             )}
                                             
-                                            <button
-                                                onClick={handleDeleteAccount}
-                                                className={styles.buttonDelete}
-                                            >
-                                                Delete Account
-                                            </button>
+                                            {canDeleteProfile() && (
+                                                <button
+                                                    onClick={handleDeleteAccount}
+                                                    className={styles.buttonDelete}
+                                                >
+                                                    Delete Account
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </>
@@ -641,6 +757,15 @@ const Profile: React.FC = () => {
                     </div>
                 </div>
             </div>
+            {showPopup && (
+                <div className={styles.popup}>
+                    {popupType === 'success' ? (
+                        <div className={styles.successPopup}>{popupMessage}</div>
+                    ) : (
+                        <div className={styles.errorPopup}>{popupMessage}</div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

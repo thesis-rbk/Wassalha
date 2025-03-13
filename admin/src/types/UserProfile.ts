@@ -1,8 +1,10 @@
+import { UserRole } from './User';
+
 export interface UserProfile {
     id: number;
-    name: string;
     email: string;
-    role: string;
+    name?: string;
+    role: UserRole;
     profile: {
         firstName: string;
         lastName: string;

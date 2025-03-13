@@ -84,7 +84,6 @@ export default function ListOfUsers() {
     const filteredUsers = users.filter((user) => {
       const searchLower = searchValue.toLowerCase();
       return (
-        user.name.toLowerCase().includes(searchLower) ||
         user.profile?.firstName?.toLowerCase().includes(searchLower) ||
         user.profile?.lastName?.toLowerCase().includes(searchLower) ||
         user.email.toLowerCase().includes(searchLower)
@@ -130,7 +129,6 @@ export default function ListOfUsers() {
       const filteredUsers = users.filter((user) => {
         const searchLower = searchTerm.toLowerCase();
         return (
-          user.name.toLowerCase().includes(searchLower) ||
           user.profile?.firstName?.toLowerCase().includes(searchLower) ||
           user.profile?.lastName?.toLowerCase().includes(searchLower) ||
           user.email.toLowerCase().includes(searchLower)
@@ -144,7 +142,6 @@ export default function ListOfUsers() {
       const filteredUsers = users.filter((user) => {
         const searchLower = searchTerm.toLowerCase();
         return (
-          user.name.toLowerCase().includes(searchLower) ||
           user.profile?.firstName?.toLowerCase().includes(searchLower) ||
           user.profile?.lastName?.toLowerCase().includes(searchLower) ||
           user.email.toLowerCase().includes(searchLower)
@@ -267,10 +264,26 @@ export default function ListOfUsers() {
                           }}
                         />
                       ) : (
-                        <span>No Image</span>
+                        <div
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "50%",
+                            backgroundColor: '#e0e0e0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.2rem',
+                            color: '#666'
+                          }}
+                        >
+                          {user.profile?.firstName?.[0]?.toUpperCase() || 
+                           user.name?.[0]?.toUpperCase() || 
+                           user.email[0].toUpperCase()}
+                        </div>
                       )}
                     </td>
-                    <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.name}</td>
+                    <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.profile?.firstName} {user.profile?.lastName}</td>
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.email}</td>
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.profile?.phoneNumber || 'N/A'}</td>
                     <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{user.profile?.country || 'N/A'}</td>

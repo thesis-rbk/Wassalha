@@ -22,16 +22,17 @@ const AdminLogin = () => {
         { email, password }
       );
 
-      console.log("Login - Full response data:", response.data); // Debug log
+      console.log("Login - Full response data:", response.data);
 
       if (!response.data.user?.id) {
-        console.error("Login - No user ID in response:", response.data); // Debug log
+        console.error("Login - No user ID in response:", response.data);
         throw new Error("No user ID in response");
       }
 
       const userData = {
         id: response.data.user.id,
         name: response.data.user.name,
+        email: response.data.user.email,
         role: response.data.user.role,
         profile: {
           image: {
@@ -40,19 +41,23 @@ const AdminLogin = () => {
         }
       };
 
-      console.log("Login - Storing user data:", userData); // Debug log
+      console.log("Login - Storing user data:", userData);
 
       localStorage.setItem("adminToken", response.data.token);
       localStorage.setItem("userData", JSON.stringify(userData));
 
       // Verify the data was stored correctly
       const storedData = localStorage.getItem("userData");
-      console.log("Login - Verified stored data:", storedData); // Debug log
+      console.log("Login - Verified stored data:", storedData);
 
       router.push("/AdminDashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      setError("Invalid email or password");
+      if (error.response?.status === 403) {
+        setError("Access denied. Admin privileges required.");
+      } else {
+        setError("Invalid email or password");
+      }
     }
   };
 

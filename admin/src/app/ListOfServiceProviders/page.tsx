@@ -289,7 +289,7 @@ export default function ListOfServiceProviders() {
                                          <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.id}</td>
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
                                             
-                                            {provider.user.profile?.image ? (
+                                            {provider.user.profile?.image?.url ? (
                                                 <Image
                                                     src={provider.user.profile.image.url}
                                                     alt="Profile"
@@ -298,7 +298,23 @@ export default function ListOfServiceProviders() {
                                                     className={tableStyles.userImage}
                                                 />
                                             ) : (
-                                                <div className={tableStyles.noImage}>No Image</div>
+                                                <div
+                                                    style={{
+                                                        width: "40px",
+                                                        height: "40px",
+                                                        borderRadius: "50%",
+                                                        backgroundColor: '#e0e0e0',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontSize: '1.2rem',
+                                                        color: '#666'
+                                                    }}
+                                                >
+                                                    {provider.user.profile?.firstName?.[0]?.toUpperCase() || 
+                                                     provider.user.name?.[0]?.toUpperCase() || 
+                                                     provider.user.email[0].toUpperCase()}
+                                                </div>
                                             )}
                                         </td>
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>

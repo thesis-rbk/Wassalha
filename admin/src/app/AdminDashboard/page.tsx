@@ -38,6 +38,22 @@ const Dashboard = () => {
   const [serviceProviders, setServiceProviders] = useState([]);
   const [travelers, setTravelers] = useState([]);
 
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Add this useEffect to detect dark mode
+  useEffect(() => {
+    const darkMode = localStorage.getItem("darkMode") === "true";
+    setIsDarkMode(darkMode);
+
+    const handleThemeChange = () => {
+      const darkMode = localStorage.getItem("darkMode") === "true";
+      setIsDarkMode(darkMode);
+    };
+
+    window.addEventListener('themeChange', handleThemeChange);
+    return () => window.removeEventListener('themeChange', handleThemeChange);
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -110,17 +126,17 @@ const Dashboard = () => {
       {
         label: 'Orders',
         data: Object.values(ordersByDate),
-        backgroundColor: '#36A2EB'
+        backgroundColor: '#018ABE' // --color-primary
       },
       {
         label: 'Requests',
         data: Object.values(requestsByDate),
-        backgroundColor: '#4BC0C0'
+        backgroundColor: '#05AFF0' // --color-secondary
       },
       {
         label: 'Promo Posts',
         data: Object.values(promoPostsByDate),
-        backgroundColor: '#FF6384'
+        backgroundColor: '#3703C8' // --color-dark
       }
     ]
   };
@@ -142,7 +158,11 @@ const Dashboard = () => {
     ],
     datasets: [{
       data: [userCount, serviceProviderCount, travelerCount],
-      backgroundColor: ['#36A2EB', '#4BC0C0', '#FF6384']
+      backgroundColor: [
+        '#018ABE', // --color-primary
+        '#05AFF0', // --color-secondary
+        '#3703C8'  // --color-dark
+      ]
     }]
   };
 
@@ -163,33 +183,33 @@ const Dashboard = () => {
     { email: 'andrew.johnson223@mybox.org', issue: 'Feature Request' }
   ];
 
-  // Update chart options with lighter grid lines
+  // Update chart options with proper color handling
   const chartOptions = {
     responsive: true,
     plugins: {
       legend: {
         labels: {
-          color: 'var(--color-text)'
+          color: isDarkMode ? '#ffffff' : '#000000'
         }
       }
     },
     scales: {
       x: {
         grid: {
-          color: 'rgba(200, 200, 200, 0.1)', // Light gray with low opacity
-          drawBorder: false // Removes the border line
+          color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+          drawBorder: false
         },
         ticks: {
-          color: 'var(--color-text)'
+          color: isDarkMode ? '#ffffff' : '#000000'
         }
       },
       y: {
         grid: {
-          color: 'rgba(200, 200, 200, 0.1)', // Light gray with low opacity
-          drawBorder: false // Removes the border line
+          color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+          drawBorder: false
         },
         ticks: {
-          color: 'var(--color-text)'
+          color: isDarkMode ? '#ffffff' : '#000000'
         }
       }
     }

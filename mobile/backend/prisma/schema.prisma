@@ -227,8 +227,8 @@ enum Role {
   USER
   ADMIN
   SUPER_ADMIN
-  
 }
+
 // ------------------ MODELS ------------------ //
 
 // ========== USER ==========
@@ -240,7 +240,7 @@ model User {
   googleId               String?
   password               String?
   hasCompletedOnboarding Boolean @default(false)
- role Role @default(USER)
+  role                   Role    @default(USER)
   isSponsor              Boolean @default(false)
   serviceProviderId      String?
 

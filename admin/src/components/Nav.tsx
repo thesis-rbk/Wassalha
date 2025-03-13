@@ -34,6 +34,7 @@ export default function Nav() {
       image?: {
         url: string;
       };
+      firstName?: string;
     };
   } | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -160,15 +161,19 @@ export default function Nav() {
           >
             {user ? (
               <div className={styles.userProfile}>
-                <img 
-                  src={user.profile?.image?.url }
-                  alt="Admin" 
-                  className={styles.userImage}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/default-admin-image.png';
-                  }}
-                />
+                {user.profile?.image?.url ? (
+                  <img 
+                    src={user.profile.image.url}
+                    alt="Admin" 
+                    className={styles.userImage}
+                  />
+                ) : (
+                  <div className={styles.userImagePlaceholder}>
+                    {user.name?.[0]?.toUpperCase() || 
+                     user.profile?.firstName?.[0]?.toUpperCase() || 
+                     'A'}
+                  </div>
+                )}
                 <div className={styles.userInfo}>
                   <div>{user.name}</div>
                   <div className={styles.userRole}>{user.role}</div>
@@ -259,6 +264,11 @@ export default function Nav() {
         <Link href="/ListOfSubscriptions" className={styles.sidebarItem}>
           <Bookmark size={20} />
           <span className={styles.itemText}>List of Subscriptions</span>
+        </Link>
+
+        <Link href="/ListOfAdmins" className={styles.sidebarItem}>
+          <Users size={20} />
+          <span className={styles.itemText}>List of Admins</span>
         </Link>
       </div>
 

@@ -155,19 +155,30 @@ const loginAdmin = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { email },
+      include: {
+        profile: {
+          include: {
+            image: true
+          }
+        }
+      }
     });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    // Check if the user is an admin
-    if (user.role !== 'ADMIN') {
-      return res.status(403).json({ error: "Access denied. Admins only." });
+    // Check if the user is an admin or super admin
+    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: "Access denied. Admin privileges required." });
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role 
+      },
       process.env.JWT_SECRET || "secretkey",
       { expiresIn: "1h" }
     );
@@ -180,11 +191,16 @@ const loginAdmin = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        profile: user.profile ? {
+          image: user.profile.image
+        } : null
       },
     });
   } catch (error) {
     console.error("Admin login error:", error);
     res.status(500).json({ error: "Something went wrong during admin login" });
+  } finally {
+    await prisma.$disconnect();
   }
 };
 
@@ -464,6 +480,9 @@ const changePassword = async (req, res) => {
 const getUsers = async (req, res) => {
   try {
     const users = await prisma.user.findMany({
+      where: {
+        role: 'USER' // Add this line to filter only users with 'user' role
+      },
       include: {
         profile: {
           include: {
