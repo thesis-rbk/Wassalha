@@ -9,7 +9,6 @@ const getProfile = async (req, res) => {
         const profile = await prisma.profile.findUnique({
             where: { userId: parseInt(userId) },
             include: {
-                
                 image: true, // Include the image relation
             },
         });
@@ -18,7 +17,7 @@ const getProfile = async (req, res) => {
             return res.status(404).json({ error: 'Profile not found' });
         }
 
-        res.status(200).json({ success: true, data: profile });
+        res.status(200).json({ success: true, data: { ...profile, banned: profile.banned, verified: profile.verified } });
     } catch (error) {
         console.error('Error fetching profile:', error);
         res.status(500).json({ success: false, error: 'Failed to fetch profile' });

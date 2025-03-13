@@ -213,6 +213,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
+    color: 'black',
   },
   searchSection: {
     padding: 16,

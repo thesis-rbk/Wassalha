@@ -61,34 +61,39 @@ const signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
-    });
+    // Create user with transaction to ensure both user and profile are created
+    const result = await prisma.$transaction(async (prisma) => {
+      const newUser = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+        },
+      });
 
-    // Fix: Create profile with correct relation syntax
-    await prisma.profile.create({
-      data: {
-        firstName: newUser.name,
-        lastName: "",
-        userId: newUser.id,  // Use userId instead of user.connect
-        country: "OTHER",    // Add a default country
-        isAnonymous: false,
-        isBanned: false,
-        isVerified: false,
-        isOnline: false
-      },
+      // Create profile with proper data structure
+      const profile = await prisma.profile.create({
+        data: {
+          userId: newUser.id,
+          firstName: name.split(' ')[0] || name, // Get first name or full name
+          lastName: name.split(' ').slice(1).join(' ') || '', // Get rest of name or empty string
+          country: "OTHER",
+          isAnonymous: false,
+          isBanned: false,
+          isVerified: false,
+          isOnline: false,
+        },
+      });
+
+      return { newUser, profile };
     });
 
     res.status(201).json({
       message: "User registered successfully",
       user: {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
+        id: result.newUser.id,
+        name: result.newUser.name,
+        email: result.newUser.email,
       },
     });
   } catch (error) {
@@ -134,6 +139,66 @@ const loginUser = async (req, res) => {
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ error: "Something went wrong during login" });
+  } finally {
+    await prisma.$disconnect();
+  }
+};
+
+
+const loginAdmin = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required" });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        profile: {
+          include: {
+            image: true
+          }
+        }
+      }
+    });
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    // Check if the user is an admin or super admin
+    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: "Access denied. Admin privileges required." });
+    }
+
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role 
+      },
+      process.env.JWT_SECRET || "secretkey",
+      { expiresIn: "1h" }
+    );
+
+    res.status(200).json({
+      message: "Admin login successful",
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profile: user.profile ? {
+          image: user.profile.image
+        } : null
+      },
+    });
+  } catch (error) {
+    console.error("Admin login error:", error);
+    res.status(500).json({ error: "Something went wrong during admin login" });
   } finally {
     await prisma.$disconnect();
   }
@@ -411,18 +476,45 @@ const changePassword = async (req, res) => {
   }
 };
 
-// Fetch users and their profiles
+// Fetch users and their profiles, including the user's image
 const getUsers = async (req, res) => {
   try {
     const users = await prisma.user.findMany({
-      include: {
-        profile: true, // Include the profile in the response
+      where: {
+        role: 'USER' // Add this line to filter only users with 'user' role
       },
+      include: {
+        profile: {
+          include: {
+            image: {
+              select: {
+                id: true,
+                url: true,
+                type: true
+              }
+            }
+          }
+        }
+      }
     });
+
+    // Transform the data to ensure image URLs are complete
+    const transformedUsers = users.map(user => ({
+      ...user,
+      profile: user.profile ? {
+        ...user.profile,
+        image: user.profile.image ? {
+          ...user.profile.image,
+          url: user.profile.image.url.startsWith('http') 
+            ? user.profile.image.url 
+            : `${process.env.NEXT_PUBLIC_API_URL}/${user.profile.image.url}`
+        } : null
+      } : null
+    }));
 
     res.status(200).json({
       success: true,
-      data: users,
+      data: transformedUsers,
     });
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -432,6 +524,477 @@ const getUsers = async (req, res) => {
       error: error.message,
     });
   }
+};
+
+// Get a single user by ID, including the user's profile data
+const getUserById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        profile: {
+          include: {
+            image: true,
+          }
+        },
+        reviewsGiven: {
+          include: {
+            reviewer: {
+              include: {
+                profile: {
+                  include: {
+                    image: true
+                  }
+                }
+              }
+            }
+          }
+        },
+        reviewsReceived: {
+          include: {
+            reviewer: {
+              include: {
+                profile: {
+                  include: {
+                    image: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({
+      ...user,
+      profile: {
+        ...user.profile,
+        bio: user.profile?.bio || null,
+        review: user.profile?.review || null,
+        isBanned: user.profile?.isBanned || false,
+        verified: user.profile?.verified || false,
+      },
+      reviewsGiven: user.reviewsGiven,
+      reviewsReceived: user.reviewsReceived
+    });
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ error: "Failed to fetch user" });
+  }
+};
+
+// Update a user and their profile
+const updateUser = async (req, res) => {
+  const { 
+    id,
+    // User model fields
+    name,
+    email,
+    phoneNumber,
+    role,
+    hasCompletedOnboarding,
+    isSponsor,
+    serviceProviderId,
+    googleId,
+    password,
+
+    // Profile model fields
+    firstName,
+    lastName,
+    bio,
+    country,
+    imageId,
+    gender,
+    review,
+    isAnonymous,
+    isBanned,
+    isVerified,
+    isOnline,
+    preferredCategories,
+    referralSource
+  } = req.body;
+
+  try {
+    if (!id) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    // Use transaction to ensure both user and profile updates succeed or fail together
+    const result = await prisma.$transaction(async (prisma) => {
+      // First update user data
+      const userUpdateData = {
+        ...(name && { name }),
+        ...(email && { email }),
+        ...(phoneNumber && { phoneNumber }),
+        ...(role && { role }),
+        ...(hasCompletedOnboarding !== undefined && { hasCompletedOnboarding }),
+        ...(isSponsor !== undefined && { isSponsor }),
+        ...(serviceProviderId && { serviceProviderId }),
+        ...(googleId && { googleId }),
+        ...(password && { password: await bcrypt.hash(password, saltRounds) }),
+      };
+
+      const updatedUser = await prisma.user.update({
+        where: { id },
+        data: userUpdateData,
+      });
+
+      // Check if profile exists
+      const existingProfile = await prisma.profile.findUnique({
+        where: { userId: id },
+      });
+
+      // Prepare profile data ensuring required fields
+      const profileData = {
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
+        ...(bio && { bio }),
+        ...(country && { country }),
+        ...(phoneNumber && { phoneNumber }),
+        ...(imageId && { imageId }),
+        ...(gender && { gender }),
+        ...(review && { review }),
+        ...(isAnonymous !== undefined && { isAnonymous }),
+        ...(isBanned !== undefined && { isBanned }),
+        ...(isVerified !== undefined && { isVerified }),
+        ...(isOnline !== undefined && { isOnline }),
+        ...(preferredCategories && { preferredCategories }),
+        ...(referralSource && { referralSource }),
+      };
+
+      let updatedProfile;
+      if (existingProfile) {
+        // Update existing profile
+        updatedProfile = await prisma.profile.update({
+          where: { userId: id },
+          data: profileData,
+          include: {
+            image: true,
+          },
+        });
+      } else {
+        // Create new profile if it doesn't exist
+        updatedProfile = await prisma.profile.create({
+          data: {
+            ...profileData,
+            userId: id,
+            firstName: firstName || updatedUser.name,
+            lastName: lastName || "",
+            country: country || "OTHER",
+            isAnonymous: isAnonymous || false,
+            isBanned: isBanned || false,
+            isVerified: isVerified || false,
+            isOnline: isOnline || false,
+          },
+          include: {
+            image: true,
+          },
+        });
+      }
+
+      return { updatedUser, updatedProfile };
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      data: {
+        user: result.updatedUser,
+        profile: result.updatedProfile,
+      },
+    });
+  } catch (error) {
+    console.error("Update user error:", error);
+    res.status(500).json({ 
+      success: false,
+      error: "Failed to update user", 
+      details: error.message 
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+};
+
+// Delete a user
+const deleteUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: "User ID is required"
+      });
+    }
+
+    const userId = parseInt(id);
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid user ID format"
+      });
+    }
+
+    // Start a transaction
+    await prisma.$transaction(async (prisma) => {
+      // Check if user exists first
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          profile: {
+            include: { image: true }
+          }
+        }
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      try {
+        // 1. Delete profile and image first
+        if (user.profile) {
+          if (user.profile.image) {
+            await prisma.media.delete({
+              where: { id: user.profile.image.id }
+            }).catch(error => {
+              console.error("Error deleting media:", error);
+              // Continue with deletion even if media deletion fails
+            });
+          }
+
+          await prisma.profile.delete({
+            where: { userId }
+          }).catch(error => {
+            console.error("Error deleting profile:", error);
+            throw error;
+          });
+        }
+
+        // 2. Delete user preferences and settings
+        await Promise.all([
+          prisma.userPreference.deleteMany({ where: { userId } }),
+          prisma.userCategory.deleteMany({ where: { userId } })
+        ]).catch(error => {
+          console.error("Error deleting user preferences:", error);
+          throw error;
+        });
+
+        // 3. Delete reputation data
+        await Promise.all([
+          prisma.reputationTransaction.deleteMany({
+            where: { reputation: { userId } }
+          }),
+          prisma.reputation.deleteMany({ where: { userId } })
+        ]).catch(error => {
+          console.error("Error deleting reputation data:", error);
+          throw error;
+        });
+
+        // 4. Delete notifications
+        await prisma.notification.deleteMany({
+          where: { userId }
+        }).catch(error => {
+          console.error("Error deleting notifications:", error);
+          throw error;
+        });
+
+        // 5. Delete service provider data
+        await prisma.serviceProvider.deleteMany({
+          where: { userId }
+        }).catch(error => {
+          console.error("Error deleting service provider data:", error);
+          throw error;
+        });
+
+        // 6. Delete messages and chats
+        await Promise.all([
+          prisma.message.deleteMany({
+            where: {
+              OR: [
+                { senderId: userId },
+                { receiverId: userId }
+              ]
+            }
+          }),
+          prisma.chat.deleteMany({
+            where: {
+              OR: [
+                { requesterId: userId },
+                { providerId: userId }
+              ]
+            }
+          })
+        ]).catch(error => {
+          console.error("Error deleting messages and chats:", error);
+          throw error;
+        });
+
+        // 7. Delete reviews
+        await prisma.review.deleteMany({
+          where: {
+            OR: [
+              { reviewerId: userId },
+              { reviewedId: userId }
+            ]
+          }
+        }).catch(error => {
+          console.error("Error deleting reviews:", error);
+          throw error;
+        });
+
+        // 8. Delete posts
+        await Promise.all([
+          prisma.goodsPost.deleteMany({ where: { travelerId: userId } }),
+          prisma.promoPost.deleteMany({ where: { publisherId: userId } })
+        ]).catch(error => {
+          console.error("Error deleting posts:", error);
+          throw error;
+        });
+
+        // 9. Delete orders and related processes
+        await Promise.all([
+          prisma.processEvent.deleteMany({ where: { changedByUserId: userId } }),
+          prisma.goodsProcess.deleteMany({
+            where: {
+              order: {
+                OR: [
+                  { buyerId: userId },
+                  { sellerId: userId }
+                ]
+              }
+            }
+          }),
+          prisma.order.deleteMany({
+            where: {
+              OR: [
+                { buyerId: userId },
+                { sellerId: userId }
+              ]
+            }
+          })
+        ]).catch(error => {
+          console.error("Error deleting orders and processes:", error);
+          throw error;
+        });
+
+        // 10. Delete payments
+        await prisma.payment.deleteMany({
+          where: {
+            OR: [
+              { payerId: userId },
+              { receiverId: userId }
+            ]
+          }
+        }).catch(error => {
+          console.error("Error deleting payments:", error);
+          throw error;
+        });
+
+        // 11. Finally delete the user
+        await prisma.user.delete({
+          where: { id: userId }
+        }).catch(error => {
+          console.error("Error deleting user:", error);
+          throw error;
+        });
+
+      } catch (error) {
+        console.error("Transaction error:", error);
+        throw error;
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "User and all associated data deleted successfully"
+    });
+
+  } catch (error) {
+    console.error("Error in delete operation:", error);
+    
+    if (error.message === 'User not found') {
+      return res.status(404).json({
+        success: false,
+        error: "User not found"
+      });
+    }
+
+    if (error.code === 'P2003') {
+      return res.status(400).json({
+        success: false,
+        error: "Cannot delete user due to existing references",
+        details: error.message,
+        hint: "Please try again or contact support if the issue persists"
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: "Failed to delete user",
+      details: error.message,
+      hint: "An unexpected error occurred during deletion"
+    });
+  } finally {
+    try {
+      await prisma.$disconnect();
+    } catch (error) {
+      console.error("Error disconnecting from database:", error);
+    }
+  }
+};
+
+const banUser = async (req, res) => {
+  const { id } = req.params; // Get user ID from request parameters
+
+  try {
+      // Ensure the ID is converted to an integer
+      const userId = parseInt(id, 10);
+      
+      // Update the profile to set isBanned to true
+      const updatedProfile = await prisma.profile.update({
+          where: { userId: userId }, 
+          data: { isBanned: true }, // Always set isBanned to true
+      });
+
+    res.status(200).json({
+      message: "User has been banned successfully.",
+      profile: updatedProfile, // Return the updated profile
+    });
+  } catch (error) {
+    console.error("Error banning user:", error);
+    res.status(500).json({ error: "Failed to ban user" });
+  }
+};
+
+const unbanUser = async (req, res) => {
+    const { id } = req.params; // Get user ID from request parameters
+
+    try {
+        // Ensure the ID is converted to an integer
+        const userId = parseInt(id, 10);
+        
+        // Update the profile to set isBanned to false
+        const updatedProfile = await prisma.profile.update({
+            where: { userId: userId }, 
+            data: { isBanned: false }, // Set isBanned to false
+        });
+
+        res.status(200).json({
+            message: "User has been unbanned successfully.",
+            profile: updatedProfile, // Return the updated profile
+        });
+    } catch (error) {
+        console.error("Error unbanning user:", error);
+        res.status(500).json({ error: "Failed to unban user" });
+    }
 };
 
 const verifyIdCard = async (req, res) => {
@@ -634,9 +1197,34 @@ const submitQuestionnaire = async (req, res) => {
   }
 };
 
+const verifyUserProfile = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const updatedProfile = await prisma.profile.update({
+      where: { userId: parseInt(id) },
+      data: { isVerified: true },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "User profile verified successfully",
+      data: updatedProfile,
+    });
+  } catch (error) {
+    console.error("Error verifying user profile:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to verify user profile",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   signup,
   loginUser,
+  loginAdmin,
   googleLogin,
   requestPasswordReset,
   resetPassword,
@@ -645,8 +1233,14 @@ module.exports = {
   completeOnboarding,
   changePassword,
   getUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+  banUser,
+  unbanUser,
   verifyIdCard,
   verifySelfie,
   verifyCreditCard,
-  submitQuestionnaire
+  submitQuestionnaire,
+  verifyUserProfile
 };
