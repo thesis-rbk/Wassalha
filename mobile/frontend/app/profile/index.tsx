@@ -11,21 +11,12 @@ import { BaseButton } from '@/components/ui/buttons/BaseButton';
 import { TitleLarge, BodyMedium } from '@/components/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import CountryFlag from "react-native-country-flag";
-<<<<<<< HEAD
-import { InfoItemProps, ProfileState, ProfileImage } from '@/types';
-const { width } = Dimensions.get('window');
-
-const countryToCode: { [key: string]: string } = {
-  "USA": "US",
-  "FRANCE": "FR",
-=======
 
 const { width } = Dimensions.get('window');
 
 const countryToCode = {
   "USA": "US",
-  "FRANCE": "FR", 
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
+  "FRANCE": "FR",
   "SPAIN": "ES",
   "GERMANY": "DE",
   "ITALY": "IT",
@@ -40,11 +31,7 @@ const countryToCode = {
   "MEXICO": "MX",
   "BOLIVIA": "BO",
   "MOROCCO": "MA",
-<<<<<<< HEAD
   "TUNISIA": "TN",
-=======
-  "TUNISIA": "TN", 
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
   "ALGERIA": "DZ",
   "TURKEY": "TR",
   "PORTUGAL": "PT",
@@ -69,18 +56,9 @@ const countryToCode = {
   "OTHER": "XX"
 };
 
-<<<<<<< HEAD
-// Add a type definition for the profile state
-
-
-const ProfilePage = () => {
-  const { theme } = useTheme();
-  const [profile, setProfile] = useState<ProfileState>({
-=======
 const ProfilePage = () => {
   const { theme } = useTheme();
   const [profile, setProfile] = useState({
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
     firstName: '',
     lastName: '',
     bio: '',
@@ -132,26 +110,17 @@ const ProfilePage = () => {
   }
 
   return (
-<<<<<<< HEAD
     <ScrollView
-=======
-    <ScrollView 
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
       style={[styles.container, { backgroundColor: Colors[theme].background }]}
       showsVerticalScrollIndicator={false}
     >
       <View style={[styles.headerBackground, { backgroundColor: Colors[theme].primary }]} />
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
       {/* Profile Image Section */}
       <View style={styles.profileImageContainer}>
         <View style={styles.imageWrapper}>
           {profile.image?.filename ? (
             <>
-<<<<<<< HEAD
               <Image
                 source={{ uri: `${process.env.EXPO_PUBLIC_API_URL}/api/uploads/${profile.image.filename}` }}
                 style={styles.profileImage}
@@ -161,17 +130,6 @@ const ProfilePage = () => {
                   styles.onlineIndicator,
                   { backgroundColor: profile.isOnline ? "#22c55e" : "#64748b" }
                 ]}
-=======
-              <Image 
-                source={{ uri: `${process.env.EXPO_PUBLIC_API_URL}/api/uploads/${profile.image.filename}` }}
-                style={styles.profileImage} 
-              />
-              <View 
-                style={[
-                  styles.onlineIndicator, 
-                  { backgroundColor: profile.isOnline ? "#22c55e" : "#64748b" }
-                ]} 
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
               />
             </>
           ) : (
@@ -181,19 +139,11 @@ const ProfilePage = () => {
                   {profile.firstName?.[0]}{profile.lastName?.[0]}
                 </Text>
               </View>
-<<<<<<< HEAD
               <View
                 style={[
                   styles.onlineIndicator,
                   { backgroundColor: profile.isOnline ? "#22c55e" : "#64748b" }
                 ]}
-=======
-              <View 
-                style={[
-                  styles.onlineIndicator, 
-                  { backgroundColor: profile.isOnline ? "#22c55e" : "#64748b" }
-                ]} 
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
               />
             </>
           )}
@@ -271,23 +221,14 @@ const ProfilePage = () => {
 
         {/* Action Buttons */}
         <View style={styles.buttonsContainer}>
-<<<<<<< HEAD
           <BaseButton
-=======
-          <BaseButton 
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
             onPress={() => router.push('/profile/edit')}
             size="login"
           >
             Edit Profile
           </BaseButton>
-<<<<<<< HEAD
 
           <BaseButton
-=======
-          
-          <BaseButton 
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
             onPress={() => router.push('/profile/change')}
             size="login"
             variant="secondary"
@@ -301,18 +242,6 @@ const ProfilePage = () => {
 };
 
 // InfoItem component
-<<<<<<< HEAD
-
-const InfoItem = ({ icon, label, value, theme, isCountry = false }: InfoItemProps) => (
-  <View style={styles.infoItem}>
-    <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={20} color={Colors[theme as keyof typeof Colors].text} style={styles.infoIcon} />
-    <View style={styles.infoContent}>
-      <Text style={[styles.infoLabel, { color: Colors[theme as keyof typeof Colors].text }]}>{label}</Text>
-      <View style={styles.valueContainer}>
-        {isCountry && value !== "Not specified" && (
-          <CountryFlag
-            isoCode={countryToCode[value?.toUpperCase() as keyof typeof countryToCode] || value}
-=======
 const InfoItem = ({ icon, label, value, theme, isCountry = false }) => (
   <View style={styles.infoItem}>
     <Ionicons name={icon} size={20} color={Colors[theme].text} style={styles.infoIcon} />
@@ -322,16 +251,11 @@ const InfoItem = ({ icon, label, value, theme, isCountry = false }) => (
         {isCountry && value !== "Not specified" && (
           <CountryFlag
             isoCode={countryToCode[value?.toUpperCase()] || value}
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
             size={20}
             style={styles.flag}
           />
         )}
-<<<<<<< HEAD
-        <Text style={[styles.infoValue, { color: Colors[theme as keyof typeof Colors].text }]}>{value}</Text>
-=======
         <Text style={[styles.infoValue, { color: Colors[theme].text }]}>{value}</Text>
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
       </View>
     </View>
   </View>
@@ -450,8 +374,4 @@ const styles = StyleSheet.create({
 });
 
 export default ProfilePage;
-<<<<<<< HEAD
-=======
 
-export default ProfilePage;
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32

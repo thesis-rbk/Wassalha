@@ -6,10 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-<<<<<<< HEAD
-  Alert,
-=======
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 } from "react-native";
 import {
   Link,
@@ -38,55 +34,18 @@ export default function Page() {
   const router = useRouter();
 
   const handleCreateOrder = async () => {
-<<<<<<< HEAD
-    console.log('🎯 Starting order creation process...');
-    console.log('📝 Entry method:', entryMethod);
-
-    if (entryMethod === "manual") {
-      console.log('👉 Navigating to manual entry...');
-=======
     console.log("Starting navigation...");
 
     if (entryMethod === "manual") {
       console.log("Manual entry - navigating...");
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
       router.push("/productDetails");
       return;
     }
 
-<<<<<<< HEAD
-    if (entryMethod === "url" && !productUrl) {
-      Alert.alert(
-        "No URL Provided",
-        "Would you like to proceed with manual entry?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel"
-          },
-          {
-            text: "Yes, proceed manually",
-            onPress: () => {
-              router.push('/productDetails');
-            }
-          }
-        ]
-      );
-      return;
-    }
-
-    // Only try to scrape if URL method is selected and URL is provided
-    if (entryMethod === "url" && productUrl) {
-      console.log('🔗 Processing URL:', productUrl);
-      setIsLoading(true);
-      try {
-        console.log('📡 Making scrape request to:', SCRAPE_URL);
-=======
     // Only try to scrape if URL method is selected and URL is provided
     if (entryMethod === "url" && productUrl) {
       setIsLoading(true);
       try {
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
         const response = await fetch(SCRAPE_URL, {
           method: "POST",
           headers: {
@@ -94,11 +53,6 @@ export default function Page() {
           },
           body: JSON.stringify({ url: productUrl }),
         });
-<<<<<<< HEAD
-        console.log('✅ Scrape response received');
-=======
-
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
         const data = await response.json();
         if (data.success) {
           console.log("URL success - navigating...");

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, ActivityIndicator, Dimensions, Text, TouchableOpacity, Alert } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
@@ -18,7 +17,7 @@ import { ProcessStatus } from '@/types/GoodsProcess';
 // Custom hook to ensure we have user data
 const useReliableAuth = () => {
   const { user: authUser, loading: authLoading } = useAuth();
-  const [tokenUser, setTokenUser] = useState<{id: string, name: string, email: string} | null>(null);
+  const [tokenUser, setTokenUser] = useState<{ id: string, name: string, email: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,7 +48,7 @@ const useReliableAuth = () => {
             if (tokenParts.length === 3) {
               const payload = JSON.parse(atob(tokenParts[1]));
               console.log('User found from JWT token:', payload);
-              
+
               if (payload.id) {
                 setTokenUser({
                   id: payload.id.toString(),
@@ -87,11 +86,11 @@ export default function OrderPage() {
   // Add a function to check if the current user is the owner of a request
   const isOwnRequest = (requestUserId: number): boolean => {
     if (!user || !user.id) return false;
-    
+
     // Convert both IDs to strings for comparison
     const userIdStr = user.id.toString();
     const requestUserIdStr = requestUserId.toString();
-    
+
     return userIdStr === requestUserIdStr;
   };
 
@@ -122,23 +121,23 @@ export default function OrderPage() {
     const getImageUrl = (goods: Goods) => {
       // If no image data at all, return null
       if (!goods) return null;
-      
+
       // If goodsUrl has the full path
       if (goods.goodsUrl?.startsWith('/api/uploads/')) {
         return `${BACKEND_URL}${goods.goodsUrl}`;
       }
-      
+
       // If goodsUrl is just the filename
       if (goods.goodsUrl) {
         return `${BACKEND_URL}/api/uploads/${goods.goodsUrl}`;
       }
-      
+
       // If we have imageId but no direct access to filename
       if (goods.imageId) {
         // Use the imageId to construct the URL
         return `${BACKEND_URL}/api/uploads/${goods.imageId}`;
       }
-      
+
       return null;
     };
 
@@ -160,7 +159,7 @@ export default function OrderPage() {
         location: item.goodsLocation,
         destination: item.goodsDestination
       });
-      
+
       const params = {
         id: item.id.toString(),
         imageUrl: getImageUrl(item.goods),
@@ -181,7 +180,7 @@ export default function OrderPage() {
       };
 
       console.log('Navigation params:', params);
-      
+
       try {
         console.log('Attempting navigation to /processTrack/initializationSP');
         router.push({
@@ -193,11 +192,11 @@ export default function OrderPage() {
         console.error('Navigation error:', error);
       }
     };
-  
+
     // Check if this request has an associated order
     const hasOrder = item.order !== null && item.order !== undefined;
-    const processStatus = hasOrder && item.order?.goodsProcess?.status 
-      ? item.order.goodsProcess.status 
+    const processStatus = hasOrder && item.order?.goodsProcess?.status
+      ? item.order.goodsProcess.status
       : undefined;
 
     return (
@@ -226,7 +225,7 @@ export default function OrderPage() {
           <View style={styles.headerContent}>
             <View style={styles.titleRow}>
               <ThemedText style={styles.productTitle}>{item.goods.name}</ThemedText>
-              
+
               <View style={styles.badgeContainer}>
                 {/* Show "Your Request" badge if it's the user's own request */}
                 {isOwnRequest(item.userId) && (
@@ -234,11 +233,11 @@ export default function OrderPage() {
                     <ThemedText style={styles.badgeText}>Your Request</ThemedText>
                   </View>
                 )}
-                
+
                 {/* Show status badge if it has an order */}
                 {hasOrder && (
                   <View style={[
-                    styles.statusBadge, 
+                    styles.statusBadge,
                     { backgroundColor: getProcessStatusColor(processStatus as ProcessStatus) }
                   ]}>
                     <ThemedText style={styles.badgeText}>
@@ -248,7 +247,7 @@ export default function OrderPage() {
                 )}
               </View>
             </View>
-            
+
             <View style={styles.detailsCard}>
               <View style={styles.detailRow}>
                 <View style={styles.iconContainer}>
@@ -291,7 +290,7 @@ export default function OrderPage() {
                 <View style={styles.detailContent}>
                   <ThemedText style={styles.detailLabel}>Status</ThemedText>
                   <View style={[
-                    styles.statusBadge, 
+                    styles.statusBadge,
                     styles[item.status.toLowerCase() as Lowercase<RequestStatus>]
                   ]}>
                     <ThemedText style={styles.statusText}>{item.status}</ThemedText>
@@ -314,26 +313,26 @@ export default function OrderPage() {
             <ThemedText style={styles.priceText}>
               ${item.goods.price} × {item.quantity}
             </ThemedText>
-            
+
             {/* Show different buttons based on request status */}
             {!isOwnRequest(item.userId) && !hasOrder && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.offerButton}
                 onPress={handleMakeOffer}
               >
                 <ThemedText style={styles.offerButtonText}>Make an Offer</ThemedText>
               </TouchableOpacity>
             )}
-            
+
             {!isOwnRequest(item.userId) && hasOrder && (
               <View style={styles.takenContainer}>
                 <ThemedText style={styles.takenText}>Already Taken</ThemedText>
               </View>
             )}
-            
+
             {/* Show View Order button for any order */}
             {hasOrder && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.viewOrderButton}
                 onPress={() => router.push({
                   pathname: '/processTrack/initializationSO',
@@ -343,20 +342,20 @@ export default function OrderPage() {
                 <ThemedText style={styles.viewOrderButtonText}>View Order</ThemedText>
               </TouchableOpacity>
             )}
-            
+
             {/* Add Confirm Order button for orders that need confirmation */}
-            {isOwnRequest(item.userId) && hasOrder && 
+            {isOwnRequest(item.userId) && hasOrder &&
               item.order?.orderStatus === 'PENDING' && (
-              <TouchableOpacity 
-                style={styles.confirmButton}
-                onPress={() => handleConfirmOrder(item.order?.id)}
-              >
-                <ThemedText style={styles.confirmButtonText}>Confirm Order</ThemedText>
-              </TouchableOpacity>
-            )}
+                <TouchableOpacity
+                  style={styles.confirmButton}
+                  onPress={() => handleConfirmOrder(item.order?.id)}
+                >
+                  <ThemedText style={styles.confirmButtonText}>Confirm Order</ThemedText>
+                </TouchableOpacity>
+              )}
 
             {isOwnRequest(item.userId) && !item.order && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.viewOfferButton}
                 onPress={() => fetchOffersForRequest(item.id)}
               >
@@ -374,14 +373,14 @@ export default function OrderPage() {
     try {
       setIsLoading(true);
       console.log(`Fetching offers for request ID: ${requestId}`);
-      
+
       const response = await axiosInstance.get(`/api/requests/${requestId}/offers`);
       console.log('Offers API response:', JSON.stringify(response.data, null, 2));
-      
+
       if (response.data.data && response.data.data.length > 0) {
         const offerId = response.data.data[0].id;
         console.log(`Found offer ID: ${offerId}, navigating...`);
-        
+
         router.push({
           pathname: '/processTrack/initializationSO',
           params: { offerId: offerId.toString() }
@@ -404,14 +403,14 @@ export default function OrderPage() {
       Alert.alert("Error", "Order ID is missing.");
       return;
     }
-    
+
     try {
       setIsLoading(true);
       console.log(`Confirming order ID: ${orderId}`);
-      
+
       const response = await axiosInstance.patch(`/api/orders/${orderId}/confirm`);
       console.log('Confirm order response:', JSON.stringify(response.data, null, 2));
-      
+
       Alert.alert("Success", "Order confirmed successfully!");
       // Refresh the requests list to show updated status
       fetchRequests();
@@ -425,12 +424,12 @@ export default function OrderPage() {
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen 
-        options={{ 
+      <Stack.Screen
+        options={{
           title: "Orders & Requests"
-        }} 
+        }}
       />
-      
+
       {isLoading && requests.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" />
@@ -691,24 +690,3 @@ const getProcessStatusText = (status: ProcessStatus): string => {
     default: return status;
   }
 };
-=======
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-
-export default function orderssssssssss() {
-    return (
-        <View style={styles.container}>
-            <ThemedText>all orders heres...........</ThemedText>
-        </View>
-    );
-}
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-});
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32

@@ -1,23 +1,12 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
-=======
-import React, { useState } from 'react';
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 import {
   View,
   Image,
   StyleSheet,
   Switch,
   ScrollView,
-<<<<<<< HEAD
-  Alert,
-  TouchableOpacity,
-} from 'react-native';
-import { Camera, X, Minus, Plus, Globe, Edit2 } from 'lucide-react-native';
-=======
 } from 'react-native';
 import { Camera, X, Minus, Plus } from 'lucide-react-native';
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 import { InputField } from '@/components/InputField';
 import { BaseButton } from '@/components/ui/buttons/BaseButton';
 import { TitleLarge, TitleSection, TitleSub, BodyMedium } from '@/components/Typography';
@@ -25,24 +14,9 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useLocalSearchParams } from 'expo-router';
 import { ProductDetailsProps } from '@/types/ProductDetails';
-<<<<<<< HEAD
-import { useRouter } from 'expo-router';
-import * as DocumentPicker from 'expo-document-picker';
-import axiosInstance from "@/config";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as FileSystem from 'expo-file-system';
-
-console.log('API URL:', process.env.EXPO_PUBLIC_API_URL);
-console.log('Upload URL:', process.env.EXPO_PUBLIC_MEDIA_UPLOAD_URL);
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const colorScheme = useColorScheme() ?? 'light';
-  const router = useRouter();
-=======
-
-const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
-  const colorScheme = useColorScheme() ?? 'light';
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 
   // Retrieve scrapedData from the query parameters (if available)
   const { scrapedData } = useLocalSearchParams();
@@ -52,181 +26,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const [productName, setProductName] = useState(parsedData ? parsedData.name : '');
   const [productImage, setProductImage] = useState(
     parsedData && parsedData.imageId
-<<<<<<< HEAD
-      ? `${process.env.EXPO_PUBLIC_MEDIA_VIEW_URL}/${parsedData.imageId}`
-      : ''
-  );
-  const [productImageId, setProductImageId] = useState(null);
-  const [price, setPrice] = useState(parsedData ? parsedData.price.toString() : '');
-  const [productDetails, setProductDetails] = useState(parsedData ? parsedData.description : '');
-  const [withBox, setWithBox] = useState(false);
-  const [goodsId, setGoodsId] = useState(parsedData ? parsedData.goodsId : '');
-  const [dataSource, setDataSource] = useState('scraped');
-  const [imageLoading, setImageLoading] = useState(false);
-  const [imageSource, setImageSource] = useState<'local' | 'remote'>('local');
-
-  const clearProductImage = () => setProductImage('');
-
-  const pickImage = async () => {
-    try {
-      console.log('📄 Opening document picker...');
-      
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['image/*'], // Limit to image files
-        copyToCacheDirectory: true
-      });
-      
-      console.log('📄 Document picker result:', result);
-      
-      if (result.canceled === false && result.assets && result.assets.length > 0) {
-        const selectedFile = result.assets[0];
-        console.log('📄 Selected file:', selectedFile);
-        
-        // Update state with the selected file URI
-        setProductImage(selectedFile.uri);
-        console.log('📄 Updated product image with new URI:', selectedFile.uri);
-      } else {
-        console.log('📄 Document picking cancelled or no file selected');
-      }
-    } catch (error) {
-      console.error('❌ Error picking document:', error);
-      Alert.alert('Error', 'Failed to pick document');
-    }
-  };
-  
-  
-  const handleNext = async () => {
-    try {
-      console.log('🚀 Starting navigation to additional details...');
-      
-      // If we have a remote image, try to download it first
-      if (imageSource === 'remote' && productImage.startsWith('http')) {
-        setImageLoading(true);
-        
-        try {
-          const filename = productImage.split('/').pop() || 'image.jpg';
-          const fileUri = `${FileSystem.cacheDirectory}${filename}`;
-          
-          console.log('📥 Downloading image before navigation...');
-          const result = await FileSystem.downloadAsync(productImage, fileUri);
-          
-          if (result.status === 200) {
-            console.log('✅ Image downloaded successfully');
-            setProductImage(fileUri);
-            setImageSource('local');
-          } else {
-            // If download fails, we'll still navigate but with the remote URL
-            console.warn('⚠️ Image download failed, using remote URL');
-          }
-        } catch (error) {
-          console.error('❌ Image download error:', error);
-          // Continue with navigation even if download fails
-        } finally {
-          setImageLoading(false);
-        }
-      }
-      
-      // Now navigate with whatever image we have
-      navigateToNextStep();
-    } catch (error) {
-      console.error('Navigation error:', error);
-      Alert.alert('Error', 'Failed to proceed to next step. Please try again.');
-    }
-  };
-
-  const handleScrapedImage = async () => {
-    if (!parsedData?.imageUrl) return;
-    
-    setImageLoading(true);
-    
-    try {
-      // First, try to display the remote image directly
-      setProductImage(parsedData.imageUrl);
-      setImageSource('remote');
-      
-      // Start a background download of the image
-      const filename = parsedData.imageUrl.split('/').pop() || 'scraped_image.jpg';
-      const fileUri = `${FileSystem.cacheDirectory}${filename}`;
-      
-      console.log('🔄 Background downloading of scraped image started');
-      
-      FileSystem.downloadAsync(parsedData.imageUrl, fileUri)
-        .then(result => {
-          if (result.status === 200) {
-            console.log('✅ Scraped image downloaded to local storage');
-            // Only update if we're still using the same remote image
-            if (productImage === parsedData.imageUrl) {
-              setProductImage(fileUri);
-              setImageSource('local');
-              console.log('🔄 Image source switched to local file');
-            }
-          }
-        })
-        .catch(error => {
-          console.error('❌ Background download failed:', error);
-          // We already have the remote URL displayed, so no need for an alert
-        });
-    } catch (error) {
-      console.error('❌ Error handling scraped image:', error);
-      // If we can't even set the remote URL, clear it
-      setProductImage('');
-    } finally {
-      setImageLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (parsedData) {
-      setDataSource('scraped');
-      setProductName(parsedData.name || '');
-      setPrice(parsedData.price ? parsedData.price.toString() : '');
-      setProductDetails(parsedData.description || '');
-      
-      // Handle the image in the background
-      handleScrapedImage();
-    }
-  }, [parsedData]);
-
-  const renderScrapedDataBanner = () => {
-    if (dataSource !== 'scraped') return null;
-    
-    return (
-      <View style={styles.scrapedBanner}>
-        <View style={styles.scrapedIconContainer}>
-          <Globe size={18} color="#ffffff" />
-        </View>
-        <View style={styles.scrapedTextContainer}>
-          <BodyMedium style={styles.scrapedTitle}>Web Data Imported</BodyMedium>
-          <BodyMedium style={styles.scrapedSubtitle}>
-            This information was automatically imported from {parsedData?.source || 'the web'}
-          </BodyMedium>
-        </View>
-        <TouchableOpacity 
-          style={styles.scrapedEditButton}
-          onPress={() => setDataSource('manual')}
-        >
-          <Edit2 size={16} color={Colors[colorScheme as 'light' | 'dark'].primary} />
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  const navigateToNextStep = () => {
-    router.push({
-      pathname: '/productDetails/additional-details',
-      params: {
-        name: productName,
-        price: price,
-        details: productDetails,
-        withBox: withBox.toString(),
-        imageUri: productImage,
-        dataSource: imageSource === 'remote' ? 'scraped' : 'manual'
-      }
-    });
-    console.log('✅ Navigation successful');
-  };
-
-=======
       ? `http://localhost:5000/api/media/${parsedData.imageId}`
       : ''
   );
@@ -249,17 +48,11 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
     }
   };
 
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
   return (
     <ScrollView style={styles.container}>
       <View style={styles.card}>
         <TitleLarge style={styles.mainTitle}>1. Product Details</TitleLarge>
-        
-<<<<<<< HEAD
-        {renderScrapedDataBanner()}
-        
-=======
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
+
         <InputField
           label="Product name"
           value={productName}
@@ -272,54 +65,21 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
         <View style={styles.imageContainer}>
           {productImage ? (
             <View style={styles.imageWrapper}>
-<<<<<<< HEAD
-              <Image 
-                source={{ uri: productImage }} 
-                style={styles.productImage} 
-                onError={(e) => {
-                  console.error('Image loading error:', e.nativeEvent.error);
-                  Alert.alert('Error', 'Failed to load image. Please try selecting another image.');
-                  setProductImage('');
-                }}
-              />
-              <TouchableOpacity 
-                style={styles.changeImageButton}
-                onPress={pickImage}
-              >
-                <BodyMedium style={styles.changeImageText}>
-                  Change Image
-                </BodyMedium>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.uploadCard}>
-              <BaseButton 
-                size="medium" 
-                onPress={pickImage} 
-                style={styles.uploadButton}
-              >
-                <Camera size={20} color={Colors[colorScheme as 'light' | 'dark'].primary} />
-                <BodyMedium style={styles.uploadText}>Upload image</BodyMedium>
-              </BaseButton>
-            </View>
-          )}
-=======
               <Image source={{ uri: productImage }} style={styles.productImage} />
               <BaseButton size="small" onPress={clearProductImage} style={styles.clearImageButton}>
                 <X size={14} color="#999" />
               </BaseButton>
             </View>
           ) : null}
-          
+
           <View style={styles.uploadCard}>
             <BaseButton size="medium" onPress={() => console.log('Upload Image')} style={styles.uploadButton}>
               <Camera size={20} color={Colors[colorScheme].primary} />
               <BodyMedium style={styles.uploadText}>Upload image</BodyMedium>
             </BaseButton>
           </View>
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
         </View>
-        
+
         <InputField
           label="Price"
           value={price}
@@ -328,9 +88,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
           keyboardType="decimal-pad"
           style={styles.input}
         />
-<<<<<<< HEAD
-=======
-        
+
         <View style={styles.quantityContainer}>
           <InputField
             label="Quantity"
@@ -361,7 +119,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
             </BaseButton>
           </View>
         </View>
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 
         <InputField
           label="Product details"
@@ -372,19 +129,10 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
           numberOfLines={3}
           style={[styles.input, styles.textArea]}
         />
-        
+
         <View style={styles.switchContainer}>
           <View style={styles.switchTextContainer}>
             <View style={styles.switchHeader}>
-<<<<<<< HEAD
-          <TitleSub>With box</TitleSub>
-          <Switch
-            value={withBox}
-            onValueChange={setWithBox}
-                trackColor={{ false: '#e0e0e0', true: Colors[colorScheme as 'light' | 'dark'].primary }}
-            thumbColor={withBox ? '#ffffff' : '#ffffff'}
-          />
-=======
               <TitleSub>With box</TitleSub>
               <Switch
                 value={withBox}
@@ -392,20 +140,15 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
                 trackColor={{ false: '#e0e0e0', true: Colors[colorScheme].primary }}
                 thumbColor={withBox ? '#ffffff' : '#ffffff'}
               />
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
             </View>
             <BodyMedium style={styles.switchDescription}>
               Requiring the box may reduce the number of offers you receive. Travelers generally prefer to deliver orders without the box to save space.
             </BodyMedium>
           </View>
         </View>
-        
+
         <View style={styles.buttonContainer}>
-<<<<<<< HEAD
-          <BaseButton size="large" onPress={handleNext}>
-=======
           <BaseButton size="large" onPress={onNext}>
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
             <BodyMedium style={styles.buttonText}>Next</BodyMedium>
           </BaseButton>
         </View>
@@ -431,17 +174,6 @@ const styles = StyleSheet.create({
   sectionTitle: { marginTop: 12, marginBottom: 8, fontSize: 16 },
   input: { marginBottom: 12 },
   imageContainer: {
-<<<<<<< HEAD
-    marginBottom: 16,
-  },
-  imageWrapper: {
-    width: 120,
-    height: 120,
-  },
-  productImage: {
-    width: '100%',
-    height: '100%',
-=======
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
@@ -452,13 +184,10 @@ const styles = StyleSheet.create({
   productImage: {
     width: 120,
     height: 120,
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#e0e0e0',
   },
-<<<<<<< HEAD
-=======
   clearImageButton: {
     position: 'absolute',
     top: 2,
@@ -467,7 +196,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 4,
   },
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
   uploadCard: {
     width: 160,
     height: 110,
@@ -514,58 +242,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   buttonText: { color: '#ffffff' },
-<<<<<<< HEAD
-  changeImageButton: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: 8,
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    borderTopLeftRadius: 8,
-  },
-  changeImageText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-  scrapedBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e3f2fd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.light.primary,
-  },
-  scrapedIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#2196f3',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  scrapedTextContainer: {
-    flex: 1,
-  },
-  scrapedTitle: {
-    fontWeight: '600',
-    color: '#0d47a1',
-    fontSize: 14,
-  },
-  scrapedSubtitle: {
-    color: '#1976d2',
-    fontSize: 12,
-  },
-  scrapedEditButton: {
-    padding: 8,
-    borderRadius: 16,
-    backgroundColor: '#e3f2fd',
-    borderWidth: 1,
-    borderColor: Colors.light.primary,
-  },
-=======
   quantityContainer: { position: 'relative', marginBottom: 12 },
   quantityInput: { paddingRight: 90, height: 40, zIndex: 1 },
   quantityControls: {
@@ -591,7 +267,6 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
   },
   iconContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 });
 
 export default ProductDetails;

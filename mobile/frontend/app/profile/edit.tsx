@@ -25,12 +25,6 @@ import axiosInstance from "@/config"
 import { TitleLarge, BodyMedium } from "@/components/Typography"
 import * as ImagePicker from "expo-image-picker"
 import { MaterialIcons, Feather, FontAwesome } from "@expo/vector-icons"
-<<<<<<< HEAD
-import { Profile } from "@/types" 
-
- 
-
-=======
 
 interface Profile {
   firstName: string
@@ -41,25 +35,24 @@ interface Profile {
   image: any
   imageId: string | null
 }
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 
 export default function EditProfile() {
-    const { theme } = useTheme();
-    const [showPicker, setShowPicker] = useState(false);
-    const [profile, setProfile] = useState<Profile>({
-        firstName: '',
-        lastName: '',
-        bio: '',
-        country: '',
-        phoneNumber: '',
-        image: null,
-        imageId: null,
-    });
-    const [loading, setLoading] = useState(true);
+  const { theme } = useTheme();
+  const [showPicker, setShowPicker] = useState(false);
+  const [profile, setProfile] = useState<Profile>({
+    firstName: '',
+    lastName: '',
+    bio: '',
+    country: '',
+    phoneNumber: '',
+    image: null,
+    imageId: null,
+  });
+  const [loading, setLoading] = useState(true);
 
-    const getInitials = () => {
-        return `${profile.firstName?.charAt(0) || ''}${profile.lastName?.charAt(0) || ''}`.toUpperCase();
-    };
+  const getInitials = () => {
+    return `${profile.firstName?.charAt(0) || ''}${profile.lastName?.charAt(0) || ''}`.toUpperCase();
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -86,121 +79,114 @@ export default function EditProfile() {
       }
     };
 
-        fetchProfile();
-    }, []);
+    fetchProfile();
+  }, []);
 
-    const handleImageUpload = async () => {
-        try {
-            const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [4, 3],
-                quality: 1,
-            });
+  const handleImageUpload = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
 
-            if (!result.canceled && result.assets[0]) {
-                const selectedImage = result.assets[0];
-                const imageUri = selectedImage.uri;
+      if (!result.canceled && result.assets[0]) {
+        const selectedImage = result.assets[0];
+        const imageUri = selectedImage.uri;
 
-                const imageFile = {
-                    uri: imageUri,
-                    type: 'image/jpeg',
-                    name: 'profile-image.jpg',
-                } as const;
+        const imageFile = {
+          uri: imageUri,
+          type: 'image/jpeg',
+          name: 'profile-image.jpg',
+        } as const;
 
-                console.log('Selected image file:', imageFile);
+        console.log('Selected image file:', imageFile);
 
-                setProfile(prev => ({
-                    ...prev,
-                    image: imageFile,
-                    imageId: imageUri,
-                }));
-            }
-        } catch (error) {
-            console.error('Error selecting image:', error);
-            Alert.alert('Error', 'Failed to select image');
+        setProfile(prev => ({
+          ...prev,
+          image: imageFile,
+          imageId: imageUri,
+        }));
+      }
+    } catch (error) {
+      console.error('Error selecting image:', error);
+      Alert.alert('Error', 'Failed to select image');
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (!token) throw new Error('No token found');
+
+      const decoded: any = jwtDecode(token);
+      const formData = new FormData();
+
+      formData.append('firstName', profile.firstName || '');
+      formData.append('lastName', profile.lastName || '');
+      formData.append('bio', profile.bio || '');
+      formData.append('country', profile.country || '');
+      formData.append('phoneNumber', profile.phoneNumber || '');
+
+      if (profile.image && profile.image.uri) {
+        const imageFile = {
+          uri: profile.image.uri,
+          type: 'image/jpeg',
+          name: 'profile-image.jpg',
+        };
+
+        formData.append('image', imageFile as any);
+        console.log('Appending image:', imageFile);
+      }
+
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json',
+        },
+      };
+
+      console.log('Sending request with formData:',
+        Object.fromEntries(formData as any));
+
+      const response = await axiosInstance.put(
+        `/api/users/profile/${decoded.id}`,
+        formData,
+        config
+      );
+
+      if (response.data.success) {
+        await AsyncStorage.setItem('firstName', profile.firstName);
+        await AsyncStorage.setItem('lastName', profile.lastName);
+        await AsyncStorage.setItem('bio', profile.bio);
+        await AsyncStorage.setItem('phoneNumber', profile.phoneNumber);
+
+        if (response.data.data.imageId) {
+          await AsyncStorage.setItem('imageId',
+            String(response.data.data.imageId));
         }
-    };
 
-    const handleUpdateProfile = async () => {
-        try {
-            setLoading(true);
-            const token = await AsyncStorage.getItem('jwtToken');
-            if (!token) throw new Error('No token found');
-
-            const decoded: any = jwtDecode(token);
-            const formData = new FormData();
-
-            formData.append('firstName', profile.firstName || '');
-            formData.append('lastName', profile.lastName || '');
-            formData.append('bio', profile.bio || '');
-            formData.append('country', profile.country || '');
-            formData.append('phoneNumber', profile.phoneNumber || '');
-
-            if (profile.image && profile.image.uri) {
-                const imageFile = {
-                    uri: profile.image.uri,
-                    type: 'image/jpeg',
-                    name: 'profile-image.jpg',
-                };
-                
-                formData.append('image', imageFile as any);
-                console.log('Appending image:', imageFile);
-            }
-
-            const config = {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data',
-                    'Accept': 'application/json',
-                },
-            };
-
-            console.log('Sending request with formData:', 
-                Object.fromEntries(formData as any));
-
-            const response = await axiosInstance.put(
-                `/api/users/profile/${decoded.id}`,
-                formData,
-                config
-            );
-
-            if (response.data.success) {
-<<<<<<< HEAD
-                await AsyncStorage.setItem('firstName', profile.firstName || '');
-                await AsyncStorage.setItem('lastName', profile.lastName || '');
-                await AsyncStorage.setItem('bio', profile.bio || '');
-                await AsyncStorage.setItem('phoneNumber', profile.phoneNumber || '');
-=======
-                await AsyncStorage.setItem('firstName', profile.firstName);
-                await AsyncStorage.setItem('lastName', profile.lastName);
-                await AsyncStorage.setItem('bio', profile.bio);
-                await AsyncStorage.setItem('phoneNumber', profile.phoneNumber);
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
-                
-                if (response.data.data.imageId) {
-                    await AsyncStorage.setItem('imageId', 
-                        String(response.data.data.imageId));
-                }
-
-                Alert.alert('Success', 'Profile updated successfully');
-                router.back();
-            }
-        } catch (error: any) {
-            console.error('Network Error Details:', {
-                message: error.message,
-                code: error.code,
-                response: error.response?.data,
-                config: error.config,
-            });
-            Alert.alert(
-                'Error',
-                'Failed to update profile. Please try again.'
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
+        Alert.alert('Success', 'Profile updated successfully');
+        router.back();
+      }
+    } catch (error: any) {
+      console.error('Network Error Details:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        config: error.config,
+      });
+      Alert.alert(
+        'Error',
+        'Failed to update profile. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return <ActivityIndicator size="large" color={Colors[theme].primary} />;
@@ -211,7 +197,7 @@ export default function EditProfile() {
       <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
         <TopNavigation
           title="Edit Profile"
-          onNotificationPress={() => {}}
+          onNotificationPress={() => { }}
           profileName={profile.firstName}
           onProfilePress={() => {
             console.log("Navigating to profile")

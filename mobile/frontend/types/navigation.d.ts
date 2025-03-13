@@ -7,7 +7,6 @@ declare module "@react-navigation/native-stack" {
         title?: string;
     }
 
-<<<<<<< HEAD
 }
 import { StackNavigationProp } from '@react-navigation/stack'
 type RootStackParamList = {
@@ -16,6 +15,3 @@ type RootStackParamList = {
 };
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 export default NavigationProp;
-=======
-}
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32

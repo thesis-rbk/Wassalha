@@ -6,10 +6,7 @@ import {
   Plane,
   MapPin,
   MessageCircle,
-<<<<<<< HEAD
   Plus
-=======
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 } from "lucide-react-native";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -37,7 +34,6 @@ export function TabBar({
       route: "home" as Route,
     },
     {
-<<<<<<< HEAD
       name: "Order",
       icon: <ShoppingBag size={24} color={iconColor} />,
       route: "../test/order" as Route,
@@ -55,16 +51,6 @@ export function TabBar({
         <Plus size={24} color="white" /> // White icon on colored background
       </View>),
       route: "/productDetails/create-order" as Route,
-=======
-      name: "Orders",
-      icon: <ShoppingBag size={24} color={iconColor} />,
-      route: "/test/order" as Route,
-    },
-    {
-      name: "Trips",
-      icon: <Plane size={24} color={iconColor} />,
-      route: "../test/Travel" as Route,
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
     },
     {
       name: "Pick-up",
@@ -115,11 +101,7 @@ export function TabBar({
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-<<<<<<< HEAD
     justifyContent: "space-between", // Ensure equal spacing
-=======
-    justifyContent: "space-around",
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
     paddingVertical: 8,
     borderTopWidth: 1,
     borderTopColor: "#E5E5E5",
@@ -127,10 +109,7 @@ const styles = StyleSheet.create({
   tab: {
     alignItems: "center",
     justifyContent: "center",
-<<<<<<< HEAD
     flex: 1, // Ensure each tab takes equal space
-=======
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
   },
   tabText: {
     fontSize: 12,
@@ -139,7 +118,6 @@ const styles = StyleSheet.create({
   activeTabText: {
     fontWeight: "bold",
   },
-<<<<<<< HEAD
   plusIconContainer: {
     backgroundColor: "#008098",
     borderRadius: 50,
@@ -148,6 +126,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-=======
->>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 });
