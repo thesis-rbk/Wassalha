@@ -1,83 +1,96 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image } from 'expo-image';
-import { 
-  MapPin, 
-  Calendar, 
-  Package, 
-  DollarSign, 
-  Box, 
-  Info, 
-  User, 
-  Star, 
-  Shield, 
-  MessageCircle, 
-  Award, 
+import React, { useState } from "react";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  TextInput,
+  Text,
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Image } from "expo-image";
+import {
+  MapPin,
+  Calendar,
+  Package,
+  DollarSign,
+  Box,
+  Info,
+  User,
+  Star,
+  Shield,
+  MessageCircle,
+  Award,
   Users,
-  Bell
-} from 'lucide-react-native';
-import { BACKEND_URL } from '@/config';
-import axiosInstance from '@/config';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { useAuth } from '@/hooks/useAuth';
+  Bell,
+  Wallet,
+  Clock,
+} from "lucide-react-native";
+import { BACKEND_URL } from "@/config";
+import axiosInstance from "@/config";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { useAuth } from "@/hooks/useAuth";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { TitleLarge, BodyMedium } from "@/components/Typography";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import ProgressBar from "../../components/ProgressBar";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { decode as atob } from 'base-64';
-import { Picker } from '@react-native-picker/picker';
-import { useRoleDetection } from '@/hooks/useRoleDetection';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { decode as atob } from "base-64";
+import { Picker } from "@react-native-picker/picker";
+// import { useRoleDetection } from "@/hooks/useRoleDetection";
+import Card from "@/components/cards/ProcessCard";
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
   "Air France": "AF",
   "British Airways": "BA",
-  "Lufthansa": "LH",
-  "Emirates": "EK",
+  Lufthansa: "LH",
+  Emirates: "EK",
   "Qatar Airways": "QR",
   "Royal Air Maroc": "AT",
-  "Tunisair": "TU",
+  Tunisair: "TU",
   "Air Algérie": "AH",
-  "Egypt Air": "MS"
+  "Egypt Air": "MS",
 };
 
-const FLIGHT_NUMBERS = Array.from({ length: 100 }, (_, i) => 
+const FLIGHT_NUMBERS = Array.from({ length: 100 }, (_, i) =>
   (i + 100).toString()
 );
 
 const COUNTRIES = {
-  "USA": "US",
-  "FRANCE": "FR", 
-  "SPAIN": "ES",
-  "GERMANY": "DE",
-  "ITALY": "IT",
-  "UK": "GB",
-  "CANADA": "CA",
-  "AUSTRALIA": "AU",
-  "JAPAN": "JP",
-  "CHINA": "CN",
-  "BRAZIL": "BR",
-  "INDIA": "IN",
-  "RUSSIA": "RU",
-  "MEXICO": "MX",
-  "BOLIVIA": "BO",
-  "MOROCCO": "MA",
-  "TUNISIA": "TN", 
-  "ALGERIA": "DZ",
-  "TURKEY": "TR",
-  "PORTUGAL": "PT"
+  USA: "US",
+  FRANCE: "FR",
+  SPAIN: "ES",
+  GERMANY: "DE",
+  ITALY: "IT",
+  UK: "GB",
+  CANADA: "CA",
+  AUSTRALIA: "AU",
+  JAPAN: "JP",
+  CHINA: "CN",
+  BRAZIL: "BR",
+  INDIA: "IN",
+  RUSSIA: "RU",
+  MEXICO: "MX",
+  BOLIVIA: "BO",
+  MOROCCO: "MA",
+  TUNISIA: "TN",
+  ALGERIA: "DZ",
+  TURKEY: "TR",
+  PORTUGAL: "PT",
 };
 
-export default function InitializationSp() {
+export default function InitializationSP() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
-  
+
+  console.log("kjslkdsldslsd", params);
+
   // Progress steps
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -91,44 +104,46 @@ export default function InitializationSp() {
       name: params.goodsName,
       price: Number(params.price),
       description: params.description,
-      image: { 
-        filename: typeof params.imageUrl === 'string' 
-          ? params.imageUrl.split('/').pop() 
-          : null 
-      }
+      category: params.category,
+      image: {
+        filename:
+          typeof params.imageUrl === "string"
+            ? params.imageUrl.split("/").pop()
+            : null,
+      },
     },
     quantity: Number(params.quantity),
     goodsLocation: params.location,
     goodsDestination: params.destination,
-    withBox: params.withBox === 'true',
+    withBox: params.withBox === "true",
     user: {
-      name: params.requesterName || 'Anonymous',
+      name: params.requesterName || "Anonymous",
       profile: {
-        isVerified: params.requesterVerified === 'true'
+        isVerified: params.requesterVerified === "true",
       },
       reputation: {
-        score: Number(params.requesterRating)
-      }
-    }
+        score: Number(params.requesterRating),
+      },
+    },
   });
   const [loading, setLoading] = React.useState(true);
   const [showOfferForm, setShowOfferForm] = useState(false);
   const [offerDetails, setOfferDetails] = useState({
     deliveryDate: new Date(),
-    departureFlightCode: '',
-    arrivalFlightCode: '',
+    departureFlightCode: "",
+    arrivalFlightCode: "",
     airline: Object.keys(AIRLINE_CODES)[0],
     flightNumber: FLIGHT_NUMBERS[0],
     departureCountry: Object.keys(COUNTRIES)[0],
-    arrivalCountry: Object.keys(COUNTRIES)[0]
+    arrivalCountry: Object.keys(COUNTRIES)[0],
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { role, loading: roleLoading } = useRoleDetection(
-    currentUser?.id ? parseInt(currentUser.id) : undefined
-  );
+  // const { role, loading: roleLoading } = useRoleDetection(
+  //   currentUser?.id ? parseInt(currentUser.id) : undefined
+  // );
 
   React.useEffect(() => {
     fetchRequestDetails();
@@ -140,45 +155,45 @@ export default function InitializationSp() {
 
   const fetchRequestDetails = async () => {
     try {
-      console.log('Fetching details for request:', params.id);
+      console.log("Fetching details for request:", params.id);
       const response = await axiosInstance.get(`/api/requests/${params.id}`);
       setRequestDetails((prev: typeof requestDetails) => ({
         ...response.data.data,
         goods: {
           ...response.data.data.goods,
-          image: response.data.data.goods.image || prev.goods.image
-        }
+          image: response.data.data.goods.image || prev.goods.image,
+        },
       }));
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching request details:', error);
-      Alert.alert('Error', 'Failed to load request details');
+      console.error("Error fetching request details:", error);
+      Alert.alert("Error", "Failed to load request details");
       setLoading(false);
     }
   };
 
   async function loadUserFromToken() {
     try {
-      const token = await AsyncStorage.getItem('jwtToken');
+      const token = await AsyncStorage.getItem("jwtToken");
       if (token) {
-        const tokenParts = token.split('.');
+        const tokenParts = token.split(".");
         if (tokenParts.length === 3) {
           try {
             const payload = JSON.parse(atob(tokenParts[1]));
             if (payload.id) {
               setCurrentUser({
                 id: payload.id.toString(),
-                name: payload.name || 'User from token',
-                email: payload.email || ''
+                name: payload.name || "User from token",
+                email: payload.email || "",
               });
             }
           } catch (e) {
-            console.error('Error decoding token:', e);
+            console.error("Error decoding token:", e);
           }
         }
       }
     } catch (e) {
-      console.error('Error loading user from token:', e);
+      console.error("Error loading user from token:", e);
     }
   }
 
@@ -189,17 +204,19 @@ export default function InitializationSp() {
   const handleSubmitOffer = async () => {
     try {
       setIsSubmitting(true);
-      
+
       const requestId = Array.isArray(params.id) ? params.id[0] : params.id;
-      
-      const checkResponse = await axiosInstance.get(`/api/requests/${requestId}`);
+
+      const checkResponse = await axiosInstance.get(
+        `/api/requests/${requestId}`
+      );
       const request = checkResponse.data.data;
-      
-      if (request.status !== 'PENDING' || request.order) {
+
+      if (request.status !== "PENDING" || request.order) {
         Alert.alert(
-          'Request Not Available',
-          'This request already has an active order or is not accepting offers.',
-          [{ text: 'Back to Requests', onPress: () => router.back() }]
+          "Request Not Available",
+          "This request already has an active order or is not accepting offers.",
+          [{ text: "Back to Requests", onPress: () => router.back() }]
         );
         return;
       }
@@ -207,7 +224,7 @@ export default function InitializationSp() {
       const airlineCode = AIRLINE_CODES[offerDetails.airline];
       const flightNumber = offerDetails.flightNumber;
       const trackingNumber = `${airlineCode}${flightNumber}`;
-      
+
       const orderData = {
         requestId: parseInt(requestId),
         travelerId: currentUser?.id,
@@ -215,26 +232,30 @@ export default function InitializationSp() {
         arrivalDate: offerDetails.deliveryDate,
         trackingNumber: trackingNumber,
         orderStatus: "PENDING",
-        paymentStatus: "ON_HOLD"
+        paymentStatus: "ON_HOLD",
       };
 
-      const response = await axiosInstance.post('/api/orders', orderData);
-      
+      const response = await axiosInstance.post("/api/orders", orderData);
+
       if (response.status === 201) {
         router.replace({
-          pathname: '/screens/OrderSuccessScreen',
+          pathname: "/screens/OrderSuccessScreen",
           params: {
             orderId: response.data.data.id,
             goodsName: requestDetails.goods.name,
-            destination: requestDetails.goodsDestination
-          }
+            destination: requestDetails.goodsDestination,
+          },
         });
+        // Alert.alert(
+        //   "Success",
+        //   "Your request is submitted and you will be notified and passed to next step when the user accept your offer"
+        // );
       }
     } catch (error: any) {
-      console.error('Error submitting offer:', error);
+      console.error("Error submitting offer:", error);
       Alert.alert(
-        'Error', 
-        'This request is not available for offers at the moment. Please try another request.'
+        "Error",
+        "This request is not available for offers at the moment. Please try another request."
       );
     } finally {
       setIsSubmitting(false);
@@ -242,8 +263,8 @@ export default function InitializationSp() {
   };
 
   const getInitials = (name: string) => {
-    if (!name) return '??';
-    const names = name.split(' ');
+    if (!name) return "??";
+    const names = name.split(" ");
     if (names.length >= 2) {
       return (names[0][0] + names[names.length - 1][0]).toUpperCase();
     }
@@ -255,28 +276,31 @@ export default function InitializationSp() {
       <View style={styles.avatarContainer}>
         {user?.profile?.imageId ? (
           <Image
-            source={{ uri: `${BACKEND_URL}/api/uploads/${user.profile.imageId}` }}
+            source={{
+              uri: `${BACKEND_URL}/api/uploads/${user.profile.imageId}`,
+            }}
             style={styles.avatar}
             contentFit="cover"
           />
         ) : (
-          <LinearGradient
-            colors={['#007AFF', '#00C6FF']}
-            style={styles.avatar}
-          >
+          <LinearGradient colors={["#007AFF", "#00C6FF"]} style={styles.avatar}>
             <BodyMedium style={styles.initials}>
               {getInitials(user?.name)}
             </BodyMedium>
           </LinearGradient>
         )}
-        {user?.profile?.isVerified && (
-          <View style={styles.verifiedBadge} />
-        )}
+        {user?.profile?.isVerified && <View style={styles.verifiedBadge} />}
       </View>
     );
   };
 
-  const ReputationDisplay = ({ reputation, isVerified }: { reputation: any; isVerified: boolean }) => {
+  const ReputationDisplay = ({
+    reputation,
+    isVerified,
+  }: {
+    reputation: any;
+    isVerified: boolean;
+  }) => {
     return (
       <View style={styles.reputationContainer}>
         <View style={styles.reputationItem}>
@@ -327,38 +351,41 @@ export default function InitializationSp() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TitleLarge style={styles.headerTitle}>Request Details</TitleLarge>
-        <View style={styles.headerIcons}>
-          <Bell size={24} color={Colors[colorScheme].primary} />
-          <MessageCircle size={24} color={Colors[colorScheme].primary} />
-          <User size={24} color={Colors[colorScheme].primary} />
-        </View>
-      </View>
-
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <Text style={styles.title}>Initialization</Text>
+        <Text style={styles.subtitle}>
+          This is the first step of the process, check the product details below
+          and you can submit an offer if you want
+        </Text>
         <ProgressBar currentStep={1} steps={progressSteps} />
-        
+        <Text style={styles.headerTitle}>Product Details</Text>
         <View style={styles.imageContainer}>
           <Image
-            source={{ uri: `${BACKEND_URL}/api/uploads/${requestDetails.goods.image?.filename}` }}
+            source={{
+              uri: `${BACKEND_URL}/api/uploads/${requestDetails.goods.image?.filename}`,
+            }}
             style={styles.productImage}
             contentFit="cover"
           />
         </View>
 
         <View style={styles.detailsContainer}>
-          <TitleLarge style={styles.title}>{requestDetails.goods.name}</TitleLarge>
-          
+          <TitleLarge style={styles.title}>
+            {requestDetails.goods.name}
+          </TitleLarge>
+
           <View style={styles.priceCategory}>
             <View style={styles.priceContainer}>
-              <DollarSign size={20} color={Colors[colorScheme].primary} />
+              <Wallet size={20} color={Colors[colorScheme].primary} />
               <BodyMedium style={styles.price}>
                 ${requestDetails.goods.price.toFixed(2)}
               </BodyMedium>
             </View>
             <BodyMedium style={styles.category}>
-              {requestDetails.goods.category?.name || "Uncategorized"}
+              {requestDetails.goods.category || "Uncategorized"}
             </BodyMedium>
           </View>
 
@@ -368,7 +395,8 @@ export default function InitializationSp() {
               <View style={styles.infoContent}>
                 <BodyMedium style={styles.infoLabel}>Route</BodyMedium>
                 <BodyMedium style={styles.infoValue}>
-                  {requestDetails.goodsLocation} → {requestDetails.goodsDestination}
+                  {requestDetails.goodsLocation} →{" "}
+                  {requestDetails.goodsDestination}
                 </BodyMedium>
               </View>
             </View>
@@ -377,7 +405,9 @@ export default function InitializationSp() {
               <Package size={20} color={Colors[colorScheme].primary} />
               <View style={styles.infoContent}>
                 <BodyMedium style={styles.infoLabel}>Quantity</BodyMedium>
-                <BodyMedium style={styles.infoValue}>{requestDetails.quantity}</BodyMedium>
+                <BodyMedium style={styles.infoValue}>
+                  {requestDetails.quantity}
+                </BodyMedium>
               </View>
             </View>
 
@@ -386,7 +416,7 @@ export default function InitializationSp() {
               <View style={styles.infoContent}>
                 <BodyMedium style={styles.infoLabel}>Original Box</BodyMedium>
                 <BodyMedium style={styles.infoValue}>
-                  {requestDetails.withBox ? 'Required' : 'Not Required'}
+                  {requestDetails.withBox ? "Required" : "Not Required"}
                 </BodyMedium>
               </View>
             </View>
@@ -406,7 +436,7 @@ export default function InitializationSp() {
 
           <View style={styles.requesterSection}>
             <TitleLarge style={styles.sectionTitle}>Request by</TitleLarge>
-            
+
             <View style={styles.requesterCard}>
               <View style={styles.requesterHeader}>
                 <UserAvatar user={requestDetails.user} />
@@ -414,21 +444,26 @@ export default function InitializationSp() {
                   <BodyMedium style={styles.requesterName}>
                     {requestDetails.user.name}
                   </BodyMedium>
-                  <ReputationDisplay 
+                  <ReputationDisplay
                     reputation={{
                       score: Number(params.requesterRating),
                       level: Number(params.requesterLevel),
-                      totalRatings: Number(params.requesterTotalRatings)
+                      totalRatings: Number(params.requesterTotalRatings),
                     }}
-                    isVerified={params.requesterVerified === 'true'}
+                    isVerified={params.requesterVerified === "true"}
                   />
                 </View>
               </View>
 
-              <BlurView intensity={85} tint="light" style={styles.blurredSection}>
+              <BlurView
+                intensity={85}
+                tint="light"
+                style={styles.blurredSection}
+              >
                 <View style={styles.securityNote}>
                   <BodyMedium style={styles.securityText}>
-                    🔒 Contact information will be available after offer acceptance
+                    🔒 Contact information will be available after offer
+                    acceptance
                   </BodyMedium>
                 </View>
               </BlurView>
@@ -438,23 +473,25 @@ export default function InitializationSp() {
           {showOfferForm ? (
             <View style={styles.offerFormContainer}>
               <TitleLarge style={styles.formTitle}>Make an Offer</TitleLarge>
-              
+
               <View style={styles.formField}>
                 <BodyMedium style={styles.label}>Departure Country</BodyMedium>
                 <View style={styles.pickerContainer}>
                   <Picker
                     selectedValue={offerDetails.departureCountry}
                     style={styles.picker}
-                    onValueChange={(value) => setOfferDetails(prev => ({
-                      ...prev,
-                      departureCountry: value
-                    }))}
+                    onValueChange={(value) =>
+                      setOfferDetails((prev) => ({
+                        ...prev,
+                        departureCountry: value,
+                      }))
+                    }
                   >
-                    {Object.keys(COUNTRIES).map(country => (
-                      <Picker.Item 
-                        key={country} 
-                        label={country} 
-                        value={country} 
+                    {Object.keys(COUNTRIES).map((country) => (
+                      <Picker.Item
+                        key={country}
+                        label={country}
+                        value={country}
                       />
                     ))}
                   </Picker>
@@ -467,16 +504,18 @@ export default function InitializationSp() {
                   <Picker
                     selectedValue={offerDetails.arrivalCountry}
                     style={styles.picker}
-                    onValueChange={(value) => setOfferDetails(prev => ({
-                      ...prev,
-                      arrivalCountry: value
-                    }))}
+                    onValueChange={(value) =>
+                      setOfferDetails((prev) => ({
+                        ...prev,
+                        arrivalCountry: value,
+                      }))
+                    }
                   >
-                    {Object.keys(COUNTRIES).map(country => (
-                      <Picker.Item 
-                        key={country} 
-                        label={country} 
-                        value={country} 
+                    {Object.keys(COUNTRIES).map((country) => (
+                      <Picker.Item
+                        key={country}
+                        label={country}
+                        value={country}
                       />
                     ))}
                   </Picker>
@@ -491,41 +530,39 @@ export default function InitializationSp() {
                       selectedValue={offerDetails.airline}
                       style={styles.picker}
                       onValueChange={(value) => {
-                        setOfferDetails(prev => ({
+                        setOfferDetails((prev) => ({
                           ...prev,
                           airline: value,
-                          departureFlightCode: `${AIRLINE_CODES[value]}${offerDetails.flightNumber}`
+                          departureFlightCode: `${AIRLINE_CODES[value]}${offerDetails.flightNumber}`,
                         }));
                       }}
                     >
-                      {Object.keys(AIRLINE_CODES).map(airline => (
-                        <Picker.Item 
-                          key={airline} 
-                          label={airline} 
-                          value={airline} 
+                      {Object.keys(AIRLINE_CODES).map((airline) => (
+                        <Picker.Item
+                          key={airline}
+                          label={airline}
+                          value={airline}
                         />
                       ))}
                     </Picker>
                   </View>
-                  
+
                   <View style={[styles.pickerContainer, { flex: 1 }]}>
                     <Picker
                       selectedValue={offerDetails.flightNumber}
                       style={styles.picker}
                       onValueChange={(value) => {
-                        setOfferDetails(prev => ({
+                        setOfferDetails((prev) => ({
                           ...prev,
                           flightNumber: value,
-                          departureFlightCode: `${AIRLINE_CODES[prev.airline]}${value}`
+                          departureFlightCode: `${
+                            AIRLINE_CODES[prev.airline]
+                          }${value}`,
                         }));
                       }}
                     >
-                      {FLIGHT_NUMBERS.map(num => (
-                        <Picker.Item 
-                          key={num} 
-                          label={num} 
-                          value={num}
-                        />
+                      {FLIGHT_NUMBERS.map((num) => (
+                        <Picker.Item key={num} label={num} value={num} />
                       ))}
                     </Picker>
                   </View>
@@ -533,8 +570,10 @@ export default function InitializationSp() {
               </View>
 
               <View style={styles.formField}>
-                <BodyMedium style={styles.label}>Estimated Delivery Date</BodyMedium>
-                <TouchableOpacity 
+                <BodyMedium style={styles.label}>
+                  Estimated Delivery Date
+                </BodyMedium>
+                <TouchableOpacity
                   style={styles.dateInput}
                   onPress={() => setShowDatePicker(true)}
                 >
@@ -548,7 +587,10 @@ export default function InitializationSp() {
                   mode="date"
                   onConfirm={(date) => {
                     setShowDatePicker(false);
-                    setOfferDetails(prev => ({...prev, deliveryDate: date}));
+                    setOfferDetails((prev) => ({
+                      ...prev,
+                      deliveryDate: date,
+                    }));
                   }}
                   onCancel={() => setShowDatePicker(false)}
                   minimumDate={new Date()}
@@ -556,31 +598,53 @@ export default function InitializationSp() {
               </View>
 
               <View style={styles.buttonRow}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.button, styles.cancelButton]}
                   onPress={() => setShowOfferForm(false)}
                 >
-                  <BodyMedium style={styles.cancelButtonText}>Cancel</BodyMedium>
+                  <BodyMedium style={styles.cancelButtonText}>
+                    Cancel
+                  </BodyMedium>
                 </TouchableOpacity>
-                
-                <BaseButton 
+
+                <BaseButton
                   size="large"
                   onPress={handleSubmitOffer}
                   style={styles.submitButton}
-                  disabled={!isValidFlightCode(offerDetails.departureFlightCode)}
+                  disabled={
+                    !isValidFlightCode(offerDetails.departureFlightCode)
+                  }
                 >
-                  <BodyMedium style={styles.submitButtonText}>Submit Offer</BodyMedium>
+                  <BodyMedium style={styles.submitButtonText}>
+                    Submit Offer
+                  </BodyMedium>
                 </BaseButton>
               </View>
             </View>
-          ) : (
+          ) : !params.idOrder ? (
             <BaseButton
               size="large"
               onPress={handleMakeOffer}
               style={styles.makeOfferButton}
             >
-              <BodyMedium style={styles.makeOfferButtonText}>Make an Offer</BodyMedium>
+              <BodyMedium style={styles.makeOfferButtonText}>
+                Make an Offer
+              </BodyMedium>
             </BaseButton>
+          ) : (
+            <Card style={styles.statusCard}>
+              <View style={styles.statusHeader}>
+                <Clock size={20} color="#eab308" />
+                <Text style={styles.statusTitle}>
+                  Awaiting Requester Confirmation
+                </Text>
+              </View>
+              <Text style={styles.statusText}>
+                Your offer has been submitted successfully and the requester has
+                been notified. Once he confirms your offer you will be passing
+                to the verification step.
+              </Text>
+            </Card>
           )}
         </View>
       </ScrollView>
@@ -589,9 +653,9 @@ export default function InitializationSp() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#fff" 
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
   },
   header: {
     flexDirection: "row",
@@ -602,38 +666,39 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
   },
-  headerTitle: { 
-    fontSize: 20, 
-    color: Colors.light.primary 
+  headerTitle: {
+    fontSize: 20,
+    color: Colors.light.primary,
+    marginBottom: 19,
   },
-  headerIcons: { 
-    flexDirection: "row", 
-    gap: 16 
+  headerIcons: {
+    flexDirection: "row",
+    gap: 16,
   },
-  scrollView: { 
-    flex: 1 
+  scrollView: {
+    flex: 1,
   },
-  scrollContent: { 
-    padding: 16, 
-    paddingBottom: 32 
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 32,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: "#fff",
   },
   imageContainer: {
-    width: '100%',
+    width: "100%",
     height: 300,
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 16,
   },
   productImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   detailsContainer: {
     padding: 16,
@@ -641,41 +706,47 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   title: {
+    fontFamily: "Poppins-Bold",
     fontSize: 24,
-    fontWeight: '700',
-    color: Colors.light.text,
-    marginBottom: 8,
+    color: "#1e293b",
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "#64748b",
+    marginBottom: 20,
   },
   priceCategory: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   price: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.light.primary,
     marginLeft: 4,
   },
   category: {
     fontSize: 16,
     color: Colors.light.text,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: "#f1f5f9",
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 16,
   },
   infoCard: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -684,8 +755,8 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
   },
   infoRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     marginBottom: 16,
   },
   infoContent: {
@@ -699,15 +770,15 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     color: Colors.light.text,
   },
   descriptionCard: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -716,13 +787,13 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
   },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.light.text,
     marginLeft: 8,
   },
@@ -736,7 +807,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   requesterCard: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 16,
     marginTop: 8,
@@ -744,45 +815,45 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
   },
   requesterHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   avatarContainer: {
     width: 60,
     height: 60,
-    position: 'relative',
+    position: "relative",
   },
   avatar: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   initials: {
-    color: 'white',
+    color: "white",
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   verifiedBadge: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     right: 0,
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#22c55e',
+    backgroundColor: "#22c55e",
     borderWidth: 2,
-    borderColor: 'white',
+    borderColor: "white",
   },
   blurredSection: {
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginVertical: 16,
   },
   securityNote: {
     padding: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   securityText: {
     fontSize: 13,
@@ -790,20 +861,20 @@ const styles = StyleSheet.create({
   },
   contactButton: {
     backgroundColor: Colors.light.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     padding: 14,
     borderRadius: 12,
   },
   contactButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: 8,
   },
   offerFormContainer: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 16,
     borderRadius: 12,
     marginTop: 16,
@@ -812,7 +883,7 @@ const styles = StyleSheet.create({
   },
   formTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 16,
     color: Colors.light.text,
   },
@@ -826,29 +897,29 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: "#e2e8f0",
     borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: 'white',
+    overflow: "hidden",
+    backgroundColor: "white",
   },
   picker: {
     height: 50,
-    width: '100%',
+    width: "100%",
   },
   flightCodeContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   dateInput: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: "#e2e8f0",
     borderRadius: 8,
     padding: 12,
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
   buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: 12,
     marginTop: 16,
   },
@@ -856,18 +927,18 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelButton: {
-    backgroundColor: '#e2e8f0',
+    backgroundColor: "#e2e8f0",
     padding: 16,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   cancelButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.light.text,
   },
   submitButton: {
@@ -876,8 +947,8 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: 'white',
+    fontWeight: "600",
+    color: "white",
   },
   makeOfferButton: {
     backgroundColor: Colors.light.primary,
@@ -886,16 +957,16 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   makeOfferButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   requesterInfo: {
     marginLeft: 12,
   },
   requesterName: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.light.text,
   },
   requestCount: {
@@ -904,24 +975,24 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   reputationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 4,
     gap: 12,
   },
   reputationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   ratingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   ratingScore: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#f59e0b',
+    fontWeight: "600",
+    color: "#f59e0b",
   },
   ratingCount: {
     fontSize: 12,
@@ -929,9 +1000,9 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   levelBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f3e8ff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f3e8ff",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -939,13 +1010,13 @@ const styles = StyleSheet.create({
   },
   levelText: {
     fontSize: 12,
-    fontWeight: '500',
-    color: '#7c3aed',
+    fontWeight: "500",
+    color: "#7c3aed",
   },
   verifiedBadgeInline: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#dcfce7',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#dcfce7",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -953,7 +1024,63 @@ const styles = StyleSheet.create({
   },
   verifiedText: {
     fontSize: 12,
-    fontWeight: '500',
-    color: '#22c55e',
+    fontWeight: "500",
+    color: "#22c55e",
+  },
+  statusCard: {
+    marginTop: 16,
+    backgroundColor: "#fff7ed",
+    borderColor: "#fed7aa",
+  },
+  statusHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  statusTitle: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 16,
+    color: "#c2410c",
+    marginLeft: 8,
+  },
+  statusText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "#431407",
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  timeline: {
+    borderLeftWidth: 2,
+    borderLeftColor: "#e2e8f0",
+    marginLeft: 7,
+    paddingLeft: 20,
+  },
+  timelineItem: {
+    flexDirection: "row",
+    marginBottom: 16,
+    alignItems: "flex-start",
+  },
+  timelineDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    position: "absolute",
+    left: -24,
+    top: 3,
+  },
+  completedDot: {
+    backgroundColor: "#16a34a",
+  },
+  pendingDot: {
+    backgroundColor: "#eab308",
+    borderWidth: 2,
+    borderColor: "#fef9c3",
+  },
+  timelineText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 13,
+    color: "#64748b",
+    marginLeft: 8,
   },
 });

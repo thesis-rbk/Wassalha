@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { ThemeProvider } from "@/context/ThemeContext";
 import WelcomeAnimation from "@/components/WelcomeAnimation";
 import MainLoading from "@/components/MainLoading";
-import { StripeProvider } from '@stripe/stripe-react-native';
+import { StripeProvider } from "@stripe/stripe-react-native";
 import { STRIPE_PUBLISHABLE_KEY } from "@/config";
 SplashScreen.preventAutoHideAsync();
 
@@ -31,9 +31,7 @@ export default function RootLayout() {
   console.log("Store:", store);
 
   return (
-    <StripeProvider
-      publishableKey={STRIPE_PUBLISHABLE_KEY}
-    >
+    <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>
       <ThemeProvider>
         <Provider store={store}>
           {!loadingComplete ? (
@@ -87,7 +85,10 @@ export default function RootLayout() {
                 name="profile/edit"
                 options={{ title: "Edit Profile" }}
               />
-              <Stack.Screen name="profile/index" options={{ title: "Profile" }} />
+              <Stack.Screen
+                name="profile/index"
+                options={{ title: "Profile" }}
+              />
               <Stack.Screen
                 name="messages/messages"
                 options={{ title: "Messages" }}
@@ -100,9 +101,18 @@ export default function RootLayout() {
               <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
               <Stack.Screen name="test/chat" options={{ title: "Chat" }} />
               <Stack.Screen name="test/order" options={{ title: "order" }} />
-              <Stack.Screen name="verification/start" options={{ title: "verification" }} />
-              <Stack.Screen name="verification/TakeSelfie" options={{ title: "Take Selfie" }} />
-              <Stack.Screen name="verification/creditCardVerification" options={{ title: "Credit Card Verification" }} />
+              <Stack.Screen
+                name="verification/start"
+                options={{ title: "verification" }}
+              />
+              <Stack.Screen
+                name="verification/TakeSelfie"
+                options={{ title: "Take Selfie" }}
+              />
+              <Stack.Screen
+                name="verification/creditCardVerification"
+                options={{ title: "Credit Card Verification" }}
+              />
               <Stack.Screen
                 name="processTrack/initializationSO"
                 options={{ title: "Initialization" }}
@@ -135,26 +145,42 @@ export default function RootLayout() {
                 name="processTrack/pickupSP"
                 options={{ title: "Pickup" }}
               />
-              <Stack.Screen name="test/role-test" options={{ title: "Role Test" }} />
-              <Stack.Screen name="test/order-details"  />
+              <Stack.Screen
+                name="test/role-test"
+                options={{ title: "Role Test" }}
+              />
+              <Stack.Screen
+                name="test/order-details"
+                options={{ title: "Order Details" }}
+              />
               <Stack.Screen
                 name="processTrack/makeOffer"
                 options={{ title: "Make Offer" }}
               />
-              
+              <Stack.Screen
+                name="productDetails/create-order"
+                options={{ title: "Create Request" }}
+              />
+              <Stack.Screen
+                name="productDetails/index"
+                options={{ title: "Good Details" }}
+              />
+              <Stack.Screen
+                name="productDetails/additional-details"
+                options={{ title: "Good Details" }}
+              />
+
               {/* Add the new success screens */}
               <Stack.Screen
                 name="screens/RequestSuccessScreen"
-                options={{ 
+                options={{
                   title: "Request Created",
-                  
                 }}
               />
               <Stack.Screen
                 name="screens/OrderSuccessScreen"
-                options={{ 
+                options={{
                   title: "Order Created",
-                  
                 }}
               />
             </Stack>

@@ -23,7 +23,7 @@ const serviceProviderRoutes = require("./routes/serviceProvider.Routes");
 const orderRoutes = require("./routes/orderRoutes");
 const processRoutes = require("./routes/processRoutes");
 const stripeRoutes = require("./routes/stripe.route");
-const paymentRoutes = require("./routes/payment.route");
+const paymentsRoutes = require("./routes/payments.route");
 
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
@@ -58,7 +58,7 @@ app.use("/api/service-provider", serviceProviderRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/process", processRoutes);
 app.use("/api/stripe", stripeRoutes);
-app.use("/api/payment", paymentRoutes);
+app.use("/api/payment", paymentsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

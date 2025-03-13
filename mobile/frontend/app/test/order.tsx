@@ -4,14 +4,12 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
-  Dimensions,
-  Text,
   TouchableOpacity,
   Alert,
 } from "react-native";
+import SegmentedControl from "@/components/SegmentedControl";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import { Stack } from "expo-router";
 import axiosInstance from "@/config";
 import { useAuth } from "@/hooks/useAuth";
 import { Request, RequestStatus, Goods } from "@/types";
@@ -21,7 +19,7 @@ import { MapPin, DollarSign, Package, Activity } from "lucide-react-native";
 import { BACKEND_URL } from "@/config";
 import { useRouter } from "expo-router";
 import { decode as atob } from "base-64";
-import { ProcessStatus } from "@/types/GoodsProcess";
+import { GoodsProcess, ProcessStatus } from "@/types/GoodsProcess";
 
 // Custom hook to ensure we have user data
 const useReliableAuth = () => {
@@ -92,6 +90,8 @@ const useReliableAuth = () => {
 
 export default function OrderPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [view, setView] = useState<"orders" | "requests">("orders");
+  const [goodsProcesses, setGoodsProcesses] = useState<GoodsProcess[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
   const { user, loading: authLoading } = useReliableAuth();
   const router = useRouter();
@@ -107,29 +107,249 @@ export default function OrderPage() {
     return userIdStr === requestUserIdStr;
   };
 
+  const getProcessStatusColor = (status: ProcessStatus): string => {
+    switch (status) {
+      case "PREINITIALIZED":
+        return "#3b82f6"; // blue
+      case "INITIALIZED":
+        return "#3b82f6"; // blue
+      case "CONFIRMED":
+        return "#8b5cf6"; // purple
+      case "PAID":
+        return "#10b981"; // green
+      case "IN_TRANSIT":
+        return "#f97316"; // orange
+      case "PICKUP_MEET":
+        return "#eab308"; // yellow
+      case "FINALIZED":
+        return "#14b8a6"; // teal
+      case "CANCELLED":
+        return "#ef4444"; // red
+      default:
+        return "#6b7280"; // gray
+    }
+  };
+
+  const getProcessStatusText = (status: ProcessStatus): string => {
+    switch (status) {
+      case "PREINITIALIZED":
+        return "Pre-Initialized";
+      case "INITIALIZED":
+        return "Initialized";
+      case "CONFIRMED":
+        return "Confirmed";
+      case "PAID":
+        return "Paid";
+      case "IN_TRANSIT":
+        return "In Transit";
+      case "PICKUP_MEET":
+        return "Ready for Pickup";
+      case "FINALIZED":
+        return "Completed";
+      case "CANCELLED":
+        return "Cancelled";
+      default:
+        return status;
+    }
+  };
+
+  const getRequestStatusColor = (status: RequestStatus): string => {
+    switch (status) {
+      case "PENDING":
+        return "#3b82f6"; // blue
+      case "ACCEPTED":
+        return "#10b981"; // green
+      case "CANCELLED":
+        return "#f97316"; // orange
+      case "REJECTED":
+        return "#ef4444"; // red
+      default:
+        return "#6b7280"; // gray
+    }
+  };
+
+  const getRequestStatusText = (status: RequestStatus): string => {
+    switch (status) {
+      case "PENDING":
+        return "Pending";
+      case "ACCEPTED":
+        return "Accepted";
+      case "CANCELLED":
+        return "Cancelled";
+      case "REJECTED":
+        return "Rejected";
+      default:
+        return status;
+    }
+  };
+
   // Fetch requests when component mounts or user changes
   useEffect(() => {
     if (!authLoading) {
-      console.log("User loaded, fetching requests...", user);
+      console.log("User loaded, fetching orders...", user);
+      fetchGoodsProcesses();
       fetchRequests();
     }
   }, [user, authLoading]);
 
+  // Fetch requests
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
-      // Add include=offers to get offer data with requests
-      const response = await axiosInstance.get("/api/requests?include=offers");
-      console.log("Current user ID:", user?.id);
-      setRequests(response.data.data);
-    } catch (error: any) {
-      console.error("Error details:", error);
+      const response = await axiosInstance.get("/api/requests");
+      setRequests(response.data.data || []);
+    } catch (error) {
+      console.error("Error fetching requests:", error);
+      setRequests([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const renderItem = ({ item }: { item: Request }) => {
+  const renderRequestItem = ({ item }: { item: Request }) => {
+    const parameters = {
+      id: item?.id?.toString(),
+      goodsName: item.goods?.name || "Unknown",
+      price: item.goods?.price || 0,
+      location: item.goodsLocation || "Unknown",
+      destination: item.goodsDestination || "Unknown",
+      quantity: item.quantity.toString() || "0",
+      description: item.goods?.description || "",
+      category: item?.goods?.category?.name || "Uncategorized",
+      withBox: item.withBox?.toString() || "false",
+      requesterId: item.userId.toString(),
+      requesterName: item.user?.name || "Anonymous",
+      requesterRating: item.user?.reputation?.score?.toString() || "0",
+      requesterLevel: item.user?.reputation?.level?.toString() || "1",
+      requesterTotalRatings:
+        item.user?.reputation?.totalRatings?.toString() || "0",
+      requesterVerified: item.user?.profile?.isVerified?.toString() || "false",
+      status: item.status,
+      imageUrl: item.goods?.goodsUrl
+        ? `${BACKEND_URL}${item.goods.goodsUrl}`
+        : null,
+    };
+
+    return (
+      <View style={styles.card}>
+        <View style={styles.imageSection}>
+          {parameters.imageUrl ? (
+            <Image
+              source={{ uri: parameters.imageUrl }}
+              style={styles.productImage}
+              contentFit="cover"
+            />
+          ) : (
+            <View style={styles.noImageContainer}>
+              <ThemedText style={styles.noImageText}>
+                No Image Available
+              </ThemedText>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.content}>
+          <View style={styles.headerContent}>
+            <View style={styles.titleRow}>
+              <ThemedText style={styles.productTitle}>
+                {parameters.goodsName}
+              </ThemedText>
+
+              <View style={styles.badgeContainer}>
+                {isOwnRequest(item.userId) && (
+                  <View style={styles.ownRequestBadge}>
+                    <ThemedText style={styles.badgeText}>
+                      Your Request
+                    </ThemedText>
+                  </View>
+                )}
+
+                <View
+                  style={[
+                    styles.statusBadge,
+                    {
+                      backgroundColor: getRequestStatusColor(item.status),
+                    },
+                  ]}
+                >
+                  <ThemedText style={styles.badgeText}>
+                    {item.status}
+                  </ThemedText>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.detailsCard}>
+              <View style={styles.detailRow}>
+                <MapPin size={20} color="#64748b" />
+                <ThemedText style={styles.detailValue}>
+                  {parameters.location} → {parameters.destination}
+                </ThemedText>
+              </View>
+
+              <View style={styles.detailRow}>
+                <DollarSign size={20} color="#64748b" />
+                <ThemedText style={styles.priceValue}>
+                  ${parameters.price.toFixed(2)}
+                </ThemedText>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Package size={20} color="#64748b" />
+                <ThemedText style={styles.detailValue}>
+                  {parameters.quantity}
+                </ThemedText>
+              </View>
+            </View>
+          </View>
+
+          {parameters.description && (
+            <View style={styles.descriptionCard}>
+              <ThemedText style={styles.sectionTitle}>Description</ThemedText>
+              <ThemedText style={styles.description}>
+                {parameters.description}
+              </ThemedText>
+            </View>
+          )}
+
+          {/* Add "View Request" button for requests not owned by the current user */}
+          {!isOwnRequest(item.userId) && (
+            <TouchableOpacity
+              style={styles.viewRequestButton}
+              onPress={() =>
+                router.push({
+                  pathname: "/processTrack/initializationSP",
+                  params: parameters,
+                })
+              }
+            >
+              <ThemedText style={styles.viewRequestButtonText}>
+                View Request
+              </ThemedText>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  const fetchGoodsProcesses = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axiosInstance.get("/api/process");
+      console.log("Current user ID:", user?.id);
+      // Set goodsProcesses to an empty array if no data is returned
+      setGoodsProcesses(response.data.data || []);
+    } catch (error: any) {
+      console.error("Error details:", error);
+      // Optionally set to empty array on error too, depending on your needs
+      setGoodsProcesses([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const renderOrderItem = ({ item }: { item: GoodsProcess }) => {
     // Helper function to get the correct image URL
     const getImageUrl = (goods: Goods) => {
       // If no image data at all, return null
@@ -154,79 +374,154 @@ export default function OrderPage() {
       return null;
     };
 
-    const getInitials = (user?: { name?: string }) => {
-      if (!user?.name) return "?";
-      const names = user.name.split(" ");
-      if (names.length >= 2) {
-        return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-      }
-      return names[0][0].toUpperCase();
-    };
-
-    const handleMakeOffer = () => {
-      console.log("=== handleMakeOffer START ===");
-      console.log("Request item:", {
-        id: item.id,
-        goodsName: item.goods.name,
-        price: item.goods.price,
-        location: item.goodsLocation,
-        destination: item.goodsDestination,
-      });
-
-      const params = {
-        id: item.id.toString(),
-        imageUrl: getImageUrl(item.goods),
-        goodsName: item.goods.name,
-        price: item.goods.price.toString(),
-        location: item.goodsLocation,
-        destination: item.goodsDestination,
-        quantity: item.quantity.toString(),
-        description: item.goods.description || "",
-        withBox: item.withBox?.toString() || "false",
-        requesterId: item.userId.toString(),
-        requesterName: item.user?.name || "Anonymous",
-        requesterRating: item.user?.reputation?.score?.toString() || "0",
-        requesterLevel: item.user?.reputation?.level?.toString() || "1",
-        requesterTotalRatings:
-          item.user?.reputation?.totalRatings?.toString() || "0",
-        requesterVerified:
-          item.user?.profile?.isVerified?.toString() || "false",
-        totalOrders: item.user?.requests?.length?.toString() || "0",
-      };
-
-      console.log("Navigation params:", params);
-
-      try {
-        console.log("Attempting navigation to /processTrack/initializationSP");
-        router.push({
-          pathname: "/processTrack/initializationSP",
-          params: params,
-        });
-        console.log("Navigation push completed");
-      } catch (error) {
-        console.error("Navigation error:", error);
-      }
+    const parameters = {
+      idProcess: item?.id?.toString(),
+      idOrder: item?.orderId?.toString(),
+      idRequest: item?.order?.requestId?.toString(),
+      idGood: item?.order?.request?.goodsId?.toString(),
+      imageUrl: getImageUrl(item.order.request.goods),
+      goodsName: item?.order?.request?.goods?.name || "Unknown",
+      price: item?.order?.request?.goods?.price || 0,
+      location: item?.order?.request?.goodsLocation || "Unknown",
+      destination: item?.order?.request?.goodsDestination || "Unknown",
+      quantity: item?.order?.request?.quantity.toString() || "0",
+      description: item?.order?.request?.goods?.description || "",
+      withBox: item?.order?.request?.withBox?.toString() || "false",
+      requesterId: item?.order?.request?.userId.toString(),
+      requesterName: item?.order?.request?.user?.name || "Anonymous",
+      requesterRating:
+        item?.order?.request?.user?.reputation?.score?.toString() || "0",
+      requesterLevel:
+        item?.order?.request?.user?.reputation?.level?.toString() || "1",
+      requesterTotalRatings:
+        item?.order?.request?.user?.reputation?.totalRatings?.toString() || "0",
+      requesterVerified:
+        item?.order?.request?.user?.profile?.isVerified?.toString() || "false",
+      totalOrders:
+        item?.order?.request?.user?.requests?.length?.toString() || "0",
+      travelerId: item.order?.travelerId?.toString(),
+      travelerName: item.order?.traveler?.name || "Anonymous",
+      travelerRating:
+        item.order?.traveler?.reputation?.score?.toString() || "0",
+      travelerLevel: item.order?.traveler?.reputation?.level?.toString() || "1",
+      travelerTotalRatings:
+        item.order?.traveler?.reputation?.totalRatings?.toString() || "0",
+      travelerVerified:
+        item.order?.traveler?.profile?.isVerified?.toString() || "false",
+      status: item?.status,
+      category: item?.order?.request?.goods?.category?.name || "Uncategorized",
     };
 
     // Check if this request has an associated order
     const hasOrder = item.order !== null && item.order !== undefined;
-    const processStatus =
-      hasOrder && item.order?.goodsProcess?.status
-        ? item.order.goodsProcess.status
-        : undefined;
+    const processStatus = hasOrder && item.status ? item.status : undefined;
+
+    const handleNavigation = () => {
+      if (isOwnRequest(parseInt(parameters.requesterId)) && hasOrder) {
+        switch (parameters.status) {
+          case "PREINITIALIZED":
+            return router.push({
+              pathname: "/processTrack/initializationSO",
+              params: parameters,
+            });
+          case "INITIALIZED":
+            return router.push({
+              pathname: "/processTrack/verificationSO",
+              params: parameters,
+            });
+          case "CONFIRMED":
+            return router.push({
+              pathname: "/processTrack/paymentSO",
+              params: parameters,
+            });
+          case "PAID":
+            return router.push({
+              pathname: "/processTrack/pickupSO",
+              params: parameters,
+            });
+          case "IN_TRANSIT":
+            return router.push({
+              pathname: "/home", // TO BE CHANGED
+              params: parameters,
+            });
+          case "PICKUP_MEET":
+            return router.push({
+              pathname: "/home", // TO BE CHANGED
+              params: parameters,
+            });
+          case "FINALIZED":
+            return router.push({
+              pathname: "/home", // TO BE CHANGED
+              params: parameters,
+            });
+          case "CANCELLED":
+            return router.push({
+              pathname: "/home", // TO BE CHANGED
+              params: parameters,
+            });
+          default:
+            return parameters.status;
+        }
+      } else if (!isOwnRequest(parseInt(parameters.requesterId)) && hasOrder) {
+        switch (parameters.status) {
+          case "PREINITIALIZED":
+            return router.push({
+              pathname: "/processTrack/initializationSP",
+              params: parameters,
+            });
+          case "INITIALIZED":
+            return router.push({
+              pathname: "/processTrack/verificationSP",
+              params: parameters,
+            });
+          case "CONFIRMED":
+            return router.push({
+              pathname: "/processTrack/paymentSP",
+              params: parameters,
+            });
+          case "PAID":
+            return router.push({
+              pathname: "/processTrack/pickupSP",
+              params: parameters,
+            });
+          case "IN_TRANSIT":
+            return router.push({
+              pathname: "/home", // TO BE CHANGED
+              params: parameters,
+            });
+          case "PICKUP_MEET":
+            return router.push({
+              pathname: "/home", // TO BE CHANGED
+              params: parameters,
+            });
+          case "FINALIZED":
+            return router.push({
+              pathname: "/home", // TO BE CHANGED
+              params: parameters,
+            });
+          case "CANCELLED":
+            return router.push({
+              pathname: "/home", // TO BE CHANGED
+              params: parameters,
+            });
+          default:
+            return parameters.status;
+        }
+      }
+    };
 
     return (
       <View style={styles.card}>
         <View style={styles.imageSection}>
-          {getImageUrl(item.goods) ? (
+          {parameters.imageUrl ? (
             <Image
-              source={{ uri: getImageUrl(item.goods) }}
+              source={{ uri: parameters.imageUrl }}
               style={styles.productImage}
               contentFit="cover"
               onError={(error) => {
                 console.error("Image error:", error, {
-                  url: getImageUrl(item.goods),
-                  goods: item.goods,
+                  url: parameters.imageUrl,
+                  goods: parameters.goodsName,
                 });
               }}
             />
@@ -243,12 +538,12 @@ export default function OrderPage() {
           <View style={styles.headerContent}>
             <View style={styles.titleRow}>
               <ThemedText style={styles.productTitle}>
-                {item.goods.name}
+                {parameters.goodsName}
               </ThemedText>
 
               <View style={styles.badgeContainer}>
                 {/* Show "Your Request" badge if it's the user's own request */}
-                {isOwnRequest(item.userId) && (
+                {isOwnRequest(parseInt(parameters.requesterId)) && (
                   <View style={styles.ownRequestBadge}>
                     <ThemedText style={styles.badgeText}>
                       Your Request
@@ -284,7 +579,7 @@ export default function OrderPage() {
                 <View style={styles.detailContent}>
                   <ThemedText style={styles.detailLabel}>Route</ThemedText>
                   <ThemedText style={styles.detailValue}>
-                    {item.goodsLocation} → {item.goodsDestination}
+                    {parameters.location} → {parameters.destination}
                   </ThemedText>
                 </View>
               </View>
@@ -296,7 +591,7 @@ export default function OrderPage() {
                 <View style={styles.detailContent}>
                   <ThemedText style={styles.detailLabel}>Price</ThemedText>
                   <ThemedText style={styles.priceValue}>
-                    ${item.goods.price.toFixed(2)}
+                    ${parameters.price.toFixed(2)}
                   </ThemedText>
                 </View>
               </View>
@@ -308,7 +603,7 @@ export default function OrderPage() {
                 <View style={styles.detailContent}>
                   <ThemedText style={styles.detailLabel}>Quantity</ThemedText>
                   <ThemedText style={styles.detailValue}>
-                    {item.quantity}
+                    {parameters.quantity}
                   </ThemedText>
                 </View>
               </View>
@@ -323,12 +618,12 @@ export default function OrderPage() {
                     style={[
                       styles.statusBadge,
                       styles[
-                        item.status.toLowerCase() as Lowercase<RequestStatus>
+                        parameters.status.toLowerCase() as Lowercase<RequestStatus>
                       ],
                     ]}
                   >
                     <ThemedText style={styles.statusText}>
-                      {item.status}
+                      {parameters.status}
                     </ThemedText>
                   </View>
                 </View>
@@ -336,48 +631,31 @@ export default function OrderPage() {
             </View>
           </View>
 
-          {item.goods.description && (
+          {parameters.description && (
             <View style={styles.descriptionCard}>
               <ThemedText style={styles.sectionTitle}>Description</ThemedText>
               <ThemedText style={styles.description}>
-                {item.goods.description}
+                {parameters.description}
               </ThemedText>
             </View>
           )}
 
           <View style={styles.actionRow}>
             <ThemedText style={styles.priceText}>
-              ${item.goods.price} × {item.quantity}
+              ${parameters.price} × {parameters.quantity}
             </ThemedText>
 
-            {/* Show different buttons based on request status */}
-            {!isOwnRequest(item.userId) && !hasOrder && (
-              <TouchableOpacity
-                style={styles.offerButton}
-                onPress={handleMakeOffer}
-              >
-                <ThemedText style={styles.offerButtonText}>
-                  Make an Offer
-                </ThemedText>
-              </TouchableOpacity>
-            )}
-
-            {!isOwnRequest(item.userId) && hasOrder && (
+            {!isOwnRequest(parseInt(parameters.requesterId)) && hasOrder && (
               <View style={styles.takenContainer}>
                 <ThemedText style={styles.takenText}>Already Taken</ThemedText>
               </View>
             )}
 
-            {/* Show View Order button for any order */}
-            {hasOrder && (
+            {/* Show View Order button for any order for SO */}
+            {isOwnRequest(parseInt(parameters.requesterId)) && hasOrder && (
               <TouchableOpacity
                 style={styles.viewOrderButton}
-                onPress={() =>
-                  router.push({
-                    pathname: "/processTrack/initializationSO",
-                    params: { id: item.order?.id.toString() },
-                  })
-                }
+                onPress={handleNavigation}
               >
                 <ThemedText style={styles.viewOrderButtonText}>
                   View Order
@@ -385,21 +663,19 @@ export default function OrderPage() {
               </TouchableOpacity>
             )}
 
-            {/* Add Confirm Order button for orders that need confirmation */}
-            {isOwnRequest(item.userId) &&
-              hasOrder &&
-              item.order?.orderStatus === "PENDING" && (
-                <TouchableOpacity
-                  style={styles.confirmButton}
-                  onPress={() => handleConfirmOrder(item.order?.id)}
-                >
-                  <ThemedText style={styles.confirmButtonText}>
-                    Confirm Order
-                  </ThemedText>
-                </TouchableOpacity>
-              )}
+            {/* Show View Order button for any order for SO */}
+            {!isOwnRequest(parseInt(parameters.requesterId)) && hasOrder && (
+              <TouchableOpacity
+                style={styles.viewOrderButton}
+                onPress={handleNavigation}
+              >
+                <ThemedText style={styles.viewOrderButtonText}>
+                  View Order
+                </ThemedText>
+              </TouchableOpacity>
+            )}
 
-            {isOwnRequest(item.userId) && !item.order && (
+            {/* {isOwnRequest(parseInt(parameters.requesterId)) && !item.order && (
               <TouchableOpacity
                 style={styles.viewOfferButton}
                 onPress={() => fetchOffersForRequest(item.id)}
@@ -408,93 +684,52 @@ export default function OrderPage() {
                   Check for Offers
                 </ThemedText>
               </TouchableOpacity>
-            )}
+            )} */}
           </View>
         </View>
       </View>
     );
   };
 
-  // Add this function to fetch offers for a specific request
-  const fetchOffersForRequest = async (requestId: number) => {
-    try {
-      setIsLoading(true);
-      console.log(`Fetching offers for request ID: ${requestId}`);
-
-      const response = await axiosInstance.get(
-        `/api/requests/${requestId}/offers`
-      );
-      console.log(
-        "Offers API response:",
-        JSON.stringify(response.data, null, 2)
-      );
-
-      if (response.data.data && response.data.data.length > 0) {
-        const offerId = response.data.data[0].id;
-        console.log(`Found offer ID: ${offerId}, navigating...`);
-
-        router.push({
-          pathname: "/processTrack/initializationSO",
-          params: { offerId: offerId.toString() },
-        });
-      } else {
-        console.log("No offers found for this request");
-        Alert.alert("No Offers", "There are no offers for this request yet.");
-      }
-    } catch (error) {
-      console.error("Error fetching offers:", error);
-      Alert.alert("Error", "Failed to load offers for this request.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Add this function to handle order confirmation
-  const handleConfirmOrder = async (orderId?: number) => {
-    if (!orderId) {
-      Alert.alert("Error", "Order ID is missing.");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      console.log(`Confirming order ID: ${orderId}`);
-
-      const response = await axiosInstance.patch(
-        `/api/orders/${orderId}/confirm`
-      );
-      console.log(
-        "Confirm order response:",
-        JSON.stringify(response.data, null, 2)
-      );
-
-      Alert.alert("Success", "Order confirmed successfully!");
-      // Refresh the requests list to show updated status
-      fetchRequests();
-    } catch (error) {
-      console.error("Error confirming order:", error);
-      Alert.alert("Error", "Failed to confirm order. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen
-        options={{
-          title: "Orders & Requests",
-        }}
+      <SegmentedControl
+        values={["Requests", "Orders"]}
+        selectedIndex={view === "requests" ? 0 : 1}
+        onChange={(index) => setView(index === 0 ? "requests" : "orders")}
       />
 
-      {isLoading && requests.length === 0 ? (
+      {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" />
+        </View>
+      ) : view === "orders" ? (
+        goodsProcesses.length === 0 ? (
+          <View style={styles.noOrdersContainer}>
+            <ThemedText style={styles.noOrdersText}>
+              No orders yet...
+            </ThemedText>
+          </View>
+        ) : (
+          <FlatList
+            data={goodsProcesses}
+            renderItem={renderOrderItem}
+            keyExtractor={(item) => item.id.toString()}
+            refreshing={isLoading}
+            onRefresh={fetchGoodsProcesses}
+            contentContainerStyle={styles.listContainer}
+          />
+        )
+      ) : requests.length === 0 ? (
+        <View style={styles.noOrdersContainer}>
+          <ThemedText style={styles.noOrdersText}>
+            No requests yet...
+          </ThemedText>
         </View>
       ) : (
         <FlatList
           data={requests}
-          renderItem={renderItem}
+          renderItem={renderRequestItem}
           keyExtractor={(item) => item.id.toString()}
           refreshing={isLoading}
           onRefresh={fetchRequests}
@@ -605,7 +840,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#ef4444",
   },
   statusText: {
-    color: "white",
+    color: "orange",
     fontSize: 12,
     fontWeight: "500",
   },
@@ -719,47 +954,46 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  noOrdersContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noOrdersText: {
+    fontSize: 18,
+    fontWeight: "500",
+    color: "#64748b", // A muted color for better UX
+  },
+  toggleMenu: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginVertical: 16,
+  },
+  toggleButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginHorizontal: 4,
+  },
+  toggleButtonActive: {
+    backgroundColor: "#3b82f6",
+  },
+  toggleButtonText: {
+    color: "#1e293b",
+  },
+  toggleButtonTextActive: {
+    color: "white",
+  },
+  viewRequestButton: {
+    backgroundColor: "#3b82f6", // blue
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  viewRequestButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "600",
+  },
 });
-
-// Add these functions to your order.tsx file
-const getProcessStatusColor = (status: ProcessStatus): string => {
-  switch (status) {
-    case "INITIALIZED":
-      return "#3b82f6"; // blue
-    case "CONFIRMED":
-      return "#8b5cf6"; // purple
-    case "PAID":
-      return "#10b981"; // green
-    case "IN_TRANSIT":
-      return "#f97316"; // orange
-    case "PICKUP_MEET":
-      return "#eab308"; // yellow
-    case "FINALIZED":
-      return "#14b8a6"; // teal
-    case "CANCELLED":
-      return "#ef4444"; // red
-    default:
-      return "#6b7280"; // gray
-  }
-};
-
-const getProcessStatusText = (status: ProcessStatus): string => {
-  switch (status) {
-    case "INITIALIZED":
-      return "Initialized";
-    case "CONFIRMED":
-      return "Confirmed";
-    case "PAID":
-      return "Paid";
-    case "IN_TRANSIT":
-      return "In Transit";
-    case "PICKUP_MEET":
-      return "Ready for Pickup";
-    case "FINALIZED":
-      return "Completed";
-    case "CANCELLED":
-      return "Cancelled";
-    default:
-      return status;
-  }
-};

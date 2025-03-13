@@ -11,16 +11,9 @@ import {
 import ProgressBar from "../../components/ProgressBar";
 import { MaterialIcons } from "@expo/vector-icons";
 import axiosInstance from "@/config";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { User } from "@/types";
 import { Goods } from "@/types";
-
-// Define interfaces for type safety
-interface VerificationImage {
-  id: number;
-  url: string;
-  type: string;
-}
 
 interface Request {
   id: number;
@@ -35,17 +28,16 @@ interface Request {
   date: Date;
   status: "PENDING" | "ACCEPTED" | "CANCELLED" | "REJECTED";
   withBox?: boolean;
-  verificationImage: VerificationImage | null;
+  verificationImage: string | null;
   isVerified?: boolean;
   verificationStatus?: "NEEDS_VERIFICATION" | "NEEDS_NEW_PHOTO" | "VERIFIED";
-  verificationDate?: Date;
 }
 
-export default function VerificationScreen(/*{ route }*/) {
+export default function VerificationScreen() {
+  const params = useLocalSearchParams();
   const [request, setRequest] = useState<Request | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  // const requestId = route.params?.requestId;
-  const requestId = 1;
+  const requestId = params.idRequest;
 
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -168,7 +160,7 @@ export default function VerificationScreen(/*{ route }*/) {
           <View style={styles.imageSection}>
             <Text style={styles.imageTitle}>Uploaded Photo</Text>
             <Image
-              source={{ uri: request.verificationImage.url }}
+              source={{ uri: request.verificationImage }}
               style={styles.image}
               resizeMode="contain"
             />
