@@ -1,0 +1,113 @@
+.adminLoginContainer {
+    --color-primary: #018ABE;
+    --color-secondary: #05AFF0;
+    --color-white: white;
+    --radius-small: 5px;
+    --radius-large: 10px;
+  }
+  
+  .container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100vw;
+    background-color: var(--color-primary);
+    backdrop-filter: blur(8px);
+    margin: 0;
+    padding: 0;
+  }
+  
+  .dark {
+    background-color: rgba(0, 0, 0, 0.85);
+  }
+  
+  .card {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: var(--radius-large);
+    padding: 40px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+  }
+  
+  .darkMode {
+    background-color: #333;
+    color: white;
+  }
+  
+  .moonIcon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    color: var(--color-primary);
+    transition: color 0.3s ease;
+  }
+  
+  .formContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+   
+    margin-top: 20px;
+  }
+  
+  .label {
+    align-self: flex-start;
+    font-weight: bold;
+    margin-bottom: 3px;
+    font-size: 16px;
+  }
+  
+  .inputWrapper {
+    position: relative;
+  }
+  
+  .input {
+    margin: 10px 0;
+    padding: 10px;
+    width: 380px;
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-small);
+    transition: border-color 0.3s ease;
+  }
+  
+  .input:focus {
+    border-color: var(--color-secondary);
+    outline: none;
+  }
+  
+  .eyeIcon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: var(--color-primary);
+  }
+  
+  .button {
+    padding: 10px;
+    margin-top: 10px;
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-small);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+  }
+  
+  .button:hover {
+    background-color: var(--color-secondary);
+  }
+  
+  .error {
+    color: red;
+    font-size: 14px;
+  }
+  

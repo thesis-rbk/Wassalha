@@ -254,20 +254,16 @@ class RequestController {
     // Delete Request
     async deleteRequest(req, res) {
         try {
-            // Check if user owns the request
-            const request = await prisma.request.findUnique({
-                where: { id: parseInt(req.params.id) }
-            });
-
-            if (!request || request.userId !== req.user.id) {
-                return res.status(403).json({
+            const requestId = parseInt(req.params.id);
+            if (!requestId) {
+                return res.status(400).json({
                     success: false,
-                    error: 'Not authorized to delete this request'
+                    error: 'Invalid request ID'
                 });
             }
 
             await prisma.request.delete({
-                where: { id: parseInt(req.params.id) },
+                where: { id: requestId },
             });
 
             res.status(200).json({
@@ -275,6 +271,7 @@ class RequestController {
                 message: 'Request deleted successfully',
             });
         } catch (error) {
+            console.error('Error in deleteRequest:', error);
             res.status(400).json({
                 success: false,
                 error: error.message,

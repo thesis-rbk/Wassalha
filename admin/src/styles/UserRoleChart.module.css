@@ -1,0 +1,14 @@
+.chartContainer {
+    position: absolute;
+    top: 0px;
+    left: 270px;
+}
+
+.cardContainer {
+    background-color: #fff; /* Card background color */
+    border-radius: 12px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Shadow for depth */
+    padding: 16px; /* Padding inside the card */
+    margin: 16px; /* Margin around the card */
+}
+

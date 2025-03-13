@@ -83,7 +83,7 @@ const SelectCountry = () => {
 
           <TouchableOpacity
             style={styles.linkOption}
-            onPress={() => router.push('/verification/passport' as any)}
+            onPress={() => router.push('/verification/IdCard' as any)}
             activeOpacity={0.7}
           >
             <View style={styles.optionContent}>
@@ -95,7 +95,7 @@ const SelectCountry = () => {
 
           <TouchableOpacity
             style={styles.linkOption}
-            onPress={() => router.push('/verification/residencePermit' as any)}
+            onPress={() => router.push('/verification/IdCard' as any)}
             activeOpacity={0.7}
           >
             <View style={styles.optionContent}>
