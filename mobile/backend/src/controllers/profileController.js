@@ -56,115 +56,81 @@ const updateProfile = async (req, res) => {
                 height: 100,
             };
 
-            console.log("Request body:", req.body);
-            console.log("Uploaded file:", req.file);
+            const media = await prisma.media.create({
+                data: mediaData,
+            });
 
-            try {
-                // Prepare update data object
-                let updateData = {};
+            updateData.imageId = media.id;
 
-                // Only add fields that are provided in the request
-                if (firstName !== undefined) updateData.firstName = firstName;
-                if (lastName !== undefined) updateData.lastName = lastName;
-                if (bio !== undefined) updateData.bio = bio;
-                if (country !== undefined) updateData.country = country;
-                if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+            updateData.imageId = media.id;
+        }
 
-                // Handle image upload if present
-                if (req.file) {
-                    console.log(`File uploaded: ${req.file.originalname}`);
+        // Update profile with only the provided fields
 
-                    const mediaData = {
-                        url: req.file.path,
-                        type: 'IMAGE',
-                        filename: req.file.filename,
-                        extension: "PNG",
-                        size: req.file.size,
-                        width: 100,
-                        height: 100,
-                    };
-
-                    const media = await prisma.media.create({
-                        data: mediaData,
-                    });
-
-                    updateData.imageId = media.id;
-
-                    updateData.imageId = media.id;
-                }
-
-                // Update profile with only the provided fields
-
-                // Update profile with only the provided fields
-                const updatedProfile = await prisma.profile.update({
-                    where: { userId: parseInt(userId) },
-                    data: updateData,
-                    include: {
-                        image: true, // Include the image in response
-                        data: updateData,
-                        include: {
-                            image: true, // Include the image in response
-                        },
-                    });
-
-                res.status(200).json({
-                    success: true,
-                    data: updatedProfile,
-                    message: 'Profile updated successfully'
-                });
-
-                res.status(200).json({
-                    success: true,
-                    data: updatedProfile,
-                    message: 'Profile updated successfully'
-                });
-
-            } catch (error) {
-                console.error('Error updating profile:', error);
-                res.status(500).json({
-                    success: false,
-                    error: 'Failed to update profile',
-                    message: error.message
-                });
-                res.status(500).json({
-                    success: false,
-                    error: 'Failed to update profile',
-                    message: error.message
-                });
+        // Update profile with only the provided fields
+        const updatedProfile = await prisma.profile.update({
+            where: { userId: parseInt(userId) },
+            data: updateData,
+            include: {
+                image: true, // Include the image in response
+                data: updateData,
+                include: {
+                    image: true, // Include the image in response
+                },
             }
-        };
+        })
 
-        const getUserProfile = async (userId) => {
-            try {
-                const userProfile = await prisma.user.findUnique({
-                    where: { id: userId },
-                    include: {
-                        profile: true, // Assuming 'profile' is the relation name in your Prisma schema
-                    },
-                });
+        res.status(200).json({
+            success: true,
+            data: updatedProfile,
+            message: 'Profile updated successfully'
+        });
 
-                if (userProfile) {
-                    const { email, name, profile } = userProfile;
-                    const { firstName, lastName, bio } = profile;
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update profile',
+            message: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update profile',
+            message: error.message
+        });
+    }
+};
 
-                    console.log("Email:", email);
-                    console.log("Name:", name);
-                    console.log("First Name:", firstName);
-                    console.log("Last Name:", lastName);
-                    console.log("Bio:", bio);
-                } else {
-                    console.log("User not found");
-                }
-            } catch (error) {
-                console.error("Error fetching user profile:", error);
-            }
-        };
+const getUserProfile = async (userId) => {
+    try {
+        const userProfile = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                profile: true, // Assuming 'profile' is the relation name in your Prisma schema
+            },
+        });
 
-        // Call the function with the user ID
-        // Replace 11 with the actual user ID
+        if (userProfile) {
+            const { email, name, profile } = userProfile;
+            const { firstName, lastName, bio } = profile;
 
-        module.exports = {
-            getProfile,
-            updateProfile,
-            getUserProfile,
-        }; 
+            console.log("Email:", email);
+            console.log("Name:", name);
+            console.log("First Name:", firstName);
+            console.log("Last Name:", lastName);
+            console.log("Bio:", bio);
+        } else {
+            console.log("User not found");
+        }
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+    }
+};
+// Call the function with the user ID
+// Replace 11 with the actual user ID
+
+module.exports = {
+    getProfile,
+    updateProfile,
+    getUserProfile,
+}

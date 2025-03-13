@@ -1,14 +1,10 @@
 const prisma = require('../../prisma/index');
 
-<<<<<<< HEAD
-const createGoods = async (req, res) => {
-=======
 exports.createGoods = async (req, res) => {
->>>>>>> 1c8050f2f326b7b4e6eec9aeffeed1c8a1ebb9aa
   console.log('📥 Received goods creation request');
   console.log('📦 Request body:', req.body);
   console.log('🖼️ File received:', req.file ? 'Yes' : 'No');
-  
+
   try {
     if (req.file) {
       console.log('📁 File details:', {
@@ -93,11 +89,6 @@ exports.createGoods = async (req, res) => {
   }
 };
 
-<<<<<<< HEAD
-module.exports = {
-  createGoods
-};
-=======
 
 
 // Fetch all goods with detailed information
@@ -218,4 +209,3 @@ exports.verifyGood = async (req, res) => {
     });
   }
 }; 
->>>>>>> 1c8050f2f326b7b4e6eec9aeffeed1c8a1ebb9aa

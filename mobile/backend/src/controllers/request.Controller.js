@@ -7,11 +7,11 @@ class RequestController {
         console.log('📥 Received request creation request');
         console.log('👤 User ID:', req.user.id);
         console.log('📦 Request body:', req.body);
-        
+
         try {
             // Get user ID from authenticated user
             const userId = req.user.id;
-            
+
             const request = await prisma.request.create({
                 data: {
                     userId, // Now using authenticated user's ID
@@ -254,32 +254,16 @@ class RequestController {
     // Delete Request
     async deleteRequest(req, res) {
         try {
-<<<<<<< HEAD
-            // Check if user owns the request
-            const request = await prisma.request.findUnique({
-                where: { id: parseInt(req.params.id) }
-            });
-
-            if (!request || request.userId !== req.user.id) {
-                return res.status(403).json({
-                    success: false,
-                    error: 'Not authorized to delete this request'
-=======
             const requestId = parseInt(req.params.id);
             if (!requestId) {
                 return res.status(400).json({
                     success: false,
                     error: 'Invalid request ID'
->>>>>>> 1c8050f2f326b7b4e6eec9aeffeed1c8a1ebb9aa
                 });
             }
 
             await prisma.request.delete({
-<<<<<<< HEAD
-                where: { id: parseInt(req.params.id) },
-=======
                 where: { id: requestId },
->>>>>>> 1c8050f2f326b7b4e6eec9aeffeed1c8a1ebb9aa
             });
 
             res.status(200).json({
@@ -287,10 +271,7 @@ class RequestController {
                 message: 'Request deleted successfully',
             });
         } catch (error) {
-<<<<<<< HEAD
-=======
             console.error('Error in deleteRequest:', error);
->>>>>>> 1c8050f2f326b7b4e6eec9aeffeed1c8a1ebb9aa
             res.status(400).json({
                 success: false,
                 error: error.message,
@@ -405,7 +386,7 @@ class RequestController {
         try {
             const requestId = parseInt(req.params.id);
             console.log('🔍 Getting offers for request:', requestId);
-            
+
             // Since there's no direct Offer model in your schema,
             // we'll query for orders that are in PENDING state
             // which effectively represent offers

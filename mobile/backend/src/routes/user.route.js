@@ -31,7 +31,7 @@ const router = express.Router();
 // Public routes
 router.post("/register", signup);
 router.post("/login", loginUser);
-router.post("/admin/login", loginAdmin);
+// router.post("/admin/login", loginAdmin);
 router.post("/google-login", googleLogin); // New Google login endpoint
 router.post("/reset-password/request", requestPasswordReset);
 router.post("/reset-password", resetPassword);
@@ -66,11 +66,11 @@ router.post(
 
 // User CRUD routes
 router.get("/", getUsers); // Get all users
-router.get("/:id", getUserById); // Get a single user
-router.put("/:id", updateUser); // Update user
-router.put("/:id/ban", authenticateAdmin, banUser); // Ban/Unban a user
-router.put("/:id/unban", authenticateAdmin, unbanUser); // Unban a user
-router.delete("/:id", authenticateAdmin, deleteUser); // Only admins can delete users
-router.put("/:id/verify-profile", authenticateAdmin, verifyUserProfile);
+// router.get("/:id", getUserById); // Get a single user
+// router.put("/:id", updateUser); // Update user
+// router.put("/:id/ban", authenticateAdmin, banUser); // Ban/Unban a user
+// router.put("/:id/unban", authenticateAdmin, unbanUser); // Unban a user
+// router.delete("/:id", authenticateAdmin, deleteUser); // Only admins can delete users
+// router.put("/:id/verify-profile", authenticateAdmin, verifyUserProfile);
 
 module.exports = router;

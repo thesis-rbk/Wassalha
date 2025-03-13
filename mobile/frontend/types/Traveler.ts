@@ -12,6 +12,8 @@ export interface TravelerReputation {
 export interface TravelerProfile {
   isVerified: boolean;
   imageId: string | null;
+  gender: string
+  image: { url: string }
 }
 
 export interface Traveler {
@@ -22,4 +24,8 @@ export interface Traveler {
   reputation: TravelerReputation;
   profile: TravelerProfile;
   stats: TravelerStats;
+  user: {
+    profile: TravelerProfile
+  }
+  score: number
 } 
