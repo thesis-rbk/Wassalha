@@ -11,7 +11,6 @@ const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
 const goodsRoutes = require("./routes/goods.route");
 const fetchRoute = require("./routes/fetchAll");
-const fetchRoute = require("./routes/fetchAll");
 const productRoutes = require("./routes/productRoutes");
 const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
@@ -31,7 +30,6 @@ const sponsorshipRoutes = require("./routes/sponsorship.route");
 const subscriptionRoutes = require("./routes/subscription.route");
 const stripeRoutes = require("./routes/stripe.route");
 const adminRoutes = require("./routes/admin.route");
-const stripeRoutes = require("./routes/stripe.route");
 const paymentsRoutes = require("./routes/payments.route");
 
 // Import socket
@@ -76,11 +74,9 @@ app.use("/api/service-providers", serviceProviderRoutes);
 app.use("/api/sponsorships", sponsorshipRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/media", mediaRoutes);
-app.use("/api", all);
 app.use("/api/mobile/requests", mobileRequestRoutes);
 app.use("/api/mobile/goods", mobileGoodsRoutes);
 app.use("/api/process", processRoutes);
-app.use("/api/stripe", stripeRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/stripe", stripeRoutes);
 app.use("/api/payment", paymentsRoutes);
