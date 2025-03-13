@@ -6,7 +6,10 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+<<<<<<< HEAD
   TextInput,
+=======
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 } from 'react-native';
 import {
   Bell,
@@ -31,6 +34,10 @@ import { useRouter, Link } from 'expo-router';
 import { SideMenu } from '@/types/Sidemenu';
 import { RootState } from '@/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 // Define valid app routes
 
 
@@ -73,9 +80,40 @@ export function TopNavigation({
     setIsMenuOpen(!isMenuOpen);
   };
 
+<<<<<<< HEAD
 
   const menuItems: SideMenu[] = [
     { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/test/Notifications' },
+=======
+  // const menuItems = [
+  //   {
+  //     icon: <Bell size={24} color={Colors[colorScheme].text} />,
+  //     label: "Notifications",
+  //   },
+  //   {
+  //     icon: <Settings size={24} color={Colors[colorScheme].text} />,
+  //     label: "Settings",
+  //   },
+  //   {
+  //     icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />,
+  //     label: "Orders",
+  //   },
+  //   {
+  //     icon: <Plane size={24} color={Colors[colorScheme].text} />,
+  //     label: "Trips",
+  //   },
+  //   {
+  //     icon: <PenSquare size={24} color={Colors[colorScheme].text} />,
+  //     label: "Make a Request",
+  //   },
+  //   {
+  //     icon: <LogOut size={24} color={Colors[colorScheme].text} />,
+  //     label: "Log Out",
+  //     onPress: handleLogout,
+  //   },
+  const menuItems: SideMenu[] = [
+    { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/' },
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
     { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
     { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips', route: '/test/Travel' },
     { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request', route: '/productDetails/create-order' },
@@ -88,7 +126,11 @@ export function TopNavigation({
       if (item.onPress) {
         item.onPress();
       } else if (item.route) {
+<<<<<<< HEAD
         router.push(item.route as any);
+=======
+        router.push(item.route);
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
       }
     } catch (err) {
       console.error('Error from navigation:', err);
@@ -100,6 +142,7 @@ export function TopNavigation({
       <View
         style={[
           styles.container,
+<<<<<<< HEAD
           { backgroundColor: "white" },
         ]}
       >
@@ -112,6 +155,23 @@ export function TopNavigation({
         />
         <TouchableOpacity onPress={onNotificationPress}>
           <Bell color="black" size={24} />
+=======
+          { backgroundColor: Colors[colorScheme].primary },
+        ]}
+      >
+        <TouchableOpacity onPress={toggleMenu}>
+          <Menu color={Colors[colorScheme].background} size={24} />
+        </TouchableOpacity>
+
+        <ThemedText
+          style={[styles.title, { color: Colors[colorScheme].background }]}
+        >
+          {title}
+        </ThemedText>
+
+        <TouchableOpacity onPress={onNotificationPress}>
+          <Bell color={Colors[colorScheme].background} size={24} />
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
         </TouchableOpacity>
       </View>
 
@@ -188,12 +248,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+<<<<<<< HEAD
     paddingHorizontal: 16,
     paddingVertical: 8,
     height: 60,
     borderBottomWidth: 1,
     borderBottomColor: "#E5E5E5",
     zIndex: 1,
+=======
+    padding: 16,
+    height: 60,
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
   },
   title: {
     fontSize: 20,
@@ -279,6 +344,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 15,
   },
+<<<<<<< HEAD
   searchInput: {
     flex: 1,
     height: 40,
@@ -287,4 +353,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: "#e0e0e0",
   }
+=======
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 });

@@ -9,7 +9,6 @@ const getProfile = async (req, res) => {
         const profile = await prisma.profile.findUnique({
             where: { userId: parseInt(userId) },
             include: {
-
                 image: true, // Include the image relation
             },
         });

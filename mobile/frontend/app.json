@@ -9,6 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+<<<<<<< HEAD
       "supportsTablet": true,
       "entitlements": {
         "aps-environment": "production"
@@ -18,6 +19,9 @@
           "remote-notification"
         ]
       }
+=======
+      "supportsTablet": true
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
     },
     "platforms": [
       "ios",
@@ -49,6 +53,7 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+<<<<<<< HEAD
       ],
       [
         "expo-image-picker",
@@ -56,6 +61,8 @@
           "photosPermission": "The app needs access to your photos to upload images.",
           "cameraPermission": "The app needs access to your camera to take photos."
         }
+=======
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
       ]
     ],
     "experiments": {

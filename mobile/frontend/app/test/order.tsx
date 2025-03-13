@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, ActivityIndicator, Dimensions, Text, TouchableOpacity, Alert } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
@@ -690,3 +691,24 @@ const getProcessStatusText = (status: ProcessStatus): string => {
     default: return status;
   }
 };
+=======
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import { ThemedText } from '@/components/ThemedText';
+
+export default function orderssssssssss() {
+    return (
+        <View style={styles.container}>
+            <ThemedText>all orders heres...........</ThemedText>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+});
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32

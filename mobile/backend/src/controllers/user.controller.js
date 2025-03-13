@@ -69,17 +69,25 @@ const signup = async (req, res) => {
       },
     });
 
+<<<<<<< HEAD
     // Fix: Create profile with correct relation syntax
+=======
+    // Automatically create profile for new user
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
     await prisma.profile.create({
       data: {
         firstName: newUser.name,
         lastName: "",
+<<<<<<< HEAD
         userId: newUser.id,  // Use userId instead of user.connect
         country: "OTHER",    // Add a default country
         isAnonymous: false,
         isBanned: false,
         isVerified: false,
         isOnline: false
+=======
+        user: { connect: { id: newUser.id } },
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
       },
     });
 
@@ -645,8 +653,11 @@ module.exports = {
   completeOnboarding,
   changePassword,
   getUsers,
+<<<<<<< HEAD
   verifyIdCard,
   verifySelfie,
   verifyCreditCard,
   submitQuestionnaire
+=======
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 };

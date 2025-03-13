@@ -1,14 +1,23 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
+=======
+import React, { useState } from 'react';
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 import {
   View,
   Image,
   StyleSheet,
   Switch,
   ScrollView,
+<<<<<<< HEAD
   Alert,
   TouchableOpacity,
 } from 'react-native';
 import { Camera, X, Minus, Plus, Globe, Edit2 } from 'lucide-react-native';
+=======
+} from 'react-native';
+import { Camera, X, Minus, Plus } from 'lucide-react-native';
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 import { InputField } from '@/components/InputField';
 import { BaseButton } from '@/components/ui/buttons/BaseButton';
 import { TitleLarge, TitleSection, TitleSub, BodyMedium } from '@/components/Typography';
@@ -16,6 +25,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useLocalSearchParams } from 'expo-router';
 import { ProductDetailsProps } from '@/types/ProductDetails';
+<<<<<<< HEAD
 import { useRouter } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import axiosInstance from "@/config";
@@ -28,6 +38,11 @@ console.log('Upload URL:', process.env.EXPO_PUBLIC_MEDIA_UPLOAD_URL);
 const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
+=======
+
+const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
+  const colorScheme = useColorScheme() ?? 'light';
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 
   // Retrieve scrapedData from the query parameters (if available)
   const { scrapedData } = useLocalSearchParams();
@@ -37,6 +52,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const [productName, setProductName] = useState(parsedData ? parsedData.name : '');
   const [productImage, setProductImage] = useState(
     parsedData && parsedData.imageId
+<<<<<<< HEAD
       ? `${process.env.EXPO_PUBLIC_MEDIA_VIEW_URL}/${parsedData.imageId}`
       : ''
   );
@@ -210,13 +226,40 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
     console.log('✅ Navigation successful');
   };
 
+=======
+      ? `http://localhost:5000/api/media/${parsedData.imageId}`
+      : ''
+  );
+  const [price, setPrice] = useState(parsedData ? parsedData.price.toString() : '');
+  const [quantity, setQuantity] = useState('1');
+  const [productDetails, setProductDetails] = useState(parsedData ? parsedData.description : '');
+  const [withBox, setWithBox] = useState(false);
+
+  const clearProductImage = () => setProductImage('');
+
+  const incrementQuantity = () => {
+    const currentQuantity = parseInt(quantity) || 0;
+    setQuantity((currentQuantity + 1).toString());
+  };
+
+  const decrementQuantity = () => {
+    const currentQuantity = parseInt(quantity) || 0;
+    if (currentQuantity > 1) {
+      setQuantity((currentQuantity - 1).toString());
+    }
+  };
+
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
   return (
     <ScrollView style={styles.container}>
       <View style={styles.card}>
         <TitleLarge style={styles.mainTitle}>1. Product Details</TitleLarge>
         
+<<<<<<< HEAD
         {renderScrapedDataBanner()}
         
+=======
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
         <InputField
           label="Product name"
           value={productName}
@@ -229,6 +272,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
         <View style={styles.imageContainer}>
           {productImage ? (
             <View style={styles.imageWrapper}>
+<<<<<<< HEAD
               <Image 
                 source={{ uri: productImage }} 
                 style={styles.productImage} 
@@ -259,6 +303,21 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
               </BaseButton>
             </View>
           )}
+=======
+              <Image source={{ uri: productImage }} style={styles.productImage} />
+              <BaseButton size="small" onPress={clearProductImage} style={styles.clearImageButton}>
+                <X size={14} color="#999" />
+              </BaseButton>
+            </View>
+          ) : null}
+          
+          <View style={styles.uploadCard}>
+            <BaseButton size="medium" onPress={() => console.log('Upload Image')} style={styles.uploadButton}>
+              <Camera size={20} color={Colors[colorScheme].primary} />
+              <BodyMedium style={styles.uploadText}>Upload image</BodyMedium>
+            </BaseButton>
+          </View>
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
         </View>
         
         <InputField
@@ -269,6 +328,40 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
           keyboardType="decimal-pad"
           style={styles.input}
         />
+<<<<<<< HEAD
+=======
+        
+        <View style={styles.quantityContainer}>
+          <InputField
+            label="Quantity"
+            value={quantity}
+            onChangeText={setQuantity}
+            placeholder="1"
+            keyboardType="number-pad"
+            style={[styles.input, styles.quantityInput]}
+          />
+          <View style={styles.quantityControls}>
+            <BaseButton
+              size="small"
+              onPress={decrementQuantity}
+              style={styles.quantityButton}
+            >
+              <View style={styles.iconContainer}>
+                <Minus size={16} color={Colors[colorScheme].primary} />
+              </View>
+            </BaseButton>
+            <BaseButton
+              size="small"
+              onPress={incrementQuantity}
+              style={styles.quantityButton}
+            >
+              <View style={styles.iconContainer}>
+                <Plus size={16} color={Colors[colorScheme].primary} />
+              </View>
+            </BaseButton>
+          </View>
+        </View>
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 
         <InputField
           label="Product details"
@@ -283,6 +376,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
         <View style={styles.switchContainer}>
           <View style={styles.switchTextContainer}>
             <View style={styles.switchHeader}>
+<<<<<<< HEAD
           <TitleSub>With box</TitleSub>
           <Switch
             value={withBox}
@@ -290,6 +384,15 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
                 trackColor={{ false: '#e0e0e0', true: Colors[colorScheme as 'light' | 'dark'].primary }}
             thumbColor={withBox ? '#ffffff' : '#ffffff'}
           />
+=======
+              <TitleSub>With box</TitleSub>
+              <Switch
+                value={withBox}
+                onValueChange={setWithBox}
+                trackColor={{ false: '#e0e0e0', true: Colors[colorScheme].primary }}
+                thumbColor={withBox ? '#ffffff' : '#ffffff'}
+              />
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
             </View>
             <BodyMedium style={styles.switchDescription}>
               Requiring the box may reduce the number of offers you receive. Travelers generally prefer to deliver orders without the box to save space.
@@ -298,7 +401,11 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
         </View>
         
         <View style={styles.buttonContainer}>
+<<<<<<< HEAD
           <BaseButton size="large" onPress={handleNext}>
+=======
+          <BaseButton size="large" onPress={onNext}>
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
             <BodyMedium style={styles.buttonText}>Next</BodyMedium>
           </BaseButton>
         </View>
@@ -324,6 +431,7 @@ const styles = StyleSheet.create({
   sectionTitle: { marginTop: 12, marginBottom: 8, fontSize: 16 },
   input: { marginBottom: 12 },
   imageContainer: {
+<<<<<<< HEAD
     marginBottom: 16,
   },
   imageWrapper: {
@@ -333,10 +441,33 @@ const styles = StyleSheet.create({
   productImage: {
     width: '100%',
     height: '100%',
+=======
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
+    justifyContent: 'flex-start',
+  },
+  imageWrapper: { position: 'relative' },
+  productImage: {
+    width: 120,
+    height: 120,
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#e0e0e0',
   },
+<<<<<<< HEAD
+=======
+  clearImageButton: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 4,
+  },
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
   uploadCard: {
     width: 160,
     height: 110,
@@ -383,6 +514,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   buttonText: { color: '#ffffff' },
+<<<<<<< HEAD
   changeImageButton: {
     backgroundColor: 'rgba(0,0,0,0.6)',
     padding: 8,
@@ -433,6 +565,33 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.light.primary,
   },
+=======
+  quantityContainer: { position: 'relative', marginBottom: 12 },
+  quantityInput: { paddingRight: 90, height: 40, zIndex: 1 },
+  quantityControls: {
+    position: 'absolute',
+    right: 8,
+    top: 38,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'transparent',
+    zIndex: 2,
+    height: 28,
+  },
+  quantityButton: {
+    width: 28,
+    height: 28,
+    backgroundColor: 'rgba(0, 128, 152, 0.05)',
+    borderRadius: 4,
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+  },
+  iconContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+>>>>>>> 1765ecfa99b276041f2c8b479981d78048c5ac32
 });
 
 export default ProductDetails;
