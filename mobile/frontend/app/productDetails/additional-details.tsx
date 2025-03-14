@@ -63,6 +63,7 @@ const AdditionalDetails: React.FC = () => {
   // Add this to handle closing dropdown when clicking outside
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
+
   // Add loading state for image picker
   const [imageLoading, setImageLoading] = useState(false);
 
@@ -205,6 +206,7 @@ const AdditionalDetails: React.FC = () => {
         }
       }
 
+
       // If the image is a remote URL, download it first
       if (
         productDetails.imageUri &&
@@ -212,6 +214,7 @@ const AdditionalDetails: React.FC = () => {
       ) {
         console.log("📥 Downloading remote image before submission...");
         setImageLoading(true);
+
 
         try {
           const filename =
@@ -265,6 +268,7 @@ const AdditionalDetails: React.FC = () => {
         }
       }
 
+
       // Continue with form submission
       if (jwtToken) {
         submitForm(jwtToken);
@@ -287,6 +291,7 @@ const AdditionalDetails: React.FC = () => {
       console.log("📤 Creating goods with image...");
 
       const formData = new FormData();
+
 
       // Add all the goods data
       formData.append("name", productDetails.name);
@@ -318,6 +323,7 @@ const AdditionalDetails: React.FC = () => {
           }
         }
 
+
         // Get filename from URI
         const fileName =
           productDetails.imageUri.split("/").pop() ||
@@ -328,6 +334,7 @@ const AdditionalDetails: React.FC = () => {
           type: fileType,
           name: fileName,
         });
+
 
         const imageFile = {
           uri: productDetails.imageUri,
@@ -341,8 +348,10 @@ const AdditionalDetails: React.FC = () => {
         console.log("⚠️ No image selected");
       }
 
+
       // Debug the FormData
       debugFormData(formData);
+
 
       try {
         // Use fetch instead of axios for more direct control
@@ -365,6 +374,7 @@ const AdditionalDetails: React.FC = () => {
             `Server returned ${response.status}: ${await response.text()}`
           );
         }
+
 
         const goodsResponse = await response.json();
         console.log("✅ Goods created:", goodsResponse);
@@ -390,8 +400,12 @@ const AdditionalDetails: React.FC = () => {
           }
 
           const requestData = {
+
+          const requestData = {
             goodsId: goodsResponse.data.id,
             quantity: parseInt(quantity) || 1,
+            goodsLocation,
+            goodsDestination,
             goodsLocation,
             goodsDestination,
             date: requestDate,
@@ -470,10 +484,12 @@ const AdditionalDetails: React.FC = () => {
           {productDetails.imageUri ? (
             <View style={styles.selectedImageContainer}>
               <RNImage
+              <RNImage
                 source={{ uri: productDetails.imageUri }}
                 style={styles.selectedImage}
                 resizeMode="cover"
               />
+              <TouchableOpacity
               <TouchableOpacity
                 style={styles.changeImageButton}
                 onPress={pickDocument}
@@ -485,6 +501,7 @@ const AdditionalDetails: React.FC = () => {
               </TouchableOpacity>
             </View>
           ) : (
+            <TouchableOpacity
             <TouchableOpacity
               style={styles.pickDocumentButton}
               onPress={pickDocument}
@@ -514,6 +531,12 @@ const AdditionalDetails: React.FC = () => {
           <TouchableOpacity
             style={[
               styles.dropdownTrigger,
+          <TitleSection style={styles.sectionTitle}>
+            Category * {/* Asterisk indicates required field */}
+          </TitleSection>
+          <TouchableOpacity
+            style={[
+              styles.dropdownTrigger,
               categoryError ? styles.errorBorder : null,
               dropdownVisible ? styles.dropdownTriggerActive : null,
             ]}
@@ -534,6 +557,12 @@ const AdditionalDetails: React.FC = () => {
                 dropdownVisible ? styles.dropdownIconActive : null,
               ]}
             />
+          </TouchableOpacity>
+
+          {/* Error message */}
+          {categoryError ? (
+            <BodyMedium style={styles.errorText}>{categoryError}</BodyMedium>
+          ) : null}
           </TouchableOpacity>
 
           {/* Error message */}
@@ -571,7 +600,11 @@ const AdditionalDetails: React.FC = () => {
                     </BodyMedium>
                   </TouchableOpacity>
                 ))}
+                  </TouchableOpacity>
+                ))}
               </ScrollView>
+            </View>
+          )}
             </View>
           )}
         </View>
@@ -638,6 +671,7 @@ const AdditionalDetails: React.FC = () => {
         <View style={styles.formField}>
           <BodyMedium style={styles.label}>Delivery Date</BodyMedium>
           <TouchableOpacity
+          <TouchableOpacity
             style={styles.dateInput}
             onPress={() => setShowDatePicker(true)}
           >
@@ -657,6 +691,8 @@ const AdditionalDetails: React.FC = () => {
         </View>
 
         <View style={styles.buttonContainer}>
+          <BaseButton
+            size="large"
           <BaseButton
             size="large"
             onPress={handleSubmit}

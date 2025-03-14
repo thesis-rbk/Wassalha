@@ -10,7 +10,7 @@ const path = require("path");
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
 const goodsRoutes = require("./routes/goods.route");
-const fetchRoute = require("./routes/fetchAll");
+const fetchRoute = require("./routes/sponsorSubscription.route");
 const productRoutes = require("./routes/productRoutes");
 const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
@@ -52,8 +52,7 @@ app.use(express.json());
 
 // Serve static files from the "uploads" directory
 app.use("/api/uploads", express.static(path.join(__dirname, "uploads"))); // Serve static files
-app.use("/api/fecth", fetchRoute);
-
+app.use("/api/fetch", fetchRoute);
 // Routes
 
 // Routes (REST API will still work)
