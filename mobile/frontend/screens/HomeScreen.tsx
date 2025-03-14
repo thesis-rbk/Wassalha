@@ -25,8 +25,6 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/context/ThemeContext";
 import { Traveler } from "@/types/Traveler"
-import NotificationItem from "../components/notificationContect";
-import Notification from "./Notification";
 // Import the NotificationItem component
 import axios from "axios";
 
@@ -68,7 +66,7 @@ export default function HomeScreen() {
     {
       title: "Pickup",
       icon: <MapPin size={40} color="white" />,
-      route: "../mapTrack" as const,
+      route: "../pickup/pickup" as const,
     },
     {
       title: "Subscription",
@@ -101,10 +99,6 @@ export default function HomeScreen() {
         onMenuPress={() => { }}
         onNotificationPress={() => { }}
       />
-
-      {notifications.map((notification, index) => (
-        <NotificationItem key={index} message={notification.message} timestamp={notification.timestamp} />
-      ))}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.servicesSection}>
@@ -161,7 +155,6 @@ export default function HomeScreen() {
             </ScrollView>
           </View>
         </View>
-        <Notification />
       </ScrollView>
       <View style={styles.inputContainer}>
         <TextInput

@@ -47,7 +47,7 @@ const SponsorshipsScreen = () => {
 
 
     const handleBuyPress = (sponsorshipId: number) => {
-        alert(`Buying Sponsorship with ID: ${sponsorshipId}`);
+        navigation.navigate('verification/sponsorPayment')
     };
 
     const handleAddSponsorshipPress = () => {

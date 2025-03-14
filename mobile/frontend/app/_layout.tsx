@@ -14,7 +14,6 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
     const [fontsLoaded] = useFonts({});
-
     const [animationComplete, setAnimationComplete] = useState(false);
     const [loadingComplete, setLoadingComplete] = useState(false);
 

@@ -1,5 +1,6 @@
 const prisma = require("../../prisma");
-const stripe = require('stripe')('sk_test_51R2IX3RxAom2sGrJoYzJqyHlwxtSEGijXWTpF7SrqEPIxofuGa6G3utjw6vm2jj3rzauDybQNXoOzxwQDsvLbHLR00PapWPAuC')
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+//env iiiiiiiiii
 const sponsor = {
     createSponsorShip: async (req, res) => {
         try {
@@ -253,7 +254,7 @@ const sponsor = {
     },
     paymentSponsore: async (req, res) => {
         try {
-            const { orderId, amount, paymentMethod, status } = req.body;
+            const { orderId, amount, paymentMethod, status, currency } = req.body;
 
             // Create a payment method using a test token
             const paymentMethods = await stripe.paymentMethods.create({
@@ -287,8 +288,8 @@ const sponsor = {
                 data: {
                     orderId,
                     amount,
-                    currency: "EUR",
-                    paymentMethod: paymentMethod || "card",
+                    currency,
+                    paymentMethod,
                     status: paymentIntent.status === "succeeded" ? "COMPLETED" : "PENDING",
                     transactionId: paymentIntent.id,
                     qrCode: paymentIntent.client_secret,
@@ -302,7 +303,7 @@ const sponsor = {
                 console.log("fullllll", fullPaymentIntent);
                 const chargeId = fullPaymentIntent.latest_charge;
 
-                const connectedAccountId = "acct_1R2IWoRsdX3txV2w"
+                const connectedAccountId = process.env.PROFILE_STRIPE_ID
                 // Mock transfer response instead of calling Stripe
                 const mockTransfer = {
                     id: "tr_mock_" + Date.now(), // Fake transfer ID
