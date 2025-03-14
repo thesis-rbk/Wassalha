@@ -62,49 +62,31 @@ const signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Handle image upload (same logic as updateProfile)
-    let imageId = null; // Initialize imageId
+    // Handle image upload
+    let imageId = null;
     if (req.file) {
-      console.log(`File uploaded: ${req.file.originalname}`); // Log the name of the uploaded file
-      console.log(`File path: ${req.file.path}`); // Log the path where the file is saved
+      console.log(`File uploaded: ${req.file.originalname}`);
+      console.log(`File path: ${req.file.path}`);
 
-      // Save the image metadata to the Media table
       const mediaData = {
-        url: req.file.path, // Assuming the path is the URL (adjust if serving differently)
-        type: 'IMAGE', // Static value as in updateProfile
-        filename: req.file.filename, // Generated filename from Multer
-        extension: "PNG", // Static as in updateProfile (could be dynamic from req.file.mimetype)
-        size: req.file.size, // File size in bytes
-        width: 100, // Static as in updateProfile (could use image processing for accuracy)
-        height: 100, // Static as in updateProfile
+        url: req.file.path, // Path saved by Multer
+        type: 'IMAGE',
+        filename: req.file.filename,
+        extension: "PNG", 
+        size: req.file.size,
+        width: 100, // Static (could be dynamic with image processing)
+        height: 100, // Static
       };
 
       const media = await prisma.media.create({
         data: mediaData,
       });
-      imageId = media.id; // Get the ID of the newly created media entry
+      imageId = media.id;
     } else {
-      console.log("No file uploaded."); // Log if no file was uploaded
+      console.log("No file uploaded.");
     }
 
-    // Create the user
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
-    });
-
-    // Create profile with image if uploaded (same as updateProfile logic)
-    await prisma.profile.create({
-      data: {
-        firstName: newUser.name,
-        lastName: "",
-        userId: newUser.id,
-        imageId: imageId, // Save the image ID if uploaded
-      },
-    // Create user with transaction to ensure both user and profile are created
+    // Create user and profile in a transaction
     const result = await prisma.$transaction(async (prisma) => {
       const newUser = await prisma.user.create({
         data: {
@@ -114,17 +96,17 @@ const signup = async (req, res) => {
         },
       });
 
-      // Create profile with proper data structure
       const profile = await prisma.profile.create({
         data: {
           userId: newUser.id,
-          firstName: name.split(' ')[0] || name, // Get first name or full name
-          lastName: name.split(' ').slice(1).join(' ') || '', // Get rest of name or empty string
+          firstName: name.split(' ')[0] || name, // First word as firstName
+          lastName: name.split(' ').slice(1).join(' ') || '', // Rest as lastName
           country: "OTHER",
           isAnonymous: false,
           isBanned: false,
           isVerified: false,
           isOnline: false,
+          imageId: imageId, // Link the uploaded image if present
         },
       });
 

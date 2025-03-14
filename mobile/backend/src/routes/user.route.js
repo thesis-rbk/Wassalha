@@ -23,11 +23,8 @@ const {
   verifyUserProfile,
 } = require("../controllers/user.controller");
 const upload = require('../middleware/multerMiddleware');
-const { authenticateUser } = require("../middleware/middleware");
-const { getMessages } = require("../controllers/message.controller");
 const { getMessages } = require("../controllers/message.controller");
 const { authenticateUser, authenticateAdmin, authenticateUserOrAdmin } = require("../middleware/middleware");
-const upload = require('../middleware/multerMiddleware');
 
 const router = express.Router();
 
