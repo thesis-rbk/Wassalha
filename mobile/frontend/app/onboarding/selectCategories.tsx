@@ -25,8 +25,7 @@ export default function SelectCategoriesScreen() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axiosInstance.get("/api/categories"
-        );
+        const response = await axiosInstance.get("/api/categories");
         const data = await response.data;
         if (response.status === 200) {
           setCategories(data.data); // Assuming the response contains a `data` array of category objects

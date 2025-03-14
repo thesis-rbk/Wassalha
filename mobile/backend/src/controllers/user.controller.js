@@ -7,6 +7,8 @@ const crypto = require("crypto");
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 const saltRounds = parseInt(process.env.SALT_ROUNDS, 10) || 10;
+const multer = require('multer');
+const upload = multer();
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
@@ -22,10 +24,12 @@ const generateRandomCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
 };
 
+// Signup with Multer middleware applied
 const signup = async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
+    // Validation
     if (!name || !email || !password) {
       return res
         .status(400)
@@ -47,9 +51,6 @@ const signup = async (req, res) => {
         .status(400)
         .json({ error: "Password must contain at least one uppercase letter" });
     }
-    /*if (!/\d/.test(password)) {
-      return res.status(400).json({ error: 'Password must contain at least one number' });
-    }*/
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -61,7 +62,31 @@ const signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create user with transaction to ensure both user and profile are created
+    // Handle image upload
+    let imageId = null;
+    if (req.file) {
+      console.log(`File uploaded: ${req.file.originalname}`);
+      console.log(`File path: ${req.file.path}`);
+
+      const mediaData = {
+        url: req.file.path, // Path saved by Multer
+        type: 'IMAGE',
+        filename: req.file.filename,
+        extension: "PNG", 
+        size: req.file.size,
+        width: 100, // Static (could be dynamic with image processing)
+        height: 100, // Static
+      };
+
+      const media = await prisma.media.create({
+        data: mediaData,
+      });
+      imageId = media.id;
+    } else {
+      console.log("No file uploaded.");
+    }
+
+    // Create user and profile in a transaction
     const result = await prisma.$transaction(async (prisma) => {
       const newUser = await prisma.user.create({
         data: {
@@ -71,17 +96,17 @@ const signup = async (req, res) => {
         },
       });
 
-      // Create profile with proper data structure
       const profile = await prisma.profile.create({
         data: {
           userId: newUser.id,
-          firstName: name.split(' ')[0] || name, // Get first name or full name
-          lastName: name.split(' ').slice(1).join(' ') || '', // Get rest of name or empty string
+          firstName: name.split(' ')[0] || name, // First word as firstName
+          lastName: name.split(' ').slice(1).join(' ') || '', // Rest as lastName
           country: "OTHER",
           isAnonymous: false,
           isBanned: false,
           isVerified: false,
           isOnline: false,
+          imageId: imageId, // Link the uploaded image if present
         },
       });
 

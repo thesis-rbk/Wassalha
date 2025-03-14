@@ -15,6 +15,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { getSocket } from "@/services/socketService";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+
 SplashScreen.preventAutoHideAsync();
 
 function NotificationInitializer() {

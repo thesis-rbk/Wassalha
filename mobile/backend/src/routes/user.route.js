@@ -22,14 +22,14 @@ const {
   submitQuestionnaire,
   verifyUserProfile,
 } = require("../controllers/user.controller");
+const upload = require('../middleware/multerMiddleware');
 const { getMessages } = require("../controllers/message.controller");
 const { authenticateUser, authenticateAdmin, authenticateUserOrAdmin } = require("../middleware/middleware");
-const upload = require('../middleware/multerMiddleware');
 
 const router = express.Router();
 
 // Public routes
-router.post("/register", signup);
+router.post("/register",upload.single('image'), signup);
 router.post("/login", loginUser);
 router.post("/admin/login", loginAdmin);
 router.post("/google-login", googleLogin); // New Google login endpoint

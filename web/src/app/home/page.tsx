@@ -5,11 +5,10 @@ import Footer from "../components/Footer"; // Import the Footer component
 export default function Home() {
   return (
     <div>
-      <Nav /> {/* Call the Nav component here */}
-      <main>
-        {/* Main content goes here */}
+      {/* Remove Nav and Footer from here */}
+      <main> 
+        {/* Your home page content */}
       </main>
-      <Footer /> {/* Call the Footer component here */}
     </div>
   );
 }

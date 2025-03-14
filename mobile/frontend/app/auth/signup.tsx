@@ -1,6 +1,7 @@
+"use client";
+
 import React, { useState } from "react";
-import HomeScreen from "../../screens/HomeScreen";
-import { View, StyleSheet, ScrollView, Image } from "react-native";
+import { View, StyleSheet, ScrollView, Image, Alert } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { InputField } from "@/components/InputField";
@@ -12,6 +13,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import AwesomeAlert from "react-native-awesome-alerts";
 import axiosInstance from "../../config";
 import { InputFieldPassword } from "@/components/InputFieldPassword";
+import * as ImagePicker from "expo-image-picker";
+import { Feather } from "@expo/vector-icons";
 
 const Signup = () => {
   const colorScheme = useColorScheme() ?? "light";
@@ -21,13 +24,12 @@ const Signup = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [image, setImage] = useState<any>(null); // Added image state
   const [passwordStrength, setPasswordStrength] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [confirmPasswordError, setConfirmPasswordError] = useState<
-    string | null
-  >(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
 
   // Password strength checker function
@@ -40,12 +42,7 @@ const Signup = () => {
     const hasNumbers = /\d/.test(pwd);
     const hasSpecialChars = /[!@#$%^&*(),.?":{}|<>]/.test(pwd);
 
-    const strengthScore = [
-      hasUpperCase,
-      hasLowerCase,
-      hasNumbers,
-      hasSpecialChars,
-    ].filter(Boolean).length;
+    const strengthScore = [hasUpperCase, hasLowerCase, hasNumbers, hasSpecialChars].filter(Boolean).length;
 
     if (pwd.length >= 12 && strengthScore >= 3) {
       return "strong";
@@ -84,9 +81,7 @@ const Signup = () => {
 
   const handleEmailChange = (text: string) => {
     setEmail(text);
-    setEmailError(
-      text && !isEmailValid(text) ? "Please enter a valid email address" : null
-    );
+    setEmailError(text && !isEmailValid(text) ? "Please enter a valid email address" : null);
   };
 
   const handlePasswordChange = (text: string) => {
@@ -94,26 +89,51 @@ const Signup = () => {
     setPasswordStrength(checkPasswordStrength(text));
     setPasswordError(checkPasswordRequirements(text));
     if (confirmPassword) {
-      setConfirmPasswordError(
-        text === confirmPassword ? null : "Passwords do not match"
-      );
+      setConfirmPasswordError(text === confirmPassword ? null : "Passwords do not match");
     }
   };
 
   const handleConfirmPasswordChange = (text: string) => {
     setConfirmPassword(text);
-    setConfirmPasswordError(
-      text && text !== password ? "Passwords do not match" : null
-    );
+    setConfirmPasswordError(text && text !== password ? "Passwords do not match" : null);
   };
 
+  // Image upload handler (copied from EditProfile)
+  const handleImageUpload = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const selectedImage = result.assets[0];
+        const imageUri = selectedImage.uri;
+
+        const imageFile = {
+          uri: imageUri,
+          type: "image/jpeg",
+          name: "profile-image.jpg",
+        } as const;
+
+        console.log("Selected image file:", imageFile);
+        setImage(imageFile);
+      }
+    } catch (error) {
+      console.error("Error selecting image:", error);
+      Alert.alert("Error", "Failed to select image");
+    }
+  };
+
+  // Updated signup handler with FormData
   const handleEmailSignup = async () => {
     if (!name || !email || !password || !confirmPassword) {
       if (!name) setNameError("Name is required");
       if (!email) setEmailError("Email is required");
       if (!password) setPasswordError("Password is required");
-      if (!confirmPassword)
-        setConfirmPasswordError("Confirm Password is required");
+      if (!confirmPassword) setConfirmPasswordError("Confirm Password is required");
       return;
     }
     if (!isNameValid(name)) {
@@ -135,14 +155,27 @@ const Signup = () => {
       return;
     }
 
-    console.log("Signup payload:", { name, email, password });
     try {
-      console.log("url apii , ", axiosInstance.defaults.baseURL);
-      const res = await axiosInstance.post("/api/users/register", {
-        name,
-        email,
-        password,
-      });
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("email", email);
+      formData.append("password", password);
+
+      if (image && image.uri) {
+        formData.append("image", image as any);
+        console.log("Appending image:", image);
+      }
+
+      console.log("Signup payload:", Object.fromEntries(formData as any));
+
+      const config = {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "Accept": "application/json",
+        },
+      };
+
+      const res = await axiosInstance.post("/api/users/register", formData, config);
       const data = res.data;
 
       if (res.status === 201 || res.status === 200) {
@@ -152,12 +185,12 @@ const Signup = () => {
       } else {
         setEmailError(data.error || "Signup failed");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Signup error:", error);
-      setEmailError("Something went wrong");
+      setEmailError(error.response?.data?.error || "Something went wrong");
     }
   };
-
+  
   const getStrengthColor = () => {
     switch (passwordStrength) {
       case "weak":
@@ -176,7 +209,7 @@ const Signup = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Logo or Header Image */}
         <Image
-          source={require("../pngImage/navigation(1).png")} // Replace with your logo
+          source={require("../pngImage/navigation(1).png")}
           style={styles.logo}
           resizeMode="contain"
         />
@@ -184,6 +217,30 @@ const Signup = () => {
         {/* Welcome Text */}
         <ThemedText style={styles.welcomeText}>Join Us!</ThemedText>
         <ThemedText style={styles.subText}>Sign up to get started</ThemedText>
+
+        {/* Image Upload Section (copied from EditProfile) */}
+        <View style={styles.photoSection}>
+          <View style={styles.avatarContainer}>
+            {image ? (
+              <Image source={{ uri: image.uri }} style={styles.avatar} />
+            ) : (
+              <View style={[styles.avatarPlaceholder, { backgroundColor: Colors[colorScheme].primary }]}>
+                <ThemedText style={styles.avatarText}>{name ? name.charAt(0).toUpperCase() : "U"}</ThemedText>
+              </View>
+            )}
+            <BaseButton
+              variant="primary"
+              size="medium"
+              style={[styles.editButton, { backgroundColor: Colors[colorScheme].primary }]}
+              onPress={handleImageUpload}
+            >
+              <Feather name="edit-2" size={16} color="#FFFFFF" />
+            </BaseButton>
+          </View>
+          <ThemedText style={[styles.photoLimit, { color: Colors[colorScheme].primary }]}>
+            Tap to upload a profile picture
+          </ThemedText>
+        </View>
 
         {/* Name Input */}
         <InputField
@@ -215,9 +272,7 @@ const Signup = () => {
           secureTextEntry
         />
         {passwordStrength && (
-          <ThemedText
-            style={[styles.strengthText, { color: getStrengthColor() }]}
-          >
+          <ThemedText style={[styles.strengthText, { color: getStrengthColor() }]}>
             Password Strength: {passwordStrength}
           </ThemedText>
         )}
@@ -245,10 +300,7 @@ const Signup = () => {
         {/* Login Link */}
         <ThemedText style={styles.loginText}>
           Already have an account?{" "}
-          <ThemedText
-            style={styles.loginLink}
-            onPress={() => router.push("/auth/login")}
-          >
+          <ThemedText style={styles.loginLink} onPress={() => router.push("/auth/login")}>
             Log In
           </ThemedText>
         </ThemedText>
@@ -300,7 +352,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     marginBottom: 32,
-    color: Colors.light.text + "80", // Slightly transparent
+    color: Colors.light.text + "80",
   },
   signupButton: {
     marginTop: 20,
@@ -317,6 +369,51 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 10,
     textAlign: "center",
+  },
+  // Styles copied from EditProfile for image upload
+  photoSection: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  avatarContainer: {
+    position: "relative",
+    marginBottom: 8,
+  },
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
+  avatarPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    color: "white",
+    fontSize: 40,
+    fontWeight: "bold",
+  },
+  editButton: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  photoLimit: {
+    fontSize: 12,
+    marginTop: 8,
   },
 });
 
