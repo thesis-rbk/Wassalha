@@ -32,6 +32,7 @@ const sponsorshipRoutes = require("./routes/sponsorship.route");
 const subscriptionRoutes = require("./routes/subscription.route");
 const stripeRoutes = require('./routes/stripe.route');
 const adminRoutes = require("./routes/admin.route");
+const ticketRoutes = require("./routes/Ticket.route");
 
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
@@ -78,6 +79,7 @@ app.use("/api/mobile/goods", mobileGoodsRoutes);
 app.use("/api/process", processRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/tickets", ticketRoutes);
 
 // Add error logging middleware
 app.use((err, req, res, next) => {

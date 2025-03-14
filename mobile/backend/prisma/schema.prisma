@@ -229,6 +229,14 @@ enum Role {
   SUPER_ADMIN
 }
 
+// Add TicketStatus enum with the other enums
+enum TicketStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
 // ------------------ MODELS ------------------ //
 
 // ========== USER ==========
@@ -242,7 +250,7 @@ model User {
   hasCompletedOnboarding Boolean @default(false)
   role                   Role    @default(USER)
   isSponsor              Boolean @default(false)
-  serviceProviderId      String?
+  serviceProviderId      Int?
 
   requests         Request[]
   notifications    Notification[]
@@ -275,6 +283,9 @@ model User {
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  // Add this line
+  tickets    Ticket[]
 }
 
 // ========== PROFILE ==========
@@ -514,6 +525,10 @@ model Message {
   isRead  Boolean @default(false)
 
   time DateTime @default(now()) // Add the time field, defaulting to the current timestamp
+
+  // Add new ticket relation
+  ticketId   Int?
+  ticket     Ticket?    @relation("TicketMessages", fields: [ticketId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 // ========== MEDIA ==========
@@ -695,4 +710,18 @@ model ProcessEvent {
 
   note      String?
   createdAt DateTime @default(now())
+}
+
+// Add Ticket model before the existing models
+model Ticket {
+  id          Int          @id @default(autoincrement()) // Changed to Int to match your schema's pattern
+  title       String
+  description String
+  userId      Int          // Changed to Int to match User model's id type
+  status      TicketStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  messages    Message[]    @relation("TicketMessages") // Added relation name to avoid ambiguity
 }

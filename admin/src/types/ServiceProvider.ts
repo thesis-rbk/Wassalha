@@ -12,8 +12,12 @@ export interface ServiceProvider {
     licenseNumber?: string;
     passportNumber?: string;
     user: {
+        id: number;
         name: string;
         email: string;
+        isSponsor: boolean;
+        serviceProviderId?: number;
+        role: string;
         profile?: {
             firstName: string;
             lastName: string;
