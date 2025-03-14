@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -8,14 +8,31 @@ import { NotificationType, NotificationStatus } from '@/store/notificationsSlice
 import { Bell, CheckCircle, XCircle, Package } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { checkServerConnection } from '@/utils/simpleNetworkCheck';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 
 export default function NotificationsScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const { user } = useAuth();
   const { notifications, fetchNotifications, markAsRead } = useNotifications(user?.id?.toString());
+  const reduxNotifications = useSelector(
+    (state: RootState) => state.notifications
+  );
+
+  // Add this ref to track if we've run the check already
+  const networkCheckDone = useRef(false);
 
   useEffect(() => {
+    // Fetch notifications every time
     fetchNotifications();
+    
+    // But only run the network check once
+    if (!networkCheckDone.current) {
+      console.log('Running one-time network check on NotificationsScreen');
+      checkServerConnection();
+      networkCheckDone.current = true;
+    }
   }, []);
 
   const formatDate = (dateString: string) => {

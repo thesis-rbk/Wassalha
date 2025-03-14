@@ -32,7 +32,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { decode as atob } from 'base-64';
 import { Picker } from '@react-native-picker/picker';
 import { useRoleDetection } from '@/hooks/useRoleDetection';
-import { io } from 'socket.io-client';
+import { getSocket } from '@/services/socketService';
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -73,10 +73,6 @@ const COUNTRIES = {
   "TURKEY": "TR",
   "PORTUGAL": "PT"
 };
-
-// Add this socket initialization outside the component
-// We keep it outside to prevent multiple connections
-const socket = io(`${BACKEND_URL}/notifications`);
 
 export default function InitializationSp() {
   const params = useLocalSearchParams();
@@ -147,8 +143,12 @@ export default function InitializationSp() {
     loadUserFromToken();
   }, []);
 
+  // Replace the socket-related useEffect with this updated version
   // Add useEffect for socket connection
   React.useEffect(() => {
+    // Get the shared socket instance
+    const socket = getSocket('notifications');
+    
     // Log when socket connects successfully
     socket.on('connect', () => {
       console.log('🔌 Socket connected with ID:', socket.id);
@@ -159,24 +159,27 @@ export default function InitializationSp() {
       console.error('🔴 Socket connection error:', error);
     });
 
-    // Cleanup function to disconnect socket when component unmounts
+    // Cleanup function to remove listeners when component unmounts
     return () => {
-      socket.disconnect();
-      console.log('🔌 Socket disconnected');
+      socket.off('connect');
+      socket.off('connect_error');
+      // We don't disconnect since the socket is now shared
     };
   }, []); // Empty dependency array means this runs once when component mounts
 
-  // Socket connection useEffect - Handles real-time notifications
+  // Update the socket connection useEffect for user-specific notifications
   React.useEffect(() => {
     // Separate async function to handle socket setup
     const setupSocketConnection = async () => {
       try {
         // Safety check: Only proceed if we have a valid user ID
-        // This prevents attempting socket connection before user data loads
         if (!currentUser?.id) {
           console.log('⏳ Waiting for user data to load before socket setup...');
           return; // Exit early if no user data
         }
+
+        // Get the shared socket instance
+        const socket = getSocket('notifications');
 
         // Log the start of socket setup with user info
         console.log('🔄 Starting socket setup for user:', {
@@ -186,12 +189,10 @@ export default function InitializationSp() {
         });
 
         // Join user's personal notification room
-        // This creates a unique channel for this user's notifications
         socket.emit('join', currentUser.id);
         console.log('✅ Successfully joined notification room:', currentUser.id);
 
         // Set up listener for offer responses
-        // This will catch any accept/reject notifications for offers this user makes
         socket.on('offer_response_notification', (notification) => {
           console.log('📩 Received offer response:', notification);
           
@@ -218,8 +219,7 @@ export default function InitializationSp() {
         // Detailed error logging for debugging
         console.error('❌ Socket setup error:', {
           error: error.message,
-          userId: currentUser?.id,
-          socketId: socket.id
+          userId: currentUser?.id
         });
       }
     };
@@ -229,6 +229,7 @@ export default function InitializationSp() {
 
     // Cleanup function - runs when component unmounts or user ID changes
     return () => {
+      const socket = getSocket('notifications');
       if (currentUser?.id) {
         // Remove all listeners to prevent memory leaks
         socket.off('offer_response_notification');
@@ -364,6 +365,9 @@ export default function InitializationSp() {
       const response = await axiosInstance.post('/api/orders', orderData);
       
       if (response.status === 201) {
+        // Get the shared socket
+        const socket = getSocket('notifications');
+        
         // After successful order creation, emit socket notification
         socket.emit('offer_made', {
           requesterId: requestDetails.user.id,  // ID of request creator

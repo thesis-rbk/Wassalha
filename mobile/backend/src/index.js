@@ -6,8 +6,6 @@ const cors = require("cors");
 const http = require("http");
 const path = require("path"); // Import path module
 
-
-
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
@@ -34,8 +32,9 @@ const stripeRoutes = require('./routes/stripe.route');
 const adminRoutes = require("./routes/admin.route");
 const notificationRoutes = require("./routes/notification.route");
 
-// Import socket
-const { initializeSocket } = require('./sockets');
+// Import socket initialization function
+const { initializeSocket } = require("./sockets/index");
+
 const app = express();
 const server = http.createServer(app);
 app.use(morgan("dev"));
@@ -80,6 +79,13 @@ app.use("/api/process", processRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
+// Add health endpoint
+app.get('/api/health', (req, res) => {
+  console.log('Health check request received');
+  res.status(200).json({ status: 'ok' });
+
+  
+});
 
 // Add error logging middleware
 app.use((err, req, res, next) => {
@@ -91,21 +97,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-
-
-// Initialize socket
+// Initialize socket with the server
 initializeSocket(server);
 
 // Start server
-// Use `server.listen()` instead of `app.listen()`
-// **Why:**
-// The reason we need to use `server.listen()` here is because Express (`app`) is now being handled
-// by the underlying HTTP server (`server`) that we created with `http.createServer(app)`. This allows us to
-// run both Express routes and Socket.IO on the same server, preventing conflicts.
-//
-// If we were to use `app.listen()` and `server.listen()` both, it would try to listen on the same port twice,
-// which will result in an error.
-
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

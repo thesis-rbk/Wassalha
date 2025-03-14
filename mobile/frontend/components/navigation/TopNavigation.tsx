@@ -51,6 +51,7 @@ export function TopNavigation({
   const { user, token } = useSelector((state: RootState) => state.auth);
   const notifications = useSelector((state: RootState) => state.notifications?.unreadCount ?? 0);
   console.log("User:", user);
+  console.log('TopNavigation - notifications count:', notifications);
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem("jwtToken");
@@ -326,10 +327,18 @@ const styles = StyleSheet.create({
     height: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'white',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
   },
   badgeText: {
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

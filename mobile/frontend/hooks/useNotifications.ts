@@ -9,7 +9,7 @@ import {
 } from '@/store/notificationsSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react';
-import { io } from 'socket.io-client';
+import { getSocket } from '@/services/socketService';
 import { BACKEND_URL } from '@/config';
 
 export function useNotifications(userId?: string) {
@@ -21,10 +21,10 @@ export function useNotifications(userId?: string) {
   useEffect(() => {
     if (!userId) return;
     
-    const socket = io(`${BACKEND_URL}/notifications`);
+    const socket = getSocket('notifications');
     
     const handleConnect = () => {
-      console.log('🔌 Notification socket connected');
+      console.log('🔌 Notification socket connected in useNotifications hook');
       socket.emit('join', userId);
     };
     
@@ -82,8 +82,8 @@ export function useNotifications(userId?: string) {
     socket.on('order_cancelled_notification', handleOrderCancelled);
     socket.on('offer_cancelled_notification', handleOfferCancelled);
     
-    if (!socket.connected) {
-      socket.connect();
+    if (socket.connected) {
+      socket.emit('join', userId);
     }
     
     return () => {

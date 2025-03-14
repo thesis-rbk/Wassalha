@@ -8,13 +8,41 @@ import { useEffect, useState } from "react";
 import { ThemeProvider } from "@/context/ThemeContext";
 import WelcomeAnimation from "@/components/WelcomeAnimation";
 import MainLoading from "@/components/MainLoading";
-import { StripeProvider } from '@stripe/stripe-react-native';
+import { StripeProvider } from "@stripe/stripe-react-native";
 import { STRIPE_PUBLISHABLE_KEY } from "@/config";
+import { useAuth } from "@/hooks/useAuth";
+import { useNotifications } from "@/hooks/useNotifications";
+import { getSocket } from "@/services/socketService";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 SplashScreen.preventAutoHideAsync();
+
+function NotificationInitializer() {
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    const initNotifications = async () => {
+      if (user?.id) {
+        console.log('🔔 Initializing notifications for user:', user.id);
+        
+        const socket = getSocket('notifications');
+        
+        const { fetchNotifications } = useNotifications(String(user.id));
+        
+        fetchNotifications();
+      } else {
+        console.log('👤 No user logged in, skipping notification initialization');
+      }
+    };
+    
+    initNotifications();
+  }, [user?.id]);
+  
+  return null;
+}
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({});
-
   const [animationComplete, setAnimationComplete] = useState(false);
   const [loadingComplete, setLoadingComplete] = useState(false);
 
@@ -31,11 +59,11 @@ export default function RootLayout() {
   console.log("Store:", store);
 
   return (
-    <StripeProvider
-      publishableKey={STRIPE_PUBLISHABLE_KEY}
-    >
+    <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>
       <ThemeProvider>
         <Provider store={store}>
+          {animationComplete && loadingComplete && <NotificationInitializer />}
+          
           {!loadingComplete ? (
             <MainLoading onLoadingComplete={() => setLoadingComplete(true)} />
           ) : !animationComplete ? (
@@ -59,9 +87,7 @@ export default function RootLayout() {
 
               <Stack.Screen
                 name="productDetails"
-                options={{
-                  title: "Product Details",
-                }}
+                options={{ title: "Product Details" }}
               />
               <Stack.Screen
                 name="test/Subscription"
@@ -87,7 +113,10 @@ export default function RootLayout() {
                 name="profile/edit"
                 options={{ title: "Edit Profile" }}
               />
-              <Stack.Screen name="profile/index" options={{ title: "Profile" }} />
+              <Stack.Screen
+                name="profile/index"
+                options={{ title: "Profile" }}
+              />
               <Stack.Screen
                 name="messages/messages"
                 options={{ title: "Messages" }}
@@ -100,9 +129,18 @@ export default function RootLayout() {
               <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
               <Stack.Screen name="test/chat" options={{ title: "Chat" }} />
               <Stack.Screen name="test/order" options={{ title: "order" }} />
-              <Stack.Screen name="verification/start" options={{ title: "verification" }} />
-              <Stack.Screen name="verification/TakeSelfie" options={{ title: "Take Selfie" }} />
-              <Stack.Screen name="verification/creditCardVerification" options={{ title: "Credit Card Verification" }} />
+              <Stack.Screen
+                name="verification/start"
+                options={{ title: "verification" }}
+              />
+              <Stack.Screen
+                name="verification/TakeSelfie"
+                options={{ title: "Take Selfie" }}
+              />
+              <Stack.Screen
+                name="verification/creditCardVerification"
+                options={{ title: "Credit Card Verification" }}
+              />
               <Stack.Screen
                 name="processTrack/initializationSO"
                 options={{ title: "Initialization" }}
@@ -135,140 +173,33 @@ export default function RootLayout() {
                 name="processTrack/pickupSP"
                 options={{ title: "Pickup" }}
               />
-              <Stack.Screen name="test/role-test" options={{ title: "Role Test" }} />
-              <Stack.Screen name="test/order-details"  />
+              <Stack.Screen
+                name="test/role-test"
+                options={{ title: "Role Test" }}
+              />
+              <Stack.Screen name="test/order-details" />
               <Stack.Screen
                 name="processTrack/makeOffer"
                 options={{ title: "Make Offer" }}
               />
-              
+
               {/* Add the new success screens */}
               <Stack.Screen
                 name="screens/RequestSuccessScreen"
-                options={{ 
-                  title: "Request Created",
-                  
-                }}
+                options={{ title: "Request Created" }}
               />
               <Stack.Screen
                 name="screens/OrderSuccessScreen"
-                options={{ 
-                  title: "Order Created",
-                  
-                }}
+                options={{ title: "Order Created" }}
+              />
+              <Stack.Screen
+                name="screens/NotificationsScreen"
+                options={{ title: "Notifications" }}
               />
             </Stack>
           )}
         </Provider>
       </ThemeProvider>
     </StripeProvider>
-            <Stack.Screen
-              name="productDetails"
-              options={{
-                title: "Product Details",
-              }}
-            />
-            <Stack.Screen
-              name="test/Subscription"
-              options={{ title: "Subscription" }}
-            />
-            <Stack.Screen
-              name="onboarding/howYouHeard"
-              options={{ title: "How You Heard" }}
-            />
-            <Stack.Screen
-              name="onboarding/selectCategories"
-              options={{ title: "Select Categories" }}
-            />
-            <Stack.Screen
-              name="onboarding/customScreen"
-              options={{ title: "Custom Screen" }}
-            />
-            <Stack.Screen
-              name="profile/change"
-              options={{ title: "Change Password" }}
-            />
-            <Stack.Screen
-              name="profile/edit"
-              options={{ title: "Edit Profile" }}
-            />
-            <Stack.Screen name="profile/index" options={{ title: "Profile" }} />
-            <Stack.Screen
-              name="messages/messages"
-              options={{ title: "Messages" }}
-            />
-            <Stack.Screen
-              name="test/Terms&&Conditions"
-              options={{ title: "terms n conditions" }}
-            />
-            <Stack.Screen name="test/Travel" options={{ title: "Travel" }} />
-            <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
-            <Stack.Screen name="test/chat" options={{ title: "Chat" }} />
-            <Stack.Screen name="test/order" options={{ title: "order" }} />
-            <Stack.Screen name="verification/start" options={{ title: "verification" }} />
-            <Stack.Screen
-              name="processTrack/initializationSO"
-              options={{ title: "Initialization" }}
-            />
-            <Stack.Screen
-              name="processTrack/initializationSP"
-              options={{ title: "Initialization" }}
-            />
-            <Stack.Screen
-              name="processTrack/verificationSO"
-              options={{ title: "Verification" }}
-            />
-            <Stack.Screen
-              name="processTrack/verificationSP"
-              options={{ title: "Verification" }}
-            />
-            <Stack.Screen
-              name="processTrack/paymentSO"
-              options={{ title: "Payment" }}
-            />
-            <Stack.Screen
-              name="processTrack/paymentSP"
-              options={{ title: "Payment" }}
-            />
-            <Stack.Screen
-              name="processTrack/pickupSO"
-              options={{ title: "Pickup" }}
-            />
-            <Stack.Screen
-              name="processTrack/pickupSP"
-              options={{ title: "Pickup" }}
-            />
-            <Stack.Screen name="test/role-test" options={{ title: "Role Test" }} />
-            <Stack.Screen name="test/order-details"  />
-            <Stack.Screen
-              name="processTrack/makeOffer"
-              options={{ title: "Make Offer" }}
-            />
-            
-            {/* Add the new success screens */}
-            <Stack.Screen
-              name="screens/RequestSuccessScreen"
-              options={{ 
-                title: "Request Created",
-                
-              }}
-            />
-            <Stack.Screen
-              name="screens/OrderSuccessScreen"
-              options={{ 
-                title: "Order Created",
-                
-              }}
-            />
-            <Stack.Screen
-              name="screens/NotificationsScreen"
-              options={{ 
-                title: "Notifications"
-              }}
-            />
-          </Stack>
-        )}
-      </Provider>
-    </ThemeProvider>
   );
 }

@@ -1,7 +1,7 @@
 // Import Socket.IO server and our feature handlers
 const { Server } = require('socket.io');
 const notificationHandlers = require('./notifications/notificationSocket');
-const { trackingHandlers, getFlightLocation } = require('./tracking/trackingSocket');
+const { trackingHandlers } = require('./tracking/trackingSocket');
 
 // Global socket instance - kept outside function so it can be accessed by getIO()
 let io;
