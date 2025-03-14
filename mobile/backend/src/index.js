@@ -31,6 +31,7 @@ const subscriptionRoutes = require("./routes/subscription.route");
 const stripeRoutes = require('./routes/stripe.route');
 const adminRoutes = require("./routes/admin.route");
 const notificationRoutes = require("./routes/notification.route");
+const chatRoutes = require('./routes/chat.route');
 
 // Import socket initialization function
 const { initializeSocket } = require("./sockets/index");
@@ -83,6 +84,8 @@ app.use("/api/process", processRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use('/api/chats', chatRoutes);
+
 // Add health endpoint
 app.get('/api/health', (req, res) => {
   console.log('Health check request received');

@@ -2,6 +2,7 @@
 const { Server } = require('socket.io');
 const notificationHandlers = require('./notifications/notificationSocket');
 const { trackingHandlers } = require('./tracking/trackingSocket');
+const chatHandlers = require('./chat/chatSocket');
 
 // Global socket instance - kept outside function so it can be accessed by getIO()
 let io;
@@ -21,6 +22,7 @@ const initializeSocket = (server) => {
     // This helps organize different socket functionalities
     const notifications = io.of('/notifications');  // Notification channel
     const tracking = io.of('/tracking');           // Tracking channel
+    const chat = io.of('/chat');                  // Chat channel
 
     // Handle connections to notification namespace
     notifications.on('connection', (socket) => {
@@ -34,6 +36,13 @@ const initializeSocket = (server) => {
         console.log('✈️ Client connected to tracking:', socket.id);
         // Pass socket to tracking handlers to manage tracking events
         trackingHandlers(socket);
+    });
+
+    // Handle connections to chat namespace
+    chat.on('connection', (socket) => {
+        console.log('💬 Client connected to chat:', socket.id);
+        // Pass socket to chat handlers to manage chat events
+        chatHandlers(socket);
     });
 
     return io;

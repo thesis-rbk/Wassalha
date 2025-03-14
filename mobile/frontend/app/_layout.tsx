@@ -130,6 +130,7 @@ export default function RootLayout() {
               <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
               <Stack.Screen name="test/chat" options={{ title: "Chat" }} />
               <Stack.Screen name="test/order" options={{ title: "order" }} />
+              <Stack.Screen name="test/chat-redux-test" options={{ title: "Chat Redux Test" }} />
               <Stack.Screen
                 name="verification/start"
                 options={{ title: "verification" }}
