@@ -56,7 +56,7 @@ export default function HomeScreen() {
     {
       title: "Subscription",
       icon: <Crown size={32} color={Colors[colorScheme].primary} />,
-      route: "../test/Subscription" as const,
+      route: "../pickup/pickup" as const,
     },
   ];
 
