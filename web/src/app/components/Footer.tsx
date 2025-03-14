@@ -29,13 +29,13 @@ export default function Footer() {
                 <Link href="/">Home</Link>
               </li>
               <li>
-              <Link href="/">orders</Link>
+                <Link href="/orders">orders</Link>
               </li>
               <li>
-                <Link href="/">travel</Link>
+                <Link href="/travel">travel</Link>
               </li>
               <li>
-                <Link href="/">pickup</Link>
+                <Link href="/pickup">pickup</Link>
               </li>
             </ul>
           </div>
@@ -66,7 +66,7 @@ export default function Footer() {
                 <Link href="/support">Support</Link>
               </li>
               <li>
-                <Link href="/">how to use Wasslha</Link>
+                <Link href="/guide">how to use Wasslha</Link>
               </li>
             </ul>
           </div>
