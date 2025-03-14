@@ -6,8 +6,6 @@ const cors = require("cors");
 const http = require("http");
 const path = require("path"); // Import path module
 
-
-
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/user.route");
@@ -23,10 +21,10 @@ const mobileRequestRoutes = require("./routes/mobileRequestRoutes");
 const mobileGoodsRoutes = require("./routes/mobileGoodsRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const processRoutes = require("./routes/processRoutes");
+const pickupRoutes = require("./routes/pickup.route");
 const goodsPostRoutes = require("./routes/goodsPost.route");
 const promoPostRoutes = require("./routes/promoPost.route");
 const paymentRoutes = require("./routes/payment.route");
-const pickupRoutes = require("./routes/pickup.route");
 const serviceProviderRoutes = require("./routes/serviceProvider.Routes");
 const sponsorshipRoutes = require("./routes/sponsorship.route");
 const subscriptionRoutes = require("./routes/subscription.route");
@@ -52,13 +50,17 @@ app.use(express.json());
 
 // Serve static files from the "uploads" directory
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve static files
-// console.log("pathsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", path.join(__dirname, 'src/uploads'));
 app.use("/api/fecth", fetchRoute)
 // Routes
 
-// API Routes
+// Routes (REST API will still work)
+app.use("/api/pickup", pickupRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/scrape", scrapeRoutes);
+app.use("/api", all);
+
+// Routes
+// API Routes
 app.use("/api/requests", requestRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/goods", goodsRoutes);
@@ -95,7 +97,6 @@ app.use((err, req, res, next) => {
 
 // Initialize socket
 trackingSocket(server);
-
 // Start server
 // Use `server.listen()` instead of `app.listen()`
 // **Why:**

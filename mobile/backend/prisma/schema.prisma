@@ -281,6 +281,9 @@ model User {
   serviceProvider ServiceProvider?
   profile         Profile?
 
+  // New relation for PickupSuggestion
+  pickupSuggestions PickupSuggestion[]
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -442,11 +445,14 @@ model Pickup {
   qrCode             String?
   coordinates        String?
   contactPhoneNumber String?
+  travelerconfirmed  Boolean @default(false)
+  userconfirmed      Boolean @default(false)
   status             PickupStatus @default(SCHEDULED)
   scheduledTime      DateTime?
-
-  requests      Request[]
-  notifications Notification[]
+  
+  requests          Request[]
+  notifications     Notification[]
+  pickupSuggestions PickupSuggestion[]
 }
 
 // ========== NOTIFICATION ==========
@@ -710,6 +716,23 @@ model ProcessEvent {
 
   note      String?
   createdAt DateTime @default(now())
+}
+// Add this new model to your existing schema
+model PickupSuggestion {
+  id            Int      @id @default(autoincrement())
+  pickupId      Int?     // Nullable if suggestion is for a new pickup not yet created
+  pickup        Pickup?  @relation(fields: [pickupId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  orderId       Int      // To link to the order if no pickup exists yet
+  userId        Int      // The user who made the suggestion
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  pickupType    PickupType
+  location      String?
+  address       String?
+  qrCode        String?
+  coordinates   String?
+  contactPhoneNumber String?
+  scheduledTime DateTime?
+  createdAt     DateTime @default(now())
 }
 
 // Add Ticket model before the existing models
