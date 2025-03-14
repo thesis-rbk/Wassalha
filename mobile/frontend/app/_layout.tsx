@@ -9,11 +9,11 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import WelcomeAnimation from "@/components/WelcomeAnimation";
 import MainLoading from "@/components/MainLoading";
 import { StripeProvider } from '@stripe/stripe-react-native';
+import {STRIPE_PUBLISHABLE_KEY} from "@/config";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({});
-  const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_SECRET_KEY || '';
   const [animationComplete, setAnimationComplete] = useState(false);
   const [loadingComplete, setLoadingComplete] = useState(false);
 

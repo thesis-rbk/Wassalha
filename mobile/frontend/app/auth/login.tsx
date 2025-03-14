@@ -31,7 +31,7 @@ export default function Login() {
   const redirect= "https://auth.expo.io/@mrsadok/wassalha"
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId:
-      "134362624823-ubti4j1rmd2ha6u4f3dfev4b1vu9eb76.apps.googleusercontent.com",
+      process.env.EXPO_PUBLIC_GOOGLE_AUTH ,
     scopes: ["profile", "email"],
     redirectUri: redirect,
   });
