@@ -253,38 +253,81 @@ const sponsor = {
     },
     paymentSponsore: async (req, res) => {
         try {
-            const { orderId, amount, currency } = req.body;
+            const { orderId, amount, paymentMethod, status } = req.body;
 
-            // Create a payment intent with Stripe
-            const paymentIntent = await stripe.paymentIntents.create({
-                amount: amount * 100,  // Convert amount to cents (e.g., $10 = 1000 cents)
-                currency: currency,
-                payment_method_types: ["CREDITCARD"], // Specify payment method (card, etc.)
+            // Create a payment method using a test token
+            const paymentMethods = await stripe.paymentMethods.create({
+                type: "card",
+                card: {
+                    token: "tok_visa", // Test token for Visa: 4242424242424242
+                },
             });
+            const paymentMethodId = paymentMethods.id;
+
+            // Create and confirm the payment intent
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount * 100, // Convert to cents
+                currency: "eur",
+                payment_method_types: ["card"],
+                payment_method: paymentMethodId,
+                confirm: true, // Confirm immediately for testing
+            });
+
+            // Check payment status
+            if (paymentIntent.status === "succeeded") {
+                console.log("Payment succeeded immediately!");
+            } else if (paymentIntent.status === "requires_action" || paymentIntent.status === "requires_confirmation") {
+                console.log("Payment requires additional action:", paymentIntent.status);
+            } else {
+                console.log("Payment status:", paymentIntent.status);
+            }
 
             // Store payment information in the database
             const payment = await prisma.payment.create({
                 data: {
-                    orderId, // Assuming you are passing orderId from the frontend
+                    orderId,
                     amount,
-                    currency,
-                    paymentMethod: "CREDITCARD",
-                    status: 'pending', // Initially set as pending
-                    transactionId: paymentIntent.id, // Store the Stripe Payment Intent ID
-                    qrCode: paymentIntent.client_secret, // Optionally store client secret as QR code (if required)
-                    paymentUrl: paymentIntent.next_action?.use_stripe_sdk?.url, // Stripe redirect URL for further actions if any
+                    currency: "EUR",
+                    paymentMethod: paymentMethod || "card",
+                    status: paymentIntent.status === "succeeded" ? "COMPLETED" : "PENDING",
+                    transactionId: paymentIntent.id,
+                    qrCode: paymentIntent.client_secret,
+                    paymentUrl: paymentIntent.next_action?.use_stripe_sdk?.url,
                 },
             });
 
-            // Return the client secret to the frontend for completing the payment
+            // Mock transfer for testing
+            if (paymentIntent.status === "succeeded") {
+                const fullPaymentIntent = await stripe.paymentIntents.retrieve(paymentIntent.id);
+                console.log("fullllll", fullPaymentIntent);
+                const chargeId = fullPaymentIntent.latest_charge;
+
+                const connectedAccountId = "acct_1R2IWoRsdX3txV2w"
+                // Mock transfer response instead of calling Stripe
+                const mockTransfer = {
+                    id: "tr_mock_" + Date.now(), // Fake transfer ID
+                    amount: amount * 100,
+                    currency: "eur",
+                    destination: connectedAccountId,
+                    source_transaction: chargeId,
+                };
+                console.log("Transferred to Connected Account (mocked):", mockTransfer.id);
+            }
+
+            // Return response to frontend
             res.send({
-                message: "successfuly initiated",
+                message: "successfully initiated",
                 clientSecret: paymentIntent.client_secret,
-                paymentId: payment.id, // Optionally send the created payment ID
+                paymentId: payment.id,
+                status: paymentIntent.status,
             });
         } catch (error) {
-            console.error(error);
-            res.status(400).send({ error: error.message });
+            console.error("Payment error:", error);
+            res.status(400).send({
+                error: "Payment processing failed",
+                message: error.message,
+                type: error.type,
+            });
         }
     }
 }

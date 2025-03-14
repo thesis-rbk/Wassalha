@@ -84,7 +84,7 @@ enum PaymentStatus {
 
 enum PaymentCurrency {
   DOLLAR
-  EURO
+  EUR
   TND
 }
 
@@ -97,7 +97,7 @@ enum PaymentState {
 }
 
 enum PaymentMethod {
-  CREDITCARD
+  card
   D17
   STRIPE
   PAYPAL
