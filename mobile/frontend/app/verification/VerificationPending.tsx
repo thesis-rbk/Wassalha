@@ -3,15 +3,13 @@ import { View, StyleSheet, Image } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
+import { CheckCircle } from 'lucide-react-native';
 
 const VerificationPending = () => {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.content}>
-        <Image 
-          source={require('../../assets/images/verification-submitted.png')} 
-          style={styles.icon}
-        />
+        <CheckCircle size={120} color={Colors.light.primary} style={styles.icon} />
         <ThemedText style={styles.title}>Verification Submitted</ThemedText>
         <ThemedText style={styles.message}>
           Thank you for completing the verification process. Our admin team will review your information and get back to you shortly.
@@ -22,7 +20,7 @@ const VerificationPending = () => {
           
           <View style={styles.statusItem}>
             <View style={[styles.statusDot, styles.statusCompleted]} />
-            <ThemedText style={styles.statusText}>Information Submitted</ThemedText>
+            <ThemedText style={styles.statusText}>Verification Complete</ThemedText>
           </View>
           
           <View style={styles.statusItem}>
@@ -32,7 +30,7 @@ const VerificationPending = () => {
           
           <View style={styles.statusItem}>
             <View style={[styles.statusDot, styles.statusPending]} />
-            <ThemedText style={styles.statusText}>Verification Complete</ThemedText>
+            <ThemedText style={styles.statusText}>Information Submitted</ThemedText>
           </View>
         </View>
 
