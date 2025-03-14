@@ -20,6 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Pickup } from "../../types/Pickup";
 import { MapPin, CheckCircle, AlertCircle } from "lucide-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import QRCode from "react-native-qrcode-svg";
 
 export default function PickupTraveler() {
   const router = useRouter();
@@ -39,8 +40,10 @@ export default function PickupTraveler() {
   const userId = user?.id;
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [selectedPickupId, setSelectedPickupId] = useState<number | null>(null);
-  const [suggestions, setSuggestions] = useState<any[]>([]); // State for suggestions
-  const [showSuggestions, setShowSuggestions] = useState(false); // Toggle suggestions view
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [qrCodeData, setQRCodeData] = useState<string>("");
 
   useEffect(() => {
     fetchPickups();
@@ -70,26 +73,57 @@ export default function PickupTraveler() {
     }
   };
 
+  const generateQRCodeData = (pickup: Pickup): string => {
+    return JSON.stringify({
+      pickupId: pickup.id,
+      orderId: pickup.orderId,
+      userId: userId,
+      timestamp: new Date().toISOString(),
+    });
+  };
+
   const handleAccept = async (pickupId: number): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("jwtToken");
       if (!token) throw new Error("No authentication token found");
 
-      await axiosInstance.put(
+      // Find the pickup to check if userconfirmed is already true
+      const pickup = pickups.find((p) => p.id === pickupId);
+      if (!pickup) throw new Error("Pickup not found");
+
+      // Generate QR code data only if this acceptance completes the confirmation
+      let qrCode = "";
+      if (pickup.userconfirmed) {
+        qrCode = generateQRCodeData({ ...pickup, travelerconfirmed: true });
+      }
+
+      const response = await axiosInstance.put(
         "/api/pickup/accept",
-        { pickupId },
+        { pickupId, qrCode }, // Send QR code data to backend
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       alert("Pickup accepted!");
       setPickups((prev) =>
-        prev.map((pickup) =>
-          pickup.id === pickupId
-            ? { ...pickup, status: "IN_PROGRESS", travelerconfirmed: true }
-            : pickup
+        prev.map((p) =>
+          p.id === pickupId
+            ? {
+                ...p,
+                status: "IN_PROGRESS",
+                travelerconfirmed: true,
+                qrCode: qrCode || p.qrCode || response.data.qrCode, // Update with QR code from response if provided
+              }
+            : p
         )
       );
-      fetchPickups();
+
+      // If both are confirmed now, show the QR code
+      if (pickup.userconfirmed && qrCode) {
+        setQRCodeData(qrCode);
+        setShowQRCode(true);
+      }
+
+      fetchPickups(); // Refresh pickups to get the latest data from the backend
     } catch (error) {
       console.error("Error accepting pickup:", error);
       alert("Failed to accept pickup. Please try again.");
@@ -108,7 +142,7 @@ export default function PickupTraveler() {
 
       await axiosInstance.put(
         "/api/pickup/status",
-        { pickupId, newStatus: "CANCELLED" },
+        { pickupId, newStatus: "CANCELLED", qrCode:qrCodeData },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -182,7 +216,8 @@ export default function PickupTraveler() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-          },        }
+          },
+        }
       );
 
       if (response.data.success) {
@@ -197,6 +232,11 @@ export default function PickupTraveler() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const showStoredQRCode = (qrCode: string) => {
+    setQRCodeData(qrCode);
+    setShowQRCode(true);
   };
 
   const isRequester = (pickup: Pickup) => userId !== pickup.order.travelerId;
@@ -286,6 +326,14 @@ export default function PickupTraveler() {
               onPress={() => openStatusModal(item.id)}
             >
               Update Status
+            </BaseButton>
+            <BaseButton
+              variant="primary"
+              size="small"
+              style={styles.actionButton}
+              onPress={() => showStoredQRCode(item.qrCode || generateQRCodeData(item))}
+            >
+              Show QR Code
             </BaseButton>
           </View>
         )}
@@ -439,6 +487,39 @@ export default function PickupTraveler() {
           )}
         </>
       )}
+
+      {/* QR Code Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showQRCode}
+        onRequestClose={() => setShowQRCode(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Your Pickup QR Code</Text>
+            <View style={styles.qrCodeContainer}>
+              <QRCode
+                value={qrCodeData}
+                size={200}
+                color="#1e293b"
+                backgroundColor="white"
+              />
+            </View>
+            <Text style={styles.qrInstructions}>
+              Show this QR code to identify yourself when picking up your package.
+            </Text>
+            <BaseButton
+              variant="primary"
+              size="small"
+              style={styles.cancelModalButton}
+              onPress={() => setShowQRCode(false)}
+            >
+              Close
+            </BaseButton>
+          </View>
+        </View>
+      </Modal>
 
       {/* Status Selection Modal */}
       <Modal
@@ -740,5 +821,16 @@ const styles = StyleSheet.create({
     color: "#64748b",
     textAlign: "center",
     marginTop: 20,
+  },
+  qrCodeContainer: {
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  qrInstructions: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "#64748b",
+    textAlign: "center",
+    marginBottom: 20,
   },
 });

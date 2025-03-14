@@ -51,7 +51,7 @@ export default function HomeScreen() {
     {
       title: "Pickup",
       icon: <MapPin size={32} color={Colors[colorScheme].primary} />,
-      route: "../mapTrack" as const,
+      route: "../processTrack/pickupSP" as const,
     },
     {
       title: "Subscription",
