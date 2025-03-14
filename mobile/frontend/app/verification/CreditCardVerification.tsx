@@ -45,24 +45,46 @@ const CreditCardVerification = () => {
     setCvv(text.replace(/\D/g, '').slice(0, 3));
   };
 
+  // Add these validation functions at the top of the file
+  const validateCardNumber = (number: string) => {
+    const cleaned = number.replace(/\s/g, '');
+    return /^[0-9]{16}$/.test(cleaned);
+  };
+
+  const validateExpiryDate = (date: string) => {
+    const [month, year] = date.split('/').map(Number);
+    const now = new Date();
+    const currentYear = now.getFullYear() % 100;
+    const currentMonth = now.getMonth() + 1;
+
+    return month >= 1 && month <= 12 && 
+           year >= currentYear &&
+           (year > currentYear || month >= currentMonth);
+  };
+
+  const validateCVV = (cvv: string) => {
+    return /^[0-9]{3,4}$/.test(cvv);
+  };
+
+  // Update the validateForm function
   const validateForm = () => {
-    if (cardNumber.replace(/\s/g, '').length < 16) {
-      Alert.alert('Error', 'Please enter a valid card number');
+    if (!validateCardNumber(cardNumber)) {
+      Alert.alert('Error', 'Please enter a valid 16-digit card number');
       return false;
     }
     
-    if (expiryDate.length < 5) {
-      Alert.alert('Error', 'Please enter a valid expiry date (MM/YY)');
+    if (!validateExpiryDate(expiryDate)) {
+      Alert.alert('Error', 'Please enter a valid future expiry date');
       return false;
     }
     
-    if (cvv.length < 3) {
-      Alert.alert('Error', 'Please enter a valid CVV');
+    if (!validateCVV(cvv)) {
+      Alert.alert('Error', 'Please enter a valid CVV (3-4 digits)');
       return false;
     }
     
-    if (cardholderName.length < 3) {
-      Alert.alert('Error', 'Please enter the cardholder name');
+    if (cardholderName.trim().length < 3) {
+      Alert.alert('Error', 'Please enter the full cardholder name');
       return false;
     }
     

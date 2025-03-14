@@ -187,18 +187,29 @@ class ServiceProviderController {
         try {
             const { userId } = req.params;
             
-            const updatedProvider = await prisma.serviceProvider.update({
-                where: { userId: parseInt(userId) },
-                data: {
-                    isVerified: true,
-                    updatedAt: new Date()
-                }
-            });
+            // Update both ServiceProvider and Profile
+            const [updatedProvider, updatedProfile] = await prisma.$transaction([
+                prisma.serviceProvider.update({
+                    where: { userId: parseInt(userId) },
+                    data: {
+                        isVerified: true,
+                        updatedAt: new Date()
+                    }
+                }),
+                prisma.profile.update({
+                    where: { userId: parseInt(userId) },
+                    data: {
+                        isSponsor: true,
+                        isVerified: true
+                    }
+                })
+            ]);
 
             res.json({
                 success: true,
                 data: {
-                    isVerified: updatedProvider.isVerified
+                    serviceProvider: updatedProvider,
+                    profile: updatedProfile
                 }
             });
         } catch (error) {
