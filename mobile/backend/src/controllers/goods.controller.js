@@ -4,7 +4,7 @@ exports.createGoods = async (req, res) => {
   console.log('📥 Received goods creation request');
   console.log('📦 Request body:', req.body);
   console.log('🖼️ File received:', req.file ? 'Yes' : 'No');
-  
+
   try {
     if (req.file) {
       console.log('📁 File details:', {

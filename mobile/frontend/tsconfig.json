@@ -24,6 +24,7 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "react-native-dotenv.d.ts"
+    "react-native-dotenv.d.ts",
+    "screens/NotificationB.tsx"
   ]
 }
