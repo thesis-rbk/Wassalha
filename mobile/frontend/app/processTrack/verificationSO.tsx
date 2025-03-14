@@ -7,37 +7,19 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import ProgressBar from "../../components/ProgressBar";
 import { MaterialIcons } from "@expo/vector-icons";
 import axiosInstance from "@/config";
 import { router, useLocalSearchParams } from "expo-router";
-import { User } from "@/types";
-import { Goods } from "@/types";
-
-interface Request {
-  id: number;
-  userId: number;
-  user: User;
-  goodsId: number;
-  goods: Goods;
-  quantity: number;
-  goodsLocation: string;
-  goodsDestination: string;
-  pickupId?: number;
-  date: Date;
-  status: "PENDING" | "ACCEPTED" | "CANCELLED" | "REJECTED";
-  withBox?: boolean;
-  verificationImage: string | null;
-  isVerified?: boolean;
-  verificationStatus?: "NEEDS_VERIFICATION" | "NEEDS_NEW_PHOTO" | "VERIFIED";
-}
+import { Order } from "@/types";
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
-  const [request, setRequest] = useState<Request | null>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const requestId = params.idRequest;
+  const orderId = params.idOrder;
 
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -47,29 +29,27 @@ export default function VerificationScreen() {
   ];
 
   useEffect(() => {
-    const fetchRequest = async () => {
+    const fetchOrder = async () => {
       try {
-        const response = await axiosInstance.get(`/api/requests/${requestId}`);
-        setRequest(response.data.data);
+        const response = await axiosInstance.get(`/api/orders/${orderId}`);
+        setOrder(response.data.data);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching request:", error);
-        Alert.alert("Error", "Failed to fetch request details");
+        console.error("Error fetching order:", error);
+        Alert.alert("Error", "Failed to fetch order details");
       }
     };
 
-    const pollInterval = setInterval(fetchRequest, 5000); // Poll every 5 seconds
-    fetchRequest(); // Initial fetch
-
-    return () => clearInterval(pollInterval);
-  }, [requestId]);
+    fetchOrder();
+    console.log(order);
+  }, [orderId]);
 
   const confirmProduct = async () => {
     try {
       const response = await axiosInstance.post(
         "/api/products/confirm-product",
         {
-          requestId,
+          orderId,
         }
       );
 
@@ -88,17 +68,16 @@ export default function VerificationScreen() {
       const response = await axiosInstance.post(
         "/api/products/request-new-photo",
         {
-          requestId,
+          orderId,
         }
       );
 
       if (response.status === 200) {
         Alert.alert("Success", "Another photo has been requested");
-        if (request) {
-          setRequest({
-            ...request,
-            verificationStatus: "NEEDS_NEW_PHOTO",
-            verificationImage: null,
+        if (order) {
+          setOrder({
+            ...order,
+            // verificationImageId: null,
           });
         }
       }
@@ -110,9 +89,7 @@ export default function VerificationScreen() {
 
   const cancelProcess = async () => {
     try {
-      const response = await axiosInstance.put(`/api/requests/${requestId}`, {
-        status: "CANCELLED",
-      });
+      const response = await axiosInstance.delete(`/api/process/${orderId}`);
 
       if (response.status === 200) {
         Alert.alert("Success", "Process cancelled successfully");
@@ -133,69 +110,71 @@ export default function VerificationScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Verification</Text>
-        <Text style={styles.subtitle}>
-          {request?.isVerified
-            ? "Product verified successfully!"
-            : "Waiting for the service provider to upload the product photo."}
-        </Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Verification</Text>
+          <Text style={styles.subtitle}>
+            {order?.verificationImageId
+              ? "Product recieved successfully!"
+              : "Waiting for the service provider to upload the product photo."}
+          </Text>
 
-        <ProgressBar currentStep={2} steps={progressSteps} />
+          <ProgressBar currentStep={2} steps={progressSteps} />
 
-        {/* Waiting Message */}
-        {!request?.verificationImage && (
-          <View style={styles.loadingContainer}>
-            <MaterialIcons name="hourglass-empty" size={48} color="#64748b" />
-            <Text style={styles.waitingText}>
-              We are waiting for the service provider to upload the product
-              photo.
-            </Text>
-          </View>
-        )}
-
-        {/* Uploaded Image Section */}
-        {request?.verificationImage && (
-          <View style={styles.imageSection}>
-            <Text style={styles.imageTitle}>Uploaded Photo</Text>
-            <Image
-              source={{ uri: request.verificationImage }}
-              style={styles.image}
-              resizeMode="contain"
-            />
-          </View>
-        )}
-
-        {/* Confirmation Section */}
-        {request?.verificationImage && !request?.isVerified && (
-          <View style={styles.confirmationSection}>
-            <Text style={styles.confirmationText}>
-              Please confirm that the product matches your expectations.
-            </Text>
-            <TouchableOpacity
-              style={styles.confirmButton}
-              onPress={confirmProduct}
-            >
-              <Text style={styles.confirmButtonText}>Confirm Product</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.requestButton}
-              onPress={requestAnotherPhoto}
-            >
-              <Text style={styles.requestButtonText}>
-                Request Another Photo
+          {/* Waiting Message */}
+          {!order?.verificationImageId && (
+            <View style={styles.loadingContainer}>
+              <MaterialIcons name="hourglass-empty" size={48} color="#64748b" />
+              <Text style={styles.waitingText}>
+                We are waiting for the service provider to upload the product
+                photo.
               </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+            </View>
+          )}
 
-        {/* Cancel Button */}
-        <TouchableOpacity style={styles.cancelButton} onPress={cancelProcess}>
-          <Text style={styles.cancelButtonText}>Cancel Process</Text>
-        </TouchableOpacity>
+          {/* Uploaded Image Section */}
+          {order?.verificationImageId && (
+            <View style={styles.imageSection}>
+              <Text style={styles.imageTitle}>Uploaded Photo</Text>
+              <Image
+                source={{ uri: order?.verificationImage?.url }}
+                style={styles.image}
+                resizeMode="contain"
+              />
+            </View>
+          )}
+
+          {/* Confirmation Section */}
+          {order?.verificationImageId && (
+            <View style={styles.confirmationSection}>
+              <Text style={styles.confirmationText}>
+                Please confirm that the product matches your expectations.
+              </Text>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={confirmProduct}
+              >
+                <Text style={styles.confirmButtonText}>Confirm Product</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.requestButton}
+                onPress={requestAnotherPhoto}
+              >
+                <Text style={styles.requestButtonText}>
+                  Request Another Photo
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Cancel Button */}
+          <TouchableOpacity style={styles.cancelButton} onPress={cancelProcess}>
+            <Text style={styles.cancelButtonText}>Cancel Process</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 

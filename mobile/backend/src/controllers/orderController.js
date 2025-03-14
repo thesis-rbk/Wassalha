@@ -50,6 +50,7 @@ const getOrderById = async (req, res) => {
     const order = await prisma.order.findUnique({
       where: { id: parseInt(req.params.id) },
       include: {
+        verificationImage: true,
         request: {
           include: {
             goods: true,

@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Image,
   Alert,
   ActivityIndicator,
@@ -13,19 +12,16 @@ import * as ImagePicker from "expo-image-picker";
 import ProgressBar from "../../components/ProgressBar";
 import { MaterialIcons } from "@expo/vector-icons";
 import axiosInstance from "@/config";
-import { router } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 
-interface FileData {
-  uri: string;
-  name: string;
-  type: string;
-}
-
 export default function VerificationScreen() {
+  const params = useLocalSearchParams();
   const [image, setImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+
+  console.log(params);
 
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -68,12 +64,13 @@ export default function VerificationScreen() {
 
     try {
       const formData = new FormData();
-      const fileData: FileData = {
+      const fileData = {
         uri: image,
         name: "verification_photo.jpg",
         type: "image/jpeg",
       };
       formData.append("file", fileData as any); // Type assertion due to FormData limitations
+      formData.append("orderId", params.idOrder as string); // Send orderId
 
       const response = await axiosInstance.post(
         "/api/products/verify-product",
@@ -99,28 +96,6 @@ export default function VerificationScreen() {
     }
   };
 
-  // Confirm the product (for the user)
-  const confirmProduct = async () => {
-    try {
-      const response = await axiosInstance.post(
-        "/api/products/confirm-product",
-        {
-          productId: 123, // Replace with actual product ID
-        }
-      );
-
-      if (response.status === 200) {
-        Alert.alert("Success", "Product confirmed successfully.");
-        // Move to the next step (e.g., payment)
-      } else {
-        Alert.alert("Error", "Failed to confirm product. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error confirming product:", error);
-      Alert.alert("Error", "An error occurred. Please try again.");
-    }
-  };
-
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.container}>
@@ -137,6 +112,14 @@ export default function VerificationScreen() {
             Take a clear photo of the product to verify its authenticity. Ensure
             the product is well-lit and fully visible in the photo.
           </Text>
+
+          {/* Success Message */}
+          {isVerified && (
+            <View style={styles.successContainer}>
+              <MaterialIcons name="check-circle" size={48} color="#10b981" />
+              <Text style={styles.successText}>Product Sent Successfully!</Text>
+            </View>
+          )}
 
           {/* Image Upload Section */}
           {!isVerified && (
@@ -214,16 +197,6 @@ export default function VerificationScreen() {
             service owner for confirmation. Wait for their response before
             proceeding.
           </Text>
-
-          {/* Success Message */}
-          {isVerified && (
-            <View style={styles.successContainer}>
-              <MaterialIcons name="check-circle" size={48} color="#10b981" />
-              <Text style={styles.successText}>
-                Product Verified Successfully!
-              </Text>
-            </View>
-          )}
         </View>
       </View>
     </ScrollView>

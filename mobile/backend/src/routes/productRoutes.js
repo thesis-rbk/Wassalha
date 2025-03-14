@@ -8,8 +8,6 @@ const {
 const upload = require("../middleware/multerMiddleware");
 const router = express.Router();
 
-// ... existing routes
-
 // New route for checking illegal items
 router.post("/check-illegal", checkIllegalItems);
 router.post("/verify-product", upload.single("file"), verifyProduct);

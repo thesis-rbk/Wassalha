@@ -162,9 +162,36 @@ const getProcessEvents = async (req, res) => {
   }
 };
 
+const cancelProcess = async (req, res) => {
+  const { orderId } = req.body;
+
+  try {
+    const updatedOrder = await prisma.goodsProcess.update({
+      where: { orderId: parseInt(orderId) },
+      data: {
+        status: "CANCELLED",
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Process cancelled successfully",
+      data: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Error cancelling process:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to cancel the process",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllProcessDetails,
   getProcessDetails,
   updateProcessStatus,
   getProcessEvents,
+  cancelProcess,
 };
