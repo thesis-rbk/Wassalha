@@ -103,7 +103,7 @@ export function TopNavigation({
     { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
     { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips', route: '/test/Travel' },
     { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request', route: '/productDetails/create-order' },
-    { icon: <Users size={24} color={Colors[colorScheme].text} />, label: 'Sponsorship', route: '/screens/SponsorshipScreen' },
+    { icon: <Users size={24} color={Colors[colorScheme].text} />, label: 'Sponsorship', route: 'screens/SponsorshipScreen' as any },
     { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out', onPress: handleLogout },
   ];
 
