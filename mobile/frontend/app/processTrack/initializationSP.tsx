@@ -385,7 +385,8 @@ export default function InitializationSP() {
               </BodyMedium>
             </View>
             <BodyMedium style={styles.category}>
-              {requestDetails.goods.category || "Uncategorized"}
+              {/* {requestDetails.goods.category} */}
+              LINE387
             </BodyMedium>
           </View>
 
