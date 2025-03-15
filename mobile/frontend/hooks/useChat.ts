@@ -14,6 +14,7 @@ import {
 import { getSocket } from '@/services/socketService';
 import { BACKEND_URL } from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Socket } from 'socket.io-client';
 
 /**
  * Custom hook for chat functionality
@@ -36,7 +37,15 @@ export function useChat(chatId?: number, userId?: string) {
   
   // Get socket connection for chat namespace
   // Only creates/gets socket if userId exists
-  const socket = userId ? getSocket('chat') : null;
+  const [socket, setSocket] = useState<Socket | null>(null);
+  
+  useEffect(() => {
+    if (userId) {
+      getSocket('chat').then(socket => {
+        setSocket(socket);
+      });
+    }
+  }, [userId]);
   
   // ====== SOCKET CONNECTION & EVENT LISTENERS ======
   useEffect(() => {
@@ -55,6 +64,7 @@ export function useChat(chatId?: number, userId?: string) {
       console.log('📥 New message received:', message);
       // Add the message to Redux state
       dispatch(addMessage(message));
+      console.log('After adding message, messages:', getState().chat.messages);
     };
     
     // Handle when another user reads your message
@@ -102,6 +112,13 @@ export function useChat(chatId?: number, userId?: string) {
       }
     };
   }, [chatId, userId, socket, dispatch, typingTimeout]);
+  
+  useEffect(() => {
+    if (chatId) {
+      fetchChatDetails(chatId);
+      fetchChatMessages(chatId);
+    }
+  }, [chatId, fetchChatDetails, fetchChatMessages]);
   
   // ====== API FUNCTIONS ======
   
@@ -262,7 +279,15 @@ export function useChat(chatId?: number, userId?: string) {
    */
   const sendMessage = useCallback((content: string, type = 'text') => {
     // Verify we have all required data
-    if (!chatId || !userId || !socket || !activeChat) return false;
+    if (!chatId || !userId || !socket || !activeChat) {
+      console.error('❌ Cannot send message - missing required data:', { 
+        chatId, 
+        userId, 
+        socketConnected: !!socket, 
+        activeChatExists: !!activeChat 
+      });
+      return false;
+    }
     
     // Determine recipient based on who's sending the message
     const receiverId = activeChat.requesterId.toString() === userId
@@ -281,11 +306,19 @@ export function useChat(chatId?: number, userId?: string) {
     // Send message via socket
     socket.emit('send_message', messageData);
     
-    // Also send typing indicator to instantly clear it
-    socket.emit('typing', { chatId, userId: parseInt(userId) });
+    // Add a simple message object to Redux so it shows immediately
+    dispatch(addMessage({
+      id: Date.now(), // Simple temporary ID
+      chatId: chatId,
+      senderId: parseInt(userId),
+      content: content,
+      time: new Date().toISOString(),
+      isRead: false,
+      chat: { id: chatId }
+    }));
     
     return true;
-  }, [chatId, userId, socket, activeChat]);
+  }, [chatId, userId, socket, activeChat, dispatch]);
   
   /**
    * Marks a message as read

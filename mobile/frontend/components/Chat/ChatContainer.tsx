@@ -36,7 +36,8 @@ export default function ChatContainer({ chatId, userId }: ChatContainerProps) {
     fetchChatMessages,
     sendMessage,
     markMessageAsRead,
-    sendTypingIndicator
+    sendTypingIndicator,
+    fetchChatDetails
   } = useChat(chatId, userId);
   
   // Reference to FlatList for scrolling
@@ -48,6 +49,7 @@ export default function ChatContainer({ chatId, userId }: ChatContainerProps) {
   // Fetch messages when component mounts
   useEffect(() => {
     if (chatId) {
+      fetchChatDetails(chatId);
       fetchChatMessages(chatId);
     }
   }, [chatId, fetchChatMessages]);

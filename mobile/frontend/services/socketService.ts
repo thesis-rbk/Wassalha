@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { BACKEND_URL } from '@/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // This object stores all our socket connections
 // It works like a dictionary where the key is the socket type (e.g., 'notifications' or 'chat')
@@ -12,19 +13,27 @@ const sockets: Record<string, Socket> = {};
  * @param type - What the socket is used for ('notifications' or 'chat')
  * @returns The socket.io connection for that feature
  */
-export const getSocket = (type: string = 'notifications'): Socket => {
+export const getSocket = async (type: string = 'notifications'): Promise<Socket> => {
   // Socket.io uses "namespaces" that start with a slash
   // For example: '/notifications' or '/chat'
   const namespace = `/${type}`;
   
+  // Get the user data from AsyncStorage
+  const userData = await AsyncStorage.getItem('user');
+  const user = userData ? JSON.parse(userData) : null;
+  const userId = user?.id;
+  
   // Check if we already have a socket for this type
   if (!sockets[type]) {
     // If not, create a new socket connection
-    console.log(`🔌 Creating ${type} socket`);
+    console.log(`🔌 Creating ${type} socket with user ID: ${userId}`);
     
-    // Connect to the server with the specific namespace
-    // Example: http://your-server.com/notifications
-    sockets[type] = io(`${BACKEND_URL}${namespace}`);
+    // Pass the user ID in the query parameters
+    sockets[type] = io(`${BACKEND_URL}${namespace}`, {
+      query: {
+        userId: userId
+      }
+    });
     
     // Add listeners for connection events to help with debugging
     

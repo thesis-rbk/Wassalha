@@ -2,7 +2,7 @@
 const { Server } = require('socket.io');
 const notificationHandlers = require('./notifications/notificationSocket');
 const { trackingHandlers } = require('./tracking/trackingSocket');
-const { chatHandlers, authenticateSocket } = require('./chat/chatSocket');
+const { chatHandlers, authenticateSocket, setIO } = require('./chat/chatSocket');
 
 // Global socket instance - kept outside function so it can be accessed by getIO()
 let io;
@@ -17,6 +17,9 @@ const initializeSocket = (server) => {
             methods: ["GET", "POST"]  // Allowed HTTP methods
         }
     });
+
+    // Pass the io instance to chatSocket
+    setIO(io);
 
     // Create separate channels (namespaces) for different features
     // This helps organize different socket functionalities
@@ -39,7 +42,7 @@ const initializeSocket = (server) => {
     });
 
     // Handle connections to chat namespace
-    chat.on('connection', (socket) => {
+    chat.use(authenticateSocket).on('connection', (socket) => {
         console.log('💬 Client connected to chat:', socket.id);
         // Pass socket to chat handlers to manage chat events
         chatHandlers(socket);

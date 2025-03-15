@@ -37,6 +37,8 @@ export default function MessageBubble({ content, time, isRead, isSender }: Messa
    * Converts ISO string to hours:minutes format
    */
   const formatTime = (timestamp: string) => {
+    if (!timestamp) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
