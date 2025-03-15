@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import ProgressBar from "../../components/ProgressBar";
 import { MaterialIcons } from "@expo/vector-icons";
-import axiosInstance from "@/config";
+import axiosInstance, { BACKEND_URL } from "@/config";
 import { router, useLocalSearchParams } from "expo-router";
 import { Order } from "@/types";
 
@@ -43,6 +43,31 @@ export default function VerificationScreen() {
     fetchOrder();
     console.log(order);
   }, [orderId]);
+
+  const getImageUrl = () => {
+    // If no image data at all, return null
+    if (!params.imageUrl) return null;
+
+    // If ordersUrl has the full path
+    if (params.imageUrl.toString().startsWith("/api/uploads/")) {
+      return `${BACKEND_URL}${params.imageUrl}`;
+    }
+
+    // If ordersUrl is just the filename
+    if (params.imageUrl) {
+      return `${BACKEND_URL}/api/uploads/${params.imageUrl}`;
+    }
+
+    console.log(params, getImageUrl());
+
+    // If we have imageId but no direct access to filename
+    // if (orders.verificationImageId) {
+    //   // Use the imageId to construct the URL
+    //   return `${BACKEND_URL}/api/uploads/${orders.verificationImageId}`;
+    // }
+
+    return null;
+  };
 
   const confirmProduct = async () => {
     try {
@@ -119,7 +144,7 @@ export default function VerificationScreen() {
           <Text style={styles.title}>Verification</Text>
           <Text style={styles.subtitle}>
             {order?.verificationImageId
-              ? "Product recieved successfully!"
+              ? "Product Image recieved successfully!"
               : "Waiting for the service provider to upload the product photo."}
           </Text>
 

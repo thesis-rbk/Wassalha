@@ -141,10 +141,6 @@ export default function InitializationSP() {
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // const { role, loading: roleLoading } = useRoleDetection(
-  //   currentUser?.id ? parseInt(currentUser.id) : undefined
-  // );
-
   React.useEffect(() => {
     fetchRequestDetails();
   }, [params.id]);
@@ -155,8 +151,10 @@ export default function InitializationSP() {
 
   const fetchRequestDetails = async () => {
     try {
-      console.log("Fetching details for request:", params.id);
-      const response = await axiosInstance.get(`/api/requests/${params.id}`);
+      console.log("Fetching details for request:", params.idRequest);
+      const response = await axiosInstance.get(
+        `/api/requests/${params.idRequest}`
+      );
       setRequestDetails((prev: typeof requestDetails) => ({
         ...response.data.data,
         goods: {
@@ -360,7 +358,25 @@ export default function InitializationSP() {
           This is the first step of the process, check the product details below
           and you can submit an offer if you want
         </Text>
+
         <ProgressBar currentStep={1} steps={progressSteps} />
+
+        {!showOfferForm && params.idOrder && (
+          <Card style={styles.statusCard}>
+            <View style={styles.statusHeader}>
+              <Clock size={20} color="#eab308" />
+              <Text style={styles.statusTitle}>
+                Awaiting Requester Confirmation
+              </Text>
+            </View>
+            <Text style={styles.statusText}>
+              Your offer has been submitted successfully and the requester has
+              been notified. Once he confirms your offer you will be passing to
+              the verification step.
+            </Text>
+          </Card>
+        )}
+
         <Text style={styles.headerTitle}>Product Details</Text>
         <View style={styles.imageContainer}>
           <Image
@@ -632,21 +648,7 @@ export default function InitializationSP() {
                 Make an Offer
               </BodyMedium>
             </BaseButton>
-          ) : (
-            <Card style={styles.statusCard}>
-              <View style={styles.statusHeader}>
-                <Clock size={20} color="#eab308" />
-                <Text style={styles.statusTitle}>
-                  Awaiting Requester Confirmation
-                </Text>
-              </View>
-              <Text style={styles.statusText}>
-                Your offer has been submitted successfully and the requester has
-                been notified. Once he confirms your offer you will be passing
-                to the verification step.
-              </Text>
-            </Card>
-          )}
+          ) : null}
         </View>
       </ScrollView>
     </View>
@@ -671,6 +673,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: Colors.light.primary,
     marginBottom: 19,
+    marginTop: 12,
   },
   headerIcons: {
     flexDirection: "row",

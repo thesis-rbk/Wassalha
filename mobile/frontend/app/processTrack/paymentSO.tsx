@@ -16,7 +16,6 @@ import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { router, useLocalSearchParams } from "expo-router";
 import { BACKEND_URL } from "@/config";
-import { parse } from "path";
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
@@ -92,6 +91,15 @@ export default function PaymentScreen() {
     }
   };
 
+  const getInitials = (name: string) => {
+    if (!name) return "??";
+    const names = name.split(" ");
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return names[0][0].toUpperCase();
+  };
+
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
     { id: 2, title: "Verification", icon: "verification" },
@@ -120,7 +128,9 @@ export default function PaymentScreen() {
           <View style={styles.orderRow}>
             <Text style={styles.orderLabel}>Traveler:</Text>
             <View style={styles.travelerInfo}>
-              <Text style={styles.orderValue}>{params.travelerName}</Text>
+              <Text style={styles.orderValue}>
+                {getInitials(params.travelerName.toString())}
+              </Text>
             </View>
           </View>
 

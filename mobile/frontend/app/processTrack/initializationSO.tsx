@@ -23,17 +23,10 @@ import {
 } from "lucide-react-native";
 import axiosInstance from "@/config";
 import ProgressBar from "@/components/ProgressBar";
-import { BlurView } from "expo-blur";
 import { BACKEND_URL } from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import {
-  Traveler,
-  TravelerProfile,
-  TravelerReputation,
-  TravelerStats,
-} from "@/types";
 
 export default function InitializationSO() {
   const params = useLocalSearchParams();
@@ -214,167 +207,161 @@ export default function InitializationSO() {
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-      >
-        <Text style={styles.title}>Initialization</Text>
-        <Text style={styles.subtitle}>
-          This is the first step of the process, check the traveler public
-          details below and you can confirm if you want
-        </Text>
-        <ProgressBar currentStep={1} steps={progressSteps} />
+    <ScrollView
+      style={styles.scrollView}
+      contentContainerStyle={styles.scrollContent}
+    >
+      <Text style={styles.title}>Initialization</Text>
+      <Text style={styles.subtitle}>
+        This is the first step of the process, check the traveler public details
+        below and you can confirm if you want
+      </Text>
+      <ProgressBar currentStep={1} steps={progressSteps} />
 
-        <View style={styles.detailsContainer}>
-          <ThemedText style={styles.productName}>
-            {offer ? offer.request.goods.name : order.request.goods.name}
-          </ThemedText>
+      <View style={styles.detailsContainer}>
+        <ThemedText style={styles.productName}>
+          {offer ? offer.request.goods.name : order.request.goods.name}
+        </ThemedText>
 
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Request Details</ThemedText>
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Request Details</ThemedText>
 
-            <View style={styles.detailRow}>
-              <MapPin size={16} color="#64748b" />
-              <ThemedText style={styles.detailText}>
-                From: {order.request.goodsLocation}
-              </ThemedText>
-            </View>
-
-            <View style={styles.detailRow}>
-              <MapPin size={16} color="#64748b" />
-              <ThemedText style={styles.detailText}>
-                To: {order.request.goodsDestination}
-              </ThemedText>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Package size={16} color="#64748b" />
-              <ThemedText style={styles.detailText}>
-                Quantity: {order.request.quantity}
-              </ThemedText>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Clock size={16} color="#64748b" />
-              <ThemedText style={styles.detailText}>
-                Estimated Delivery:{" "}
-                {new Date(
-                  displayData.estimatedDeliveryDate
-                ).toLocaleDateString()}
-              </ThemedText>
-            </View>
+          <View style={styles.detailRow}>
+            <MapPin size={16} color="#64748b" />
+            <ThemedText style={styles.detailText}>
+              From: {order.request.goodsLocation}
+            </ThemedText>
           </View>
 
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Traveler</ThemedText>
+          <View style={styles.detailRow}>
+            <MapPin size={16} color="#64748b" />
+            <ThemedText style={styles.detailText}>
+              To: {order.request.goodsDestination}
+            </ThemedText>
+          </View>
 
-            <View style={styles.travelerCard}>
-              <View style={styles.travelerHeader}>
-                <View style={styles.avatarContainer}>
-                  <View style={styles.avatarPlaceholder}>
-                    <ThemedText style={styles.avatarInitials}>
-                      {getInitials(params.travelerName?.toString())}
+          <View style={styles.detailRow}>
+            <Package size={16} color="#64748b" />
+            <ThemedText style={styles.detailText}>
+              Quantity: {order.request.quantity}
+            </ThemedText>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Clock size={16} color="#64748b" />
+            <ThemedText style={styles.detailText}>
+              Estimated Delivery:{" "}
+              {new Date(displayData.estimatedDeliveryDate).toLocaleDateString()}
+            </ThemedText>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Traveler</ThemedText>
+
+          <View style={styles.travelerCard}>
+            <View style={styles.travelerHeader}>
+              <View style={styles.avatarContainer}>
+                <View style={styles.avatarPlaceholder}>
+                  <ThemedText style={styles.avatarInitials}>
+                    {getInitials(params.travelerName?.toString())}
+                  </ThemedText>
+                </View>
+
+                {params.travelerVerified && (
+                  <View style={styles.verifiedBadge}>
+                    <CheckCircle size={16} color="#10b981" />
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.travelerInfo}>
+                <ThemedText style={styles.travelerName}>
+                  {getObfuscatedName(params.travelerName?.toString())}
+                </ThemedText>
+
+                <View style={styles.reputationRow}>
+                  <View style={styles.reputationContainer}>
+                    <Star size={16} color="#f59e0b" fill="#f59e0b" />
+                    <ThemedText style={styles.reputationText}>
+                      {parseInt(params.travelerRating.toString()).toFixed(1)} (
+                      {params.travelerTotalRatings} ratings)
                     </ThemedText>
                   </View>
 
-                  {params.travelerVerified && (
-                    <View style={styles.verifiedBadge}>
-                      <CheckCircle size={16} color="#10b981" />
-                    </View>
-                  )}
+                  <View style={styles.experienceBadge}>
+                    <Award size={14} color="#7c3aed" />
+                    <ThemedText style={styles.experienceText}>
+                      Level {params.travelerLevel}
+                    </ThemedText>
+                  </View>
                 </View>
 
-                <View style={styles.travelerInfo}>
-                  <ThemedText style={styles.travelerName}>
-                    {getObfuscatedName(params.travelerName?.toString())}
-                  </ThemedText>
-
-                  <View style={styles.reputationRow}>
-                    <View style={styles.reputationContainer}>
-                      <Star size={16} color="#f59e0b" fill="#f59e0b" />
-                      <ThemedText style={styles.reputationText}>
-                        {parseInt(params.travelerRating.toString()).toFixed(1)}{" "}
-                        ({params.travelerTotalRatings} ratings)
-                      </ThemedText>
-                    </View>
-
-                    <View style={styles.experienceBadge}>
-                      <Award size={14} color="#7c3aed" />
-                      <ThemedText style={styles.experienceText}>
-                        Level {params.travelerLevel}
-                      </ThemedText>
-                    </View>
-                  </View>
-
-                  <View style={styles.statsContainer}>
-                    {/* <View style={styles.statItem}>
+                <View style={styles.statsContainer}>
+                  {/* <View style={styles.statItem}>
                       <Package size={14} color="#64748b" />
                       <ThemedText style={styles.statText}>
                         {traveler?.stats?.completedOrders} Deliveries
                       </ThemedText>
                     </View> */}
-                    {/* <View style={styles.divider} /> */}
-                    {/* <View style={styles.statItem}>
+                  {/* <View style={styles.divider} /> */}
+                  {/* <View style={styles.statItem}>
                       <CheckCircle size={14} color="#64748b" />
                       <ThemedText style={styles.statText}>
                         {traveler?.stats?.successRate}% Success
                       </ThemedText>
                     </View> */}
-                  </View>
                 </View>
               </View>
             </View>
           </View>
-
-          <View style={[styles.imageContainer, { marginTop: 16 }]}>
-            <Image
-              source={{ uri: getImageUrl(displayData) }}
-              style={styles.productImage}
-              contentFit="cover"
-            />
-          </View>
         </View>
 
-        {/* <View style={styles.bottomSpacer} /> */}
+        {/* <View style={[styles.imageContainer, { marginTop: 16 }]}>
+          <Image
+            source={{ uri: getImageUrl(displayData) }}
+            style={styles.productImage}
+            contentFit="cover"
+          />
+        </View> */}
+      </View>
 
-        <View style={styles.bottomActions}>
-          {/* Show Accept button when we have an offer */}
-          {processId && order ? (
-            <TouchableOpacity
-              style={[styles.acceptButton, processing && styles.buttonDisabled]}
-              onPress={handleAcceptOffer}
-              disabled={processing}
-            >
-              {processing ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <ThemedText style={styles.buttonText}>
-                  Accept and Proceed to Verification
-                </ThemedText>
-              )}
-            </TouchableOpacity>
-          ) : null}
+      <View style={styles.bottomActions}>
+        {/* Show Accept button when we have an offer */}
+        {processId && order ? (
+          <TouchableOpacity
+            style={[styles.acceptButton, processing && styles.buttonDisabled]}
+            onPress={handleAcceptOffer}
+            disabled={processing}
+          >
+            {processing ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <ThemedText style={styles.buttonText}>
+                Accept and Proceed to Verification
+              </ThemedText>
+            )}
+          </TouchableOpacity>
+        ) : null}
 
-          {/* Show Cancel button for orders */}
-          {orderId && order ? (
-            <TouchableOpacity
-              style={[styles.cancelButton, processing && styles.buttonDisabled]}
-              onPress={handleCancelOrder}
-              disabled={processing}
-            >
-              {processing ? (
-                <ActivityIndicator size="small" color="#ef4444" />
-              ) : (
-                <ThemedText style={styles.cancelButtonText}>
-                  Cancel Order
-                </ThemedText>
-              )}
-            </TouchableOpacity>
-          ) : null}
-        </View>
-      </ScrollView>
-    </View>
+        {/* Show Cancel button for orders */}
+        {orderId && order ? (
+          <TouchableOpacity
+            style={[styles.cancelButton, processing && styles.buttonDisabled]}
+            onPress={handleCancelOrder}
+            disabled={processing}
+          >
+            {processing ? (
+              <ActivityIndicator size="small" color="#ef4444" />
+            ) : (
+              <ThemedText style={styles.cancelButtonText}>
+                Cancel Order
+              </ThemedText>
+            )}
+          </TouchableOpacity>
+        ) : null}
+      </View>
+    </ScrollView>
   );
 }
 
@@ -599,20 +586,9 @@ const styles = StyleSheet.create({
     height: 80,
   },
   bottomActions: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "white",
     padding: 16,
     paddingBottom: Platform.OS === "ios" ? 32 : 16,
-    borderTopWidth: 1,
     borderTopColor: "#e2e8f0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
     gap: 12,
   },
   acceptButton: {

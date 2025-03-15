@@ -117,7 +117,9 @@ export default function VerificationScreen() {
           {isVerified && (
             <View style={styles.successContainer}>
               <MaterialIcons name="check-circle" size={48} color="#10b981" />
-              <Text style={styles.successText}>Product Sent Successfully!</Text>
+              <Text style={styles.successText}>
+                Product Image Sent Successfully!
+              </Text>
             </View>
           )}
 

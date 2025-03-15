@@ -5,7 +5,6 @@ import {
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import SegmentedControl from "@/components/SegmentedControl";
 import { ThemedView } from "@/components/ThemedView";

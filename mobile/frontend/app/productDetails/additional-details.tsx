@@ -8,15 +8,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  Platform,
   Image as RNImage,
 } from "react-native";
-import {
-  ChevronDown,
-  Upload,
-  Image as ImageIcon,
-  Calendar,
-} from "lucide-react-native";
+import { ChevronDown, Image as ImageIcon } from "lucide-react-native";
 import { InputField } from "@/components/InputField";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { TitleLarge, TitleSection, BodyMedium } from "@/components/Typography";
