@@ -11,7 +11,7 @@ import { BaseButton } from '@/components/ui/buttons/BaseButton';
 import { TitleLarge, BodyMedium } from '@/components/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import CountryFlag from "react-native-country-flag";
-import { InfoItemProps, ProfileState, ProfileImage } from '@/types';
+import { InfoItemProps, ProfileImage } from '@/types';
 import { Crown, Shield, ShieldCheck } from 'lucide-react-native';
 const { width } = Dimensions.get('window');
 
