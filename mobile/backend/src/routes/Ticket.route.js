@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateUser,authenticateAdmin } = require('../middleware/middleware');
+const { authenticateUser, authenticateAdmin } = require('../middleware/middleware');
 const {
     createTicket,
     getTickets,
@@ -11,9 +11,9 @@ const {
 } = require('../controllers/Ticket.Controllers');
 
 router.post('/', authenticateUser, createTicket);
-router.get('/', authenticateUser, getTickets);
-router.get('/:id', authenticateUser, getTicketById);
+router.get('/', authenticateAdmin, getTickets);
+router.get('/:id', authenticateAdmin, getTicketById);
 router.put('/:id/status', authenticateAdmin, updateTicketStatus);
 router.post('/:id/messages', authenticateUser, addTicketMessage);
-router.delete('/:id', authenticateUser, deleteTicket);
+router.delete('/:id', authenticateAdmin, deleteTicket);
 module.exports = router;

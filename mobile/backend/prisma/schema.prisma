@@ -750,14 +750,14 @@ model PickupSuggestion {
 
 // Add Ticket model before the existing models
 model Ticket {
-  id          Int          @id @default(autoincrement()) // Changed to Int to match your schema's pattern
+  id          Int          @id @default(autoincrement())
   title       String
-  description String
-  userId      Int          // Changed to Int to match User model's id type
+  description String       @db.Text
+  userId      Int
   status      TicketStatus @default(PENDING)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  messages    Message[]    @relation("TicketMessages") // Added relation name to avoid ambiguity
+  messages    Message[]    @relation("TicketMessages")
 }

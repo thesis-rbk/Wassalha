@@ -31,7 +31,7 @@ const router = express.Router();
 // Public routes
 router.post("/register",upload.single('image'), signup);
 router.post("/login", loginUser);
-// router.post("/admin/login", loginAdmin);
+router.post("/admin/login", loginAdmin);
 router.post("/google-login", googleLogin); // New Google login endpoint
 router.post("/reset-password/request", requestPasswordReset);
 router.post("/reset-password", resetPassword);

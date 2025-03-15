@@ -140,10 +140,8 @@ export default function Nav() {
 
   return (
     <div className={`${styles.layout} ${isDarkMode ? styles.darkMode : ''}`}>
-      <nav className={styles.nav}>
-        <div className={styles.logo}>
-          Admin Dashboard 
-        </div>
+      <nav className={`${styles.nav} ${styles.veryTransparentNav}`}>
+        <div className={styles.navSpacer}></div>
         <div className={styles.navItems}>
           <Bell className={`${styles.bellIcon} ${styles.icon}`} />
           <div 
