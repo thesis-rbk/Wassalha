@@ -2,13 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { VerificationStatusProps } from '@/types/VerificationStatusProps';
 
-interface VerificationStatusProps {
-  isVerified: boolean;
-  isPending?: boolean;
-  type?: string;
-  onPress?: () => void;
-}
 
 export const VerificationStatus = ({ 
   isVerified, 

@@ -1,4 +1,5 @@
 import { ProfileImage } from './ProfileImage';
+import { User } from './User';
 
 export interface ProfileState {
   firstName: string;
@@ -6,7 +7,7 @@ export interface ProfileState {
   bio: string;
   country: string;
   phoneNumber: string;
-  imageId: string | null;
+  imageId: number | null;
   image: ProfileImage | null;
   gender: string;
   review: string;
@@ -16,6 +17,10 @@ export interface ProfileState {
   isOnline: boolean;
   preferredCategories: string;
   referralSource: string;
-  isSponsor: boolean;
+  type?: string; // 'SUBSCRIBER' or 'SPONSOR'
+  subscriptionLevel?: string; // 'BASIC' or 'PREMIUM'
+  badge?: string
+  isSponsor?: boolean;
+  
   }
   
