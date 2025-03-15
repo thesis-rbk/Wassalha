@@ -19,6 +19,9 @@ router.get('/user/:userId', serviceProviderController.getServiceProviderByUserId
 router.delete('/:id', serviceProviderController.deleteServiceProvider);
 
 // Route to verify a sponsor
-router.put('/verify-sponsor/:userId', serviceProviderController.verifySponsor);
+router.put('/verify/:userId', serviceProviderController.verifySponsor);
+
+// Create a pending sponsor
+router.post('/pending/:userId', serviceProviderController.createPendingSponsor);
 
 module.exports = router; 

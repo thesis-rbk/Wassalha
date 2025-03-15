@@ -30,7 +30,11 @@ export default function RootLayout() {
   console.log("Store:", store);
 
   return (
-    <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>
+    <StripeProvider
+      publishableKey={STRIPE_PUBLISHABLE_KEY}
+      urlScheme="wassalha"
+      merchantIdentifier="merchant.com.wassalha"
+    >
       <ThemeProvider>
         <Provider store={store}>
           {!loadingComplete ? (
@@ -41,16 +45,24 @@ export default function RootLayout() {
             />
           ) : (
             <Stack>
+              {/* Optionally define specific screens if needed */}
               <Stack.Screen name="auth/signup" options={{ title: "Sign Up" }} />
               <Stack.Screen name="auth/login" options={{ title: "Log In" }} />
-              <Stack.Screen name="/home" />
+              <Stack.Screen name="home" />
               <Stack.Screen
                 name="auth/ResetPassword"
                 options={{ title: "Reset Password" }}
               />
               <Stack.Screen
+                name="auth/NewPassword"
+                options={{ title: "New Password" }}
+              />
+
+              <Stack.Screen
                 name="productDetails"
-                options={{ title: "Product Details" }}
+                options={{
+                  title: "Product Details",
+                }}
               />
               <Stack.Screen
                 name="test/Subscription"
@@ -76,38 +88,22 @@ export default function RootLayout() {
                 name="profile/edit"
                 options={{ title: "Edit Profile" }}
               />
-              <Stack.Screen
-                name="profile/index"
-                options={{ title: "Profile" }}
-              />
+              <Stack.Screen name="profile/index" options={{ title: "Profile" }} />
               <Stack.Screen
                 name="messages/messages"
                 options={{ title: "Messages" }}
               />
               <Stack.Screen
                 name="test/Terms&&Conditions"
-                options={{ title: "Terms and Conditions" }}
+                options={{ title: "terms n conditions" }}
               />
               <Stack.Screen name="test/Travel" options={{ title: "Travel" }} />
               <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
               <Stack.Screen name="test/chat" options={{ title: "Chat" }} />
-              <Stack.Screen name="test/order" options={{ title: "Order" }} />
-              <Stack.Screen
-                name="verification/start"
-                options={{ title: "Verification" }}
-              />
-              <Stack.Screen
-                name="test/Notification"
-                options={{ title: "Verification" }}
-              />
-              <Stack.Screen
-                name="verification/TakeSelfie"
-                options={{ title: "Take Selfie" }}
-              />
-              <Stack.Screen
-                name="verification/creditCardVerification"
-                options={{ title: "Credit Card Verification" }}
-              />
+              <Stack.Screen name="test/order" options={{ title: "order" }} />
+              <Stack.Screen name="verification/start" options={{ title: "verification" }} />
+              <Stack.Screen name="verification/TakeSelfie" options={{ title: "Take Selfie" }} />
+              <Stack.Screen name="verification/creditCardVerification" options={{ title: "Credit Card Verification" }} />
               <Stack.Screen
                 name="processTrack/initializationSO"
                 options={{ title: "Initialization" }}
@@ -140,31 +136,30 @@ export default function RootLayout() {
                 name="processTrack/pickupSP"
                 options={{ title: "Pickup" }}
               />
-              <Stack.Screen
-                name="test/role-test"
-                options={{ title: "Role Test" }}
-              />
-              <Stack.Screen name="test/order-details" />
+              <Stack.Screen name="test/role-test" options={{ title: "Role Test" }} />
+              <Stack.Screen name="test/order-details"  />
               <Stack.Screen
                 name="processTrack/makeOffer"
                 options={{ title: "Make Offer" }}
               />
+              
+              {/* Add the new success screens */}
               <Stack.Screen
                 name="screens/RequestSuccessScreen"
-                options={{ title: "Request Created" }}
+                options={{ 
+                  title: "Request Created",
+                  
+                }}
               />
               <Stack.Screen
                 name="screens/OrderSuccessScreen"
-                options={{ title: "Order Created" }}
+                options={{ 
+                  title: "Order Created",
+                  
+                }}
               />
-              <Stack.Screen
-                name="verification/fetchAll"
-                options={{ title: "Fetch Sub" }}
-              />
-              <Stack.Screen
-                name="verification/CreateSponsorPost"
-                options={{ title: "Create Sponsor Post" }}
-              />
+               <Stack.Screen name="verification/fetchAll" options={{ title: "Fetch Sub" }} />
+               <Stack.Screen name="verification/CreateSponsorPost" options={{ title: "Create Sponsor Post" }} />
             </Stack>
           )}
         </Provider>

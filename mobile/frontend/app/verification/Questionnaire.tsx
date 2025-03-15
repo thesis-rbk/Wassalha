@@ -74,7 +74,11 @@ const Questionnaire = () => {
       
       const response = await axiosInstance.post(
         `/api/users/submit-questionnaire/${decoded.id}`,
-        { answers },
+        { 
+          answers,
+          userType: 'SPONSOR',
+          subscriptionLevel: 'BASIC'
+        },
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -83,6 +87,7 @@ const Questionnaire = () => {
       );
 
       if (response.data.success) {
+        await AsyncStorage.setItem('verificationPending', 'true');
         router.push('/verification/VerificationPending');
       }
     } catch (error: any) {
