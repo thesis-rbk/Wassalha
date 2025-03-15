@@ -8,3 +8,11 @@ declare module "@react-navigation/native-stack" {
     }
 
 }
+import { StackNavigationProp } from '@react-navigation/stack'
+type RootStackParamList = {
+    'verification/CreateSponsorPost': undefined;
+    'verification/FetchAll': undefined; // Add this line
+    "verification/sponsorPayment": undefined
+};
+type NavigationProp = StackNavigationProp<RootStackParamList>;
+export default NavigationProp;
