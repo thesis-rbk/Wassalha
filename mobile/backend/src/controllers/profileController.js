@@ -61,26 +61,20 @@ const updateProfile = async (req, res) => {
             });
 
             updateData.imageId = media.id;
-
-            updateData.imageId = media.id;
         }
 
         // Update profile with only the provided fields
-
-        // Update profile with only the provided fields
         const updatedProfile = await prisma.profile.update({
-            where: { userId: parseInt(userId) },
+            where: { 
+                userId: parseInt(userId) 
+            },
             data: updateData,
             include: {
-                image: true, // Include the image in response
-                data: updateData,
-                include: {
-                    image: true, // Include the image in response
-                },
+                image: true // Include the image in response
             }
-        })
+        });
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             data: updatedProfile,
             message: 'Profile updated successfully'
@@ -88,12 +82,7 @@ const updateProfile = async (req, res) => {
 
     } catch (error) {
         console.error('Error updating profile:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to update profile',
-            message: error.message
-        });
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             error: 'Failed to update profile',
             message: error.message
