@@ -85,7 +85,7 @@ const createEscrowPaymentIntent = async (req, res) => {
       data: {
         orderId: parseInt(orderId),
         amount: parseFloat(amount),
-        currency: "DOLLAR",
+        currency: "USD",
         status: "PENDING",
         paymentMethod: "STRIPE",
         transactionId: paymentIntent.paymentIntentId,
