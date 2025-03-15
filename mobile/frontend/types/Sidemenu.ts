@@ -9,6 +9,7 @@ type AppRoutes =
     | '/test/Subscription'
     | '/test/sponsorShip'
     | '/test/order'
+    | '/test/Notifications'
 export interface SideMenu {
     icon: React.ReactNode;
     label: string;

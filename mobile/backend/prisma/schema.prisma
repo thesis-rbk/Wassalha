@@ -84,7 +84,7 @@ enum PaymentStatus {
 
 enum PaymentCurrency {
   DOLLAR
-  EURO
+  EUR
   TND
 }
 
@@ -97,12 +97,14 @@ enum PaymentState {
 }
 
 enum PaymentMethod {
-  CREDITCARD
+  CARD
   D17
   STRIPE
   PAYPAL
   BANKTRANSFER
 }
+
+//credit card and bank transfers
 
 enum PickupType {
   AIRPORT
@@ -302,45 +304,54 @@ model Profile {
   country     Country? // Optional field for country
   phoneNumber String?
 
-  // Profile image stored as Media
   imageId Int?   @unique
   image   Media? @relation("ProfileImage", fields: [imageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   gender Gender?
 
-  review              String?
   isAnonymous         Boolean?        @default(false)
   isBanned            Boolean         @default(false)
   isVerified          Boolean         @default(false)
   isOnline            Boolean         @default(false)
   preferredCategories String?
   referralSource      ReferralSource?
-  User                User?           @relation(fields: [userId], references: [id])
+
+  user                User            @relation(fields: [userId], references: [id])
+  reviewerReviews     ReviewSponsor[] @relation("ReviewerReviews")
+  reviewedUserReviews ReviewSponsor[] @relation("ReviewedUserReviews")
+}
+
+model ReviewSponsor {
+  review_id        Int @id @default(autoincrement())
+  reviewer_id      Int
+  reviewed_user_id Int
+  rating           Int
+
+  reviewer      Profile @relation("ReviewerReviews", fields: [reviewer_id], references: [id])
+  reviewed_user Profile @relation("ReviewedUserReviews", fields: [reviewed_user_id], references: [id])
 }
 
 // ========== SERVICE PROVIDER ==========
 model ServiceProvider {
-  id          Int     @id @default(autoincrement())
-  userId      Int     @unique
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  type        ServiceProviderType
-  isVerified  Boolean @default(false)
-  badge       String?
+  id         Int                 @id @default(autoincrement())
+  userId     Int                 @unique
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  type       ServiceProviderType
+  isVerified Boolean             @default(false)
+  badge      String?
 
   // Verification Fields
-  idCard      String? // Optional: Government ID
-  passport    String? // Optional: Passport Number
-  license     String? // Optional: Driving License
-  creditCard  String? // Optional: Last 4 digits for security
-  selfie      String? // Optional: Selfie
+  idCard               String? // Optional: Government ID
+  passport             String? // Optional: Passport Number
+  license              String? // Optional: Driving License
+  creditCard           String? // Optional: Last 4 digits for security
+  selfie               String? // Optional: Selfie
   questionnaireAnswers Json?
   // Example attributes
-  subscriptionLevel String?
-
-
+  subscriptionLevel    String?
 
   // Sponsorships relation
-  sponsorships  Sponsorship[] @relation("ServiceProviderSponsors")
+  sponsorships Sponsorship[] @relation("ServiceProviderSponsors")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -445,11 +456,11 @@ model Pickup {
   qrCode             String?
   coordinates        String?
   contactPhoneNumber String?
-  travelerconfirmed  Boolean @default(false)
-  userconfirmed      Boolean @default(false)
+  travelerconfirmed  Boolean      @default(false)
+  userconfirmed      Boolean      @default(false)
   status             PickupStatus @default(SCHEDULED)
   scheduledTime      DateTime?
-  
+
   requests          Request[]
   notifications     Notification[]
   pickupSuggestions PickupSuggestion[]
@@ -457,9 +468,10 @@ model Pickup {
 
 // ========== NOTIFICATION ==========
 model Notification {
-  id     Int  @id @default(autoincrement())
-  userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id       Int  @id @default(autoincrement())
+  userId   Int
+  senderId Int?
+  user     User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   type    NotificationType
   title   String?
@@ -587,29 +599,29 @@ model Subscription {
 
 // ========== SPONSORSHIP ==========
 model Sponsorship {
-  id          Int     @id @default(autoincrement())
+  id          Int                 @id @default(autoincrement())
   name        String
   description String?
   price       Float
   duration    Int
   platform    SponsorshipPlatform
   categoryId  Int
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  isActive    Boolean @default(true)
+  category    Category?           @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  isActive    Boolean             @default(true)
 
   // New fields from your schema
   sponsorId   Int
   sponsor     ServiceProvider @relation("ServiceProviderSponsors", fields: [sponsorId], references: [id])
   recipientId Int
-  recipient   User @relation("SponsorshipRecipients", fields: [recipientId], references: [id])
+  recipient   User?           @relation("SponsorshipRecipients", fields: [recipientId], references: [id])
   product     String
   amount      Float
-  status      String @default("pending")
+  status      String          @default("pending")
 
   users User[] @relation("UserSponsorships")
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ========== GOODS POSTS ==========
@@ -717,19 +729,20 @@ model ProcessEvent {
   note      String?
   createdAt DateTime @default(now())
 }
+
 // Add this new model to your existing schema
 model PickupSuggestion {
-  id            Int      @id @default(autoincrement())
-  pickupId      Int?     // Nullable if suggestion is for a new pickup not yet created
-  pickup        Pickup?  @relation(fields: [pickupId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  orderId       Int      // To link to the order if no pickup exists yet
-  userId        Int      // The user who made the suggestion
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  pickupType    PickupType
-  location      String?
-  address       String?
-  qrCode        String?
-  coordinates   String?
+  id                 Int        @id @default(autoincrement())
+  pickupId           Int? // Nullable if suggestion is for a new pickup not yet created
+  pickup             Pickup?    @relation(fields: [pickupId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  orderId            Int // To link to the order if no pickup exists yet
+  userId             Int // The user who made the suggestion
+  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  pickupType         PickupType
+  location           String?
+  address            String?
+  qrCode             String?
+  coordinates        String?
   contactPhoneNumber String?
   scheduledTime DateTime?
   createdAt     DateTime @default(now())
