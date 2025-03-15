@@ -1,15 +1,16 @@
-import { User } from './User';
-import { Category } from './Category';
-
-export interface Sponsorship {
+export type Sponsorship = {
     id: number;
     name: string;
-    description?: string;
     price: number;
-    duration: number;
-    platform: 'FACEBOOK' | 'INSTAGRAM' | 'YOUTUBE' | 'TWITTER' | 'TIKTOK' | 'OTHER';
-    categoryId: number;
-    category: Category;
+    description: string;
+    status: string;
     isActive: boolean;
-    users: User[];
-}
+    createdAt: string;
+    updatedAt: string;
+    category: { name: string };
+    platform: string;
+    recipient?: {
+        name: string; // Optional because we won't fetch recipient if active
+    };
+};
+

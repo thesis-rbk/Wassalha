@@ -43,21 +43,21 @@ function NotificationInitializer() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({});
-  const [animationComplete, setAnimationComplete] = useState(false);
-  const [loadingComplete, setLoadingComplete] = useState(false);
+    const [fontsLoaded] = useFonts({});
+    const [animationComplete, setAnimationComplete] = useState(false);
+    const [loadingComplete, setLoadingComplete] = useState(false);
 
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
+    useEffect(() => {
+        if (fontsLoaded) {
+            SplashScreen.hideAsync();
+        }
+    }, [fontsLoaded]);
+
+    if (!fontsLoaded) {
+        return null;
     }
-  }, [fontsLoaded]);
 
-  if (!fontsLoaded) {
-    return null;
-  }
-
-  console.log("Store:", store);
+    console.log("Store:", store);
 
   return (
     <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>

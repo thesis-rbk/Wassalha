@@ -199,10 +199,10 @@ const loginAdmin = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { 
-        id: user.id, 
-        email: user.email, 
-        role: user.role 
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role
       },
       process.env.JWT_SECRET || "secretkey",
       { expiresIn: "1h" }
@@ -530,8 +530,8 @@ const getUsers = async (req, res) => {
         ...user.profile,
         image: user.profile.image ? {
           ...user.profile.image,
-          url: user.profile.image.url.startsWith('http') 
-            ? user.profile.image.url 
+          url: user.profile.image.url.startsWith('http')
+            ? user.profile.image.url
             : `${process.env.NEXT_PUBLIC_API_URL}/${user.profile.image.url}`
         } : null
       } : null
@@ -617,7 +617,7 @@ const getUserById = async (req, res) => {
 
 // Update a user and their profile
 const updateUser = async (req, res) => {
-  const { 
+  const {
     id,
     // User model fields
     name,
@@ -737,10 +737,10 @@ const updateUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Update user error:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: "Failed to update user", 
-      details: error.message 
+      error: "Failed to update user",
+      details: error.message
     });
   } finally {
     await prisma.$disconnect();
@@ -944,7 +944,7 @@ const deleteUser = async (req, res) => {
 
   } catch (error) {
     console.error("Error in delete operation:", error);
-    
+
     if (error.message === 'User not found') {
       return res.status(404).json({
         success: false,
@@ -980,14 +980,14 @@ const banUser = async (req, res) => {
   const { id } = req.params; // Get user ID from request parameters
 
   try {
-      // Ensure the ID is converted to an integer
-      const userId = parseInt(id, 10);
-      
-      // Update the profile to set isBanned to true
-      const updatedProfile = await prisma.profile.update({
-          where: { userId: userId }, 
-          data: { isBanned: true }, // Always set isBanned to true
-      });
+    // Ensure the ID is converted to an integer
+    const userId = parseInt(id, 10);
+
+    // Update the profile to set isBanned to true
+    const updatedProfile = await prisma.profile.update({
+      where: { userId: userId },
+      data: { isBanned: true }, // Always set isBanned to true
+    });
 
     res.status(200).json({
       message: "User has been banned successfully.",
@@ -1000,26 +1000,26 @@ const banUser = async (req, res) => {
 };
 
 const unbanUser = async (req, res) => {
-    const { id } = req.params; // Get user ID from request parameters
+  const { id } = req.params; // Get user ID from request parameters
 
-    try {
-        // Ensure the ID is converted to an integer
-        const userId = parseInt(id, 10);
-        
-        // Update the profile to set isBanned to false
-        const updatedProfile = await prisma.profile.update({
-            where: { userId: userId }, 
-            data: { isBanned: false }, // Set isBanned to false
-        });
+  try {
+    // Ensure the ID is converted to an integer
+    const userId = parseInt(id, 10);
 
-        res.status(200).json({
-            message: "User has been unbanned successfully.",
-            profile: updatedProfile, // Return the updated profile
-        });
-    } catch (error) {
-        console.error("Error unbanning user:", error);
-        res.status(500).json({ error: "Failed to unban user" });
-    }
+    // Update the profile to set isBanned to false
+    const updatedProfile = await prisma.profile.update({
+      where: { userId: userId },
+      data: { isBanned: false }, // Set isBanned to false
+    });
+
+    res.status(200).json({
+      message: "User has been unbanned successfully.",
+      profile: updatedProfile, // Return the updated profile
+    });
+  } catch (error) {
+    console.error("Error unbanning user:", error);
+    res.status(500).json({ error: "Failed to unban user" });
+  }
 };
 
 const verifyIdCard = async (req, res) => {
@@ -1135,9 +1135,9 @@ const verifyCreditCard = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'User not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
       });
     }
 

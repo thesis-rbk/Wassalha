@@ -54,18 +54,18 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const pickImage = async () => {
     try {
       console.log('📄 Opening document picker...');
-      
+
       const result = await DocumentPicker.getDocumentAsync({
         type: ['image/*'], // Limit to image files
         copyToCacheDirectory: true
       });
-      
+
       console.log('📄 Document picker result:', result);
-      
+
       if (result.canceled === false && result.assets && result.assets.length > 0) {
         const selectedFile = result.assets[0];
         console.log('📄 Selected file:', selectedFile);
-        
+
         // Update state with the selected file URI
         setProductImage(selectedFile.uri);
         console.log('📄 Updated product image with new URI:', selectedFile.uri);
@@ -77,23 +77,23 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
       Alert.alert('Error', 'Failed to pick document');
     }
   };
-  
-  
+
+
   const handleNext = async () => {
     try {
       console.log('🚀 Starting navigation to additional details...');
-      
+
       // If we have a remote image, try to download it first
       if (imageSource === 'remote' && productImage.startsWith('http')) {
         setImageLoading(true);
-        
+
         try {
           const filename = productImage.split('/').pop() || 'image.jpg';
           const fileUri = `${FileSystem.cacheDirectory}${filename}`;
-          
+
           console.log('📥 Downloading image before navigation...');
           const result = await FileSystem.downloadAsync(productImage, fileUri);
-          
+
           if (result.status === 200) {
             console.log('✅ Image downloaded successfully');
             setProductImage(fileUri);
@@ -109,7 +109,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
           setImageLoading(false);
         }
       }
-      
+
       // Now navigate with whatever image we have
       navigateToNextStep();
     } catch (error) {
@@ -120,20 +120,20 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
 
   const handleScrapedImage = async () => {
     if (!parsedData?.imageUrl) return;
-    
+
     setImageLoading(true);
-    
+
     try {
       // First, try to display the remote image directly
       setProductImage(parsedData.imageUrl);
       setImageSource('remote');
-      
+
       // Start a background download of the image
       const filename = parsedData.imageUrl.split('/').pop() || 'scraped_image.jpg';
       const fileUri = `${FileSystem.cacheDirectory}${filename}`;
-      
+
       console.log('🔄 Background downloading of scraped image started');
-      
+
       FileSystem.downloadAsync(parsedData.imageUrl, fileUri)
         .then(result => {
           if (result.status === 200) {
@@ -165,7 +165,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
       setProductName(parsedData.name || '');
       setPrice(parsedData.price ? parsedData.price.toString() : '');
       setProductDetails(parsedData.description || '');
-      
+
       // Handle the image in the background
       handleScrapedImage();
     }
@@ -173,7 +173,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
 
   const renderScrapedDataBanner = () => {
     if (dataSource !== 'scraped') return null;
-    
+
     return (
       <View style={styles.scrapedBanner}>
         <View style={styles.scrapedIconContainer}>
@@ -185,7 +185,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
             This information was automatically imported from {parsedData?.source || 'the web'}
           </BodyMedium>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.scrapedEditButton}
           onPress={() => setDataSource('manual')}
         >
@@ -214,9 +214,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
     <ScrollView style={styles.container}>
       <View style={styles.card}>
         <TitleLarge style={styles.mainTitle}>1. Product Details</TitleLarge>
-        
+
         {renderScrapedDataBanner()}
-        
+
         <InputField
           label="Product name"
           value={productName}
@@ -229,16 +229,16 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
         <View style={styles.imageContainer}>
           {productImage ? (
             <View style={styles.imageWrapper}>
-              <Image 
-                source={{ uri: productImage }} 
-                style={styles.productImage} 
+              <Image
+                source={{ uri: productImage }}
+                style={styles.productImage}
                 onError={(e) => {
                   console.error('Image loading error:', e.nativeEvent.error);
                   Alert.alert('Error', 'Failed to load image. Please try selecting another image.');
                   setProductImage('');
                 }}
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.changeImageButton}
                 onPress={pickImage}
               >
@@ -249,9 +249,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
             </View>
           ) : (
             <View style={styles.uploadCard}>
-              <BaseButton 
-                size="medium" 
-                onPress={pickImage} 
+              <BaseButton
+                size="medium"
+                onPress={pickImage}
                 style={styles.uploadButton}
               >
                 <Camera size={20} color={Colors[colorScheme as 'light' | 'dark'].primary} />
@@ -260,7 +260,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
             </View>
           )}
         </View>
-        
+
         <InputField
           label="Price"
           value={price}
@@ -279,24 +279,24 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
           numberOfLines={3}
           style={[styles.input, styles.textArea]}
         />
-        
+
         <View style={styles.switchContainer}>
           <View style={styles.switchTextContainer}>
             <View style={styles.switchHeader}>
-          <TitleSub>With box</TitleSub>
-          <Switch
-            value={withBox}
-            onValueChange={setWithBox}
+              <TitleSub>With box</TitleSub>
+              <Switch
+                value={withBox}
+                onValueChange={setWithBox}
                 trackColor={{ false: '#e0e0e0', true: Colors[colorScheme as 'light' | 'dark'].primary }}
-            thumbColor={withBox ? '#ffffff' : '#ffffff'}
-          />
+                thumbColor={withBox ? '#ffffff' : '#ffffff'}
+              />
             </View>
             <BodyMedium style={styles.switchDescription}>
               Requiring the box may reduce the number of offers you receive. Travelers generally prefer to deliver orders without the box to save space.
             </BodyMedium>
           </View>
         </View>
-        
+
         <View style={styles.buttonContainer}>
           <BaseButton size="large" onPress={handleNext}>
             <BodyMedium style={styles.buttonText}>Next</BodyMedium>

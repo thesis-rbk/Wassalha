@@ -7,11 +7,11 @@ class RequestController {
         console.log('📥 Received request creation request');
         console.log('👤 User ID:', req.user.id);
         console.log('📦 Request body:', req.body);
-        
+
         try {
             // Get user ID from authenticated user
             const userId = req.user.id;
-            
+
             const request = await prisma.request.create({
                 data: {
                     userId, // Now using authenticated user's ID
@@ -386,7 +386,7 @@ class RequestController {
         try {
             const requestId = parseInt(req.params.id);
             console.log('🔍 Getting offers for request:', requestId);
-            
+
             // Since there's no direct Offer model in your schema,
             // we'll query for orders that are in PENDING state
             // which effectively represent offers

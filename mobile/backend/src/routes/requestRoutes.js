@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const requestController = require('../controllers/request.Controller');
-const { authenticateUser ,authenticateUserOrAdmin} = require('../middleware/middleware');
+const { authenticateUser, authenticateUserOrAdmin } = require('../middleware/middleware');
 
 // Public routes
 router.get('/', requestController.getAllRequests); // Anyone can view requests

@@ -49,7 +49,7 @@ const AdditionalDetails: React.FC = () => {
 
   // Add this to handle closing dropdown when clicking outside
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  
+
   // Add loading state for image picker
   const [imageLoading, setImageLoading] = useState(false);
 
@@ -81,24 +81,24 @@ const AdditionalDetails: React.FC = () => {
     try {
       setImageLoading(true);
       console.log('📄 Opening document picker...');
-      
+
       const result = await DocumentPicker.getDocumentAsync({
         type: ['image/*'], // Limit to image files
         copyToCacheDirectory: true
       });
-      
+
       console.log('📄 Document picker result:', result);
-      
+
       if (result.canceled === false && result.assets && result.assets.length > 0) {
         const selectedFile = result.assets[0];
         console.log('📄 Selected file:', selectedFile);
-        
+
         // Update state with the selected file URI
         setProductDetails(prev => ({
           ...prev,
           imageUri: selectedFile.uri
         }));
-        
+
         console.log('📄 Updated product details with new image URI:', selectedFile.uri);
       } else {
         console.log('📄 Document picking cancelled or no file selected');
@@ -136,7 +136,7 @@ const AdditionalDetails: React.FC = () => {
       console.log('🚀 Starting submission process...');
       let jwtToken = await AsyncStorage.getItem('jwtToken');
       console.log('🔑 Token retrieved:', jwtToken ? 'Found' : 'Not found');
-      
+
       // Make sure we have a token
       if (!jwtToken) {
         Alert.alert('Error', 'You need to be logged in to create a request');
@@ -153,8 +153,8 @@ const AdditionalDetails: React.FC = () => {
         });
       } catch (tokenError: any) {
         // If token is expired, try to refresh it
-        if (tokenError.response?.status === 401 && 
-            tokenError.response?.data?.message === 'jwt expired') {
+        if (tokenError.response?.status === 401 &&
+          tokenError.response?.data?.message === 'jwt expired') {
           console.log('🔄 Token expired, attempting to refresh...');
           try {
             // Call your refresh token endpoint
@@ -180,18 +180,18 @@ const AdditionalDetails: React.FC = () => {
           }
         }
       }
-      
+
       // If the image is a remote URL, download it first
       if (productDetails.imageUri && productDetails.imageUri.startsWith('http')) {
         console.log('📥 Downloading remote image before submission...');
         setImageLoading(true);
-        
+
         try {
           const filename = productDetails.imageUri.split('/').pop() || 'image.jpg';
           const fileUri = `${FileSystem.cacheDirectory}${filename}`;
-          
+
           const result = await FileSystem.downloadAsync(productDetails.imageUri, fileUri);
-          
+
           if (result.status === 200) {
             console.log('✅ Remote image downloaded successfully');
             setProductDetails(prev => ({
@@ -233,7 +233,7 @@ const AdditionalDetails: React.FC = () => {
           setImageLoading(false);
         }
       }
-      
+
       // Continue with form submission
       if (jwtToken) {
         submitForm(jwtToken);
@@ -251,28 +251,28 @@ const AdditionalDetails: React.FC = () => {
     try {
       // Create FormData for goods with image
       console.log('📤 Creating goods with image...');
-      
+
       const formData = new FormData();
-      
+
       // Add all the goods data
       formData.append('name', productDetails.name);
       formData.append('price', productDetails.price.toString());
       formData.append('description', productDetails.details);
       formData.append('categoryId', categoryId!.toString());
       formData.append('isVerified', 'false');
-      
+
       // Add image if available - using document picker approach
       if (productDetails.imageUri) {
         console.log('📄 Processing selected image:', productDetails.imageUri);
-        
+
         // Get file info
         const fileInfo = await FileSystem.getInfoAsync(productDetails.imageUri);
         console.log('📄 File info:', fileInfo);
-        
+
         // Determine file type based on URI
         const uriParts = productDetails.imageUri.split('.');
         const fileExtension = uriParts[uriParts.length - 1];
-        
+
         let fileType = 'image/jpeg'; // Default
         if (fileExtension) {
           if (fileExtension.toLowerCase() === 'png') {
@@ -283,35 +283,35 @@ const AdditionalDetails: React.FC = () => {
             fileType = 'image/webp';
           }
         }
-        
+
         // Get filename from URI
         const fileName = productDetails.imageUri.split('/').pop() || `image.${fileExtension || 'jpg'}`;
-        
+
         console.log('📄 Creating file object with:', {
           uri: productDetails.imageUri,
           type: fileType,
           name: fileName
         });
-        
+
         const imageFile = {
           uri: productDetails.imageUri,
           type: fileType,
           name: fileName,
         };
-        
+
         formData.append('file', imageFile as any);
         console.log('📎 Appended image to FormData');
       } else {
         console.log('⚠️ No image selected');
       }
-      
+
       // Debug the FormData
       debugFormData(formData);
-      
+
       try {
         // Use fetch instead of axios for more direct control
         console.log('📤 Using fetch API for file upload...');
-        
+
         const response = await fetch(`${axiosInstance.defaults.baseURL}/api/goods`, {
           method: 'POST',
           headers: {
@@ -320,14 +320,14 @@ const AdditionalDetails: React.FC = () => {
           },
           body: formData
         });
-        
+
         if (!response.ok) {
           throw new Error(`Server returned ${response.status}: ${await response.text()}`);
         }
-        
+
         const goodsResponse = await response.json();
         console.log('✅ Goods created:', goodsResponse);
-        
+
         // Create request with the new goods ID
         if (goodsResponse.success) {
           // Parse and validate the date
@@ -347,36 +347,36 @@ const AdditionalDetails: React.FC = () => {
             console.warn('⚠️ Date parsing error:', dateError);
             requestDate = null;
           }
-          
-        const requestData = {
+
+          const requestData = {
             goodsId: goodsResponse.data.id,
             quantity: parseInt(quantity) || 1,
-          goodsLocation,
-          goodsDestination,
+            goodsLocation,
+            goodsDestination,
             date: requestDate,
-          withBox: productDetails.withBox
-        };
+            withBox: productDetails.withBox
+          };
 
           console.log('📤 Creating request with data:', requestData);
-          
+
           const requestResponse = await axiosInstance.post('/api/requests', requestData, {
             headers: {
               'Authorization': `Bearer ${jwtToken}`
             }
           });
           console.log('✅ Request created:', requestResponse.data);
-        
-        if (requestResponse.data.success) {
-          router.replace({
-            pathname: '/screens/RequestSuccessScreen',
-            params: {
-              requestId: requestResponse.data.data.id,
-              goodsName: productDetails.name
-            }
-          });
+
+          if (requestResponse.data.success) {
+            router.replace({
+              pathname: '/screens/RequestSuccessScreen',
+              params: {
+                requestId: requestResponse.data.data.id,
+                goodsName: productDetails.name
+              }
+            });
+          }
         }
-      }
-    } catch (error: any) {
+      } catch (error: any) {
         console.error('❌ Error:', error);
         console.error('❌ Error details:', {
           message: error.message,
@@ -412,15 +412,15 @@ const AdditionalDetails: React.FC = () => {
           <TitleSection style={styles.sectionTitle}>
             Product Image
           </TitleSection>
-          
+
           {productDetails.imageUri ? (
             <View style={styles.selectedImageContainer}>
-              <RNImage 
+              <RNImage
                 source={{ uri: productDetails.imageUri }}
                 style={styles.selectedImage}
                 resizeMode="cover"
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.changeImageButton}
                 onPress={pickDocument}
                 disabled={imageLoading}
@@ -431,7 +431,7 @@ const AdditionalDetails: React.FC = () => {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.pickDocumentButton}
               onPress={pickDocument}
               disabled={imageLoading}
@@ -454,48 +454,48 @@ const AdditionalDetails: React.FC = () => {
 
         {/* Category Dropdown */}
         <View style={styles.dropdownContainer}>
-        <TitleSection style={styles.sectionTitle}>
-          Category * {/* Asterisk indicates required field */}
-        </TitleSection>
-        <TouchableOpacity 
-          style={[
-            styles.dropdownTrigger,
+          <TitleSection style={styles.sectionTitle}>
+            Category * {/* Asterisk indicates required field */}
+          </TitleSection>
+          <TouchableOpacity
+            style={[
+              styles.dropdownTrigger,
               categoryError ? styles.errorBorder : null,
               dropdownVisible ? styles.dropdownTriggerActive : null
-          ]} 
+            ]}
             onPress={() => setDropdownVisible(!dropdownVisible)}
             activeOpacity={0.7}
-        >
-          <BodyMedium 
-            style={categoryId ? styles.selectedText : styles.placeholderText}
           >
-            {categories.find(c => c.id === categoryId)?.name || "Select a category"}
-          </BodyMedium>
-            <ChevronDown 
-              size={20} 
+            <BodyMedium
+              style={categoryId ? styles.selectedText : styles.placeholderText}
+            >
+              {categories.find(c => c.id === categoryId)?.name || "Select a category"}
+            </BodyMedium>
+            <ChevronDown
+              size={20}
               color={Colors[colorScheme].primary}
               style={[
                 styles.dropdownIcon,
                 dropdownVisible ? styles.dropdownIconActive : null
-              ]} 
+              ]}
             />
-        </TouchableOpacity>
-        
-        {/* Error message */}
-        {categoryError ? (
-          <BodyMedium style={styles.errorText}>{categoryError}</BodyMedium>
-        ) : null}
+          </TouchableOpacity>
+
+          {/* Error message */}
+          {categoryError ? (
+            <BodyMedium style={styles.errorText}>{categoryError}</BodyMedium>
+          ) : null}
 
           {dropdownVisible && (
-          <View style={styles.dropdownMenu}>
+            <View style={styles.dropdownMenu}>
               <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={true}>
-            {categories.map((category) => (
-                  <TouchableOpacity 
-                    key={category.id} 
+                {categories.map((category) => (
+                  <TouchableOpacity
+                    key={category.id}
                     style={[
                       styles.dropdownItem,
                       categoryId === category.id && styles.dropdownItemSelected
-                    ]} 
+                    ]}
                     onPress={() => {
                       handleCategorySelect(category.id);
                       setDropdownVisible(false);
@@ -508,11 +508,11 @@ const AdditionalDetails: React.FC = () => {
                     ]}>
                       {category.name}
                     </BodyMedium>
-              </TouchableOpacity>
-            ))}
+                  </TouchableOpacity>
+                ))}
               </ScrollView>
-          </View>
-        )}
+            </View>
+          )}
         </View>
 
         {/* Size Input */}
@@ -576,7 +576,7 @@ const AdditionalDetails: React.FC = () => {
 
         <View style={styles.formField}>
           <BodyMedium style={styles.label}>Delivery Date</BodyMedium>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.dateInput}
             onPress={() => setShowDatePicker(true)}
           >
@@ -598,8 +598,8 @@ const AdditionalDetails: React.FC = () => {
         </View>
 
         <View style={styles.buttonContainer}>
-          <BaseButton 
-            size="large" 
+          <BaseButton
+            size="large"
             onPress={handleSubmit}
             disabled={!categoryId || !quantity || !goodsLocation || !goodsDestination}
           >
