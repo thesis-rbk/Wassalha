@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const serviceProviderController = require('../controllers/serviceProvider.controller');
+const serviceProviderController = require('../controllers/serviceProvider.Controller');
 const { authenticateUser, authorizeAdmin } = require('../middleware/middleware');
 
 // Add authentication middleware to protected routes
