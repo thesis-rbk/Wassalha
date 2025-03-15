@@ -199,6 +199,8 @@ export default function RootLayout() {
                 options={{ title: "Notifications" }}
               />
               <Stack.Screen name="test/chat-test" options={{ title: "Chat Test" }} />
+              <Stack.Screen name="verification/fetchAll" options={{ title: "Fetch Sub" }} />
+                            <Stack.Screen name="verification/CreateSponsorPost" options={{ title: "Create Sponsor Post" }} />
             </Stack>
           )}
         </Provider>
