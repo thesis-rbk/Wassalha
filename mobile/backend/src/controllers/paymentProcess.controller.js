@@ -1,9 +1,9 @@
 require("dotenv").config();
+const prisma = require("../../prisma");
 const Stripe = require("stripe");
 const stripeService = require("../services/stripe.service");
-const { PrismaClient } = require("@prisma/client");
 
-const prisma = new PrismaClient();
+// Configure Stripe environment
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-02-24.acacia",
 });
@@ -12,12 +12,14 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY, {
  * Create a payment intent for regular payments
  */
 const createPaymentIntent = async (req, res) => {
-  console.log("Received request to create payment intent");
+  console.log("Received request to create payment intent", req.body);
+  const { amount, currency, orderId } = req.body;
 
   try {
+    // Create payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: 1099, // $10.99 USD
-      currency: "usd",
+      amount: amount,
+      currency: currency,
       payment_method_types: ["card"],
     });
 
@@ -25,8 +27,29 @@ const createPaymentIntent = async (req, res) => {
 
     console.log("Payment intent created successfully:", clientSecret);
 
+    // Create a Payment record in the database
+    const payment = await prisma.payment.create({
+      data: {
+        orderId: parseInt(orderId),
+        amount: parseFloat(amount / 100), // Convert cents to dollars
+        currency: currency.toUpperCase(),
+        status: "PENDING",
+        paymentMethod: "STRIPE",
+        transactionId: paymentIntent.id,
+      },
+    });
+
+    const updatedOrder = await prisma.goodsProcess.update({
+      where: { orderId: parseInt(orderId) },
+      data: {
+        status: "PAID",
+      },
+    });
+
     res.json({
       clientSecret: clientSecret,
+      paymentId: payment.id,
+      updatedOrder: updatedOrder,
     });
   } catch (e) {
     console.error("Error creating payment intent:", e.message);
@@ -39,12 +62,13 @@ const createPaymentIntent = async (req, res) => {
  */
 const createEscrowPaymentIntent = async (req, res) => {
   try {
-    const { orderId, amount, buyerId, sellerId } = req.body;
+    const { orderId, amount, requesterId, travelerId } = req.body;
 
-    if (!orderId || !amount || !buyerId || !sellerId) {
+    if (!orderId || !amount || !requesterId || !travelerId) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields: orderId, amount, buyerId, sellerId",
+        error:
+          "Missing required fields: orderId, amount, requesterId, travelerId",
       });
     }
 
@@ -52,12 +76,12 @@ const createEscrowPaymentIntent = async (req, res) => {
     const paymentIntent = await stripeService.createEscrowPaymentIntent({
       orderId,
       amount,
-      buyerId,
-      sellerId,
+      requesterId,
+      travelerId,
     });
 
-    // Update the payment record in the database
-    await prisma.payment.create({
+    // Create a Payment record in the database
+    const payment = await prisma.payment.create({
       data: {
         orderId: parseInt(orderId),
         amount: parseFloat(amount),
@@ -72,6 +96,7 @@ const createEscrowPaymentIntent = async (req, res) => {
       success: true,
       clientSecret: paymentIntent.clientSecret,
       paymentIntentId: paymentIntent.paymentIntentId,
+      paymentId: payment.id, // Return the payment ID for reference
     });
   } catch (error) {
     console.error("Error creating escrow payment intent:", error);

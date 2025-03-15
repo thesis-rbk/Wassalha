@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const stripeController = require("../controllers/payments.controller");
+const stripeController = require("../controllers/paymentProcess.controller");
 
 /**
  * @route POST /api/payment/create-payment-intent

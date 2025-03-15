@@ -55,7 +55,10 @@ export default function VerificationScreen() {
 
       if (response.status === 200) {
         Alert.alert("Success", "Product confirmed successfully");
-        router.push("./payment");
+        router.replace({
+          pathname: "/processTrack/paymentSO",
+          params: params,
+        });
       }
     } catch (error) {
       console.error("Error confirming product:", error);

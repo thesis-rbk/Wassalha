@@ -30,7 +30,7 @@ const sponsorshipRoutes = require("./routes/sponsorship.route");
 const subscriptionRoutes = require("./routes/subscription.route");
 const stripeRoutes = require("./routes/stripe.route");
 const adminRoutes = require("./routes/admin.route");
-const paymentsRoutes = require("./routes/payments.route");
+const paymentProcessRoutes = require("./routes/paymentProcess.route");
 
 // Import socket
 const trackingSocket = require("./sockets/trackingSocket");
@@ -52,7 +52,7 @@ app.use(express.json());
 
 // Serve static files from the "uploads" directory
 app.use("/api/uploads", express.static(path.join(__dirname, "uploads"))); // Serve static files
-app.use("/api/fetch", fetchRoute);
+app.use("/api", fetchRoute);
 // Routes
 
 // Routes (REST API will still work)
@@ -82,7 +82,7 @@ app.use("/api/mobile/goods", mobileGoodsRoutes);
 app.use("/api/process", processRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/stripe", stripeRoutes);
-app.use("/api/payment", paymentsRoutes);
+app.use("/api/payment-process", paymentProcessRoutes);
 
 // Add error logging middleware
 app.use((err, req, res, next) => {

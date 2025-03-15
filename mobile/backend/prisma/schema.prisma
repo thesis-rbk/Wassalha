@@ -83,7 +83,7 @@ enum PaymentStatus {
 }
 
 enum PaymentCurrency {
-  DOLLAR
+  USD
   EUR
   TND
 }

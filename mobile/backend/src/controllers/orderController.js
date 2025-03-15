@@ -95,14 +95,12 @@ const createOrder = async (req, res) => {
       where: { requestId: parseInt(requestId) },
     });
 
-
     if (existingOrder) {
       return res.status(400).json({
         success: false,
         error: "An order already exists for this request",
       });
     }
-
 
     // Create order with GoodsProcess
     const order = await prisma.order.create({
@@ -200,10 +198,11 @@ const updateOrderStatus = async (req, res) => {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-      include: {
-        goodsProcess: true,
-        request: true,
-        traveler: true,
+        include: {
+          goodsProcess: true,
+          request: true,
+          traveler: true,
+        },
       },
     });
 
@@ -303,20 +302,17 @@ const confirmOrder = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
-
     // Get the order
     const order = await prisma.order.findUnique({
       where: { id: parseInt(id) },
       include: { request: true, goodsProcess: true },
     });
 
-
     if (!order) {
       return res
         .status(404)
         .json({ success: false, message: "Order not found" });
     }
-
 
     // Check if user is the request owner
     if (order.request.userId !== userId) {
@@ -326,20 +322,17 @@ const confirmOrder = async (req, res) => {
       });
     }
 
-
     // Update order status - now we can use CONFIRMED
     const updatedOrder = await prisma.order.update({
       where: { id: parseInt(id) },
       data: { orderStatus: "CONFIRMED" },
     });
 
-
     // Update request status to ACCEPTED
     await prisma.request.update({
       where: { id: order.requestId },
       data: { status: "ACCEPTED" },
     });
-
 
     // Update goods process if needed
     if (order.goodsProcessId) {
@@ -358,7 +351,6 @@ const confirmOrder = async (req, res) => {
         },
       });
     }
-
 
     res.json({ success: true, data: updatedOrder });
   } catch (error) {
@@ -389,7 +381,7 @@ const deleteOrder = async (req, res) => {
     });
   }
 };
-};
+
 module.exports = {
   getAllOrders,
   getOrderById,
