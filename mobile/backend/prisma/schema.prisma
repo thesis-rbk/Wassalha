@@ -250,7 +250,7 @@ model User {
   hasCompletedOnboarding Boolean @default(false)
   role                   Role    @default(USER)
   isSponsor              Boolean @default(false)
-  serviceProviderId      Int?
+  serviceProviderId      String?
 
   requests         Request[]
   notifications    Notification[]
