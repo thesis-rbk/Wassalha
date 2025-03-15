@@ -7,6 +7,7 @@ const {
     getTicketById,
     updateTicketStatus,
     addTicketMessage,
+    deleteTicket,
 } = require('../controllers/Ticket.Controllers');
 
 router.post('/', authenticateUser, createTicket);
@@ -14,5 +15,5 @@ router.get('/', authenticateUser, getTickets);
 router.get('/:id', authenticateUser, getTicketById);
 router.put('/:id/status', authenticateAdmin, updateTicketStatus);
 router.post('/:id/messages', authenticateUser, addTicketMessage);
-
+router.delete('/:id', authenticateUser, deleteTicket);
 module.exports = router;

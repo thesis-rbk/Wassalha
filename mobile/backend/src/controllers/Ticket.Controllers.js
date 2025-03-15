@@ -5,28 +5,38 @@ const prisma = new PrismaClient();
 const createTicket = async (req, res) => {
     try {
         const { title, description } = req.body;
-        const userId = req.user.id; // Assuming you have user info in req.user from auth middleware
+        // Log for debugging
+        console.log('Creating ticket:', { title, description, userId: req.user?.id });
+        
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
+        }
 
         const ticket = await prisma.ticket.create({
             data: {
                 title,
                 description,
-                userId,
+                userId: req.user.id,
+                status: 'PENDING'  // Make sure this matches your TicketStatus enum
             },
             include: {
-                user: true,
-            },
+                user: true
+            }
         });
 
         res.status(201).json({
             success: true,
-            data: ticket,
+            data: ticket
         });
     } catch (error) {
+        console.error('Ticket creation error:', error);
         res.status(500).json({
             success: false,
             message: 'Error creating ticket',
-            error: error.message,
+            error: error.message
         });
     }
 };

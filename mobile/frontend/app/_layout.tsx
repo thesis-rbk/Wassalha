@@ -76,6 +76,10 @@ export default function RootLayout() {
                             <Stack.Screen name="screens/OrderSuccessScreen" options={{ title: "Order Created" }} />
                             <Stack.Screen name="verification/fetchAll" options={{ title: "Fetch Sub" }} />
                             <Stack.Screen name="verification/CreateSponsorPost" options={{ title: "Create Sponsor Post" }} />
+                            <Stack.Screen 
+                                name="reporting-system/create-ticket" 
+                                options={{ title: "Create Report" }} 
+                            />
                         </Stack>
                     )}
                 </Provider>

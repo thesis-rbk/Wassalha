@@ -1424,3 +1424,51 @@
   z-index: 3;
 }
 
+.emailText {
+  font-size: 0.85em;
+  color: var(--color-text-secondary);
+}
+
+.statusSelect {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card-bg);
+  color: var(--color-text);
+  margin-right: 8px;
+}
+
+.buttonContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Status badges */
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badgePending {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.badgeProcessing {
+  background-color: #e0e7ff;
+  color: #4f46e5;
+}
+
+.badgeCompleted {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.badgeFailed {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+

@@ -21,7 +21,8 @@ import {
   Award,
   Bookmark,
   Store,
-  LogOut
+  LogOut,
+  Ticket
 } from "lucide-react";
 
 export default function Nav() {
@@ -237,6 +238,11 @@ export default function Nav() {
           <ShoppingCart size={20} />
           <span className={styles.itemText}>List of Orders</span>
         </Link>
+        <Link href="/ListOfTickets" className={styles.sidebarItem}>
+          <Ticket size={20} />
+          <span className={styles.itemText}>List of Support Tickets</span>
+        </Link>
+
         <Link href="/ListOfRequests" className={styles.sidebarItem}>
           <FileText size={20} />
           <span className={styles.itemText}>List of Requests</span>

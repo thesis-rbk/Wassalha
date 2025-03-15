@@ -50,7 +50,7 @@ app.use(express.json());
 
 // Serve static files from the "uploads" directory
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve static files
-app.use("/api/fetch", fetchRoute)
+app.use("/api", fetchRoute)
 // Routes
 
 // Routes (REST API will still work)
