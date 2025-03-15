@@ -14,7 +14,7 @@ import CountryFlag from "react-native-country-flag";
 import { InfoItemProps, ProfileImage } from '@/types';
 import { Crown, Shield, ShieldCheck } from 'lucide-react-native';
 const { width } = Dimensions.get('window');
-
+import { ProfileState } from '@/types/ProfileState';
 const countryToCode: { [key: string]: string } = {
   "USA": "US",
   "FRANCE": "FR",
@@ -55,26 +55,6 @@ const countryToCode: { [key: string]: string } = {
   "PARAGUAY": "PY",
   "URUGUAY": "UY",
   "OTHER": "XX"
-};
-
-// Add a type definition for the profile state
-type ProfileState = {
-  firstName: string;
-  lastName: string;
-  bio: string;
-  country: string;
-  phoneNumber: string;
-  imageId: string | null;
-  image: ProfileImage | null;
-  gender: string;
-  review: string;
-  isAnonymous: boolean;
-  isBanned: boolean;
-  isVerified: boolean;
-  isOnline: boolean;
-  preferredCategories: string;
-  referralSource: string;
-  isSponsor: boolean;
 };
 
 const ProfilePage = () => {
