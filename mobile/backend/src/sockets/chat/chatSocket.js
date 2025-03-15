@@ -1,6 +1,40 @@
 // mobile/backend/src/sockets/chat/chatSocket.js
 const prisma = require('../../../prisma/index');
+const chatService = require('../../services/chatService');
 
+/**
+ * IMPORTANT: This is a temporary authentication bypass
+ * 
+ * TODO: Implement proper JWT authentication for socket connections
+ * 
+ * Currently using a simple pass-through authentication to allow development
+ * and testing of the chat functionality. This should be replaced with proper
+ * token verification before deploying to production.
+ * 
+ * Security risks of the current implementation:
+ * 1. Any client can connect to the socket without authentication
+ * 2. No verification of user identity for message sending
+ * 3. Potential for message spoofing (sending as another user)
+ * 
+ * The proper implementation should:
+ * 1. Verify JWT tokens from the handshake auth or query
+ * 2. Attach the verified user object to the socket
+ * 3. Reject connections with invalid or missing tokens
+ */
+const authenticateSocket = async (socket, next) => {
+  // TEMPORARY: Attach a mock user object to the socket
+  // This allows socket.user.id to work in our handlers
+  socket.user = { 
+    id: socket.handshake.query.userId ? parseInt(socket.handshake.query.userId) : 1
+  };
+  
+  // Log this bypass to make it obvious in server logs
+  console.warn('⚠️ WARNING: Using temporary socket authentication bypass');
+  
+  next();
+};
+
+// Define the chat handlers function
 const chatHandlers = (socket) => {
     console.log('🗨️ New chat connection:', socket.id);
 
@@ -19,10 +53,67 @@ const chatHandlers = (socket) => {
         socket.emit('joined_chat', { room: roomName, chatId });
     });
 
+    // When a user sends a message
+    socket.on('send_message', async (data) => {
+        try {
+            const { chatId, content, type = 'text', mediaId } = data;
+            const userId = socket.user?.id;
+            
+            if (!userId) {
+                socket.emit('error', { message: 'Authentication required' });
+                return;
+            }
+            
+            // Use the service to create the message
+            const message = await chatService.createMessage(
+                chatId,
+                userId,
+                content,
+                type,
+                mediaId
+            );
+            
+            // Confirm to sender (service already broadcasts to others)
+            socket.emit('message_sent', { 
+                success: true, 
+                messageId: message.id,
+                timestamp: message.time
+            });
+        } catch (error) {
+            console.error('Error sending message:', error);
+            socket.emit('error', { message: error.message || 'Failed to send message' });
+        }
+    });
+
+    // When a user marks a message as read
+    socket.on('mark_read', async (data) => {
+        try {
+            const { messageId } = data;
+            const userId = socket.user?.id;
+            
+            if (!userId) {
+                socket.emit('error', { message: 'Authentication required' });
+                return;
+            }
+            
+            // Use the service to mark the message as read
+            await chatService.markMessageAsRead(messageId, userId);
+            
+            // Service already handles broadcasting
+        } catch (error) {
+            console.error('Error marking message as read:', error);
+            socket.emit('error', { message: error.message || 'Failed to mark message as read' });
+        }
+    });
+
     // Handle client disconnection
     socket.on('disconnect', () => {
         console.log('👋 User disconnected from chat:', socket.id);
     });
 };
 
-module.exports = chatHandlers;
+// Export both functions to be used in the socket initialization
+module.exports = {
+    chatHandlers,
+    authenticateSocket
+};

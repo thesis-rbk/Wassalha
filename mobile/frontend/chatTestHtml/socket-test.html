@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Socket.IO Chat Test</title>
+  <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #messages { height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+    input, button { padding: 8px; margin-right: 5px; }
+    .log { color: #666; }
+    .received { color: blue; }
+    .sent { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Socket.IO Chat Test</h1>
+  
+  <div>
+    <label for="serverUrl">Server URL:</label>
+    <input id="serverUrl" type="text" value="http://192.168.1.11:5000/chat" placeholder="Socket.IO server URL">
+    
+    <label for="userId">User ID:</label>
+    <input id="userId" type="text" placeholder="Enter your user ID">
+    
+    <label for="chatId">Chat ID:</label>
+    <input id="chatId" type="text" placeholder="Enter chat ID">
+    
+    <button id="connect">Connect</button>
+    <button id="disconnect" disabled>Disconnect</button>
+  </div>
+  
+  <div id="messages"></div>
+  
+  <div>
+    <input id="messageInput" type="text" placeholder="Type a message" disabled>
+    <button id="sendBtn" disabled>Send</button>
+  </div>
+  
+  <script>
+    let socket;
+    const messagesDiv = document.getElementById('messages');
+    const serverUrlInput = document.getElementById('serverUrl');
+    const userIdInput = document.getElementById('userId');
+    const chatIdInput = document.getElementById('chatId');
+    const messageInput = document.getElementById('messageInput');
+    const connectBtn = document.getElementById('connect');
+    const disconnectBtn = document.getElementById('disconnect');
+    const sendBtn = document.getElementById('sendBtn');
+    
+    function log(message, type = 'log') {
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = message;
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+    
+    connectBtn.addEventListener('click', () => {
+      const serverUrl = serverUrlInput.value;
+      const userId = userIdInput.value;
+      const chatId = chatIdInput.value;
+      
+      if (!serverUrl || !userId || !chatId) {
+        log('Please enter Server URL, User ID and Chat ID', 'error');
+        return;
+      }
+      
+      // Connect to socket with query params for authentication
+      socket = io(serverUrl, {
+        query: { userId }
+      });
+      
+      // Connection events
+      socket.on('connect', () => {
+        log(`Connected with socket ID: ${socket.id}`);
+        
+        // Join the chat room
+        socket.emit('join_chat', chatId);
+        
+        // Enable UI elements
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+        connectBtn.disabled = true;
+        disconnectBtn.disabled = false;
+      });
+      
+      socket.on('disconnect', () => {
+        log('Disconnected from server');
+        
+        // Disable UI elements
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+        connectBtn.disabled = false;
+        disconnectBtn.disabled = true;
+      });
+      
+      socket.on('connect_error', (err) => {
+        log(`Connection error: ${err.message}`, 'error');
+      });
+      
+      // Chat specific events
+      socket.on('joined_chat', (data) => {
+        log(`Joined chat room: ${data.room}`);
+      });
+      
+      socket.on('receive_message', (message) => {
+        log(`Received: ${message.content}`, 'received');
+        console.log('Full message object:', message);
+      });
+      
+      socket.on('message_sent', (data) => {
+        log(`Message sent successfully. ID: ${data.messageId}`, 'sent');
+      });
+      
+      socket.on('message_read', (data) => {
+        log(`Message ${data.messageId} was read`, 'log');
+      });
+      
+      socket.on('user_typing', (data) => {
+        log(`User ${data.userId} is typing...`, 'log');
+      });
+      
+      socket.on('error', (data) => {
+        log(`Error: ${data.message}`, 'error');
+      });
+    });
+    
+    disconnectBtn.addEventListener('click', () => {
+      if (socket) {
+        socket.disconnect();
+      }
+    });
+    
+    sendBtn.addEventListener('click', () => {
+      const message = messageInput.value.trim();
+      const chatId = chatIdInput.value;
+      
+      if (!message) return;
+      
+      // Send the message
+      socket.emit('send_message', {
+        chatId,
+        content: message,
+        type: 'text'
+      });
+      
+      log(`Sent: ${message}`, 'sent');
+      messageInput.value = '';
+    });
+    
+    // Send typing indicator when typing
+    messageInput.addEventListener('input', () => {
+      const chatId = chatIdInput.value;
+      socket.emit('typing', { chatId });
+    });
+  </script>
+</body>
+</html>

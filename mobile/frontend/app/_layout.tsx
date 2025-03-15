@@ -130,7 +130,7 @@ export default function RootLayout() {
               <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
               <Stack.Screen name="test/chat" options={{ title: "Chat" }} />
               <Stack.Screen name="test/order" options={{ title: "order" }} />
-              <Stack.Screen name="test/chat-redux-test" options={{ title: "Chat Redux Test" }} />
+              <Stack.Screen name="test/chatreduxtest" options={{ title: "Chat Redux Test" }} />
               <Stack.Screen
                 name="verification/start"
                 options={{ title: "verification" }}
@@ -198,6 +198,7 @@ export default function RootLayout() {
                 name="screens/NotificationsScreen"
                 options={{ title: "Notifications" }}
               />
+              <Stack.Screen name="test/chat-test" options={{ title: "Chat Test" }} />
             </Stack>
           )}
         </Provider>

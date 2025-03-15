@@ -19,6 +19,12 @@ router.get('/:id/messages', chatController.getChatMessages);
 // Create a new chat
 router.post('/', chatController.createChat);
 
+// Add this to your routes
+router.post('/:id/messages', chatController.createMessage);
+
+// Add this to your routes
+router.patch('/:id/messages/read', chatController.markMessagesAsRead);
+
 // Add logging middleware
 router.use((req, res, next) => {
   console.log('📡 Chat route accessed:', {

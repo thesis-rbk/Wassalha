@@ -2,7 +2,7 @@
 const { Server } = require('socket.io');
 const notificationHandlers = require('./notifications/notificationSocket');
 const { trackingHandlers } = require('./tracking/trackingSocket');
-const chatHandlers = require('./chat/chatSocket');
+const { chatHandlers, authenticateSocket } = require('./chat/chatSocket');
 
 // Global socket instance - kept outside function so it can be accessed by getIO()
 let io;
