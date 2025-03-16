@@ -9,7 +9,7 @@ const VerificationPending = () => {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.content}>
-        <CheckCircle size={120} color={Colors.light.primary} style={styles.icon} />
+        <CheckCircle size={120} color={Colors.dark.primary} style={styles.icon} />
         <ThemedText style={styles.title}>Verification Submitted</ThemedText>
         <ThemedText style={styles.message}>
           Thank you for completing the verification process. Our admin team will review your information and get back to you shortly.
