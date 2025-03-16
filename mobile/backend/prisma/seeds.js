@@ -68,7 +68,6 @@ async function seed() {
             : undefined,
           password: hasGoogleAccount ? undefined : faker.internet.password(),
           hasCompletedOnboarding: faker.datatype.boolean(),
-          isSponsor: faker.datatype.boolean(),
         },
       });
     })
@@ -89,6 +88,7 @@ async function seed() {
           phoneNumber: faker.phone.number(),
           isAnonymous: faker.datatype.boolean(),
           referralSource: faker.helpers.enumValue(ReferralSource),
+          isSponsor: faker.datatype.boolean(),
         },
       })
     )
