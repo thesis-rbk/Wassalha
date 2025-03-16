@@ -45,7 +45,7 @@ const updateProfile = async (req, res) => {
         // Handle image upload if present
         if (req.file) {
             console.log(`File uploaded: ${req.file.originalname}`);
-            
+
             const mediaData = {
                 url: req.file.path,
                 type: 'IMAGE',
@@ -65,25 +65,27 @@ const updateProfile = async (req, res) => {
 
         // Update profile with only the provided fields
         const updatedProfile = await prisma.profile.update({
-            where: { userId: parseInt(userId) },
+            where: { 
+                userId: parseInt(userId) 
+            },
             data: updateData,
             include: {
-                image: true, // Include the image in response
-            },
+                image: true // Include the image in response
+            }
         });
 
-        res.status(200).json({ 
-            success: true, 
+        return res.status(200).json({
+            success: true,
             data: updatedProfile,
             message: 'Profile updated successfully'
         });
 
     } catch (error) {
         console.error('Error updating profile:', error);
-        res.status(500).json({ 
-            success: false, 
+        return res.status(500).json({
+            success: false,
             error: 'Failed to update profile',
-            message: error.message 
+            message: error.message
         });
     }
 };
@@ -113,7 +115,6 @@ const getUserProfile = async (userId) => {
         console.error("Error fetching user profile:", error);
     }
 };
-
 // Call the function with the user ID
 // Replace 11 with the actual user ID
 
@@ -121,4 +122,4 @@ module.exports = {
     getProfile,
     updateProfile,
     getUserProfile,
-}; 
+}

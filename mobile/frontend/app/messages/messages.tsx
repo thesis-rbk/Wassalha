@@ -61,7 +61,7 @@ export default function MessagesScreen() {
           if (
             !existingConversation ||
             new Date(message.time) >
-              new Date(existingConversation.lastMessage.time)
+            new Date(existingConversation.lastMessage.time)
           ) {
             const unreadCount =
               !message.isRead && message.senderId !== currentUserId

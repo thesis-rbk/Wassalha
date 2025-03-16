@@ -9,29 +9,31 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import WelcomeAnimation from "@/components/WelcomeAnimation";
 import MainLoading from "@/components/MainLoading";
 import { StripeProvider } from '@stripe/stripe-react-native';
-import {STRIPE_PUBLISHABLE_KEY} from "@/config";
+import { STRIPE_PUBLISHABLE_KEY } from "@/config";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({});
-  const [animationComplete, setAnimationComplete] = useState(false);
-  const [loadingComplete, setLoadingComplete] = useState(false);
+    const [fontsLoaded] = useFonts({});
+    const [animationComplete, setAnimationComplete] = useState(false);
+    const [loadingComplete, setLoadingComplete] = useState(false);
 
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
+    useEffect(() => {
+        if (fontsLoaded) {
+            SplashScreen.hideAsync();
+        }
+    }, [fontsLoaded]);
+
+    if (!fontsLoaded) {
+        return null;
     }
-  }, [fontsLoaded]);
 
-  if (!fontsLoaded) {
-    return null;
-  }
-
-  console.log("Store:", store);
+    console.log("Store:", store);
 
   return (
     <StripeProvider
       publishableKey={STRIPE_PUBLISHABLE_KEY}
+      urlScheme="wassalha"
+      merchantIdentifier="merchant.com.wassalha"
     >
       <ThemeProvider>
         <Provider store={store}>
@@ -156,6 +158,8 @@ export default function RootLayout() {
                   
                 }}
               />
+               <Stack.Screen name="verification/fetchAll" options={{ title: "Fetch Sub" }} />
+               <Stack.Screen name="verification/CreateSponsorPost" options={{ title: "Create Sponsor Post" }} />
             </Stack>
           )}
         </Provider>

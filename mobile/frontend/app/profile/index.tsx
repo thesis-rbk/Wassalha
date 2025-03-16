@@ -11,12 +11,13 @@ import { BaseButton } from '@/components/ui/buttons/BaseButton';
 import { TitleLarge, BodyMedium } from '@/components/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import CountryFlag from "react-native-country-flag";
-import { InfoItemProps, ProfileState, ProfileImage } from '@/types';
+import { InfoItemProps, ProfileImage } from '@/types';
+import { Crown, Shield, ShieldCheck } from 'lucide-react-native';
 const { width } = Dimensions.get('window');
-
+import { ProfileState } from '@/types/ProfileState';
 const countryToCode: { [key: string]: string } = {
   "USA": "US",
-  "FRANCE": "FR", 
+  "FRANCE": "FR",
   "SPAIN": "ES",
   "GERMANY": "DE",
   "ITALY": "IT",
@@ -31,7 +32,7 @@ const countryToCode: { [key: string]: string } = {
   "MEXICO": "MX",
   "BOLIVIA": "BO",
   "MOROCCO": "MA",
-  "TUNISIA": "TN", 
+  "TUNISIA": "TN",
   "ALGERIA": "DZ",
   "TURKEY": "TR",
   "PORTUGAL": "PT",
@@ -56,9 +57,6 @@ const countryToCode: { [key: string]: string } = {
   "OTHER": "XX"
 };
 
-// Add a type definition for the profile state
-
-
 const ProfilePage = () => {
   const { theme } = useTheme();
   const [profile, setProfile] = useState<ProfileState>({
@@ -77,6 +75,7 @@ const ProfilePage = () => {
     isOnline: false,
     preferredCategories: '',
     referralSource: '',
+    isSponsor: false,
   });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -113,26 +112,31 @@ const ProfilePage = () => {
   }
 
   return (
-    <ScrollView 
+    <ScrollView
       style={[styles.container, { backgroundColor: Colors[theme].background }]}
       showsVerticalScrollIndicator={false}
     >
       <View style={[styles.headerBackground, { backgroundColor: Colors[theme].primary }]} />
-      
+
       {/* Profile Image Section */}
       <View style={styles.profileImageContainer}>
         <View style={styles.imageWrapper}>
+          {profile.isSponsor && (
+            <View style={styles.sponsorBadge}>
+              <Crown size={14} color="#ffffff" />
+            </View>
+          )}
           {profile.image?.filename ? (
             <>
-              <Image 
+              <Image
                 source={{ uri: `${process.env.EXPO_PUBLIC_API_URL}/api/uploads/${profile.image.filename}` }}
-                style={styles.profileImage} 
+                style={styles.profileImage}
               />
-              <View 
+              <View
                 style={[
-                  styles.onlineIndicator, 
+                  styles.onlineIndicator,
                   { backgroundColor: profile.isOnline ? "#22c55e" : "#64748b" }
-                ]} 
+                ]}
               />
             </>
           ) : (
@@ -142,11 +146,11 @@ const ProfilePage = () => {
                   {profile.firstName?.[0]}{profile.lastName?.[0]}
                 </Text>
               </View>
-              <View 
+              <View
                 style={[
-                  styles.onlineIndicator, 
+                  styles.onlineIndicator,
                   { backgroundColor: profile.isOnline ? "#22c55e" : "#64748b" }
-                ]} 
+                ]}
               />
             </>
           )}
@@ -160,15 +164,25 @@ const ProfilePage = () => {
           <Text style={[styles.userName, { color: Colors[theme].text }]}>
             {`${profile.firstName} ${profile.lastName}`}
           </Text>
+          
+          {/* Add Sponsor Badge */}
+          {profile.isSponsor && (
+            <View style={[styles.badge, { backgroundColor: '#fef3c7', borderColor: '#fbbf24' }]}>
+              <Crown size={16} color="#d97706" />
+              <Text style={{ color: '#d97706', fontSize: 12, marginLeft: 4 }}>Sponsor</Text>
+            </View>
+          )}
+          
+          {/* Verification Badge */}
           {profile.isVerified ? (
             <View style={[styles.badge, { backgroundColor: '#dcfce7', borderColor: '#86efac' }]}>
-              <Ionicons name="checkmark" size={12} color="#16a34a" />
-              <Text style={{ color: '#16a34a', fontSize: 12 }}>Verified</Text>
+              <ShieldCheck size={16} color="#16a34a" />
+              <Text style={{ color: '#16a34a', fontSize: 12, marginLeft: 4 }}>Verified</Text>
             </View>
           ) : (
             <View style={[styles.badge, { backgroundColor: '#fee2e2', borderColor: '#fca5a5' }]}>
-              <Ionicons name="close" size={12} color="#dc2626" />
-              <Text style={{ color: '#dc2626', fontSize: 12 }}>Unverified</Text>
+              <Shield size={16} color="#dc2626" />
+              <Text style={{ color: '#dc2626', fontSize: 12, marginLeft: 4 }}>Unverified</Text>
             </View>
           )}
         </View>
@@ -224,14 +238,14 @@ const ProfilePage = () => {
 
         {/* Action Buttons */}
         <View style={styles.buttonsContainer}>
-          <BaseButton 
+          <BaseButton
             onPress={() => router.push('/profile/edit')}
             size="login"
           >
             Edit Profile
           </BaseButton>
-          
-          <BaseButton 
+
+          <BaseButton
             onPress={() => router.push('/profile/change')}
             size="login"
             variant="secondary"
@@ -316,6 +330,7 @@ const styles = StyleSheet.create({
   nameSection: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     gap: 8,
     marginBottom: 4,
@@ -331,7 +346,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    gap: 4,
   },
   onlineStatus: {
     textAlign: 'center',
@@ -374,6 +388,23 @@ const styles = StyleSheet.create({
   },
   flag: {
     borderRadius: 4,
+  },
+  sponsorBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#fbbf24',
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    zIndex: 1,
+  },
+  sponsorBadgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });
 
