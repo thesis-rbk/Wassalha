@@ -93,7 +93,14 @@ export default function HomeScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.servicesSection}>
-          <ThemedText style={styles.sectionTitle}>Our Services</ThemedText>
+          <View style={styles.sectionHeaderContainer}>
+            <ThemedText style={styles.sectionTitle}>
+              <ThemedText style={styles.sectionTitleHighlight}>Our</ThemedText> Services
+            </ThemedText>
+            <ThemedText style={styles.sectionSubtitle}>
+              Discover what Wassalha can do for you
+            </ThemedText>
+          </View>
           <View style={styles.servicesGrid}>
             {services.map((service) => (
               <Card
@@ -113,7 +120,14 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.travelersSection}>
-          <ThemedText style={styles.sectionTitle}>Best Travelers</ThemedText>
+          <View style={styles.sectionHeaderContainer}>
+            <ThemedText style={styles.sectionTitle}>
+              <ThemedText style={styles.sectionTitleHighlight}>Best</ThemedText> Travelers
+            </ThemedText>
+            <ThemedText style={styles.sectionSubtitle}>
+              Our top-rated travelers ready to help you
+            </ThemedText>
+          </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.listContainer}>
               {travelers.map((traveler, index) => (
@@ -133,7 +147,14 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
         <View style={styles.sponsorsSection}>
-          <ThemedText style={styles.sectionTitle}>Best Sponsors</ThemedText>
+          <View style={styles.sectionHeaderContainer}>
+            <ThemedText style={styles.sectionTitle}>
+              <ThemedText style={styles.sectionTitleHighlight}>Best</ThemedText> Sponsors
+            </ThemedText>
+            <ThemedText style={styles.sectionSubtitle}>
+              Trusted sponsors with excellent reputation
+            </ThemedText>
+          </View>
           <View style={styles.travelersSection}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={styles.listContainer}>
@@ -179,10 +200,27 @@ const styles = StyleSheet.create({
   servicesSection: {
     padding: 16,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
+  sectionHeaderContainer: {
+    alignItems: 'center',
     marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  sectionTitleHighlight: {
+    color: "rgba(0, 128, 152, 1)", // Match your primary color
+    fontSize: 22,
+    fontWeight: "bold",
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: "#64748B", // A subtle gray color
+    marginBottom: 16,
+    fontWeight: "400",
+    textAlign: 'center',
   },
   servicesGrid: {
     flexDirection: "row",

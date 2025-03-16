@@ -7,11 +7,13 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Button,
 } from "react-native";
 import axiosInstance from "@/config";
-import { Message, User, Profile } from "../../types";
+import { Message, User } from "../../types";
 import { router } from "expo-router";
+import { TopNavigation } from "@/components/navigation/TopNavigation";
+import { TabBar } from "@/components/navigation/TabBar";
+import { ThemedView } from "@/components/ThemedView";
 
 export default function MessagesScreen() {
   const [conversations, setConversations] = useState<
@@ -19,6 +21,7 @@ export default function MessagesScreen() {
   >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("Messages");
 
   // For demo purposes, we'll assume current user is user1
   const currentUserId = 1; // TO BE CHANGED !!
@@ -162,24 +165,42 @@ export default function MessagesScreen() {
     );
   };
 
+  const handleNotificationPress = () => {
+    router.push("/notifications");
+  };
+  
+  const handleProfilePress = () => {
+    router.push("/profile");
+  };
+  
+  const handleTabPress = (tabName: string) => {
+    setActiveTab(tabName);
+  };
+
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <ThemedView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
-      </View>
+      </ThemedView>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
+      <ThemedView style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
-      </View>
+      </ThemedView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ThemedView style={styles.container}>
+      <TopNavigation 
+        title="Messages" 
+        onNotificationPress={handleNotificationPress}
+        onProfilePress={handleProfilePress}
+      />
+      
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.user.id.toString()}
@@ -192,7 +213,9 @@ export default function MessagesScreen() {
           </View>
         }
       />
-    </View>
+      
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
+    </ThemedView>
   );
 }
 

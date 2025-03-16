@@ -13,6 +13,8 @@ import { useRouter } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PickupMap from "./pickupMap";
 import axiosInstance from "@/config";
+import { TabBar } from "@/components/navigation/TabBar";
+import { TopNavigation } from "@/components/navigation/TopNavigation";
 
 export default function Pickup({ pickupId }: { pickupId?: number }) {
   const router = useRouter();
@@ -34,8 +36,7 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
   const [airportSuggestions, setAirportSuggestions] = useState<string[]>([]);
   const [isFetchingAirports, setIsFetchingAirports] = useState<boolean>(false);
   const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-  // Replace with your Google Places API key
+  const [activeTab, setActiveTab] = useState<string>("Pick-up");
 
   const styles = StyleSheet.create({
     container: {
@@ -197,7 +198,6 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
     },
   });
 
-  // Fetch airport suggestions using Google Places API (New)
   const fetchAirportSuggestions = async (query: string) => {
     if (!query || query.length < 2) {
       setAirportSuggestions([]);
@@ -390,8 +390,26 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
     }
   };
 
+  const handleTabPress = (tabName: string) => {
+    setActiveTab(tabName);
+  };
+
+  const handleNotificationPress = () => {
+    router.push("/notifications");
+  };
+  
+  const handleProfilePress = () => {
+    router.push("/profile");
+  };
+
   return (
     <ThemedView style={styles.container}>
+      <TopNavigation 
+        title="Pickup" 
+        onNotificationPress={handleNotificationPress}
+        onProfilePress={handleProfilePress}
+      />
+      
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {step === 'select' ? (
           <>
@@ -664,6 +682,8 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
           </View>
         </View>
       </Modal>
+      
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   );
 }
