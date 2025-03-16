@@ -3,21 +3,25 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Image,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import ProgressBar from "../../components/ProgressBar";
 import { MaterialIcons } from "@expo/vector-icons";
 import axiosInstance from "@/config";
-import { router } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
+import { BaseButton } from "@/components/ui/buttons/BaseButton";
 
 export default function VerificationScreen() {
+  const params = useLocalSearchParams();
   const [image, setImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+
+  console.log(params);
 
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -60,11 +64,13 @@ export default function VerificationScreen() {
 
     try {
       const formData = new FormData();
-      // formData.append("file", {
-      //   uri: image,
-      //   name: "verification_photo.jpg",
-      //   type: "image/jpeg",
-      // });
+      const fileData = {
+        uri: image,
+        name: "verification_photo.jpg",
+        type: "image/jpeg",
+      };
+      formData.append("file", fileData as any); // Type assertion due to FormData limitations
+      formData.append("orderId", params.idOrder as string); // Send orderId
 
       const response = await axiosInstance.post(
         "/api/products/verify-product",
@@ -90,129 +96,118 @@ export default function VerificationScreen() {
     }
   };
 
-  // Confirm the product (for the user)
-  const confirmProduct = async () => {
-    try {
-      const response = await axiosInstance.post(
-        "/api/products/confirm-product",
-        {
-          productId: 123, // Replace with actual product ID
-        }
-      );
-
-      if (response.status === 200) {
-        Alert.alert("Success", "Product confirmed successfully.");
-        // Move to the next step (e.g., payment)
-      } else {
-        Alert.alert("Error", "Failed to confirm product. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error confirming product:", error);
-      Alert.alert("Error", "An error occurred. Please try again.");
-    }
-  };
-
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Verification</Text>
-        <Text style={styles.subtitle}>
-          {isVerified
-            ? "Product verified successfully!"
-            : "Show this QR code to the traveler to verify delivery"}
-        </Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Verification</Text>
+          <Text style={styles.subtitle}>
+            Capture a photo of the product to send for validation
+          </Text>
 
-        <ProgressBar currentStep={2} steps={progressSteps} />
+          <ProgressBar currentStep={2} steps={progressSteps} />
 
-        {/* Description Section */}
-        <Text style={styles.description}>
-          Take a clear photo of the product to verify its authenticity. Ensure
-          the product is well-lit and fully visible in the photo.
-        </Text>
+          {/* Description Section */}
+          <Text style={styles.description}>
+            Take a clear photo of the product to verify its authenticity. Ensure
+            the product is well-lit and fully visible in the photo.
+          </Text>
 
-        {/* Image Upload Section */}
-        {!isVerified && (
-          <View style={styles.uploadSection}>
-            {image ? (
-              <View style={styles.previewContainer}>
-                <Text style={styles.previewTitle}>Preview</Text>
-                <Image source={{ uri: image }} style={styles.image} />
-                <TouchableOpacity
-                  style={styles.retakeButton}
-                  onPress={() => setImage(null)}
+          {/* Success Message */}
+          {isVerified && (
+            <View style={styles.successContainer}>
+              <MaterialIcons name="check-circle" size={48} color="#10b981" />
+              <Text style={styles.successText}>
+                Product Image Sent Successfully!
+              </Text>
+            </View>
+          )}
+
+          {/* Image Upload Section */}
+          {!isVerified && (
+            <View style={styles.uploadSection}>
+              {image ? (
+                <View style={styles.previewContainer}>
+                  <Text style={styles.previewTitle}>Preview</Text>
+                  <Image source={{ uri: image }} style={styles.image} />
+                  <BaseButton
+                    style={styles.retakeButton}
+                    onPress={() => setImage(null)}
+                    size="medium"
+                    variant="primary"
+                  >
+                    Retake Photo
+                  </BaseButton>
+                </View>
+              ) : (
+                <BaseButton
+                  style={styles.cameraButton}
+                  onPress={takePhoto}
+                  size="large"
+                  variant="primary"
                 >
-                  <Text style={styles.retakeButtonText}>Retake Photo</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity style={styles.cameraButton} onPress={takePhoto}>
-                <MaterialIcons name="camera-alt" size={32} color="#ffffff" />
-              </TouchableOpacity>
-            )}
+                  <MaterialIcons name="camera-alt" size={32} color="#ffffff" />
+                </BaseButton>
+              )}
 
-            {image && (
-              <TouchableOpacity
-                style={styles.uploadButton}
-                onPress={uploadPhoto}
-                disabled={isUploading}
-              >
-                <Text style={styles.uploadButtonText}>
-                  {isUploading ? "Uploading..." : "Upload Photo"}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
+              {image && (
+                <BaseButton
+                  style={styles.uploadButton}
+                  onPress={uploadPhoto}
+                  size="medium"
+                  variant="primary"
+                  disabled={isUploading}
+                >
+                  {isUploading ? "Uploading..." : "Send Photo"}
+                </BaseButton>
+              )}
+            </View>
+          )}
 
-        {/* Loading Indicator */}
-        {isUploading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Uploading...</Text>
-          </View>
-        )}
+          {/* Loading Indicator */}
+          {isUploading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#007AFF" />
+              <Text style={styles.loadingText}>Uploading...</Text>
+            </View>
+          )}
 
-        {/* Success Message */}
-        {isVerified && (
-          <View style={styles.successContainer}>
-            <MaterialIcons name="check-circle" size={48} color="#10b981" />
-            <Text style={styles.successText}>
-              Product Verified Successfully!
+          <View style={styles.tipsContainer}>
+            <Text style={styles.tipTitle}>Notes:</Text>
+            <Text style={styles.tipItem}>
+              • Ensure the product is well-lit and the photo is clear.
+            </Text>
+            <Text style={styles.tipItem}>
+              • Capture the entire product in the frame, avoiding any blur or
+              obstructions.
+            </Text>
+            <Text style={styles.tipItem}>
+              • Take a close-up shot if possible, highlighting any unique
+              features of the product.
+            </Text>
+            <Text style={styles.tipItem}>
+              • Avoid any reflections or shadows that could obscure the product
+              details.
+            </Text>
+            <Text style={styles.tipItem}>
+              • After taking the photo, review it for clarity before uploading.
             </Text>
           </View>
-        )}
 
-        {/* Confirmation Section */}
-        {isVerified && (
-          <View style={styles.confirmationSection}>
-            <Text style={styles.confirmationText}>
-              Please confirm that the product matches your expectations.
-            </Text>
-            <TouchableOpacity
-              style={styles.confirmButton}
-              onPress={confirmProduct}
-            >
-              <Text style={styles.confirmButtonText}>Confirm Product</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Back Button */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <MaterialIcons name="arrow-back" size={24} color="#007AFF" />
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
+          <Text style={styles.description}>
+            Once you upload the photo, a notification will be sent to the
+            service owner for confirmation. Wait for their response before
+            proceeding.
+          </Text>
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: "#f8fafc",
   },
   content: {
@@ -236,6 +231,24 @@ const styles = StyleSheet.create({
     color: "#64748b",
     marginBottom: 20,
     textAlign: "center",
+  },
+  tipsContainer: {
+    marginTop: 16,
+    padding: 10,
+    backgroundColor: "#f0f4f8",
+    borderRadius: 8,
+  },
+  tipTitle: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 16,
+    color: "#1e293b",
+    marginBottom: 8,
+  },
+  tipItem: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "#4b5563",
+    marginBottom: 8,
   },
   uploadSection: {
     alignItems: "center",
@@ -267,8 +280,7 @@ const styles = StyleSheet.create({
   retakeButton: {
     backgroundColor: "#ef4444",
     padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
+    marginBottom: 14,
   },
   retakeButtonText: {
     color: "#ffffff",
@@ -276,10 +288,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   uploadButton: {
-    backgroundColor: "#007AFF",
     padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
   },
   uploadButtonText: {
     color: "#ffffff",
@@ -327,16 +336,5 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontFamily: "Inter-SemiBold",
     fontSize: 16,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 20,
-  },
-  backButtonText: {
-    fontFamily: "Inter-SemiBold",
-    fontSize: 16,
-    color: "#007AFF",
-    marginLeft: 8,
   },
 });

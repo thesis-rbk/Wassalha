@@ -7,36 +7,27 @@ import {
   TextInput,
   Button,
 } from "react-native";
-import axiosInstance from '@/config';
+import axiosInstance from "@/config";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
 import { TabBar } from "@/components/navigation/TabBar";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { Card } from "@/components/Card";
 import UserCard from "@/components/fetchCards";
-import {
-  Plane,
-  ShoppingBag,
-  MapPin,
-  Crown,
-} from "lucide-react-native";
-import { Colors } from "@/constants/Colors";
-import { useColorScheme } from "@/hooks/useColorScheme";
+import { Plane, ShoppingBag, MapPin, Crown } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { useTheme } from "@/context/ThemeContext";
-import { Traveler } from "@/types/Traveler"
+import { Traveler } from "@/types/Traveler";
 // Import the NotificationItem component
-import axios from "axios";
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home");
   const [travelers, setTravelers] = useState<Traveler[]>([]);
   const [sponsors, setSponsors] = useState<Traveler[]>([]);
-  const [notifications, setNotifications] = useState<{ message: string, timestamp: number }[]>([]);
-  const [customMessage, setCustomMessage] = useState<string>('');
-  const colorScheme = useColorScheme() ?? "light";
+  const [notifications, setNotifications] = useState<
+    { message: string; timestamp: number }[]
+  >([]);
+  const [customMessage, setCustomMessage] = useState<string>("");
   const router = useRouter();
-  const { theme } = useTheme();
 
   useEffect(() => {
     handleBestTraveler();
@@ -61,7 +52,7 @@ export default function HomeScreen() {
     {
       title: "Order",
       icon: <ShoppingBag size={40} color="white" />,
-      route: "../test/order" as const,
+      route: "../orders&requests/order" as const,
     },
     {
       title: "Pickup",
@@ -89,15 +80,15 @@ export default function HomeScreen() {
       ...prev,
       { message: customMessage, timestamp: Date.now() },
     ]);
-    setCustomMessage('');
+    setCustomMessage("");
   };
 
   return (
     <ThemedView style={styles.container}>
       <TopNavigation
         title="Wassalha"
-        onMenuPress={() => { }}
-        onNotificationPress={() => { }}
+        onMenuPress={() => {}}
+        onNotificationPress={() => {}}
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -131,7 +122,11 @@ export default function HomeScreen() {
                   name="traveler"
                   score={traveler.score}
                   gender={traveler.user.profile.gender}
-                  img={traveler.user.profile.image?.url ? traveler.user.profile.image.url : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCZlf5lc5tX-0gY-y94pGS0mQdL-D0lCH2OQ&s"}
+                  img={
+                    traveler.user.profile.image?.url
+                      ? traveler.user.profile.image.url
+                      : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCZlf5lc5tX-0gY-y94pGS0mQdL-D0lCH2OQ&s"
+                  }
                 />
               ))}
             </View>
@@ -148,7 +143,11 @@ export default function HomeScreen() {
                     name="sponsors"
                     score={sponsor.score}
                     gender={sponsor.user.profile.gender}
-                    img={sponsor.user.profile.image?.url ? sponsor.user.profile.image.url : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCZlf5lc5tX-0gY-y94pGS0mQdL-D0lCH2OQ&s"}
+                    img={
+                      sponsor.user.profile.image?.url
+                        ? sponsor.user.profile.image.url
+                        : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCZlf5lc5tX-0gY-y94pGS0mQdL-D0lCH2OQ&s"
+                    }
                   />
                 ))}
               </View>
@@ -217,14 +216,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
-    color: "white"
+    color: "white",
   },
   travelersSection: {
     marginTop: 16,
     paddingVertical: 16,
   },
   listContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 16,
     gap: 16,
   },
@@ -234,14 +233,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   inputContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   input: {
     flex: 1,
     height: 40,
-    borderColor: 'gray',
+    borderColor: "gray",
     borderWidth: 1,
     marginRight: 10,
     paddingHorizontal: 10,
