@@ -25,11 +25,13 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { ThemedText } from '@/components/ThemedText';
 import { useTheme } from '@/context/ThemeContext';
 import { TopNavigationProps } from '@/types/TopNavigationProps';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useRouter, Link } from 'expo-router';
 import { SideMenu } from '@/types/Sidemenu';
 import { RootState } from '@/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logout } from '../../store/authSlice';
+import { useNotification } from '@/context/NotificationContext';
 // Define valid app routes
 
 
@@ -49,14 +51,27 @@ export function TopNavigation({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const { user, token } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch();
+  const { unreadCount } = useNotification();
   console.log("User:", user);
 
   const handleLogout = async () => {
-    await AsyncStorage.removeItem("jwtToken");
-    router.push("/auth/login");
     try {
-      await AsyncStorage.removeItem('jwtToken');
-      router.push('/');
+      console.log("Starting logout process...");
+      
+      // 1. Clear Redux state
+      dispatch(logout());
+      console.log("Redux state cleared");
+      
+      // 2. Clear ALL AsyncStorage items related to authentication
+      await AsyncStorage.removeItem("jwtToken");
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("user");
+      console.log("AsyncStorage items cleared");
+      
+      // 3. Navigate to login screen (only once)
+      router.replace("/auth/login");
+      console.log("Redirected to login");
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -74,7 +89,7 @@ export function TopNavigation({
 
 
   const menuItems: SideMenu[] = [
-    { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/test/Notifications' },
+    { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/screens/NotificationsScreen' },
     { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
     { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips', route: '/test/Travel' },
     { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request', route: '/productDetails/create-order' },
@@ -109,8 +124,26 @@ export function TopNavigation({
           style={styles.searchInput}
           placeholder="Search"
         />
-        <TouchableOpacity onPress={onNotificationPress}>
-          <Bell color="black" size={24} />
+        <TouchableOpacity 
+          onPress={() => {
+            try {
+              console.log('Attempting to navigate to NotificationsScreen');
+              router.push('/screens/NotificationsScreen');
+            } catch (err) {
+              console.error('Navigation error:', err);
+            }
+          }}
+        >
+          <View style={styles.notificationContainer}>
+            <Bell color="black" size={24} />
+            {unreadCount > 0 && (
+              <View style={styles.badge}>
+                <ThemedText style={styles.badgeText}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </ThemedText>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -285,5 +318,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 20,
     backgroundColor: "#e0e0e0",
-  }
+  },
+  notificationContainer: {
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#E91E63',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+    paddingHorizontal: 4,
+  },
 });

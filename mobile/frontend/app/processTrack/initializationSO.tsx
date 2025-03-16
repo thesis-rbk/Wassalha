@@ -27,6 +27,7 @@ import { BACKEND_URL } from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
+import { useNotification } from '@/context/NotificationContext';
 
 export default function InitializationSO() {
   const params = useLocalSearchParams();
@@ -39,6 +40,7 @@ export default function InitializationSO() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const { sendNotification } = useNotification();
 
   // Progress steps
   const progressSteps = [
@@ -115,6 +117,34 @@ export default function InitializationSO() {
         });
         console.log("Offer status updated successfully");
 
+        console.log("Current user ID:", user?.id);
+        console.log("Request params:", params);
+
+        console.log("🧪 DEBUGGING NOTIFICATION DATA:");
+        console.log("- Logged in user:", user);
+        console.log("- Params received:", params);
+        console.log("- Notification data:", {
+          travelerId: params.travelerId,
+          status: 'ACCEPTED',
+          requestDetails: {
+            requesterId: user?.id,
+            goodsName: params.goodsName,
+            requestId: params.idRequest,
+            orderId: params.idOrder
+          }
+        });
+
+        sendNotification('offer_response', {
+          travelerId: params.travelerId,
+          status: 'ACCEPTED',
+          requestDetails: {
+            requesterId: user?.id,
+            goodsName: params.goodsName,
+            requestId: params.idRequest,
+            orderId: params.idOrder
+          }
+        });
+
         router.replace({
           pathname: "/processTrack/verificationSO",
           params: params,
@@ -159,6 +189,16 @@ export default function InitializationSO() {
               );
 
               if (response.status === 200) {
+                sendNotification('order_cancelled', {
+                  travelerId: params.travelerId,
+                  requestDetails: {
+                    requesterId: user?.id,
+                    goodsName: params.goodsName || 'this item',
+                    requestId: params.idRequest,
+                    orderId: order.id
+                  }
+                });
+                
                 Alert.alert(
                   "Order Cancelled",
                   "The request is now available for new offers.",
