@@ -171,7 +171,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
                     <div className={styles.messageSender}>
                       <strong>{message.sender.name}</strong>
                       <span className={styles.messageTime}>
-                        {format(new Date(message.createdAt), 'MMM dd, yyyy HH:mm')}
+                        {message.createdAt ? format(new Date(message.createdAt), 'MMM dd, yyyy HH:mm') : 'Unknown date'}
                       </span>
                     </div>
                     <div className={styles.messageContent}>

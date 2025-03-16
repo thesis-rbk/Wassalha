@@ -110,10 +110,7 @@ export function TopNavigation({
         <TouchableOpacity onPress={toggleMenu}>
           <Menu color="black" size={24} />
         </TouchableOpacity>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search"
-        />
+       
         <TouchableOpacity onPress={onNotificationPress}>
           <Bell color="black" size={24} />
         </TouchableOpacity>

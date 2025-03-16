@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 20,
-    color: Colors.light.secondary,
+    color: 'black',
   },
   button: {
     backgroundColor: '#FFD700', // Gold color
