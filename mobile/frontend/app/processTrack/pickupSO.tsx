@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import ProgressBar from "../../components/ProgressBar";
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, FlatList, ActivityIndicator, Text, TouchableOpacity } from "react-native";
+import { View, StyleSheet, FlatList, ActivityIndicator, Text, TouchableOpacity, Alert } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import axiosInstance from "../../config";
@@ -12,9 +12,17 @@ import { RootState } from "../../store";
 import { Pickup } from "../../types/Pickup";
 import { MapPin, CheckCircle, XCircle, AlertCircle } from "lucide-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import { usePickupActions } from "../../hooks/usePickupActions";
+import { QRCodeModal } from "../pickup/QRCodeModal";
+import io from "socket.io-client";
+import { Console } from "console";
+
+const SOCKET_URL = "http://172.20.10.3:4000"; 
 
 export default function PickupOwner() {
   const router = useRouter();
+  const { user } = useSelector((state: RootState) => state.auth);
+  const userId = user?.id;
 
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -27,10 +35,71 @@ export default function PickupOwner() {
   const [pickups, setPickups] = useState<Pickup[]>([]);
   const [showPickup, setShowPickup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<any[]>([]); // State for suggestions
-  const [showSuggestions, setShowSuggestions] = useState(false); // Toggle suggestions view
-  const { user } = useSelector((state: RootState) => state.auth);
-  const userId = user?.id;
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const { handleAccept, showStoredQRCode, showQRCode, setShowQRCode, qrCodeData } = usePickupActions(
+    pickups,
+    setPickups,
+    userId
+  );
+
+  // Socket.IO setup
+  useEffect(() => {
+    const socket = io(SOCKET_URL, {
+      transports: ["websocket"],
+    });
+
+    socket.on("connect", () => {
+      console.log("✅ Connected to Socket.IO server (PickupOwner)");
+      // Join rooms for all existing pickups
+      pickups.forEach((pickup) => {
+        const room = `pickup:${pickup.id}`;
+        socket.emit("joinPickupRoom", pickup.id); // Backend expects just pickupId
+        console.log(`Joined room: ${room}`);
+      });
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("❌ Socket.IO connection error:", error.message);
+    });
+
+    socket.on("suggestionUpdate", (data: any) => {
+      console.log("📩 Received suggestionUpdate (PickupOwner):", data);
+      // Update pickups if the pickup itself changes, otherwise add to suggestions
+      setPickups((prev) =>
+        prev.some((p) => p.id === data.pickupId)
+          ? prev.map((p) => (p.id === data.pickupId ? { ...p, ...data } : p))
+          : [...prev, { ...data, id: data.pickupId }]
+      );
+      setSuggestions((prev) => [...prev, data]);
+      Alert.alert("New Suggestion", `Traveler suggested a pickup for Order #${data.orderId}`);
+    });
+
+    socket.on("pickupAccepted", (updatedPickup: Pickup) => {
+      console.log("✅ Received pickupAccepted (PickupOwner):", updatedPickup);
+      setPickups((prev) =>
+        prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
+      );
+      Alert.alert("Pickup Accepted", `Pickup #${updatedPickup.id} is now scheduled!`);
+    });
+
+    socket.on("statusUpdate", (updatedPickup: Pickup) => {
+      console.log("🔄 Received statusUpdate (PickupOwner):", updatedPickup);
+      setPickups((prev) =>
+        prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
+      );
+      Alert.alert("Status Updated", `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ Disconnected from Socket.IO server (PickupOwner)");
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [pickups]);
 
   useEffect(() => {
     fetchPickups();
@@ -51,38 +120,12 @@ export default function PickupOwner() {
         }
       );
       setPickups(response.data.data);
-      console.log("Pickups:", response.data.data);
+      console.log("Pickups fetched:", response.data.data);
     } catch (error) {
       console.error("Error fetching pickups:", error);
-      alert("Failed to fetch pickups. Please try again.");
+      Alert.alert("Error", "Failed to fetch pickups. Please try again.");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleAccept = async (pickupId: number): Promise<void> => {
-    try {
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) throw new Error("No authentication token found");
-
-      await axiosInstance.put(
-        "/api/pickup/accept",
-        { pickupId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      alert("Pickup accepted!");
-      setPickups((prev) =>
-        prev.map((pickup) =>
-          pickup.id === pickupId
-            ? { ...pickup, status: "IN_PROGRESS", userconfirmed: true }
-            : pickup
-        )
-      );
-      fetchPickups();
-    } catch (error) {
-      console.error("Error accepting pickup:", error);
-      alert("Failed to accept pickup. Please try again.");
     }
   };
 
@@ -97,16 +140,15 @@ export default function PickupOwner() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert("Pickup cancelled!");
+      Alert.alert("Success", "Pickup cancelled!");
       setPickups((prev) =>
         prev.map((pickup) =>
           pickup.id === pickupId ? { ...pickup, status: "CANCELLED" } : pickup
         )
       );
-      fetchPickups();
     } catch (error) {
       console.error("Error cancelling pickup:", error);
-      alert("Failed to cancel pickup. Please try again.");
+      Alert.alert("Error", "Failed to cancel pickup. Please try again.");
     }
   };
 
@@ -126,43 +168,44 @@ export default function PickupOwner() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-          },        }
+          },
+        }
       );
 
       if (response.data.success) {
         setSuggestions(response.data.data);
         setShowSuggestions(true);
       } else {
-        alert("No suggestions found for this pickup.");
+        Alert.alert("Info", "No suggestions found for this pickup.");
       }
     } catch (error) {
       console.error("Error fetching suggestions:", error);
-      alert("Failed to fetch suggestions. Please try again.");
+      Alert.alert("Error", "Failed to fetch suggestions. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const isTraveler = (pickup: Pickup) => userId === pickup.order.travelerId;
-
+  const isTraveler = (pickup: Pickup) =>console.log("pickup", pickup);
+    ;
   const renderItem = ({ item }: { item: Pickup }) => {
     const userIsTraveler = isTraveler(item);
-    const userIsRequester = !userIsTraveler;
+    // const userIsRequester = !userIsTraveler;
 
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-        <Text style={styles.sectionTitle}>
-          Order #{item.orderId} - {item.pickupType}
-        </Text>
-        <TouchableOpacity
-          style={styles.suggestionsLink}
-          onPress={() => fetchSuggestions(item.id)}
-        >
-          <Text style={styles.suggestionsText}>See Previous</Text>
-          <Text style={styles.suggestionsText}>Suggestions</Text>
-        </TouchableOpacity>
-      </View>
+          <Text style={styles.sectionTitle}>
+            Order #{item.orderId} - {item.pickupType}
+          </Text>
+          <TouchableOpacity
+            style={styles.suggestionsLink}
+            onPress={() => fetchSuggestions(item.id)}
+          >
+            <Text style={styles.suggestionsText}>See Previous</Text>
+            <Text style={styles.suggestionsText}>Suggestions</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.orderRow}>
           <View style={styles.iconContainer}>
@@ -216,6 +259,14 @@ export default function PickupOwner() {
             <Text style={styles.successText}>
               Pickup Accepted! Package on the way.
             </Text>
+            <BaseButton
+              variant="primary"
+              size="small"
+              style={styles.actionButton}
+              onPress={() => showStoredQRCode(item)}
+            >
+              Show QR Code
+            </BaseButton>
           </View>
         )}
 
@@ -297,7 +348,7 @@ export default function PickupOwner() {
           renderItem={({ item }) => (
             <View style={styles.suggestionItem}>
               <Text style={styles.suggestionText}>
-                {item.pickupType} by {item.user.name}
+                {item.pickupType} by {item.user?.name || "Unknown"}
               </Text>
               <Text style={styles.suggestionDetail}>
                 Location: {item.location || "N/A"}, {item.address || "N/A"}
@@ -361,6 +412,7 @@ export default function PickupOwner() {
           )}
         </>
       )}
+      <QRCodeModal visible={showQRCode} qrCodeData={qrCodeData} onClose={() => setShowQRCode(false)} />
     </ThemedView>
   );
 }
@@ -375,6 +427,7 @@ const getStatusColor = (status: string): string => {
   }
 };
 
+// Styles remain unchanged
 const styles = StyleSheet.create({
   container: {
     flex: 1,

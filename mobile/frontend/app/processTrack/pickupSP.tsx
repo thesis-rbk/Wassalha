@@ -9,8 +9,8 @@ import {
   ActivityIndicator,
   ScrollView,
   Alert,
-  Modal,
   TouchableOpacity,
+  Modal,
 } from "react-native";
 import axiosInstance from "../../config";
 import Pickups from "../pickup/pickup";
@@ -20,10 +20,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Pickup } from "../../types/Pickup";
 import { MapPin, CheckCircle, AlertCircle } from "lucide-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
-import QRCode from "react-native-qrcode-svg";
+import { usePickupActions } from "../../hooks/usePickupActions";
+import { QRCodeModal } from "../pickup/QRCodeModal";
+import io from "socket.io-client";
+// import { BarCodeScanner } from "expo-barcode-scanner"; // Left commented as in original
+
+const SOCKET_URL = "http://172.20.10.3:4000"; // Match backend port from server.js
 
 export default function PickupTraveler() {
   const router = useRouter();
+  const { user } = useSelector((state: RootState) => state.auth);
+  const userId = user?.id;
 
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -36,18 +43,84 @@ export default function PickupTraveler() {
   const [pickups, setPickups] = useState<Pickup[]>([]);
   const [showPickup, setShowPickup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useSelector((state: RootState) => state.auth);
-  const userId = user?.id;
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [selectedPickupId, setSelectedPickupId] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [showQRCode, setShowQRCode] = useState(false);
-  const [qrCodeData, setQRCodeData] = useState<string>("");
+  const [showScanner, setShowScanner] = useState(false);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+
+  const { handleAccept, showStoredQRCode, showQRCode, setShowQRCode, qrCodeData } = usePickupActions(
+    pickups,
+    setPickups,
+    userId
+  );
+
+  // Socket.IO setup
+  useEffect(() => {
+    const socket = io(SOCKET_URL, {
+      transports: ["websocket"],
+    });
+
+    socket.on("connect", () => {
+      console.log("✅ Connected to Socket.IO server (PickupTraveler)");
+      pickups.forEach((pickup) => {
+        const room = `pickup:${pickup.id}`;
+        socket.emit("joinPickupRoom", pickup.id); // Backend expects pickupId
+        console.log(`Joined room: ${room}`);
+      });
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("❌ Socket.IO connection error:", error.message);
+    });
+
+    socket.on("suggestionUpdate", (data: any) => {
+      console.log("📩 Received suggestionUpdate (PickupTraveler):", data);
+      setPickups((prev) =>
+        prev.some((p) => p.id === data.pickupId)
+          ? prev.map((p) => (p.id === data.pickupId ? { ...p, ...data } : p))
+          : [...prev, { ...data, id: data.pickupId }]
+      );
+      setSuggestions((prev) => [...prev, data]);
+      Alert.alert("New Suggestion", `New pickup suggestion for Order #${data.orderId}`);
+    });
+
+    socket.on("pickupAccepted", (updatedPickup: Pickup) => {
+      console.log("✅ Received pickupAccepted (PickupTraveler):", updatedPickup);
+      setPickups((prev) =>
+        prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
+      );
+      Alert.alert("Pickup Accepted", `Pickup #${updatedPickup.id} is now scheduled!`);
+    });
+
+    socket.on("statusUpdate", (updatedPickup: Pickup) => {
+      console.log("🔄 Received statusUpdate (PickupTraveler):", updatedPickup);
+      setPickups((prev) =>
+        prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
+      );
+      Alert.alert("Status Updated", `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ Disconnected from Socket.IO server (PickupTraveler)");
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [pickups]);
 
   useEffect(() => {
     fetchPickups();
+    requestCameraPermission();
   }, []);
+
+  const requestCameraPermission = async () => {
+    // const { status } = await BarCodeScanner.requestPermissionsAsync();
+    // setHasPermission(status === "granted");
+    setHasPermission(true); // Placeholder until BarCodeScanner is uncommented
+  };
 
   const fetchPickups = async (): Promise<void> => {
     try {
@@ -64,69 +137,12 @@ export default function PickupTraveler() {
         }
       );
       setPickups(response.data.data);
-      console.log("Pickups:", response.data.data);
+      console.log("Pickups (Traveler):", response.data.data);
     } catch (error) {
-      console.error("Error fetching pickups:", error);
-      alert("Failed to fetch pickups. Please try again.");
+      console.error("Error fetching pickups (Traveler):", error);
+      Alert.alert("Error", "Failed to fetch pickups. Please try again.");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const generateQRCodeData = (pickup: Pickup): string => {
-    return JSON.stringify({
-      pickupId: pickup.id,
-      orderId: pickup.orderId,
-      userId: userId,
-      timestamp: new Date().toISOString(),
-    });
-  };
-
-  const handleAccept = async (pickupId: number): Promise<void> => {
-    try {
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) throw new Error("No authentication token found");
-
-      // Find the pickup to check if userconfirmed is already true
-      const pickup = pickups.find((p) => p.id === pickupId);
-      if (!pickup) throw new Error("Pickup not found");
-
-      // Generate QR code data only if this acceptance completes the confirmation
-      let qrCode = "";
-      if (pickup.userconfirmed) {
-        qrCode = generateQRCodeData({ ...pickup, travelerconfirmed: true });
-      }
-
-      const response = await axiosInstance.put(
-        "/api/pickup/accept",
-        { pickupId, qrCode },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      alert("Pickup accepted!");
-      setPickups((prev) =>
-        prev.map((p) =>
-          p.id === pickupId
-            ? {
-                ...p,
-                status: "IN_PROGRESS",
-                travelerconfirmed: true,
-                qrCode: qrCode || p.qrCode || response.data.qrCode, // Update with QR code from response if provided
-              }
-            : p
-        )
-      );
-
-      // If both are confirmed now, show the QR code
-      if (pickup.userconfirmed && qrCode) {
-        setQRCodeData(qrCode);
-        setShowQRCode(true);
-      }
-
-      fetchPickups(); // Refresh pickups to get the latest data from the backend
-    } catch (error) {
-      console.error("Error accepting pickup:", error);
-      alert("Failed to accept pickup. Please try again.");
     }
   };
 
@@ -146,23 +162,19 @@ export default function PickupTraveler() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert("Pickup cancelled!");
+      Alert.alert("Success", "Pickup cancelled!");
       setPickups((prev) =>
         prev.map((pickup) =>
           pickup.id === pickupId ? { ...pickup, status: "CANCELLED" } : pickup
         )
       );
-      fetchPickups();
     } catch (error) {
       console.error("Error cancelling pickup:", error);
-      alert("Failed to cancel pickup. Please try again.");
+      Alert.alert("Error", "Failed to cancel pickup. Please try again.");
     }
   };
 
-  const handleUpdateStatus = async (
-    pickupId: number,
-    newStatus: Pickup["status"]
-  ): Promise<void> => {
+  const handleUpdateStatus = async (pickupId: number, newStatus: Pickup["status"]): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("jwtToken");
       if (!token) throw new Error("No authentication token found");
@@ -187,12 +199,6 @@ export default function PickupTraveler() {
       );
 
       Alert.alert("Success", `Pickup status updated to ${newStatus} successfully!`);
-      setPickups((prev) =>
-        prev.map((pickup) =>
-          pickup.id === pickupId ? { ...pickup, status: newStatus } : pickup
-        )
-      );
-      fetchPickups();
       setStatusModalVisible(false);
     } catch (error) {
       console.error("Error updating pickup status:", error);
@@ -211,36 +217,61 @@ export default function PickupTraveler() {
       const token = await AsyncStorage.getItem("jwtToken");
       if (!token) throw new Error("No authentication token found");
 
-      const response = await axiosInstance.get(
-        `/api/pickup/history/${pickupId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axiosInstance.get(`/api/pickup/history/${pickupId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.data.success) {
         setSuggestions(response.data.data);
         setShowSuggestions(true);
       } else {
-        alert("No suggestions found for this pickup.");
+        Alert.alert("Info", "No suggestions found for this pickup.");
       }
     } catch (error) {
       console.error("Error fetching suggestions:", error);
-      alert("Failed to fetch suggestions. Please try again.");
+      Alert.alert("Error", "Failed to fetch suggestions. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const showStoredQRCode = (qrCode: string) => {
-    setQRCodeData(qrCode);
-    setShowQRCode(true);
+  const handleScan = async ({ type, data }: { type: string; data: string }) => {
+    try {
+      const scannedData = JSON.parse(data);
+      const pickup = pickups.find((p) => p.id === scannedData.pickupNumber);
+      if (!pickup || pickup.orderId !== scannedData.orderNumber) {
+        Alert.alert("Error", "Invalid QR code for this pickup.");
+        setShowScanner(false);
+        return;
+      }
+
+      if (pickup.status === "COMPLETED") {
+        Alert.alert("Info", "This pickup is already completed.");
+        setShowScanner(false);
+        return;
+      }
+
+      const token = await AsyncStorage.getItem("jwtToken");
+      if (!token) throw new Error("No authentication token found");
+
+      await axiosInstance.put(
+        "/api/pickup/status",
+        { pickupId: pickup.id, newStatus: "COMPLETED" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      Alert.alert("Success", "Pickup completed successfully!");
+      setShowScanner(false);
+    } catch (error) {
+      console.error("Error processing QR scan:", error);
+      Alert.alert("Error", "Failed to complete pickup. Please try again.");
+      setShowScanner(false);
+    }
   };
 
-  const isRequester = (pickup: Pickup) => userId !== pickup.order.travelerId;
-
+  const isRequester = (pickup: Pickup) => console.log("pickup", pickup);
   const renderItem = ({ item }: { item: Pickup }) => {
     const userIsRequester = isRequester(item);
 
@@ -250,10 +281,7 @@ export default function PickupTraveler() {
           <Text style={styles.sectionTitle}>
             Order #{item.orderId} - {item.pickupType}
           </Text>
-          <TouchableOpacity
-            style={styles.suggestionsLink}
-            onPress={() => fetchSuggestions(item.id)}
-          >
+          <TouchableOpacity style={styles.suggestionsLink} onPress={() => fetchSuggestions(item.id)}>
             <Text style={styles.suggestionsText}>See Previous</Text>
             <Text style={styles.suggestionsText}>Suggestions</Text>
           </TouchableOpacity>
@@ -290,10 +318,7 @@ export default function PickupTraveler() {
           <View style={styles.detailContent}>
             <Text style={styles.orderLabel}>Status</Text>
             <View
-              style={[
-                styles.statusBadge,
-                { backgroundColor: getStatusColor(item.status) },
-              ]}
+              style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}
             >
               <Text style={styles.badgeText}>{item.status}</Text>
             </View>
@@ -331,9 +356,17 @@ export default function PickupTraveler() {
               variant="primary"
               size="small"
               style={styles.actionButton}
-              onPress={() => showStoredQRCode(item.qrCode || generateQRCodeData(item))}
+              onPress={() => showStoredQRCode(item)}
             >
               Show QR Code
+            </BaseButton>
+            <BaseButton
+              variant="primary"
+              size="small"
+              style={styles.actionButton}
+              onPress={() => setShowScanner(true)}
+            >
+              Scan QR Code
             </BaseButton>
           </View>
         )}
@@ -414,7 +447,7 @@ export default function PickupTraveler() {
           renderItem={({ item }) => (
             <View style={styles.suggestionItem}>
               <Text style={styles.suggestionText}>
-                {item.pickupType} by {item.user.name}
+                {item.pickupType} by {item.user?.name || "Unknown"}
               </Text>
               <Text style={styles.suggestionDetail}>
                 Location: {item.location || "N/A"}, {item.address || "N/A"}
@@ -488,40 +521,8 @@ export default function PickupTraveler() {
         </>
       )}
 
-      {/* QR Code Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showQRCode}
-        onRequestClose={() => setShowQRCode(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Your Pickup QR Code</Text>
-            <View style={styles.qrCodeContainer}>
-              <QRCode
-                value={qrCodeData}
-                size={200}
-                color="#1e293b"
-                backgroundColor="white"
-              />
-            </View>
-            <Text style={styles.qrInstructions}>
-              Show this QR code to identify yourself when picking up your package.
-            </Text>
-            <BaseButton
-              variant="primary"
-              size="small"
-              style={styles.cancelModalButton}
-              onPress={() => setShowQRCode(false)}
-            >
-              Close
-            </BaseButton>
-          </View>
-        </View>
-      </Modal>
+      <QRCodeModal visible={showQRCode} qrCodeData={qrCodeData || ''} onClose={() => setShowQRCode(false)} />
 
-      {/* Status Selection Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -556,6 +557,34 @@ export default function PickupTraveler() {
             </BaseButton>
           </View>
         </View>
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showScanner}
+        onRequestClose={() => setShowScanner(false)}
+      >
+        {/* <View style={styles.scannerOverlay}>
+          {hasPermission === null ? (
+            <Text style={styles.scannerText}>Requesting camera permission...</Text>
+          ) : hasPermission === false ? (
+            <Text style={styles.scannerText}>Camera permission denied</Text>
+          ) : (
+            <BarCodeScanner
+              onBarCodeScanned={handleScan}
+              style={StyleSheet.absoluteFillObject}
+            />
+          )}
+          <BaseButton
+            variant="primary"
+            size="small"
+            style={styles.cancelModalButton}
+            onPress={() => setShowScanner(false)}
+          >
+            Cancel
+          </BaseButton>
+        </View> */}
       </Modal>
     </ScrollView>
   );
@@ -822,14 +851,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 20,
   },
-  qrCodeContainer: {
+  scannerOverlay: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    marginVertical: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  qrInstructions: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#64748b",
+  scannerText: {
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 18,
+    color: "white",
     textAlign: "center",
     marginBottom: 20,
   },

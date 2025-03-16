@@ -1,9 +1,9 @@
 require("dotenv").config();
 const morgan = require("morgan");
-// Import dependencies
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
+const { Server } = require("socket.io"); // Import Server explicitly
 const path = require("path");
 
 // Import routes
@@ -21,7 +21,7 @@ const mobileRequestRoutes = require("./routes/mobileRequestRoutes");
 const mobileGoodsRoutes = require("./routes/mobileGoodsRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const processRoutes = require("./routes/processRoutes");
-const pickupRoutes = require("./routes/pickup.route");
+const pickupRoutes = require("./routes/pickup.route"); // No need for factory function
 const goodsPostRoutes = require("./routes/goodsPost.route");
 const promoPostRoutes = require("./routes/promoPost.route");
 const paymentRoutes = require("./routes/payment.route");
@@ -32,16 +32,30 @@ const stripeRoutes = require("./routes/stripe.route");
 const adminRoutes = require("./routes/admin.route");
 const paymentProcessRoutes = require("./routes/paymentProcess.route");
 
-// Import socket
-const trackingSocket = require("./sockets/trackingSocket");
+// Import socket setup
+const setupSocket = require("./sockets/trackingSocket");
+
 const app = express();
 const server = http.createServer(app);
+
+// Initialize Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin:"http://172.20.10.3:4000",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+// Pass io to socket setup
+setupSocket(io);
+
 app.use(morgan("dev"));
 
 // Middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin:"http://172.20.10.3:4000",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -51,17 +65,13 @@ app.use(
 app.use(express.json());
 
 // Serve static files from the "uploads" directory
-app.use("/api/uploads", express.static(path.join(__dirname, "uploads"))); // Serve static files
+app.use("/api/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api", fetchRoute);
-// Routes
 
-// Routes (REST API will still work)
-app.use("/api/pickup", pickupRoutes);
+// Routes
+app.use("/api/pickup", pickupRoutes); // No io needed here
 app.use("/api/products", productRoutes);
 app.use("/api/scrape", scrapeRoutes);
-
-// Routes
-// API Routes
 app.use("/api", all);
 app.use("/api/requests", requestRoutes);
 app.use("/api/users", userRoutes);
@@ -72,7 +82,6 @@ app.use("/api/users/profile", profileRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/promo-posts", promoPostRoutes);
 app.use("/api/payments", paymentRoutes);
-app.use("/api/pickups", pickupRoutes);
 app.use("/api/service-providers", serviceProviderRoutes);
 app.use("/api/sponsorships", sponsorshipRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
@@ -84,7 +93,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/stripe", stripeRoutes);
 app.use("/api/payment-process", paymentProcessRoutes);
 
-// Add error logging middleware
+// Error logging middleware
 app.use((err, req, res, next) => {
   console.error("Error:", err);
   res.status(500).json({
@@ -94,19 +103,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Initialize socket
-trackingSocket(server);
 // Start server
-// Use `server.listen()` instead of `app.listen()`
-// **Why:**
-// The reason we need to use `server.listen()` here is because Express (`app`) is now being handled
-// by the underlying HTTP server (`server`) that we created with `http.createServer(app)`. This allows us to
-// run both Express routes and Socket.IO on the same server, preventing conflicts.
-//
-// If we were to use `app.listen()` and `server.listen()` both, it would try to listen on the same port twice,
-// which will result in an error.
-
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });

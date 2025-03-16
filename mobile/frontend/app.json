@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs camera access to scan QR codes."
+      }
     },
     "platforms": [
       "ios",
@@ -20,7 +23,9 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
+        "permissions": ["CAMERA"]
+
       }
     },
     "extra": {
@@ -48,7 +53,8 @@
           "photosPermission": "The app needs access to your photos to upload images.",
           "cameraPermission": "The app needs access to your camera to take photos."
         }
-      ]
+      ],
+      "expo-barcode-scanner"
     ],
     "experiments": {
       "typedRoutes": true
