@@ -82,88 +82,9 @@ async function checkIllegalItems(req, res) {
   });
 }
 
-// const verifyProduct = async (req, res) => {
-//   try {
-//     const file = req.file;
-//     if (!file) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "No file uploaded",
-//       });
-//     }
-
-//     let imageId = null; // Initialize imageId
-//     // Save the file path or process the image as needed
-//     const filePath = file.path;
-
-//     const mediaData = {
-//       url: req.file.path, // Assuming the path is the URL
-//       type: "IMAGE", // Get the MIME type of the file
-//       filename: req.file.filename, // Original filename
-//       // Add any other fields you want to save
-//       extension: "JPG", // Get the file extension from the MIME type
-//       size: req.file.size, // Get the size of the file
-//       width: 100, // Get the width of the image
-//       height: 100, // Get the height of the image
-//     };
-
-//     res.status(200).json({
-//       success: true,
-//       message: "Photo uploaded successfully",
-//       filePath,
-//     });
-//     try {
-//       const media = await prisma.media.create({
-//         data: mediaData,
-//       });
-//       imageId = media.id; // Get the ID of the newly created media entry
-//     } catch (error) {
-//       console.error("Error saving media:", error);
-//       return res
-//         .status(500)
-//         .json({ success: false, error: "Failed to save media" });
-//     }
-//   } catch (error) {
-//     console.error("Error uploading photo:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to upload photo",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// const confirmProduct = async (req, res) => {
-//   const { productId } = req.body;
-
-//   if (!productId) {
-//     return res.status(400).json({
-//       success: false,
-//       message: "Product ID is required",
-//     });
-//   }
-
-//   try {
-//     // Update the product status in the database
-//     // Example: await Product.update({ status: "confirmed" }, { where: { id: productId } });
-
-//     res.status(200).json({
-//       success: true,
-//       message: "Product confirmed successfully",
-//     });
-//   } catch (error) {
-//     console.error("Error confirming product:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to confirm product",
-//       error: error.message,
-//     });
-//   }
-// };
-
 const verifyProduct = async (req, res) => {
   try {
-    const { requestId } = req.body;
+    const { orderId } = req.body;
     const file = req.file;
 
     if (!file) {
@@ -188,13 +109,11 @@ const verifyProduct = async (req, res) => {
       data: mediaData,
     });
 
-    // Update request with verification image
-    await prisma.request.update({
-      where: { id: parseInt(requestId) },
+    // Update order with verification image
+    await prisma.order.update({
+      where: { id: parseInt(orderId) },
       data: {
         verificationImageId: media.id,
-        verificationStatus: "PENDING",
-        verificationDate: new Date(),
       },
     });
 
@@ -214,21 +133,20 @@ const verifyProduct = async (req, res) => {
 };
 
 const confirmProduct = async (req, res) => {
-  const { requestId } = req.body;
+  const { orderId } = req.body;
 
   try {
-    const updatedRequest = await prisma.request.update({
-      where: { id: parseInt(requestId) },
+    const updatedOrder = await prisma.goodsProcess.update({
+      where: { orderId: parseInt(orderId) },
       data: {
-        isVerified: true,
-        verificationStatus: "APPROVED",
+        status: "CONFIRMED",
       },
     });
 
     res.status(200).json({
       success: true,
       message: "Product verified successfully",
-      data: updatedRequest,
+      data: updatedOrder,
     });
   } catch (error) {
     console.error("Error confirming product:", error);
@@ -241,20 +159,20 @@ const confirmProduct = async (req, res) => {
 };
 
 const requestNewPhoto = async (req, res) => {
-  const { requestId } = req.body;
+  const { orderId } = req.body;
 
   try {
-    const updatedRequest = await prisma.request.update({
-      where: { id: parseInt(requestId) },
+    const updatedOrder = await prisma.order.update({
+      where: { id: parseInt(orderId) },
       data: {
-        verificationStatus: "NEEDS_NEW_PHOTO",
+        verificationImageId: null,
       },
     });
 
     res.status(200).json({
       success: true,
       message: "New photo requested successfully",
-      data: updatedRequest,
+      data: updatedOrder,
     });
   } catch (error) {
     console.error("Error requesting new photo:", error);

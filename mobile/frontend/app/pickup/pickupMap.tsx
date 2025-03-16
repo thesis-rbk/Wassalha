@@ -5,27 +5,45 @@ import { ThemedText } from "@/components/ThemedText";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
-import MapView, { Marker } from 'react-native-maps';
-import MapViewDirections from 'react-native-maps-directions';
-import * as Location from 'expo-location';
-import {SafeLocation} from "@/types/Pickup";
-import {PickupMapProps} from "@/types/Pickup";
+import MapView, { Marker } from "react-native-maps";
+import MapViewDirections from "react-native-maps-directions";
+import * as Location from "expo-location";
+import { SafeLocation } from "@/types/Pickup";
+import { PickupMapProps } from "@/types/Pickup";
 
-
-
-export default function PickupMap({ setCoordinates, setManualAddress }: PickupMapProps) {
-  const colorScheme = useColorScheme() ?? 'light';
+export default function PickupMap({
+  setCoordinates,
+  setManualAddress,
+}: PickupMapProps) {
+  const colorScheme = useColorScheme() ?? "light";
   const [mapModalVisible, setMapModalVisible] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<SafeLocation | null>(null);
-  const [currentPosition, setCurrentPosition] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<SafeLocation | null>(
+    null
+  );
+  const [currentPosition, setCurrentPosition] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   // Predefined safe locations in Tunisia
   const safeLocations: SafeLocation[] = [
-    { name: "Tunis-Carthage International Airport", latitude: 36.8510, longitude: 10.2272 },
-    { name: "Sousse Central Post Office", latitude: 35.8256, longitude: 10.6412 },
-    { name: "Djerba Midoun Police Station", latitude: 33.8076, longitude: 10.9975 },
-    { name: "Hammamet Bus Station", latitude: 36.4000, longitude: 10.6167 },
+    {
+      name: "Tunis-Carthage International Airport",
+      latitude: 36.851,
+      longitude: 10.2272,
+    },
+    {
+      name: "Sousse Central Post Office",
+      latitude: 35.8256,
+      longitude: 10.6412,
+    },
+    {
+      name: "Djerba Midoun Police Station",
+      latitude: 33.8076,
+      longitude: 10.9975,
+    },
+    { name: "Hammamet Bus Station", latitude: 36.4, longitude: 10.6167 },
     { name: "Sfax City Center Mall", latitude: 34.7406, longitude: 10.7603 },
   ];
 
@@ -44,18 +62,18 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
       flex: 1,
     },
     map: {
-      width: '100%',
-      height: '100%',
+      width: "100%",
+      height: "100%",
     },
     modalOverlay: {
       flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
     },
     modalContent: {
-      width: '90%',
-      height: '80%',
+      width: "90%",
+      height: "80%",
       backgroundColor: Colors[colorScheme].background,
       borderRadius: 10,
       padding: 10,
@@ -65,7 +83,7 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
       backgroundColor: Colors[colorScheme].primary,
       padding: 10,
       borderRadius: 5,
-      alignItems: 'center',
+      alignItems: "center",
     },
     confirmButtonText: {
       color: Colors[colorScheme].text,
@@ -77,8 +95,11 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
   const fetchCurrentLocation = async () => {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Permission to access location was denied');
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Denied",
+          "Permission to access location was denied"
+        );
         return;
       }
 
@@ -89,8 +110,8 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
       const { latitude, longitude } = location.coords;
       setCurrentPosition({ latitude, longitude });
     } catch (error) {
-      console.error('Error fetching current location:', error);
-      Alert.alert('Error', 'Failed to get current location');
+      console.error("Error fetching current location:", error);
+      Alert.alert("Error", "Failed to get current location");
     }
   };
 
@@ -110,7 +131,7 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
       setManualAddress(name);
       setMapModalVisible(false);
     } else {
-      Alert.alert('Error', 'Please select a location before confirming');
+      Alert.alert("Error", "Please select a location before confirming");
     }
   };
 
@@ -155,10 +176,15 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
               {safeLocations.map((location) => (
                 <Marker
                   key={location.name}
-                  coordinate={{ latitude: location.latitude, longitude: location.longitude }}
+                  coordinate={{
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                  }}
                   title={location.name}
                   onPress={() => handleMarkerPress(location)}
-                  pinColor={selectedLocation?.name === location.name ? 'green' : 'red'}
+                  pinColor={
+                    selectedLocation?.name === location.name ? "green" : "red"
+                  }
                 />
               ))}
 
@@ -166,12 +192,17 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
               {currentPosition && selectedLocation && (
                 <MapViewDirections
                   origin={currentPosition}
-                  destination={{ latitude: selectedLocation.latitude, longitude: selectedLocation.longitude }}
-                  apikey={GOOGLE_KEY || ''} // Replace with your Google Maps API key
+                  destination={{
+                    latitude: selectedLocation.latitude,
+                    longitude: selectedLocation.longitude,
+                  }}
+                  apikey={GOOGLE_KEY || ""} // Replace with your Google Maps API key
                   strokeWidth={3}
                   strokeColor="blue"
                   mode="DRIVING" // Can be WALKING, BICYCLING, TRANSIT, etc.
-                  onError={(error) => console.error('Directions error:', error)}
+                  onError={(error: Error) =>
+                    console.error("Directions error:", error)
+                  }
                 />
               )}
             </MapView>
@@ -180,7 +211,9 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
               onPress={handleConfirm}
               style={styles.confirmButton}
             >
-              <ThemedText style={styles.confirmButtonText}>Confirm Selection</ThemedText>
+              <ThemedText style={styles.confirmButtonText}>
+                Confirm Selection
+              </ThemedText>
             </BaseButton>
             <BaseButton
               variant="secondary"
