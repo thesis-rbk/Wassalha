@@ -52,16 +52,11 @@ class ServiceProviderController {
     // Fetch all service providers with required fields
     async getAllServiceProviders(req, res) {
         try {
-            console.log('Fetching all service providers...');
-            const serviceProviders = await prisma.serviceProvider.findMany({
+            const providers = await prisma.serviceProvider.findMany({
                 include: {
                     user: {
                         include: {
-                            profile: {
-                                include: {
-                                    image: true
-                                }
-                            }
+                            profile: true
                         }
                     }
                 },
@@ -69,18 +64,16 @@ class ServiceProviderController {
                     createdAt: 'desc'
                 }
             });
-            
-            console.log(`Found ${serviceProviders.length} service providers`);
-            
-            res.status(200).json({
+
+            return res.status(200).json({
                 success: true,
-                data: serviceProviders
+                data: providers
             });
         } catch (error) {
-            console.error("Error fetching service providers:", error);
-            res.status(500).json({
+            console.error('Error fetching service providers:', error);
+            return res.status(500).json({
                 success: false,
-                message: "Failed to fetch service providers",
+                message: 'Failed to fetch service providers',
                 error: error.message
             });
         }
