@@ -52,11 +52,16 @@ class ServiceProviderController {
     // Fetch all service providers with required fields
     async getAllServiceProviders(req, res) {
         try {
-            const providers = await prisma.serviceProvider.findMany({
+            console.log('Fetching all service providers...');
+            const serviceProviders = await prisma.serviceProvider.findMany({
                 include: {
                     user: {
                         include: {
-                            profile: true
+                            profile: {
+                                include: {
+                                    image: true
+                                }
+                            }
                         }
                     }
                 },
@@ -64,16 +69,18 @@ class ServiceProviderController {
                     createdAt: 'desc'
                 }
             });
-
-            return res.status(200).json({
+            
+            console.log(`Found ${serviceProviders.length} service providers`);
+            
+            res.status(200).json({
                 success: true,
-                data: providers
+                data: serviceProviders
             });
         } catch (error) {
-            console.error('Error fetching service providers:', error);
-            return res.status(500).json({
+            console.error("Error fetching service providers:", error);
+            res.status(500).json({
                 success: false,
-                message: 'Failed to fetch service providers',
+                message: "Failed to fetch service providers",
                 error: error.message
             });
         }
@@ -180,91 +187,25 @@ class ServiceProviderController {
         try {
             const { userId } = req.params;
             
-            // First check if the service provider exists
-            const existingProvider = await prisma.serviceProvider.findUnique({
-                where: { userId: parseInt(userId) }
+            const updatedProvider = await prisma.serviceProvider.update({
+                where: { userId: parseInt(userId) },
+                data: {
+                    isVerified: true,
+                    updatedAt: new Date()
+                }
             });
 
-            if (!existingProvider) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Service provider not found'
-                });
-            }
-
-            // Update both ServiceProvider and Profile in a transaction
-            const [updatedProvider, updatedProfile] = await prisma.$transaction([
-                prisma.serviceProvider.update({
-                    where: { userId: parseInt(userId) },
-                    data: {
-                        isVerified: true,
-                        type: 'SPONSOR',
-                        updatedAt: new Date()
-                    },
-                    include: {
-                        user: true
-                    }
-                }),
-                prisma.profile.update({
-                    where: { userId: parseInt(userId) },
-                    data: {
-                        isSponsor: true,
-                        isVerified: true
-                    }
-                })
-            ]);
-
-            return res.status(200).json({
+            res.json({
                 success: true,
                 data: {
-                    serviceProvider: updatedProvider,
-                    profile: updatedProfile
+                    isVerified: updatedProvider.isVerified
                 }
             });
         } catch (error) {
             console.error('Error verifying sponsor:', error);
-            return res.status(500).json({
+            res.status(500).json({
                 success: false,
                 message: 'Failed to verify sponsor',
-                error: error.message
-            });
-        }
-    }
-
-    async createPendingSponsor(req, res) {
-        try {
-            const { userId } = req.params;
-            
-            // Check if service provider already exists
-            const existingProvider = await prisma.serviceProvider.findUnique({
-                where: { userId: parseInt(userId) }
-            });
-
-            if (existingProvider) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Service provider already exists for this user'
-                });
-            }
-
-            const serviceProvider = await prisma.serviceProvider.create({
-                data: {
-                    userId: parseInt(userId),
-                    type: 'PENDING_SPONSOR',
-                    isVerified: false,
-                    ...req.body
-                }
-            });
-
-            return res.status(201).json({
-                success: true,
-                data: serviceProvider
-            });
-        } catch (error) {
-            console.error('Error creating pending sponsor:', error);
-            return res.status(500).json({
-                success: false,
-                message: 'Failed to create pending sponsor',
                 error: error.message
             });
         }
