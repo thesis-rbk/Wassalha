@@ -7,7 +7,12 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { CreditCard, Lock, CheckCircle } from "lucide-react-native";
+import {
+  CreditCard,
+  Lock,
+  CheckCircle,
+  MessageCircle,
+} from "lucide-react-native";
 import ProgressBar from "../../components/ProgressBar";
 import Card from "../../components/cards/ProcessCard";
 import { RootState } from "@/store";
@@ -15,7 +20,7 @@ import { useSelector } from "react-redux";
 import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { router, useLocalSearchParams } from "expo-router";
-import { BACKEND_URL } from "@/config";
+import axiosInstance, { BACKEND_URL } from "@/config";
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
@@ -30,6 +35,53 @@ export default function PaymentScreen() {
   const totalAmount = totalPrice + serviceFee;
 
   console.log(params);
+
+  // TO BE REMOVED AND REPLACED IN THE NEXT PAGE (NEXT STEP)
+  // Navigate to chat screen
+  // const navigateToChat = () => {
+  //   router.push({
+  //     pathname: "../messages/chat",
+  //     params: {
+  //       senderId: user?.id,
+  //       recieverId: params.travelerId, // TO BE CHANGED IN THE OTHER INTERFACE (SP) BY requesterId
+  //       orderId: params.idOrder,
+  //     },
+  //   });
+  // };
+  // Handle creating a new chat room
+  const handleCreateChatRoom = async () => {
+    try {
+      const response = await axiosInstance.post(
+        "/api/chats",
+        {
+          requesterId: user?.id, // Current user
+          providerId: parseInt(params.travelerId.toString()), // Traveler
+          productId: parseInt(params.idGood.toString()), // Order ID
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const chatId = response.data.id;
+
+      // Navigate to the chat screen
+      router.push({
+        pathname: "/messages/chat",
+        params: {
+          chatId,
+          senderId: user?.id, // Current user
+          recieverId: params.travelerId, // Traveler
+          orderId: params.idOrder, // Order ID
+        },
+      });
+    } catch (error) {
+      console.error("Error creating chat room:", error);
+      Alert.alert("Error", "Failed to create chat room. Please try again.");
+    }
+  };
 
   // Handle payment submission
   const handlePayment = async () => {
@@ -246,6 +298,14 @@ export default function PaymentScreen() {
             {isProcessing || loading ? "Processing..." : "Complete Payment"}
           </Text>
         </BaseButton>
+
+        {/* Message Bubble */}
+        <TouchableOpacity
+          style={styles.messageBubble}
+          onPress={handleCreateChatRoom}
+        >
+          <MessageCircle size={24} color="#ffffff" />
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -422,5 +482,22 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     backgroundColor: "#9ca3af",
+  },
+  //////////////////////////////////////:
+  messageBubble: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#3b82f6",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
 });

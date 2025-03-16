@@ -31,9 +31,12 @@ const subscriptionRoutes = require("./routes/subscription.route");
 const stripeRoutes = require("./routes/stripe.route");
 const adminRoutes = require("./routes/admin.route");
 const paymentProcessRoutes = require("./routes/paymentProcess.route");
+const notificationRoutes = require("./routes/notification.route");
+const chatRoutes = require("./routes/chat.route");
 
-// Import socket
-const trackingSocket = require("./sockets/trackingSocket");
+// Import socket initialization function
+const { initializeSocket } = require("./sockets/index");
+
 const app = express();
 const server = http.createServer(app);
 app.use(morgan("dev"));
@@ -83,6 +86,8 @@ app.use("/api/process", processRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/stripe", stripeRoutes);
 app.use("/api/payment-process", paymentProcessRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/chats", chatRoutes);
 
 // Add error logging middleware
 app.use((err, req, res, next) => {
@@ -94,8 +99,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Initialize socket
-trackingSocket(server);
+// Initialize socket with the server
+initializeSocket(server);
 // Start server
 // Use `server.listen()` instead of `app.listen()`
 // **Why:**

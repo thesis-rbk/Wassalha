@@ -96,6 +96,7 @@ export default function RootLayout() {
                 name="messages/messages"
                 options={{ title: "Messages" }}
               />
+              <Stack.Screen name="messages/chat" options={{ title: "Chat" }} />
               <Stack.Screen
                 name="test/Terms&&Conditions"
                 options={{ title: "terms n conditions" }}
