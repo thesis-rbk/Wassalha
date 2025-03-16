@@ -43,6 +43,7 @@ import { decode as atob } from "base-64";
 import { Picker } from "@react-native-picker/picker";
 // import { useRoleDetection } from "@/hooks/useRoleDetection";
 import Card from "@/components/cards/ProcessCard";
+import { useNotification } from '@/context/NotificationContext';
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -88,6 +89,7 @@ export default function InitializationSP() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
+  const { sendNotification } = useNotification();
 
   console.log("kjslkdsldslsd", params);
 
@@ -151,10 +153,17 @@ export default function InitializationSP() {
 
   const fetchRequestDetails = async () => {
     try {
-      console.log("Fetching details for request:", params.idRequest);
-      const response = await axiosInstance.get(
-        `/api/requests/${params.idRequest}`
-      );
+      // Get the request ID from params, with fallbacks
+      const requestId = params.idRequest || params.id;
+      console.log("Fetching details for request:", requestId);
+      
+      if (!requestId) {
+        console.error("No request ID found in params:", params);
+        setLoading(false);
+        return;
+      }
+      
+      const response = await axiosInstance.get(`/api/requests/${requestId}`);
       setRequestDetails((prev: typeof requestDetails) => ({
         ...response.data.data,
         goods: {
@@ -202,9 +211,10 @@ export default function InitializationSP() {
   const handleSubmitOffer = async () => {
     try {
       setIsSubmitting(true);
-
-      const requestId = Array.isArray(params.id) ? params.id[0] : params.id;
-
+      
+      const requestId = params.idRequest || params.id || params.requestId;
+      console.log("Using request ID for offer:", requestId);
+      
       const checkResponse = await axiosInstance.get(
         `/api/requests/${requestId}`
       );
@@ -224,7 +234,7 @@ export default function InitializationSP() {
       const trackingNumber = `${airlineCode}${flightNumber}`;
 
       const orderData = {
-        requestId: parseInt(requestId),
+        requestId: parseInt(Array.isArray(requestId) ? requestId[0] : requestId),
         travelerId: currentUser?.id,
         departureDate: offerDetails.deliveryDate,
         arrivalDate: offerDetails.deliveryDate,
@@ -233,21 +243,43 @@ export default function InitializationSP() {
         paymentStatus: "ON_HOLD",
       };
 
+      console.log("🧪 DEBUGGING NOTIFICATION DATA:");
+      console.log("- Logged in user:", currentUser);
+      console.log("- Params received:", params);
+      console.log("- Request ID:", requestId);
+      console.log("- Notification data:", {
+        requesterId: params.requesterId, 
+        travelerId: currentUser?.id,
+        requestDetails: {
+          goodsName: requestDetails.goods.name,
+          requestId: params.idRequest || params.id
+        }
+      });
+
       const response = await axiosInstance.post("/api/orders", orderData);
 
       if (response.status === 201) {
-        router.replace({
-          pathname: "/screens/OrderSuccessScreen",
-          params: {
-            orderId: response.data.data.id,
+        sendNotification('offer_made', {
+          requesterId: params.requesterId, 
+          travelerId: currentUser?.id,
+          requestDetails: {
             goodsName: requestDetails.goods.name,
-            destination: requestDetails.goodsDestination,
-          },
+            requestId: params.idRequest || params.id
+          }
         });
-        // Alert.alert(
-        //   "Success",
-        //   "Your request is submitted and you will be notified and passed to next step when the user accept your offer"
-        // );
+        console.log("requeseteidinsppppppppppppppppppppp", params.requesterId);
+        console.log("traveleridinsppppppppppppppppppppp", currentUser?.id);
+        
+        setTimeout(() => {
+          router.replace({
+            pathname: "/screens/OrderSuccessScreen",
+            params: {
+              orderId: response.data.data.id,
+              goodsName: requestDetails.goods.name,
+              destination: requestDetails.goodsDestination,
+            },
+          });
+        }, 500);
       }
     } catch (error: any) {
       console.error("Error submitting offer:", error);
