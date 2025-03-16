@@ -296,7 +296,7 @@ const getPickupsTravelerByUserIdHandler = async (req, res) => {
 };
 const acceptPickup = async (req, res) => {
   try {
-    const { pickupId } = req.body;
+    const { pickupId,qrCode } = req.body;
     const userId = req.user?.id;
 
     if (!pickupId) {
@@ -333,6 +333,7 @@ const acceptPickup = async (req, res) => {
         userconfirmed: true,
         travelerconfirmed: true,
         status: 'SCHEDULED',
+        qrCode:qrCode
       },
     });
 

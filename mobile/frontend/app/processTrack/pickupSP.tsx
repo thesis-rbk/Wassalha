@@ -99,7 +99,7 @@ export default function PickupTraveler() {
 
       const response = await axiosInstance.put(
         "/api/pickup/accept",
-        { pickupId, qrCode }, // Send QR code data to backend
+        { pickupId, qrCode },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -142,7 +142,7 @@ export default function PickupTraveler() {
 
       await axiosInstance.put(
         "/api/pickup/status",
-        { pickupId, newStatus: "CANCELLED", qrCode:qrCodeData },
+        { pickupId, newStatus: "CANCELLED" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
