@@ -23,3 +23,4 @@ export * from './ProfileImage';
 export * from './Role';
 
 export * from './Traveler';
+export * from './VerificationStatusProps';

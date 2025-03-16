@@ -136,6 +136,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     maxHeight: 220,
     marginBottom: 20,
+
   },
   linkOption: {
     padding: 18,

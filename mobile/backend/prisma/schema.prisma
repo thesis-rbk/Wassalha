@@ -180,9 +180,10 @@ enum Gender {
 
 // Distinguish sponsor vs. subscriber, etc.
 enum ServiceProviderType {
+  PENDING_SPONSOR
   SPONSOR
   SUBSCRIBER
-  // Possibly add more if needed: AGENCY, PARTNER, etc.
+  // Add other types if needed
 }
 
 // Commonly used file extensions
@@ -251,7 +252,6 @@ model User {
   password               String?
   hasCompletedOnboarding Boolean @default(false)
   role                   Role    @default(USER)
-  isSponsor              Boolean @default(false)
   serviceProviderId      String?
 
   requests         Request[]
@@ -303,7 +303,8 @@ model Profile {
   bio         String?
   country     Country? // Optional field for country
   phoneNumber String?
-
+  
+  // Profile image stored as Media
   imageId Int?   @unique
   image   Media? @relation("ProfileImage", fields: [imageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -313,6 +314,7 @@ model Profile {
   isBanned            Boolean         @default(false)
   isVerified          Boolean         @default(false)
   isOnline            Boolean         @default(false)
+  isSponsor           Boolean         @default(false)
   preferredCategories String?
   referralSource      ReferralSource?
 
@@ -333,12 +335,12 @@ model ReviewSponsor {
 
 // ========== SERVICE PROVIDER ==========
 model ServiceProvider {
-  id         Int                 @id @default(autoincrement())
-  userId     Int                 @unique
-  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  type       ServiceProviderType
-  isVerified Boolean             @default(false)
-  badge      String?
+  id          Int     @id @default(autoincrement())
+  userId      Int     @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  type        ServiceProviderType @default(PENDING_SPONSOR)
+  isVerified  Boolean @default(false)
+  badge       String?
 
   // Verification Fields
   idCard               String? // Optional: Government ID
