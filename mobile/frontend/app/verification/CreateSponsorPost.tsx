@@ -5,6 +5,7 @@ import { InputField } from '@/components/InputField';
 import { Dropdown } from '@/components/dropDown'; // Import the reusable Dropdown
 import { BaseButton } from "../../components/ui/buttons/BaseButton"; // Import BaseButton
 import { useNavigation } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const SponsorshipPlatform = {
     FACEBOOK: 'Facebook',
     INSTAGRAM: 'Instagram',
@@ -26,10 +27,30 @@ const CreateRequestForm: React.FC = () => {
     const [categories, setCategories] = useState<any[]>([]); // Store categories fetched from the backend
     const [loading, setLoading] = useState(false); // Loading state for submission
     const [error, setError] = useState<string | null>(null); // Error state
+    const [token, setToken] = useState<null | string>(); // Default sponsor ID should be empty
+    const decodeJWT = (token: string) => {
+        try {
+            const base64Url = token.split('.')[1];  // Payload part of the token
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const decodedData = JSON.parse(atob(base64));
+            return decodedData;
+        } catch (error) {
+            console.error("Error decoding token:", error);
+            return null;
+        }
+    };
 
-    const sponsorId = 3; // Example sponsorId
-    const recipientId = 7; // Example recipientId
+    const formatCardNumber = (text: string) => {
+        const cleaned = text.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
+        // Add space after every 4 digits
+        const formatted = cleaned.match(/.{1,4}/g)?.join(" ") || cleaned;
+        return formatted.slice(0, 19); // Limit to 16 digits + 3 spaces
+    };
 
+    const tokenVerif = async () => {
+        const tokeny = await AsyncStorage.getItem('jwtToken');
+        setToken(tokeny);
+    };
     // Fetch categories from the backend
     useEffect(() => {
         const fetchCategories = async () => {
@@ -41,7 +62,7 @@ const CreateRequestForm: React.FC = () => {
                 setError('An error occurred while fetching categories');
             }
         };
-
+        tokenVerif()
         fetchCategories();
     }, []);
 
@@ -62,14 +83,13 @@ const CreateRequestForm: React.FC = () => {
             platform,
             categoryId,
             amount: parseFloat(amount),
-            sponsorId, // Default sponsorId
-            recipientId, // Default recipientId
             status: 'pending', // Default status set to 'pending'
         };
 
         try {
             const response = await axiosInstance.post('api/createSponsor', requestData, {
                 headers: {
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
             });

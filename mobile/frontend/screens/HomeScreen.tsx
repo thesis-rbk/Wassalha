@@ -23,10 +23,6 @@ export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home");
   const [travelers, setTravelers] = useState<Traveler[]>([]);
   const [sponsors, setSponsors] = useState<Traveler[]>([]);
-  const [notifications, setNotifications] = useState<
-    { message: string; timestamp: number }[]
-  >([]);
-  const [customMessage, setCustomMessage] = useState<string>("");
   const router = useRouter();
 
   useEffect(() => {
@@ -75,20 +71,13 @@ export default function HomeScreen() {
     }
   };
 
-  const sendTestNotification = () => {
-    setNotifications((prev) => [
-      ...prev,
-      { message: customMessage, timestamp: Date.now() },
-    ]);
-    setCustomMessage("");
-  };
 
   return (
     <ThemedView style={styles.container}>
       <TopNavigation
         title="Wassalha"
-        onMenuPress={() => {}}
-        onNotificationPress={() => {}}
+        onMenuPress={() => { }}
+        onNotificationPress={() => { }}
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -155,15 +144,6 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter custom message"
-          value={customMessage}
-          onChangeText={setCustomMessage}
-        />
-        <Button title="Send Notification" onPress={sendTestNotification} />
-      </View>
       <TabBar activeTab={activeTab} onTabPress={setActiveTab} />
     </ThemedView>
   );

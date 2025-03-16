@@ -28,10 +28,10 @@ export default function Login() {
   const [password, setPassword] = useState<string>("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const redirect= "https://auth.expo.io/@mrsadok/wassalha"
+  const redirect = "https://auth.expo.io/@mrsadok/wassalha"
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId:
-      process.env.EXPO_PUBLIC_GOOGLE_AUTH ,
+      process.env.EXPO_PUBLIC_GOOGLE_AUTH,
     scopes: ["profile", "email"],
     redirectUri: redirect,
   });
@@ -70,7 +70,7 @@ export default function Login() {
 
     dispatch(loginStart());
     try {
-      console.log("Logging in...",process.env.EXPO_PUBLIC_API_URL);
+      console.log("Logging in...", process.env.EXPO_PUBLIC_API_URL);
       const res = await axiosInstance.post("/api/users/login", {
         email,
         password,

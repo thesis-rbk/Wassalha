@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -31,7 +31,7 @@ import { SideMenu } from '@/types/Sidemenu';
 import { RootState } from '@/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Define valid app routes
-
+import axiosInstance from '@/config';
 
 // Updated SideMenu interface
 
@@ -47,6 +47,8 @@ export function TopNavigation({
   const { toggleTheme } = useTheme();
   const [menuAnimation] = useState(new Animated.Value(-MENU_WIDTH));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [tokeny, setToken] = useState<string | null>(null);
+  const [isSponsor, setIsSponsor] = useState<boolean>(false)
   const router = useRouter();
   const { user, token } = useSelector((state: RootState) => state.auth);
   console.log("User:", user);
@@ -72,7 +74,26 @@ export function TopNavigation({
     setIsMenuOpen(!isMenuOpen);
   };
 
-
+  const tokenVerif = async () => {
+    const tokenys = await AsyncStorage.getItem('jwtToken');
+    console.log("token:", tokenys);
+    setToken(tokenys);
+  };
+  console.log("issss sponsor", isSponsor)
+  const check = async () => {
+    try {
+      const response = await axiosInstance.get('/api/checkSponsor', {
+        headers: {
+          'Authorization': `Bearer ${tokeny}`, // Correct way to pass the token in the header
+          'Accept': 'application/json',
+        },
+      });
+      console.log("is sponsor:", response.data);
+      setIsSponsor(response.data);
+    } catch (err) {
+      console.log("Error in check function:", err);
+    }
+  };
   const menuItems: SideMenu[] = [
     { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/test/Notifications' },
     { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
@@ -81,7 +102,10 @@ export function TopNavigation({
     { icon: <Users size={24} color={Colors[colorScheme].text} />, label: 'Sponsorship', route: 'screens/SponsorshipScreen' as any },
     { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out', onPress: handleLogout },
   ];
-
+  useEffect(() => {
+    tokenVerif()
+    check()
+  }, []);
   const handleRoutes = (item: SideMenu) => {
     try {
       if (item.onPress) {

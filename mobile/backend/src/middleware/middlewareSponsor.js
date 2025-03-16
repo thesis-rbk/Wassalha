@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const prisma = require('../../prisma/index');
-
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const uerSPONSOR = async (req, res, next) => {
     console.log("req.headers", req.headers);
     try {
@@ -10,7 +10,7 @@ const uerSPONSOR = async (req, res, next) => {
             return res.status(401).json({ error: 'Authentication required' });
         }
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await prisma.serviceprovider.findUnique({
+        const user = await prisma.serviceProvider.findUnique({
             where: { userId: decoded.id },
         });
         if (!user) {
@@ -27,7 +27,6 @@ const uerSPONSOR = async (req, res, next) => {
         });
     }
 };
-
 module.exports = {
     uerSPONSOR
-};
+}

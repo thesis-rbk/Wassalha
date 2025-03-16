@@ -68,7 +68,6 @@ async function seed() {
             : undefined,
           password: hasGoogleAccount ? undefined : faker.internet.password(),
           hasCompletedOnboarding: faker.datatype.boolean(),
-          isSponsor: faker.datatype.boolean(),
         },
       });
     })
@@ -89,6 +88,7 @@ async function seed() {
           phoneNumber: faker.phone.number(),
           isAnonymous: faker.datatype.boolean(),
           referralSource: faker.helpers.enumValue(ReferralSource),
+          isSponsor: faker.datatype.boolean(),
         },
       })
     )
@@ -353,7 +353,6 @@ async function seed() {
           amount: faker.number.float({ min: 100, max: 1000 }),
           category: { connect: { id: category.id } },
           sponsor: { connect: { id: sponsor.id } },
-          recipient: { connect: { id: recipient.id } },
         },
       });
     })
