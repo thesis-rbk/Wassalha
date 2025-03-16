@@ -15,5 +15,6 @@ router.get('/', authenticateAdmin, getTickets);
 router.get('/:id', authenticateAdmin, getTicketById);
 router.put('/:id/status', authenticateAdmin, updateTicketStatus);
 router.post('/:id/messages', authenticateUser, addTicketMessage);
+router.post('/:id/messages/admin', authenticateAdmin, addTicketMessage);
 router.delete('/:id', authenticateAdmin, deleteTicket);
 module.exports = router;

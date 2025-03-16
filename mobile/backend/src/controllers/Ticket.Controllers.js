@@ -162,6 +162,7 @@ const addTicketMessage = async (req, res) => {
         const { id } = req.params;
         const { content } = req.body;
         const senderId = req.user.id;
+        const isAdmin = req.user.role === 'ADMIN';
 
         // First get the ticket to find the user to receive the message
         const ticket = await prisma.ticket.findUnique({
@@ -176,23 +177,54 @@ const addTicketMessage = async (req, res) => {
             });
         }
 
-        // Determine receiver (if sender is ticket owner, receiver is admin, and vice versa)
-        const receiverId = ticket.userId === senderId 
-            ? (await prisma.user.findFirst({ where: { role: 'ADMIN' } })).id 
-            : ticket.userId;
+        // Determine receiver based on who is sending the message
+        let receiverId;
+        
+        if (isAdmin) {
+            // If admin is sending, receiver is the ticket owner
+            receiverId = ticket.userId;
+        } else if (ticket.userId === senderId) {
+            // If ticket owner is sending, receiver is an admin
+            const admin = await prisma.user.findFirst({ 
+                where: { role: 'ADMIN' } 
+            });
+            
+            if (!admin) {
+                return res.status(500).json({
+                    success: false,
+                    message: 'No admin found to receive the message'
+                });
+            }
+            
+            receiverId = admin.id;
+        } else {
+            // If neither admin nor ticket owner is sending, return error
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to add messages to this ticket'
+            });
+        }
 
+        // Create the message
         const message = await prisma.message.create({
             data: {
                 content,
                 senderId,
                 receiverId,
-                chatId: 0, // Required by schema, but not used for tickets
                 type: 'TICKET',
                 ticketId: parseInt(id),
+                // Set chatId to 0 or find a better solution
+                chatId: 0, // Required by schema, but not used for tickets
             },
             include: {
                 sender: true,
             },
+        });
+
+        // Update the ticket's updatedAt timestamp
+        await prisma.ticket.update({
+            where: { id: parseInt(id) },
+            data: { updatedAt: new Date() }
         });
 
         res.status(201).json({
@@ -200,6 +232,7 @@ const addTicketMessage = async (req, res) => {
             data: message,
         });
     } catch (error) {
+        console.error('Error adding message:', error);
         res.status(500).json({
             success: false,
             message: 'Error adding message',

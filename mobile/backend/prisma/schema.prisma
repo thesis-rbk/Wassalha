@@ -83,7 +83,7 @@ enum PaymentStatus {
 }
 
 enum PaymentCurrency {
-  DOLLAR
+  USD
   EUR
   TND
 }
@@ -217,6 +217,7 @@ enum MediaType {
 
 // Process statuses for the overall goods process
 enum ProcessStatus {
+  PREINITIALIZED
   INITIALIZED
   CONFIRMED
   PAID
@@ -422,6 +423,9 @@ model Order {
   paymentStatus PaymentStatus @default(ON_HOLD)
   orderStatus   OrderStatus   @default(PENDING)
 
+  verificationImageId Int?
+  verificationImage   Media? @relation("VerificationImage", fields: [verificationImageId], references: [id])
+
   payment       Payment[]
   pickup        Pickup?
   reviews       Review[]
@@ -568,6 +572,7 @@ model Media {
   messages Message[]
   profile  Profile?  @relation("ProfileImage")
   goods    Goods[]   @relation("GoodsImage")
+  orders   Order[]   @relation("VerificationImage")
 }
 
 // ========== CATEGORY ==========
@@ -708,7 +713,7 @@ model GoodsProcess {
   orderId Int   @unique
   order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  status    ProcessStatus @default(INITIALIZED)
+  status    ProcessStatus @default(PREINITIALIZED)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 

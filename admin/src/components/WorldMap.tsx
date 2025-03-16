@@ -6,7 +6,7 @@ const WorldMap: React.FC = () => {
   return (
     <div className={styles.worldMapContainer}>
       <Image 
-        src="/images/map.png"
+        src="/images/"
         alt="World Map" 
         layout="fill"
         objectFit="contain"
