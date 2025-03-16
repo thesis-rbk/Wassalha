@@ -1,261 +1,132 @@
+import Card from "@/components/cards/ProcessCard";
+import ProgressBar from "@/components/ProgressBar";
+import { CheckCircle, Bell, Clock, AlertCircle } from "lucide-react-native";
 import React, { useState } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
-  TextInput,
-  TouchableOpacity,
+  Text,
   Image,
+  Switch,
+  TouchableOpacity,
 } from "react-native";
-import {
-  CreditCard,
-  Lock,
-  CircleCheck as CheckCircle,
-} from "lucide-react-native";
-import ProgressBar from "../../components/ProgressBar";
-import Card from "../../components/cards/ProcessCard";
 
-export default function PaymentScreen() {
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal">("card");
-  const [cardDetails, setCardDetails] = useState({
-    number: "",
-    name: "",
-    expiry: "",
-    cvv: "",
-  });
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const handlePayment = () => {
-    setIsProcessing(true);
-
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      //   router.push(`/meeting/${id}?travelerId=${travelerId}`);
-    }, 2000);
-  };
-
-  // if (!delivery || !traveler) {
-  //   return (
-  //     <View style={styles.loadingContainer}>
-  //       <Text style={styles.loadingText}>Loading...</Text>
-  //     </View>
-  //   );
-  // }
-
+const PaymentScreen = () => {
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const progressSteps = [
-    { id: 1, title: "Initialization", icon: "initialization" },
-    { id: 2, title: "Verification", icon: "verification" },
-    { id: 3, title: "Payment", icon: "payment" },
-    { id: 4, title: "Pickup", icon: "pickup" },
+    {
+      id: 1,
+      title: "Initialization",
+      icon: "initialization",
+      status: "completed",
+    },
+    { id: 2, title: "Verification", icon: "verification", status: "completed" },
+    { id: 3, title: "Payment", icon: "payment", status: "pending" },
+    { id: 4, title: "Pickup", icon: "pickup", status: "pending" },
   ];
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
-        <Text style={styles.title}>Secure Payment</Text>
+        <Text style={styles.title}>Order Processing</Text>
         <Text style={styles.subtitle}>
-          Your payment will be held in escrow until delivery is confirmed
+          We're waiting for requester's payment confirmation
         </Text>
 
         <ProgressBar currentStep={3} steps={progressSteps} />
 
-        <Card style={styles.summaryCard}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
-
-          <View style={styles.orderRow}>
-            <Text style={styles.orderLabel}>Item:</Text>
-            <Text style={styles.orderValue}>MacBook Pro Laptop</Text>
+        {/* Status Card */}
+        <Card style={styles.statusCard}>
+          <View style={styles.statusHeader}>
+            <Clock size={20} color="#eab308" />
+            <Text style={styles.statusTitle}>
+              Awaiting Payment Confirmation
+            </Text>
           </View>
 
-          <View style={styles.orderRow}>
-            <Text style={styles.orderLabel}>Traveler:</Text>
-            <View style={styles.travelerInfo}>
-              <Image
-                source={{
-                  uri: "https://images.unsplash.com/photo-1599566150163-29194dcaad36",
-                }}
-                style={styles.travelerImage}
-              />
-              <Text style={styles.orderValue}>John Doe</Text>
+          <Text style={styles.statusText}>
+            <Text style={{ fontFamily: "Inter-SemiBold" }}>John Smith</Text>{" "}
+            needs to complete the payment within 24 hours. We'll notify you
+            immediately when the payment is confirmed.
+          </Text>
+
+          <View style={styles.timeline}>
+            <View style={styles.timelineItem}>
+              <View style={[styles.timelineDot, styles.completedDot]} />
+              <Text style={styles.timelineText}>
+                Order initialized (May 15, 10:30 AM)
+              </Text>
             </View>
-          </View>
-
-          <View style={styles.orderRow}>
-            <Text style={styles.orderLabel}>Price:</Text>
-            <Text style={styles.priceValue}>$140.00</Text>
-          </View>
-
-          <View style={styles.orderRow}>
-            <Text style={styles.orderLabel}>Service Fee:</Text>
-            <Text style={styles.orderValue}>$14.00</Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.orderRow}>
-            <Text style={styles.totalLabel}>Total:</Text>
-            <Text style={styles.totalValue}>$154.00</Text>
+            <View style={styles.timelineItem}>
+              <View style={[styles.timelineDot, styles.completedDot]} />
+              <Text style={styles.timelineText}>
+                Verification completed (May 15, 11:45 AM)
+              </Text>
+            </View>
+            <View style={styles.timelineItem}>
+              <View style={[styles.timelineDot, styles.pendingDot]} />
+              <Text style={styles.timelineText}>
+                Payment confirmation pending
+              </Text>
+            </View>
           </View>
         </Card>
 
-        <Card style={styles.paymentCard}>
-          <Text style={styles.sectionTitle}>Payment Method</Text>
-
-          <View style={styles.paymentOptions}>
-            <TouchableOpacity
-              style={[
-                styles.paymentOption,
-                paymentMethod === "card" && styles.selectedPaymentOption,
-              ]}
-              onPress={() => setPaymentMethod("card")}
-            >
-              <CreditCard
-                size={24}
-                color={paymentMethod === "card" ? "#3b82f6" : "#64748b"}
-              />
-              <Text
-                style={[
-                  styles.paymentOptionText,
-                  paymentMethod === "card" && styles.selectedPaymentOptionText,
-                ]}
-              >
-                Credit Card
+        {/* Next Steps */}
+        <Card style={styles.nextStepsCard}>
+          <View style={styles.stepsHeader}>
+            <AlertCircle size={20} color="#16a34a" />
+            <Text style={styles.stepsTitle}>What Happens Next?</Text>
+          </View>
+          <View style={styles.step}>
+            <Text style={styles.stepNumber}>1</Text>
+            <View style={styles.stepContent}>
+              <Text style={styles.stepTitle}>Payment Verification</Text>
+              <Text style={styles.stepDescription}>
+                Our system will automatically verify the payment within 1 hour
+                of receipt
               </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.paymentOption,
-                paymentMethod === "paypal" && styles.selectedPaymentOption,
-              ]}
-              onPress={() => setPaymentMethod("paypal")}
-            >
-              <Text
-                style={[
-                  styles.paypalText,
-                  paymentMethod === "paypal" &&
-                    styles.selectedPaymentOptionText,
-                ]}
-              >
-                PayPal
+            </View>
+          </View>
+          <View style={styles.step}>
+            <Text style={styles.stepNumber}>2</Text>
+            <View style={styles.stepContent}>
+              <Text style={styles.stepTitle}>Notification Updates</Text>
+              <Text style={styles.stepDescription}>
+                You'll receive push notifications and email updates about
+                Payment confirmation status
               </Text>
-            </TouchableOpacity>
+            </View>
+          </View>
+          <View style={styles.step}>
+            <Text style={styles.stepNumber}>3</Text>
+            <View style={styles.stepContent}>
+              <Text style={styles.stepTitle}>Pickup Scheduling</Text>
+              <Text style={styles.stepDescription}>
+                Once confirmed, you'll be directed to the next step to choose
+                where you want to deliver the item
+              </Text>
+            </View>
           </View>
 
-          {paymentMethod === "card" && (
-            <View style={styles.cardForm}>
-              <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>Card Number</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="1234 5678 9012 3456"
-                  value={cardDetails.number}
-                  onChangeText={(text) =>
-                    setCardDetails({ ...cardDetails, number: text })
-                  }
-                  keyboardType="numeric"
-                  maxLength={19}
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>Cardholder Name</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="John Doe"
-                  value={cardDetails.name}
-                  onChangeText={(text) =>
-                    setCardDetails({ ...cardDetails, name: text })
-                  }
-                />
-              </View>
-
-              <View style={styles.formRow}>
-                <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.inputLabel}>Expiry Date</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="MM/YY"
-                    value={cardDetails.expiry}
-                    onChangeText={(text) =>
-                      setCardDetails({ ...cardDetails, expiry: text })
-                    }
-                    keyboardType="numeric"
-                    maxLength={5}
-                  />
-                </View>
-
-                <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
-                  <Text style={styles.inputLabel}>CVV</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="123"
-                    value={cardDetails.cvv}
-                    onChangeText={(text) =>
-                      setCardDetails({ ...cardDetails, cvv: text })
-                    }
-                    keyboardType="numeric"
-                    maxLength={3}
-                    secureTextEntry
-                  />
-                </View>
-              </View>
-            </View>
-          )}
-
-          {paymentMethod === "paypal" && (
-            <View style={styles.paypalContainer}>
-              <Text style={styles.paypalInstructions}>
-                You will be redirected to PayPal to complete your payment
-                securely.
-              </Text>
-            </View>
-          )}
+          {/* We will see if there will be a button to contact us or not */}
+          {/* <TouchableOpacity style={styles.helpButton}>
+            <Text style={styles.helpButtonText}>
+              Need Help? Chat with Support
+            </Text>
+          </TouchableOpacity> */}
         </Card>
-
-        <View style={styles.securityNote}>
-          <Lock size={16} color="#64748b" />
-          <Text style={styles.securityText}>
-            Your payment information is encrypted and secure
-          </Text>
-        </View>
-
-        <View style={styles.escrowNote}>
-          <CheckCircle size={16} color="#10b981" />
-          <Text style={styles.escrowText}>
-            Payment will be held in escrow until delivery is confirmed
-          </Text>
-        </View>
-
-        {/* <Button
-          title={isProcessing ? "Processing..." : " Complete Payment"}
-          onPress={handlePayment}
-          variant="primary"
-          loading={isProcessing}
-          style={styles.payButton}
-          fullWidth
-        /> */}
       </View>
     </ScrollView>
   );
-}
+};
 
+// Add these new styles to your existing StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8fafc",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 16,
-    color: "#64748b",
   },
   content: {
     padding: 16,
@@ -273,160 +144,164 @@ const styles = StyleSheet.create({
     color: "#64748b",
     marginBottom: 20,
   },
-  summaryCard: {
+  statusCard: {
     marginTop: 16,
+    backgroundColor: "#fff7ed",
+    borderColor: "#fed7aa",
   },
-  sectionTitle: {
-    fontFamily: "Poppins-SemiBold",
-    fontSize: 18,
-    color: "#1e293b",
+  statusHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  statusTitle: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 16,
+    color: "#c2410c",
+    marginLeft: 8,
+  },
+  statusText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "#431407",
+    lineHeight: 20,
     marginBottom: 16,
   },
-  orderRow: {
+  timeline: {
+    borderLeftWidth: 2,
+    borderLeftColor: "#e2e8f0",
+    marginLeft: 7,
+    paddingLeft: 20,
+  },
+  timelineItem: {
+    flexDirection: "row",
+    marginBottom: 16,
+    alignItems: "flex-start",
+  },
+  timelineDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    position: "absolute",
+    left: -24,
+    top: 3,
+  },
+  completedDot: {
+    backgroundColor: "#16a34a",
+  },
+  pendingDot: {
+    backgroundColor: "#eab308",
+    borderWidth: 2,
+    borderColor: "#fef9c3",
+  },
+  timelineText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 13,
+    color: "#64748b",
+    marginLeft: 8,
+  },
+  notificationCard: {
+    marginTop: 16,
+    backgroundColor: "#eff6ff",
+    borderColor: "#bfdbfe",
+  },
+  notificationHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  notificationTitle: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 16,
+    color: "#1e40af",
+    marginLeft: 8,
+  },
+  notificationRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
   },
-  orderLabel: {
+  notificationText: {
     fontFamily: "Inter-Medium",
     fontSize: 14,
-    color: "#64748b",
+    color: "#1e3a8a",
   },
-  orderValue: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#1e293b",
+  notificationHint: {
+    fontFamily: "Inter-Regular",
+    fontSize: 13,
+    color: "#475569",
+    marginTop: 8,
+    marginBottom: 12,
   },
-  travelerInfo: {
+  bulletList: {
+    marginLeft: 8,
+  },
+  bulletItem: {
+    fontFamily: "Inter-Regular",
+    fontSize: 13,
+    color: "#475569",
+    marginBottom: 4,
+  },
+  nextStepsCard: {
+    marginTop: 16,
+    backgroundColor: "#f0fdf4",
+    borderColor: "#bbf7d0",
+  },
+  stepsHeader: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 16,
   },
-  travelerImage: {
+  stepsTitle: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 16,
+    color: "#166534",
+    marginLeft: 8,
+  },
+  step: {
+    flexDirection: "row",
+    marginBottom: 20,
+  },
+  stepNumber: {
+    fontFamily: "Inter-Bold",
+    fontSize: 16,
+    color: "#fff",
+    backgroundColor: "#16a34a",
     width: 24,
     height: 24,
     borderRadius: 12,
-    marginRight: 8,
+    textAlign: "center",
+    lineHeight: 24,
+    marginRight: 12,
   },
-  priceValue: {
+  stepContent: {
+    flex: 1,
+  },
+  stepTitle: {
     fontFamily: "Inter-SemiBold",
     fontSize: 14,
-    color: "#16a34a",
+    color: "#166534",
+    marginBottom: 4,
   },
-  divider: {
-    height: 1,
-    backgroundColor: "#e2e8f0",
-    marginVertical: 12,
+  stepDescription: {
+    fontFamily: "Inter-Regular",
+    fontSize: 13,
+    color: "#475569",
+    lineHeight: 18,
   },
-  totalLabel: {
-    fontFamily: "Inter-Bold",
-    fontSize: 16,
-    color: "#1e293b",
-  },
-  totalValue: {
-    fontFamily: "Inter-Bold",
-    fontSize: 16,
-    color: "#16a34a",
-  },
-  paymentCard: {
+  helpButton: {
     marginTop: 16,
-  },
-  paymentOptions: {
-    flexDirection: "row",
-    marginBottom: 16,
-  },
-  paymentOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "#3b82f6",
+    borderRadius: 8,
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    marginRight: 12,
-    minWidth: 120,
-  },
-  selectedPaymentOption: {
-    borderColor: "#3b82f6",
-    backgroundColor: "#eff6ff",
-  },
-  paymentOptionText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#64748b",
-    marginLeft: 8,
-  },
-  paypalText: {
-    fontFamily: "Inter-Bold",
-    fontSize: 16,
-    color: "#64748b",
-  },
-  selectedPaymentOptionText: {
-    color: "#3b82f6",
-  },
-  cardForm: {
-    marginTop: 8,
-  },
-  formGroup: {
-    marginBottom: 16,
-  },
-  formRow: {
-    flexDirection: "row",
-  },
-  inputLabel: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#64748b",
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: "#f8fafc",
-    borderRadius: 8,
-    padding: 12,
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#1e293b",
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  paypalContainer: {
-    padding: 16,
-    backgroundColor: "#f8fafc",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  paypalInstructions: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#64748b",
-    textAlign: "center",
-  },
-  securityNote: {
-    flexDirection: "row",
     alignItems: "center",
-    marginTop: 16,
-    marginBottom: 8,
   },
-  securityText: {
-    fontFamily: "Inter-Regular",
+  helpButtonText: {
+    fontFamily: "Inter-SemiBold",
     fontSize: 14,
-    color: "#64748b",
-    marginLeft: 8,
-  },
-  escrowNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  escrowText: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#64748b",
-    marginLeft: 8,
-  },
-  payButton: {
-    marginTop: 8,
+    color: "#fff",
   },
 });
+
+export default PaymentScreen;

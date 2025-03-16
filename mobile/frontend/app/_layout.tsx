@@ -8,26 +8,26 @@ import { useEffect, useState } from "react";
 import { ThemeProvider } from "@/context/ThemeContext";
 import WelcomeAnimation from "@/components/WelcomeAnimation";
 import MainLoading from "@/components/MainLoading";
-import { StripeProvider } from '@stripe/stripe-react-native';
+import { StripeProvider } from "@stripe/stripe-react-native";
 import { STRIPE_PUBLISHABLE_KEY } from "@/config";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-    const [fontsLoaded] = useFonts({});
-    const [animationComplete, setAnimationComplete] = useState(false);
-    const [loadingComplete, setLoadingComplete] = useState(false);
+  const [fontsLoaded] = useFonts({});
+  const [animationComplete, setAnimationComplete] = useState(false);
+  const [loadingComplete, setLoadingComplete] = useState(false);
 
-    useEffect(() => {
-        if (fontsLoaded) {
-            SplashScreen.hideAsync();
-        }
-    }, [fontsLoaded]);
-
-    if (!fontsLoaded) {
-        return null;
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
     }
+  }, [fontsLoaded]);
 
-    console.log("Store:", store);
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  console.log("Store:", store);
 
   return (
     <StripeProvider
@@ -88,7 +88,10 @@ export default function RootLayout() {
                 name="profile/edit"
                 options={{ title: "Edit Profile" }}
               />
-              <Stack.Screen name="profile/index" options={{ title: "Profile" }} />
+              <Stack.Screen
+                name="profile/index"
+                options={{ title: "Profile" }}
+              />
               <Stack.Screen
                 name="messages/messages"
                 options={{ title: "Messages" }}
@@ -100,10 +103,22 @@ export default function RootLayout() {
               <Stack.Screen name="test/Travel" options={{ title: "Travel" }} />
               <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
               <Stack.Screen name="test/chat" options={{ title: "Chat" }} />
-              <Stack.Screen name="test/order" options={{ title: "order" }} />
-              <Stack.Screen name="verification/start" options={{ title: "verification" }} />
-              <Stack.Screen name="verification/TakeSelfie" options={{ title: "Take Selfie" }} />
-              <Stack.Screen name="verification/creditCardVerification" options={{ title: "Credit Card Verification" }} />
+              <Stack.Screen
+                name="verification/start"
+                options={{ title: "verification" }}
+              />
+              <Stack.Screen
+                name="verification/TakeSelfie"
+                options={{ title: "Take Selfie" }}
+              />
+              <Stack.Screen
+                name="verification/creditCardVerification"
+                options={{ title: "Credit Card Verification" }}
+              />
+              <Stack.Screen
+                name="orders&requests/order"
+                options={{ title: "Orders & Requests" }}
+              />
               <Stack.Screen
                 name="processTrack/initializationSO"
                 options={{ title: "Initialization" }}
@@ -136,30 +151,33 @@ export default function RootLayout() {
                 name="processTrack/pickupSP"
                 options={{ title: "Pickup" }}
               />
-              <Stack.Screen name="test/role-test" options={{ title: "Role Test" }} />
-              <Stack.Screen name="test/order-details"  />
+              <Stack.Screen name="test/order-details" />
               <Stack.Screen
                 name="processTrack/makeOffer"
                 options={{ title: "Make Offer" }}
               />
-              
+
               {/* Add the new success screens */}
               <Stack.Screen
                 name="screens/RequestSuccessScreen"
-                options={{ 
+                options={{
                   title: "Request Created",
-                  
                 }}
               />
               <Stack.Screen
                 name="screens/OrderSuccessScreen"
-                options={{ 
+                options={{
                   title: "Order Created",
-                  
                 }}
               />
-               <Stack.Screen name="verification/fetchAll" options={{ title: "Fetch Sub" }} />
-               <Stack.Screen name="verification/CreateSponsorPost" options={{ title: "Create Sponsor Post" }} />
+              <Stack.Screen
+                name="verification/fetchAll"
+                options={{ title: "Fetch Sub" }}
+              />
+              <Stack.Screen
+                name="verification/CreateSponsorPost"
+                options={{ title: "Create Sponsor Post" }}
+              />
             </Stack>
           )}
         </Provider>

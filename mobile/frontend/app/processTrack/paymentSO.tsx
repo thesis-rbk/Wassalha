@@ -4,45 +4,101 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TextInput,
   TouchableOpacity,
-  Image,
+  Alert,
 } from "react-native";
-import {
-  CreditCard,
-  Lock,
-  CircleCheck as CheckCircle,
-} from "lucide-react-native";
+import { CreditCard, Lock, CheckCircle } from "lucide-react-native";
 import ProgressBar from "../../components/ProgressBar";
 import Card from "../../components/cards/ProcessCard";
+import { RootState } from "@/store";
+import { useSelector } from "react-redux";
+import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
+import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import { router, useLocalSearchParams } from "expo-router";
+import { BACKEND_URL } from "@/config";
 
 export default function PaymentScreen() {
+  const params = useLocalSearchParams();
   const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal">("card");
-  const [cardDetails, setCardDetails] = useState({
-    number: "",
-    name: "",
-    expiry: "",
-    cvv: "",
-  });
   const [isProcessing, setIsProcessing] = useState(false);
+  const { user, token } = useSelector((state: RootState) => state.auth);
+  const { confirmPayment, loading } = useConfirmPayment();
 
-  const handlePayment = () => {
+  const totalPrice =
+    parseInt(params.quantity.toString()) * parseInt(params.price.toString());
+  const serviceFee = totalPrice * 0.1;
+  const totalAmount = totalPrice + serviceFee;
+
+  console.log(params);
+
+  // Handle payment submission
+  const handlePayment = async () => {
     setIsProcessing(true);
 
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      // Step 1: Create a payment intent
+      const response = await fetch(
+        `${BACKEND_URL}/api/payment-process/create-payment-intent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            amount: totalAmount * 100, // Convert to cents
+            currency: "usd",
+            orderId: parseInt(params.idOrder.toString()),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to create payment intent");
+      }
+
+      const { clientSecret, error } = await response.json();
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      // Step 2: Confirm the payment
+      const { paymentIntent, error: confirmError } = await confirmPayment(
+        clientSecret,
+        {
+          paymentMethodType: "Card",
+        }
+      );
+
+      if (confirmError) {
+        throw new Error(confirmError.message);
+      }
+
+      if (paymentIntent) {
+        Alert.alert("Success", "Payment successful!");
+        console.log("Payment successful:", paymentIntent);
+        router.replace({
+          pathname: "/processTrack/pickupSO",
+          params: params,
+        });
+      }
+    } catch (error: Error | any) {
+      console.error("Payment error:", error);
+      Alert.alert("Error", error.message || "Something went wrong");
+    } finally {
       setIsProcessing(false);
-      //   router.push(`/meeting/${id}?travelerId=${travelerId}`);
-    }, 2000);
+    }
   };
 
-  // if (!delivery || !traveler) {
-  //   return (
-  //     <View style={styles.loadingContainer}>
-  //       <Text style={styles.loadingText}>Loading...</Text>
-  //     </View>
-  //   );
-  // }
+  const getInitials = (name: string) => {
+    if (!name) return "??";
+    const names = name.split(" ");
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return names[0][0].toUpperCase();
+  };
 
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -66,37 +122,33 @@ export default function PaymentScreen() {
 
           <View style={styles.orderRow}>
             <Text style={styles.orderLabel}>Item:</Text>
-            <Text style={styles.orderValue}>MacBook Pro Laptop</Text>
+            <Text style={styles.orderValue}>{params.goodsName}</Text>
           </View>
 
           <View style={styles.orderRow}>
             <Text style={styles.orderLabel}>Traveler:</Text>
             <View style={styles.travelerInfo}>
-              <Image
-                source={{
-                  uri: "https://images.unsplash.com/photo-1599566150163-29194dcaad36",
-                }}
-                style={styles.travelerImage}
-              />
-              <Text style={styles.orderValue}>John Doe</Text>
+              <Text style={styles.orderValue}>
+                {getInitials(params.travelerName.toString())}
+              </Text>
             </View>
           </View>
 
           <View style={styles.orderRow}>
             <Text style={styles.orderLabel}>Price:</Text>
-            <Text style={styles.priceValue}>$140.00</Text>
+            <Text style={styles.priceValue}>${totalPrice.toFixed(2)}</Text>
           </View>
 
           <View style={styles.orderRow}>
             <Text style={styles.orderLabel}>Service Fee:</Text>
-            <Text style={styles.orderValue}>$14.00</Text>
+            <Text style={styles.orderValue}>${serviceFee.toFixed(2)}</Text>
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.orderRow}>
             <Text style={styles.totalLabel}>Total:</Text>
-            <Text style={styles.totalValue}>$154.00</Text>
+            <Text style={styles.totalValue}>${totalAmount.toFixed(2)}</Text>
           </View>
         </Card>
 
@@ -146,70 +198,24 @@ export default function PaymentScreen() {
 
           {paymentMethod === "card" && (
             <View style={styles.cardForm}>
-              <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>Card Number</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="1234 5678 9012 3456"
-                  value={cardDetails.number}
-                  onChangeText={(text) =>
-                    setCardDetails({ ...cardDetails, number: text })
-                  }
-                  keyboardType="numeric"
-                  maxLength={19}
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>Cardholder Name</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="John Doe"
-                  value={cardDetails.name}
-                  onChangeText={(text) =>
-                    setCardDetails({ ...cardDetails, name: text })
-                  }
-                />
-              </View>
-
-              <View style={styles.formRow}>
-                <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.inputLabel}>Expiry Date</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="MM/YY"
-                    value={cardDetails.expiry}
-                    onChangeText={(text) =>
-                      setCardDetails({ ...cardDetails, expiry: text })
-                    }
-                    keyboardType="numeric"
-                    maxLength={5}
-                  />
-                </View>
-
-                <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
-                  <Text style={styles.inputLabel}>CVV</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="123"
-                    value={cardDetails.cvv}
-                    onChangeText={(text) =>
-                      setCardDetails({ ...cardDetails, cvv: text })
-                    }
-                    keyboardType="numeric"
-                    maxLength={3}
-                    secureTextEntry
-                  />
-                </View>
-              </View>
+              <CardField
+                postalCodeEnabled={false}
+                placeholders={{
+                  number: "4242 4242 4242 4242",
+                }}
+                cardStyle={styles.card}
+                style={styles.cardContainer}
+              />
             </View>
           )}
 
           {paymentMethod === "paypal" && (
             <View style={styles.paypalContainer}>
               <Text style={styles.paypalInstructions}>
-                You will be redirected to PayPal to complete your payment
-                securely.
+                {/* You will be redirected to PayPal to complete your payment
+                securely. */}
+                Sorry but this feature is not available yet. Hope to add it
+                soon...
               </Text>
             </View>
           )}
@@ -229,14 +235,17 @@ export default function PaymentScreen() {
           </Text>
         </View>
 
-        {/* <Button
-          title={isProcessing ? "Processing..." : " Complete Payment"}
-          onPress={handlePayment}
-          variant="primary"
-          loading={isProcessing}
+        <BaseButton
           style={styles.payButton}
-          fullWidth
-        /> */}
+          onPress={handlePayment}
+          size="large"
+          variant="primary"
+          disabled={isProcessing || loading}
+        >
+          <Text style={styles.payButtonText}>
+            {isProcessing || loading ? "Processing..." : "Complete Payment"}
+          </Text>
+        </BaseButton>
       </View>
     </ScrollView>
   );
@@ -246,16 +255,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8fafc",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 16,
-    color: "#64748b",
   },
   content: {
     padding: 16,
@@ -368,27 +367,13 @@ const styles = StyleSheet.create({
   cardForm: {
     marginTop: 8,
   },
-  formGroup: {
-    marginBottom: 16,
-  },
-  formRow: {
-    flexDirection: "row",
-  },
-  inputLabel: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#64748b",
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: "#f8fafc",
+  card: {
+    backgroundColor: "#ffffff",
     borderRadius: 8,
-    padding: 12,
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#1e293b",
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
+  },
+  cardContainer: {
+    height: 50,
+    marginVertical: 10,
   },
   paypalContainer: {
     padding: 16,
@@ -427,6 +412,15 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   payButton: {
-    marginTop: 8,
+    padding: 12,
+    alignSelf: "center",
+  },
+  payButtonText: {
+    color: "#ffffff",
+    fontFamily: "Inter-Bold",
+    fontSize: 16,
+  },
+  disabledButton: {
+    backgroundColor: "#9ca3af",
   },
 });
