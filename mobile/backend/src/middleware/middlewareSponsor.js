@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const prisma = require('../../prisma/index');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 const uerSPONSOR = async (req, res, next) => {
     console.log("req.headers", req.headers);
     try {

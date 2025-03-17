@@ -79,7 +79,6 @@ export default function HomeScreen() {
         onMenuPress={() => { }}
         onNotificationPress={() => { }}
       />
-
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.servicesSection}>
           <ThemedText style={styles.sectionTitle}>Our Services</ThemedText>
