@@ -112,7 +112,7 @@ export default function Login() {
   };
 
   const handleGoogleLogin = async (idToken: string) => {
-    console.log("Google response:", response);
+    //console.log("Google response:", response);
 
     dispatch(loginStart());
     try {
