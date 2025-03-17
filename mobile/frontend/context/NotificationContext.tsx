@@ -44,7 +44,48 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Get unread count from Redux state
   const { unreadCount } = useSelector((state: RootState) => state.notifications);
+  const fetchNotifications = useCallback(async () => {
+    // Only proceed if we have a user
+    if (!user?.id) return;
+    
+    try {
+      console.log('🔄 Fetching notifications from API');
+      
+      // Get authentication token
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (!token) {
+        console.log('⚠️ No token available to fetch notifications');
+        return;
+      }
 
+      // Make API request
+      const response = await fetch(`${BACKEND_URL}/api/notifications`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Handle error responses
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch notifications: ${response.status} ${errorText}`);
+      }
+
+      // Parse response data
+      const data = await response.json();
+      
+      // Update Redux store
+      if (Array.isArray(data)) {
+        console.log(`✅ Fetched ${data.length} notifications`);
+        dispatch(setNotifications(data));
+      } else {
+        console.warn('⚠️ API response is not an array:', data);
+        dispatch(setNotifications([]));
+      }
+    } catch (error) {
+      console.error('❌ Error fetching notifications:', error);
+    }
+  }, [dispatch, user?.id]); // Only re-create when dispatch or user ID changes
   // 1. SOCKET INITIALIZATION
   // This effect runs when the user changes (login/logout)
   useEffect(() => {
@@ -52,25 +93,37 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     let notificationSocket: Socket | null = null;
     
     const initializeSocket = async () => {
-      // Only proceed if we have a user
-        if (!user?.id) {
+      if (!user?.id) {
         console.log('👤 No user logged in, skipping notification socket setup');
-          return;
-        }
-        
+        return;
+      }
+      
       try {
         console.log('🔄 Setting up notification socket for user:', user.id);
         
-        // Get socket instance using our improved socketService
+        // Clean up any existing socket first
+        if (socket) {
+          socket.disconnect();
+        }
+
+        // Get new socket instance
         notificationSocket = await getSocket('notifications');
         
         if (mounted) {
-          // Store socket in component state
           setSocket(notificationSocket);
           
-          // Make sure socket is connected
+          // Make sure socket is connected and join room
           if (notificationSocket && !notificationSocket.connected) {
-            connectSocket('notifications');
+            await connectSocket('notifications');
+          }
+
+          // Join room after connection is established
+          if (notificationSocket?.connected) {
+            notificationSocket.emit('join', user.id);
+          } else {
+            notificationSocket?.on('connect', () => {
+              notificationSocket?.emit('join', user.id);
+            });
           }
         }
       } catch (error) {
@@ -78,25 +131,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     };
     
-    // Call the initialization function
     initializeSocket();
     
-    // Cleanup when component unmounts or user changes
+    // Cleanup function
     return () => {
       mounted = false;
       if (notificationSocket) {
-        // Remove listeners to prevent memory leaks
+        console.log('🧹 Cleaning up socket connection');
         notificationSocket.off('connect');
         notificationSocket.off('joined');
-        notificationSocket.off('offer_made');
-        notificationSocket.off('offer_response');
-        notificationSocket.off('order_cancelled');
-        notificationSocket.off('offer_cancelled');
-        // Add cleanup for verification-related events
-        notificationSocket.off('verification_photo_submitted');
-        notificationSocket.off('product_confirmed');
-        notificationSocket.off('request_new_photo');
-        notificationSocket.off('process_canceled');
+        notificationSocket.disconnect();
       }
     };
   }, [user?.id]); // Only re-run when user ID changes
@@ -104,12 +148,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // 2. SOCKET EVENT LISTENERS
   // This effect sets up all the event listeners for notifications
   useEffect(() => {
-    // Only proceed if we have both socket and user
     if (!socket || !user?.id) return;
 
-    console.log('🔌 Setting up notification event listeners');
+    console.log('🔌 Setting up notification event listeners for user:', user.id);
 
-    // Handler for new offer notifications
+    // Create event handler functions
     const handleNewOffer = (notification: any) => {
       console.log('📩 New offer notification received:', notification);
       dispatch(addNotification({
@@ -120,8 +163,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || 'You have received a new offer!',
         status: NotificationStatus.UNREAD
       }));
-      
-      // Refresh notifications to get the server-generated ID
       fetchNotifications();
     };
     
@@ -242,97 +283,40 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       console.log('✅ Joined notification room:', data);
     };
 
-    // Register all event listeners
-    socket.on('joined', handleJoined);
+    // Setup event listeners
     socket.on('offer_made', handleNewOffer);
     socket.on('offer_response', handleOfferResponse);
     socket.on('order_cancelled', handleOrderCancelled);
     socket.on('offer_cancelled', handleOfferCancelled);
-    
-    // NEW: Register verification-related event listeners
     socket.on('verification_photo_submitted', handlePhotoSubmitted);
     socket.on('product_confirmed', handleProductConfirmed);
     socket.on('request_new_photo', handleNewPhotoRequest);
     socket.on('process_canceled', handleProcessCancelled);
 
-    // Join the user-specific room when connected
-    if (socket.connected) {
-      console.log('🔌 Emitting join for user:', user.id);
+    // Rejoin room when socket reconnects
+    socket.on('connect', () => {
+      console.log('🔄 Socket reconnected, rejoining room for user:', user.id);
       socket.emit('join', user.id);
-    } else {
-      // Handle connection event if not yet connected
-      socket.on('connect', () => {
-        console.log('🔌 Socket connected, joining room for user:', user.id);
-        socket.emit('join', user.id);
-      });
-    }
+    });
 
-    // Add this after setting up all socket listeners
-    console.log('🎧 ACTIVE LISTENERS:', Object.keys((socket as any)._callbacks || {})
-      .filter(key => key.startsWith('$'))
-      .map(key => key.substring(1)));
-
-    // Cleanup function to remove all listeners when effect re-runs or component unmounts
+    // Cleanup function
     return () => {
-      console.log('🧹 Cleaning up notification event listeners');
-      socket.off('joined', handleJoined);
+      console.log('🧹 Removing notification event listeners');
       socket.off('offer_made', handleNewOffer);
       socket.off('offer_response', handleOfferResponse);
       socket.off('order_cancelled', handleOrderCancelled);
       socket.off('offer_cancelled', handleOfferCancelled);
-      
-      // NEW: Clean up verification-related event listeners
       socket.off('verification_photo_submitted', handlePhotoSubmitted);
       socket.off('product_confirmed', handleProductConfirmed);
       socket.off('request_new_photo', handleNewPhotoRequest);
       socket.off('process_canceled', handleProcessCancelled);
+      socket.off('connect');
     };
-  }, [socket, user?.id, dispatch]); // Re-run when socket, user ID, or dispatch changes
+  }, [socket, user?.id, dispatch, fetchNotifications]) // Re-run when socket, user ID, or dispatch changes
 
   // 3. API METHODS
   // Function to fetch notifications from the API
-  const fetchNotifications = useCallback(async () => {
-    // Only proceed if we have a user
-    if (!user?.id) return;
-    
-    try {
-      console.log('🔄 Fetching notifications from API');
-      
-      // Get authentication token
-      const token = await AsyncStorage.getItem('jwtToken');
-      if (!token) {
-        console.log('⚠️ No token available to fetch notifications');
-        return;
-      }
-
-      // Make API request
-      const response = await fetch(`${BACKEND_URL}/api/notifications`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      // Handle error responses
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch notifications: ${response.status} ${errorText}`);
-      }
-
-      // Parse response data
-      const data = await response.json();
-      
-      // Update Redux store
-      if (Array.isArray(data)) {
-        console.log(`✅ Fetched ${data.length} notifications`);
-        dispatch(setNotifications(data));
-      } else {
-        console.warn('⚠️ API response is not an array:', data);
-        dispatch(setNotifications([]));
-      }
-    } catch (error) {
-      console.error('❌ Error fetching notifications:', error);
-    }
-  }, [dispatch, user?.id]); // Only re-create when dispatch or user ID changes
+  
 
   // Function to mark a notification as read
   const markAsRead = useCallback(async (id: number) => {

@@ -187,7 +187,6 @@ export default function RootLayout() {
                   name="screens/NotificationsScreen"
                   options={{ 
                     title: "Notifications",
-                    headerShown: true
                   }}
                 />
               </Stack>
