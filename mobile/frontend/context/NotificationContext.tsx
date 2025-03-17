@@ -12,15 +12,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BACKEND_URL } from '@/config';
 import { Socket } from 'socket.io-client';
-
-// Define the shape of our context data
-interface NotificationContextType {
-  fetchNotifications: () => Promise<void>;   // Function to fetch notifications from API
-  markAsRead: (id: number) => Promise<void>; // Function to mark a notification as read
-  deleteNotification: (id: number) => Promise<void>; // Function to delete a notification
-  sendNotification: (eventName: string, data: any) => Promise<boolean>; // NEW: Function to send notifications
-  unreadCount: number;                        // Number of unread notifications
-}
+import { NotificationContextType } from '@/types/notificationContext';
 
 // Create the context with null initial value
 const NotificationContext = createContext<NotificationContextType | null>(null);
@@ -44,7 +36,48 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Get unread count from Redux state
   const { unreadCount } = useSelector((state: RootState) => state.notifications);
+  const fetchNotifications = useCallback(async () => {
+    // Only proceed if we have a user
+    if (!user?.id) return;
+    
+    try {
+      console.log('🔄 Fetching notifications from API');
+      
+      // Get authentication token
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (!token) {
+        console.log('⚠️ No token available to fetch notifications');
+        return;
+      }
 
+      // Make API request
+      const response = await fetch(`${BACKEND_URL}/api/notifications`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Handle error responses
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch notifications: ${response.status} ${errorText}`);
+      }
+
+      // Parse response data
+      const data = await response.json();
+      
+      // Update Redux store
+      if (Array.isArray(data)) {
+        console.log(`✅ Fetched ${data.length} notifications`);
+        dispatch(setNotifications(data));
+      } else {
+        console.warn('⚠️ API response is not an array:', data);
+        dispatch(setNotifications([]));
+      }
+    } catch (error) {
+      console.error('❌ Error fetching notifications:', error);
+    }
+  }, [dispatch, user?.id]); // Only re-create when dispatch or user ID changes
   // 1. SOCKET INITIALIZATION
   // This effect runs when the user changes (login/logout)
   useEffect(() => {
@@ -275,48 +308,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // 3. API METHODS
   // Function to fetch notifications from the API
-  const fetchNotifications = useCallback(async () => {
-    // Only proceed if we have a user
-    if (!user?.id) return;
-    
-    try {
-      console.log('🔄 Fetching notifications from API');
-      
-      // Get authentication token
-      const token = await AsyncStorage.getItem('jwtToken');
-      if (!token) {
-        console.log('⚠️ No token available to fetch notifications');
-        return;
-      }
-
-      // Make API request
-      const response = await fetch(`${BACKEND_URL}/api/notifications`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      // Handle error responses
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch notifications: ${response.status} ${errorText}`);
-      }
-
-      // Parse response data
-      const data = await response.json();
-      
-      // Update Redux store
-      if (Array.isArray(data)) {
-        console.log(`✅ Fetched ${data.length} notifications`);
-        dispatch(setNotifications(data));
-      } else {
-        console.warn('⚠️ API response is not an array:', data);
-        dispatch(setNotifications([]));
-      }
-    } catch (error) {
-      console.error('❌ Error fetching notifications:', error);
-    }
-  }, [dispatch, user?.id]); // Only re-create when dispatch or user ID changes
+  
 
   // Function to mark a notification as read
   const markAsRead = useCallback(async (id: number) => {
