@@ -12,11 +12,6 @@ const [token, setToken] = useState<null | string>(null);
 
 
 const CreditCardVerification = () => {
-  const tokenVerif = async () => {
-    const tokeny = await AsyncStorage.getItem('jwtToken');
-    console.log("token:", tokeny);
-    setToken(tokeny);
-  };
   const router = useRouter();
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');

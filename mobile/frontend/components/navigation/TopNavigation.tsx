@@ -62,17 +62,17 @@ export function TopNavigation({
   const handleLogout = async () => {
     try {
       console.log("Starting logout process...");
-      
+
       // 1. Clear Redux state
       dispatch(logout());
       console.log("Redux state cleared");
-      
+
       // 2. Clear ALL AsyncStorage items related to authentication
       await AsyncStorage.removeItem("jwtToken");
       await AsyncStorage.removeItem("token");
       await AsyncStorage.removeItem("user");
       console.log("AsyncStorage items cleared");
-      
+
       // 3. Navigate to login screen (only once)
       router.replace("/auth/login");
       console.log("Redirected to login");
@@ -116,7 +116,7 @@ export function TopNavigation({
     { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/screens/NotificationsScreen' },
     { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
     { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips', route: '/test/Travel' },
-    { icon: <Home size={24} color={Colors[colorScheme].text} />, label: 'Home', route: '/home' },
+    { icon: <Home size={24} color={Colors[colorScheme].text} />, label: 'Home', route: 'home' },
     { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request', route: '/productDetails/create-order' },
     {
       icon: isSponsor ? <DollarSign size={24} color={Colors[colorScheme].text} /> : <Users size={24} color={Colors[colorScheme].text} />,
@@ -155,7 +155,7 @@ export function TopNavigation({
           style={styles.searchInput}
           placeholder="Search"
         />
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => {
             try {
               console.log('Attempting to navigate to NotificationsScreen');

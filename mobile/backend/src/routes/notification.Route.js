@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const notificationController = require('../controllers/notification.controller.js');
-const { authenticateUser } = require('../middleware/middleware');
+const { authenticateUser } = require('../middleware/middleware.js');
 
 // Protected routes - require authentication
 router.get('/', authenticateUser, notificationController.getAllNotifications);

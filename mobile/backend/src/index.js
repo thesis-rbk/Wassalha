@@ -29,7 +29,7 @@ const sponsorshipRoutes = require("./routes/sponsorship.route");
 const subscriptionRoutes = require("./routes/subscription.route");
 const stripeRoutes = require('./routes/stripe.route');
 const adminRoutes = require("./routes/admin.route");
-const notificationRoutes = require("./routes/notification.b.Route");
+const notificationRoutes = require("./routes/notification.Route");
 const chatRoutes = require('./routes/chat.route');
 const paymentProcessRoutes = require("./routes/paymentProcess.route");
 
