@@ -36,7 +36,7 @@ export function TabBar({
     {
       name: "Order",
       icon: <ShoppingBag size={24} color={iconColor} />,
-      route: "/orders&requests/order" as Route,
+      route: "../orders&requests/order" as Route,
     },
     {
       name: "",
@@ -55,7 +55,7 @@ export function TabBar({
     {
       name: "Pick-up",
       icon: <MapPin size={24} color={iconColor} />,
-      route: "/pickup/pickup" as Route,
+      route: "../pickup/pickup" as Route,
     },
     {
       name: "Messages",

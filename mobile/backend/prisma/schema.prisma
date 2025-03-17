@@ -269,9 +269,6 @@ model User {
   subscriptions Subscription[] @relation("UserSubscriptions")
   sponsorships  Sponsorship[]  @relation("UserSponsorships")
 
-  // New relation for user as recipient
-  sponsorshipsReceived Sponsorship[] @relation("SponsorshipRecipients")
-
   // Reputation
   reputation Reputation?
 
@@ -304,7 +301,7 @@ model Profile {
   bio         String?
   country     Country? // Optional field for country
   phoneNumber String?
-  
+
   // Profile image stored as Media
   imageId Int?   @unique
   image   Media? @relation("ProfileImage", fields: [imageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -336,12 +333,12 @@ model ReviewSponsor {
 
 // ========== SERVICE PROVIDER ==========
 model ServiceProvider {
-  id          Int     @id @default(autoincrement())
-  userId      Int     @unique
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  type        ServiceProviderType @default(PENDING_SPONSOR)
-  isVerified  Boolean @default(false)
-  badge       String?
+  id         Int                 @id @default(autoincrement())
+  userId     Int                 @unique
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  type       ServiceProviderType @default(PENDING_SPONSOR)
+  isVerified Boolean             @default(false)
+  badge      String?
 
   // Verification Fields
   idCard               String? // Optional: Government ID
@@ -355,6 +352,32 @@ model ServiceProvider {
 
   // Sponsorships relation
   sponsorships Sponsorship[] @relation("ServiceProviderSponsors")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SponsorCheckout {
+  id             Int             @id @default(autoincrement())
+  buyerId        Int // Buyer ID
+  cardNumber     String // Card number
+  cardExpiryMm   String // Expiry month (MM)
+  cardExpiryYyyy String // Expiry year (YYYY)
+  cardCvc        String // CVC code
+  cardholderName String // Name of cardholder
+  postalCode     String // Postal code of the cardholder's address
+  amount         Float // Payment amount
+  qrCode         String? // Optional: QR code for payment
+  paymentUrl     String? // Optional: Payment URL
+  currency       PaymentCurrency // Currency of the payment (using the enum)
+  status         PaymentState // Payment status
+  paymentMethod  PaymentMethod // Payment method (relating to the enum)
+
+  transactionId String? // Transaction ID (nullable)
+
+  // Relation Fields
+  sponsorShipId Int
+  sponsorship   Sponsorship @relation(fields: [sponsorShipId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -617,15 +640,14 @@ model Sponsorship {
   isActive    Boolean             @default(true)
 
   // New fields from your schema
-  sponsorId   Int
-  sponsor     ServiceProvider @relation("ServiceProviderSponsors", fields: [sponsorId], references: [id])
-  recipientId Int
-  recipient   User?           @relation("SponsorshipRecipients", fields: [recipientId], references: [id])
-  product     String
-  amount      Float
-  status      String          @default("pending")
+  sponsorId Int
+  sponsor   ServiceProvider @relation("ServiceProviderSponsors", fields: [sponsorId], references: [id])
+  product   String
+  amount    Float
+  status    String          @default("pending")
 
-  users User[] @relation("UserSponsorships")
+  users            User[]            @relation("UserSponsorships")
+  sponsorCheckouts SponsorCheckout[] @relation
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
