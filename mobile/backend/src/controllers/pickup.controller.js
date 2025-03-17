@@ -1,8 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require("../../prisma");
 
-const prisma = new PrismaClient();
-
-// Handle pickup suggestion or update
 const handlePickup = async (req, res) => {
   try {
     const {
