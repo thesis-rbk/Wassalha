@@ -190,7 +190,7 @@ const Signup = () => {
       setEmailError(error.response?.data?.error || "Something went wrong");
     }
   };
-  
+
   const getStrengthColor = () => {
     switch (passwordStrength) {
       case "weak":
@@ -207,18 +207,10 @@ const Signup = () => {
   return (
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Logo or Header Image */}
-        <Image
-          source={require("../pngImage/navigation(1).png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
 
-        {/* Welcome Text */}
         <ThemedText style={styles.welcomeText}>Join Us!</ThemedText>
         <ThemedText style={styles.subText}>Sign up to get started</ThemedText>
 
-        {/* Image Upload Section (copied from EditProfile) */}
         <View style={styles.photoSection}>
           <View style={styles.avatarContainer}>
             {image ? (

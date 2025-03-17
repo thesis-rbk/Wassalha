@@ -8,6 +8,8 @@ import { CreditCard } from 'lucide-react-native';
 import axiosInstance from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
+const [token, setToken] = useState<null | string>(null);
+
 
 const CreditCardVerification = () => {
   const router = useRouter();
@@ -57,9 +59,9 @@ const CreditCardVerification = () => {
     const currentYear = now.getFullYear() % 100;
     const currentMonth = now.getMonth() + 1;
 
-    return month >= 1 && month <= 12 && 
-           year >= currentYear &&
-           (year > currentYear || month >= currentMonth);
+    return month >= 1 && month <= 12 &&
+      year >= currentYear &&
+      (year > currentYear || month >= currentMonth);
   };
 
   const validateCVV = (cvv: string) => {
@@ -72,49 +74,49 @@ const CreditCardVerification = () => {
       Alert.alert('Error', 'Please enter a valid 16-digit card number');
       return false;
     }
-    
+
     if (!validateExpiryDate(expiryDate)) {
       Alert.alert('Error', 'Please enter a valid future expiry date');
       return false;
     }
-    
+
     if (!validateCVV(cvv)) {
       Alert.alert('Error', 'Please enter a valid CVV (3-4 digits)');
       return false;
     }
-    
+
     if (cardholderName.trim().length < 3) {
       Alert.alert('Error', 'Please enter the full cardholder name');
       return false;
     }
-    
+
     return true;
   };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-    
+
     setLoading(true);
-    
+
     try {
       const jwtToken = await AsyncStorage.getItem('jwtToken');
       if (!jwtToken) throw new Error('No token found');
 
       const decoded: any = jwtDecode(jwtToken);
-      
+
       // Parse expiry date
       const [expiryMonth, expiryYear] = expiryDate.split('/');
-      
+
       // Basic card validation (Luhn algorithm)
       const isValidCard = validateCreditCard(cardNumber.replace(/\s/g, ''));
       if (!isValidCard) {
         throw new Error('Invalid card number');
       }
-      
+
       // Get card type
       const cardType = getCardType(cardNumber.replace(/\s/g, ''));
       const last4 = cardNumber.replace(/\s/g, '').slice(-4);
-      
+
       // Send to backend
       const response = await axiosInstance.post(
         `/api/users/verify-credit-card/${decoded.id}`,
@@ -140,47 +142,47 @@ const CreditCardVerification = () => {
     } catch (error: any) {
       console.error('Error verifying credit card:', error);
       Alert.alert(
-        'Error', 
+        'Error',
         error.message || 'Failed to verify credit card. Please try again.'
       );
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Basic Luhn algorithm for card validation
   const validateCreditCard = (number: string) => {
     let sum = 0;
     let shouldDouble = false;
-    
+
     // Loop through values starting from the rightmost digit
     for (let i = number.length - 1; i >= 0; i--) {
       let digit = parseInt(number.charAt(i));
-      
+
       if (shouldDouble) {
         digit *= 2;
         if (digit > 9) digit -= 9;
       }
-      
+
       sum += digit;
       shouldDouble = !shouldDouble;
     }
-    
+
     return (sum % 10) === 0;
   };
-  
+
   // Get card type based on number
   const getCardType = (number: string) => {
     const firstDigit = number.charAt(0);
     const firstTwoDigits = number.substring(0, 2);
-    
+
     if (number.startsWith('4')) return 'Visa';
     if (['51', '52', '53', '54', '55'].includes(firstTwoDigits)) return 'Mastercard';
     if (['34', '37'].includes(firstTwoDigits)) return 'American Express';
     if (['300', '301', '302', '303', '304', '305'].includes(number.substring(0, 3))) return 'Diners Club';
     if (number.startsWith('6')) return 'Discover';
     if (number.startsWith('35')) return 'JCB';
-    
+
     return 'Unknown';
   };
 

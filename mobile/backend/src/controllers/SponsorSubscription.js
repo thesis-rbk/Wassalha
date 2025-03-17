@@ -1,10 +1,12 @@
 const prisma = require("../../prisma");
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
-//env iiiiiiiiii
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 const sponsor = {
     createSponsorShip: async (req, res) => {
+        const sponsorId = req.user?.id;
+
         try {
-            const { name, description, price, duration, platform, categoryId, sponsorId, recipientId, product, amount } = req.body;
+            const { name, description, price, duration, platform, categoryId, product, amount } = req.body;
 
             const sponsorships = await prisma.sponsorship.create({
                 data: {
@@ -19,9 +21,6 @@ const sponsor = {
                     sponsor: {
                         connect: { id: parseInt(sponsorId) } // Changed from string to integer
                     },
-                    recipient: recipientId ? {
-                        connect: { id: parseInt(recipientId) } // Changed from string to integer
-                    } : undefined,
                     product: product || "",
                     amount,
                     status: "pending",
@@ -115,7 +114,6 @@ const sponsor = {
             minAmount,
             maxAmount,
             sponsorNameContains,
-            recipientNameContains
         } = req.query;
 
         try {
@@ -124,13 +122,12 @@ const sponsor = {
             // If no filters provided, return all sponsorships
             if (!nameContains && !descriptionContains && !platformContains && !productContains &&
                 !statusContains && !minPrice && !maxPrice && !minDuration && !maxDuration &&
-                !minAmount && !maxAmount && !sponsorNameContains && !recipientNameContains) {
+                !minAmount && !maxAmount && !sponsorNameContains) {
                 const allSponsorships = await prisma.sponsorship.findMany({
                     include: {
                         category: true,
                         sponsor: { include: { user: true } },
-                        recipient: true,
-                        users: true
+                        users: true,
                     }
                 });
                 return res.status(200).json(allSponsorships);
@@ -174,13 +171,6 @@ const sponsor = {
                                 }
                             }
                         },
-                        recipientNameContains && {
-                            recipient: {
-                                name: {
-                                    contains: recipientNameContains,
-                                }
-                            }
-                        }
                     ].filter(Boolean),
                     AND: [
                         minPrice && {
@@ -219,9 +209,6 @@ const sponsor = {
                             }
                         }
                     },
-                    recipient: {
-                        select: { id: true, name: true, email: true }
-                    },
                     users: {
                         select: { id: true, name: true }
                     }
@@ -252,9 +239,11 @@ const sponsor = {
             res.status(401).send({ "err": err })
         }
     },
-    paymentSponsore: async (req, res) => {
+    paymentSponsor: async (req, res) => {
+        console.log("profileee", process.env.PROFILE_STRIPE_ID)
+        console.log("keyyyyyy stripeeeeeeeeee", process.env.STRIPE_SECRET_KEY)
         try {
-            const { orderId, amount, paymentMethod, status, currency } = req.body;
+            const { buyerId, amount, paymentMethod, cardExpiryMm, status, currency, cardExpiryYyyy, cardholderName, postalCode, sponsorShipId, cardNumber, cardCvc } = req.body;
 
             // Create a payment method using a test token
             const paymentMethods = await stripe.paymentMethods.create({
@@ -284,16 +273,23 @@ const sponsor = {
             }
 
             // Store payment information in the database
-            const payment = await prisma.payment.create({
+            const payment = await prisma.sponsorCheckout.create({
                 data: {
-                    orderId,
                     amount,
-                    currency,
-                    paymentMethod,
+                    currency: "EUR",
+                    paymentMethod: "CARD",
                     status: paymentIntent.status === "succeeded" ? "COMPLETED" : "PENDING",
                     transactionId: paymentIntent.id,
                     qrCode: paymentIntent.client_secret,
                     paymentUrl: paymentIntent.next_action?.use_stripe_sdk?.url,
+                    cardExpiryYyyy,
+                    cardholderName,
+                    postalCode,
+                    sponsorShipId: parseFloat(sponsorShipId),
+                    buyerId: parseFloat(buyerId),
+                    cardExpiryMm,
+                    cardNumber,
+                    cardCvc
                 },
             });
 
@@ -307,7 +303,7 @@ const sponsor = {
                 // Mock transfer response instead of calling Stripe
                 const mockTransfer = {
                     id: "tr_mock_" + Date.now(), // Fake transfer ID
-                    amount: amount * 100,
+                    amount: amount * 100, // Convert to cents
                     currency: "eur",
                     destination: connectedAccountId,
                     source_transaction: chargeId,
@@ -330,7 +326,32 @@ const sponsor = {
                 type: error.type,
             });
         }
+    },
+    checkSponsor: async (req, res) => {
+        const sponsorId = req.user.id
+        try {
+            if (!sponsorId) {
+                return res.status(200).send(false)
+            } else {
+                res.status(200).send(true)
+            }
+        } catch (err) {
+            console.log("err", err)
+        }
+    },
+    findOneSponsor: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const sponsor = await prisma.sponsorship.findUnique({
+                where: { id: parseInt(id) },
+                include: {
+                    sponsor: true,
+                }
+            });
+            res.status(200).send(sponsor);
+        } catch (err) {
+            console.log("err", err)
+        }
     }
 }
-
 module.exports = sponsor;

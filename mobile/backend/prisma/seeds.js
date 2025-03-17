@@ -414,11 +414,8 @@ async function seed() {
           recipientId: recipient.id,
           product: faker.commerce.productName(),
           amount: faker.number.float({ min: 100, max: 1000 }),
-          status: faker.helpers.arrayElement(["pending", "active", "completed"]),
-          isActive: faker.datatype.boolean(),
-          users: {
-            connect: [{ id: faker.helpers.arrayElement(users).id }],
-          },
+          category: { connect: { id: category.id } },
+          sponsor: { connect: { id: sponsor.id } },
         },
       });
     })
