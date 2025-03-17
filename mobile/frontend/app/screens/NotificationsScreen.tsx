@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+
 import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -10,6 +11,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { Swipeable } from 'react-native-gesture-handler';
+
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function NotificationsScreen() {
@@ -17,10 +19,10 @@ export default function NotificationsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-
+  
   // Get notifications from Redux
   const { items: notifications } = useSelector((state: RootState) => state.notifications);
-
+  
   // Use the notification context
   const { fetchNotifications, markAsRead, deleteNotification } = useNotification();
 
@@ -66,8 +68,8 @@ export default function NotificationsScreen() {
       'Are you sure you want to delete this notification?',
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
+        { 
+          text: 'Delete', 
           style: 'destructive',
           onPress: async () => {
             try {
@@ -75,7 +77,7 @@ export default function NotificationsScreen() {
             } catch (err) {
               console.error('Error deleting notification:', err);
             }
-          }
+          } 
         },
       ]
     );
@@ -84,7 +86,7 @@ export default function NotificationsScreen() {
   // Render right swipe actions (delete)
   const renderRightActions = (id: number) => {
     return (
-      <TouchableOpacity
+      <TouchableOpacity 
         style={styles.deleteAction}
         onPress={() => handleDelete(id)}
       >
@@ -96,11 +98,11 @@ export default function NotificationsScreen() {
   // Render a notification item
   const renderNotification = ({ item }: { item: any }) => {
     const isUnread = item.status === NotificationStatus.UNREAD;
-
+    
     // Determine icon based on notification type
     let Icon = Bell;
     let iconColor = Colors[colorScheme].text;
-
+    
     if (item.type === NotificationType.ACCEPTED) {
       Icon = CheckCircle;
       iconColor = Colors.success;
@@ -111,7 +113,7 @@ export default function NotificationsScreen() {
       Icon = Package;
       iconColor = Colors.primary;
     }
-
+    
     return (
       <Swipeable renderRightActions={() => renderRightActions(item.id)}>
         <TouchableOpacity
@@ -151,7 +153,7 @@ export default function NotificationsScreen() {
             </TouchableOpacity>
           </View>
         )}
-
+        
         {isLoading && !refreshing && notifications.length === 0 ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={Colors[colorScheme].tint} />
