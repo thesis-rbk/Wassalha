@@ -60,7 +60,7 @@ const notificationHandlers = (socket) => {
       }
 
       // Emit to the request creator's room
-      socket.to(roomName).emit("new_offer_notification", {
+      socket.to(roomName).emit("offer_made", {
         type: "NEW_OFFER",
         message: "You have received a new offer!",
         travelerId,
@@ -114,7 +114,7 @@ const notificationHandlers = (socket) => {
       }
 
       // Emit to the traveler's room
-      socket.to(roomName).emit("offer_response_notification", {
+      socket.to(roomName).emit("offer_response", {
         type: status === "ACCEPTED" ? "OFFER_ACCEPTED" : "OFFER_REJECTED",
         message: `Your offer has been ${status.toLowerCase()}!`,
         requestDetails,
@@ -166,7 +166,7 @@ const notificationHandlers = (socket) => {
     }
 
     // Emit to the traveler's room
-    socket.to(roomName).emit("order_cancelled_notification", {
+    socket.to(roomName).emit("order_cancelled", {
       type: "ORDER_CANCELLED",
       message: "An order has been cancelled by the requester",
       requestDetails,
@@ -215,7 +215,7 @@ const notificationHandlers = (socket) => {
     }
 
     // Emit to the requester's room
-    socket.to(roomName).emit("offer_cancelled_notification", {
+    socket.to(roomName).emit("offer_cancelled", {
       type: "OFFER_CANCELLED",
       message: "A traveler has cancelled their offer",
       offerDetails,
