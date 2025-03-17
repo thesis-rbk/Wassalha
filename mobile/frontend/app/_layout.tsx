@@ -13,6 +13,8 @@ import { STRIPE_PUBLISHABLE_KEY } from "@/config";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
+import { AuthProvider } from '@/context/AuthContext';
+import { SponsorshipProcessProvider } from '@/context/SponsorshipProcessContext';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -34,134 +36,137 @@ export default function RootLayout() {
   console.log("Store:", store);
 
   return (
-    <StripeProvider
-      publishableKey={STRIPE_PUBLISHABLE_KEY}
-      urlScheme="wassalha"
-      merchantIdentifier="merchant.com.wassalha"
-    >
-      <ThemeProvider>
-        <Provider store={store}>
-          <NotificationProvider>
-            {!loadingComplete ? (
-              <MainLoading onLoadingComplete={() => setLoadingComplete(true)} />
-            ) : !animationComplete ? (
-              <WelcomeAnimation
-                onAnimationComplete={() => setAnimationComplete(true)}
-              />
-            ) : (
-              <Stack>
-                {/* Optionally define specific screens if needed */}
-                <Stack.Screen name="auth/signup" options={{ title: "Sign Up" }} />
-                <Stack.Screen name="auth/login" options={{ title: "Log In" }} />
-                <Stack.Screen name="home" />
-                <Stack.Screen
-                  name="auth/ResetPassword"
-                  options={{ title: "Reset Password" }}
-                />
-                <Stack.Screen
-                  name="auth/NewPassword"
-                  options={{ title: "New Password" }}
-                />
+    <Provider store={store}>
+      <NotificationProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <SponsorshipProcessProvider>
+              <StripeProvider
+                publishableKey={STRIPE_PUBLISHABLE_KEY}
+                urlScheme="wassalha"
+                merchantIdentifier="merchant.com.wassalha"
+              >
+                {!loadingComplete ? (
+                  <MainLoading onLoadingComplete={() => setLoadingComplete(true)} />
+                ) : !animationComplete ? (
+                  <WelcomeAnimation
+                    onAnimationComplete={() => setAnimationComplete(true)}
+                  />
+                ) : (
+                  <Stack>
+                    {/* Optionally define specific screens if needed */}
+                    <Stack.Screen name="auth/signup" options={{ title: "Sign Up" }} />
+                    <Stack.Screen name="auth/login" options={{ title: "Log In" }} />
+                    <Stack.Screen name="home" />
+                    <Stack.Screen
+                      name="auth/ResetPassword"
+                      options={{ title: "Reset Password" }}
+                    />
+                    <Stack.Screen
+                      name="auth/NewPassword"
+                      options={{ title: "New Password" }}
+                    />
 
-                <Stack.Screen
-                  name="productDetails"
-                  options={{
-                    title: "Product Details",
-                  }}
-                />
-                <Stack.Screen
-                  name="test/Subscription"
-                  options={{ title: "Subscription" }}
-                />
-                <Stack.Screen
-                  name="onboarding/howYouHeard"
-                  options={{ title: "How You Heard" }}
-                />
-                <Stack.Screen
-                  name="onboarding/selectCategories"
-                  options={{ title: "Select Categories" }}
-                />
-                <Stack.Screen
-                  name="onboarding/customScreen"
-                  options={{ title: "Custom Screen" }}
-                />
-                <Stack.Screen
-                  name="profile/change"
-                  options={{ title: "Change Password" }}
-                />
-                <Stack.Screen
-                  name="profile/edit"
-                  options={{ title: "Edit Profile" }}
-                />
-                <Stack.Screen
-                  name="profile/index"
-                  options={{ title: "Profile" }}
-                />
-                <Stack.Screen
-                  name="messages/messages"
-                  options={{ title: "Messages" }}
-                />
-                <Stack.Screen
-                  name="test/Terms&&Conditions"
-                  options={{ title: "terms n conditions" }}
-                />
-                <Stack.Screen name="test/Travel" options={{ title: "Travel" }} />
-                <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
-                <Stack.Screen name="test/chat" options={{ title: "Chat" }} />
-                <Stack.Screen
-                  name="verification/start"
-                  options={{ title: "verification" }}
-                />
-                <Stack.Screen
-                  name="verification/TakeSelfie"
-                  options={{ title: "Take Selfie" }}
-                />
-                <Stack.Screen
-                  name="verification/creditCardVerification"
-                  options={{ title: "Credit Card Verification" }}
-                />
-                <Stack.Screen
-                  name="orders&requests/order"
-                  options={{ title: "Orders & Requests" }}
-                />
-                <Stack.Screen
-                  name="processTrack/initializationSO"
-                  options={{ title: "Initialization" }}
-                />
-                <Stack.Screen
-                  name="processTrack/initializationSP"
-                  options={{ title: "Initialization" }}
-                />
-                <Stack.Screen
-                  name="processTrack/verificationSO"
-                  options={{ title: "Verification" }}
-                />
-                <Stack.Screen
-                  name="processTrack/verificationSP"
-                  options={{ title: "Verification" }}
-                />
-                <Stack.Screen
-                  name="processTrack/paymentSO"
-                  options={{ title: "Payment" }}
-                />
-                <Stack.Screen
-                  name="processTrack/paymentSP"
-                  options={{ title: "Payment" }}
-                />
-                <Stack.Screen
-                  name="processTrack/pickupSO"
-                  options={{ title: "Pickup" }}
-                />
-                <Stack.Screen
-                  name="processTrack/pickupSP"
-                  options={{ title: "Pickup" }}
-                />
-                <Stack.Screen name="test/order-details" />
-                <Stack.Screen
-                  name="processTrack/makeOffer"
-                  options={{ title: "Make Offer" }}
-                />
+                    <Stack.Screen
+                      name="productDetails"
+                      options={{
+                        title: "Product Details",
+                      }}
+                    />
+                    <Stack.Screen
+                      name="test/Subscription"
+                      options={{ title: "Subscription" }}
+                    />
+                    <Stack.Screen
+                      name="onboarding/howYouHeard"
+                      options={{ title: "How You Heard" }}
+                    />
+                    <Stack.Screen
+                      name="onboarding/selectCategories"
+                      options={{ title: "Select Categories" }}
+                    />
+                    <Stack.Screen
+                      name="onboarding/customScreen"
+                      options={{ title: "Custom Screen" }}
+                    />
+                    <Stack.Screen
+                      name="profile/change"
+                      options={{ title: "Change Password" }}
+                    />
+                    <Stack.Screen
+                      name="profile/edit"
+                      options={{ title: "Edit Profile" }}
+                    />
+                    <Stack.Screen
+                      name="profile/index"
+                      options={{ title: "Profile" }}
+                    />
+                    <Stack.Screen
+                      name="messages/messages"
+                      options={{ title: "Messages" }}
+                    />
+                    <Stack.Screen
+                      name="test/Terms&&Conditions"
+                      options={{ title: "terms n conditions" }}
+                    />
+                    <Stack.Screen name="test/Travel" options={{ title: "Travel" }} />
+                    <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
+                    <Stack.Screen name="test/chat" options={{ title: "Chat" }} />
+                    <Stack.Screen
+                      name="verification/start"
+                      options={{ title: "verification" }}
+                    />
+                    <Stack.Screen
+                      name="verification/TakeSelfie"
+                      options={{ title: "Take Selfie" }}
+                    />
+                    <Stack.Screen
+                      name="verification/creditCardVerification"
+                      options={{ title: "Credit Card Verification" }}
+                    />
+                    <Stack.Screen
+                      name="orders&requests/order"
+                      options={{ title: "Orders & Requests" }}
+                    />
+                    <Stack.Screen
+                      name="processTrack/initializationSO"
+                      options={{ title: "Initialization" }}
+                    />
+                    <Stack.Screen
+                      name="processTrack/initializationSP"
+                      options={{ title: "Initialization" }}
+                    />
+                    <Stack.Screen
+                      name="processTrack/verificationSO"
+                      options={{ title: "Verification" }}
+                    />
+                    <Stack.Screen
+                      name="processTrack/verificationSP"
+                      options={{ title: "Verification" }}
+                    />
+                    <Stack.Screen
+                      name="processTrack/paymentSO"
+                      options={{ title: "Payment" }}
+                    />
+                    <Stack.Screen
+                      name="processTrack/paymentSP"
+                      options={{ title: "Payment" }}
+                    />
+                    <Stack.Screen
+                      name="processTrack/pickupSO"
+                      options={{ title: "Pickup" }}
+                    />
+                    <Stack.Screen
+                      name="processTrack/pickupSP"
+                      options={{ title: "Pickup" }}
+                    />
+                    <Stack.Screen name="test/order-details" />
+                    <Stack.Screen
+                      name="processTrack/makeOffer"
+                      options={{ title: "Make Offer" }}
+                    />
 
+<<<<<<< HEAD
                 {/* Add the new success screens */}
                 <Stack.Screen
                   name="screens/RequestSuccessScreen"
@@ -199,5 +204,75 @@ export default function RootLayout() {
         </Provider>
       </ThemeProvider>
     </StripeProvider>
+=======
+                    {/* Add the new success screens */}
+                    <Stack.Screen
+                      name="screens/RequestSuccessScreen"
+                      options={{
+                        title: "Request Created",
+                      }}
+                    />
+                    <Stack.Screen
+                      name="screens/OrderSuccessScreen"
+                      options={{
+                        title: "Order Created",
+                      }}
+                    />
+                    <Stack.Screen
+                      name="verification/fetchAll"
+                      options={{ title: "Fetch Sub" }}
+                    />
+                    <Stack.Screen
+                      name="verification/CreateSponsorPost"
+                      options={{ title: "Create Sponsor Post" }}
+                    />
+                    <Stack.Screen
+                      name="screens/NotificationsScreen"
+                      options={{
+                        title: "Notifications",
+                      }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/initializationBuyer"
+                      options={{ title: "Sponsorship Details" }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/verificationBuyer"
+                      options={{ title: "Verification" }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/paymentBuyer"
+                      options={{ title: "Payment" }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/deliveryBuyer"
+                      options={{ title: "Delivery" }}
+                    />
+                    
+                    <Stack.Screen
+                      name="sponsorshipTrack/initializationSponsor"
+                      options={{ title: "Sponsorship Details" }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/verificationSponsor"
+                      options={{ title: "Verification" }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/paymentSponsor"
+                      options={{ title: "Payment" }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/deliverySponsor"
+                      options={{ title: "Delivery" }}
+                    />
+                  </Stack>
+                )}
+              </StripeProvider>
+            </SponsorshipProcessProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </NotificationProvider>
+    </Provider>
+>>>>>>> f4741c0705710a4bc88760d811c5d7dcfa34b9e3
   );
 }

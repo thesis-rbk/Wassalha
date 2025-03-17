@@ -5,7 +5,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Sponsorship } from '@/types/Sponsorship';
 import NavigationProp from '@/types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { router, useLocalSearchParams, useRouter } from "expo-router";
 const SponsorshipsScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [minPrice, setMinPrice] = useState('');
@@ -73,7 +73,7 @@ const SponsorshipsScreen = () => {
     );
 
     const handleBuyPress = (sponsorshipId: number) => {
-        navigation.navigate('verification/sponsorPayment', { id: sponsorshipId });
+        router.push({pathname:'/sponsorshipTrack/initializationBuyer', params:{ id: sponsorshipId }});
     };
 
     const handleAddSponsorshipPress = (sponsorshipId: number) => {
