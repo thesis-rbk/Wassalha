@@ -185,7 +185,7 @@ export default function RootLayout() {
                 />
                 <Stack.Screen
                   name="screens/NotificationsScreen"
-                  options={{ 
+                  options={{
                     title: "Notifications",
                   }}
                 />
