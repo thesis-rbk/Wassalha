@@ -1,5 +1,14 @@
-import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert, TextInput, FlatList } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  Alert,
+  TextInput,
+  FlatList,
+} from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { InputField } from "@/components/InputField";
@@ -7,35 +16,280 @@ import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import { FontAwesome5 } from "@expo/vector-icons";
-import axios from 'axios'; // Import plain axios
-import * as Location from 'expo-location';
+import axios from "axios";
+import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import PickupMap from "./pickupMap";
 import axiosInstance from "@/config";
+import io from "socket.io-client";
 
-export default function Pickup({ pickupId }: { pickupId?: number }) {
+const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
+
+export default function Pickup({ pickupId, orderId: initialOrderId }: { pickupId?: number; orderId?: number }) {
   const router = useRouter();
-  const colorScheme = useColorScheme() ?? 'light';
-  const [location, setLocation] = useState<string>('');
-  const [address, setAddress] = useState<string>('');
-  const [contact, setContact] = useState<string>('');
-  const [pickupType, setPickupType] = useState<'AIRPORT' | 'DELIVERY' | 'IN_PERSON' | 'PICKUPPOINT' | ''>('');
-  const [step, setStep] = useState<'select' | 'form'>('select');
-  const [airportName, setAirportName] = useState<string>('');
-  const [manualAddress, setManualAddress] = useState<string>('');
-  const [currentLocation, setCurrentLocation] = useState<string>('');
-  const [pickupDescription, setPickupDescription] = useState<string>('');
-  const [orderId, setOrderId] = useState<number | null>(null);
-  const [scheduledTime, setScheduledTime] = useState<string>('');
-  const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
+  const colorScheme = useColorScheme() ?? "light";
+  const [location, setLocation] = useState<string>("");
+  const [address, setAddress] = useState<string>("");
+  const [contact, setContact] = useState<string>("");
+  const [pickupType, setPickupType] = useState<
+    "AIRPORT" | "DELIVERY" | "IN_PERSON" | "PICKUPPOINT" | ""
+  >("");
+  const [step, setStep] = useState<"select" | "form">("select");
+  const [airportName, setAirportName] = useState<string>("");
+  const [manualAddress, setManualAddress] = useState<string>("");
+  const [currentLocation, setCurrentLocation] = useState<string>("");
+  const [pickupDescription, setPickupDescription] = useState<string>("");
+  const [orderId, setOrderId] = useState<number | null>(initialOrderId || null);
+  const [scheduledTime, setScheduledTime] = useState<string>("");
+  const [coordinates, setCoordinates] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [selectedOptionInfo, setSelectedOptionInfo] = useState<string>('');
+  const [selectedOptionInfo, setSelectedOptionInfo] = useState<string>("");
   const [airportSuggestions, setAirportSuggestions] = useState<string[]>([]);
   const [isFetchingAirports, setIsFetchingAirports] = useState<boolean>(false);
   const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-  // Replace with your Google Places API key
+  // Socket.IO setup
+  useEffect(() => {
+    const socket = io(SOCKET_URL, {
+      transports: ["websocket"],
+    });
+
+    socket.on("connect", () => {
+      console.log("✅ Connected to Socket.IO server (Pickup)");
+      if (pickupId) {
+        socket.emit("joinPickupRoom", pickupId);
+        console.log(`Joined room: pickup:${pickupId}`);
+      }
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("❌ Socket.IO connection error:", error.message);
+    });
+
+    socket.on("suggestionUpdate", (data: any) => {
+      console.log("📩 Received suggestionUpdate (Pickup):", data);
+      Alert.alert("Update", `Pickup #${data.pickupId} has been updated.`);
+    });
+
+    socket.on("pickupAccepted", (updatedPickup: any) => {
+      console.log("✅ Received pickupAccepted (Pickup):", updatedPickup);
+      Alert.alert("Success", `Pickup #${updatedPickup.id} is now scheduled!`);
+    });
+
+    socket.on("statusUpdate", (updatedPickup: any) => {
+      console.log("🔄 Received statusUpdate (Pickup):", updatedPickup);
+      Alert.alert("Status Updated", `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`);
+    });
+
+    return () => {
+      socket.disconnect();
+      console.log("🧹 Disconnected from Socket.IO server (Pickup)");
+    };
+  }, [pickupId]);
+
+  const fetchAirportSuggestions = async (query: string) => {
+    if (!query || query.length < 2) {
+      setAirportSuggestions([]);
+      return;
+    }
+
+    setIsFetchingAirports(true);
+    try {
+      const requestBody = {
+        textQuery: `${query} airport`,
+        includedType: "airport",
+        languageCode: "en",
+      };
+      const requestHeaders = {
+        "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY,
+        "Content-Type": "application/json",
+        "X-Goog-FieldMask": "places.displayName,places.types,places.formattedAddress",
+      };
+
+      const response = await axios.post(
+        "https://places.googleapis.com/v1/places:searchText",
+        requestBody,
+        { headers: requestHeaders }
+      );
+
+      const results = response.data.places
+        .filter((place: any) => place.types.includes("airport"))
+        .map((place: any) => place.displayName.text || place.formattedAddress);
+      setAirportSuggestions(results);
+    } catch (error) {
+      console.error("Error fetching airports from Google Places:", error);
+      Alert.alert("Error", "Failed to fetch airport suggestions");
+    } finally {
+      setIsFetchingAirports(false);
+    }
+  };
+
+  const handleAirportInputChange = (text: string) => {
+    setAirportName(text);
+    fetchAirportSuggestions(text);
+  };
+
+  const handleSuggestionSelect = (suggestion: string) => {
+    setAirportName(suggestion);
+    setAirportSuggestions([]);
+  };
+
+  const getCurrentLocation = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "Permission to access location was denied");
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      const { latitude, longitude } = location.coords;
+      setCoordinates({ latitude, longitude });
+
+      let address = await Location.reverseGeocodeAsync({ latitude, longitude });
+      const displayAddress = address[0]?.name || address[0]?.street || "Current Location";
+      setManualAddress(displayAddress);
+    } catch (error) {
+      console.error("Error getting location:", error);
+      Alert.alert("Error", "Failed to get location");
+    }
+  };
+
+  const handlePickupSelection = (
+    type: "AIRPORT" | "DELIVERY" | "IN_PERSON" | "PICKUPPOINT"
+  ) => {
+    let info = "";
+    const travelerConfirmationNote =
+      "Note: Your selection requires confirmation from the traveler. After choosing this option, please wait for their acceptance. The traveler may also suggest an alternative pickup method if needed.";
+
+    switch (type) {
+      case "AIRPORT":
+        info =
+          "Airport Pickup Process: Our staff has an employee stationed at the airport. The traveler delivers your package to our employee. Visit the designated pickup zone at the specified airport with your QR code to collect it. Check your package contents and confirm receipt with our staff. Requires traveler confirmation.\n\n" +
+          "IMPORTANT: This process is managed by our team for your convenience and safety.";
+        break;
+      case "DELIVERY":
+        info =
+          "Home Delivery Process: Provide your address or use current location. Our delivery team brings the package to you. Receive a QR code for verification, inspect your package upon arrival, and confirm delivery completion. Requires traveler confirmation.\n\n" +
+          "IMPORTANT: This process is fully managed and guaranteed by us - no risk to you!";
+        break;
+      case "IN_PERSON":
+        info =
+          "In-Person Pickup Terms: You arrange directly with the traveler for pickup. Agree on a meeting location and time with the traveler. Bring your QR code for identification, verify your package contents, and confirm receipt. Requires traveler confirmation.\n\n" +
+          "IMPORTANT: This process excludes us from the delivery arrangement. You are fully responsible for what happens during the handover. Our app is not liable for any issues.\n\n" +
+          "Advice: Choose a public place to meet the traveler to minimize any potential risks.";
+        break;
+      case "PICKUPPOINT":
+        info =
+          "Designated Pickup Point Process: Choose a specific pickup location. The package is delivered to the point by the traveler. Visit within specified hours with your QR code, check your package, and confirm collection. Requires traveler confirmation. Provide clear instructions for smooth pickup.\n\n" +
+          "IMPORTANT: This process is managed by us once the package reaches the point - safe process!";
+        break;
+    }
+    setSelectedOptionInfo(info);
+    setModalVisible(true);
+    setPickupType(type);
+  };
+
+  const handleConfirmPickup = async () => {
+    const token = await AsyncStorage.getItem("jwtToken");
+    if (!token) {
+      Alert.alert("Authentication Error", "User is not authenticated.");
+      return;
+    }
+
+    if (!pickupId && !orderId) {
+      Alert.alert("Error", "Order ID is required to create a new pickup.");
+      return;
+    }
+
+    if (!pickupType) {
+      Alert.alert("Error", "Please select a valid pickup type");
+      return;
+    }
+
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    };
+
+    const basePayload = {
+      pickupId: pickupId || undefined,
+      orderId: orderId || undefined,
+      pickupType,
+      contactPhoneNumber: contact || null,
+      scheduledTime: scheduledTime || new Date().toISOString(),
+      coordinates: coordinates ? `${coordinates.latitude},${coordinates.longitude}` : null,
+      qrCode: null,
+    };
+
+    let payload;
+    switch (pickupType) {
+      case "AIRPORT":
+        payload = { ...basePayload, location: airportName || null, address: "Airport Pickup Zone" };
+        break;
+      case "DELIVERY":
+        payload = {
+          ...basePayload,
+          location: manualAddress ? "manual" : "current",
+          address: manualAddress || "Current Location",
+        };
+        break;
+      case "IN_PERSON":
+        payload = {
+          ...basePayload,
+          location: "in_person",
+          address: manualAddress || currentLocation || null,
+        };
+        break;
+      case "PICKUPPOINT":
+        payload = {
+          ...basePayload,
+          location: "custom_point",
+          address: manualAddress || null,
+          description: pickupDescription || null,
+        };
+        break;
+      default:
+        Alert.alert("Error", "Invalid pickup type");
+        return;
+    }
+
+    try {
+      const response = await axiosInstance.post("/api/pickup/handle-confirm", payload, { headers });
+      const pickupData = response.data.pickup; // Backend returns { message, pickup }
+
+      const socket = io(SOCKET_URL, { transports: ["websocket"] });
+      const room = `pickup:${pickupData.id}`;
+      socket.emit("joinPickupRoom", pickupData.id);
+      socket.emit("suggestionUpdate", pickupData); // Match backend event name
+      console.log(`✅ Emitted suggestionUpdate to room ${room}:`, pickupData);
+
+      Alert.alert(
+        "Success",
+        pickupId
+          ? "Pickup updated successfully!"
+          : "Pickup scheduled successfully! Awaiting traveler confirmation."
+      );
+      setStep("select");
+      setPickupType("");
+      setLocation("");
+      setAddress("");
+      setContact("");
+      setScheduledTime("");
+      setCoordinates(null);
+      router.back();
+      if (!pickupId) router.back(); // Navigate back if new pickup
+    } catch (error) {
+      console.error("Pickup error:", error);
+      Alert.alert("Error", pickupId ? "Failed to update pickup" : "Failed to schedule pickup");
+    }
+  };
 
   const styles = StyleSheet.create({
     container: {
@@ -68,21 +322,21 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
       marginBottom: 20,
     },
     pickupOption: {
-      flexDirection: 'column',
-      alignItems: 'flex-start',
+      flexDirection: "column",
+      alignItems: "flex-start",
       padding: 16,
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: Colors[colorScheme].text + '40',
+      borderColor: Colors[colorScheme].text + "40",
     },
     optionHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      width: '100%',
+      flexDirection: "row",
+      alignItems: "center",
+      width: "100%",
     },
     selectedOption: {
       borderColor: Colors[colorScheme].primary,
-      backgroundColor: Colors[colorScheme].primary + '20',
+      backgroundColor: Colors[colorScheme].primary + "20",
     },
     optionText: {
       flex: 1,
@@ -94,23 +348,23 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
       marginTop: 8,
       marginLeft: 32,
       fontSize: 14,
-      color: Colors[colorScheme].text + '80',
+      color: Colors[colorScheme].text + "80",
     },
     formContainer: {
       marginBottom: 20,
     },
     locationButton: {
       marginTop: 10,
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
     formActions: {
       marginTop: 20,
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 10,
-      justifyContent: 'space-between',
+      justifyContent: "space-between",
     },
     backButton: {
       flex: 1,
@@ -150,18 +404,18 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
       fontSize: 16,
       fontWeight: "bold",
       marginBottom: 15,
-      color: '#00CC00',
+      color: "#00CC00",
     },
     importantTextRisk: {
       fontSize: 16,
       fontWeight: "bold",
       marginBottom: 15,
-      color: '#FF0000',
+      color: "#FF0000",
     },
     modalButtonContainer: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 10,
-      justifyContent: 'space-between',
+      justifyContent: "space-between",
     },
     buttonText: {
       color: Colors[colorScheme].text,
@@ -169,7 +423,7 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
     },
     airportInput: {
       borderWidth: 1,
-      borderColor: Colors[colorScheme].text + '40',
+      borderColor: Colors[colorScheme].text + "40",
       borderRadius: 8,
       padding: 10,
       fontSize: 16,
@@ -179,9 +433,9 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
     },
     suggestionContainer: {
       maxHeight: 150,
-      width: '100%',
+      width: "100%",
       borderWidth: 1,
-      borderColor: Colors[colorScheme].text + '20',
+      borderColor: Colors[colorScheme].text + "20",
       borderRadius: 8,
       backgroundColor: Colors[colorScheme].background,
       marginTop: 5,
@@ -189,7 +443,7 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
     suggestionItem: {
       padding: 10,
       borderBottomWidth: 1,
-      borderBottomColor: Colors[colorScheme].text + '10',
+      borderBottomColor: Colors[colorScheme].text + "10",
     },
     suggestionText: {
       fontSize: 16,
@@ -197,221 +451,34 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
     },
   });
 
-  // Fetch airport suggestions using Google Places API (New)
-  const fetchAirportSuggestions = async (query: string) => {
-    if (!query || query.length < 2) {
-      setAirportSuggestions([]);
-      return;
-    }
-  
-    setIsFetchingAirports(true);
-    try {
-      const requestBody = {
-        textQuery: `${query} airport`,
-        includedType: 'airport',
-        languageCode: 'en',
-      };
-      const requestHeaders = {
-        'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
-        'Content-Type': 'application/json',
-        'X-Goog-FieldMask': 'places.displayName,places.types,places.formattedAddress',
-      };
-      console.log('Request URL:', 'https://places.googleapis.com/v1/places:searchText');
-      console.log('Request Headers:', requestHeaders);
-      console.log('Request Body:', requestBody);
-  
-      const response = await axios.post(
-        'https://places.googleapis.com/v1/places:searchText',
-        requestBody,
-        { headers: requestHeaders }
-      );
-      console.log('Response:', response.data);
-  
-      const results = response.data.places
-        .filter((place: any) => place.types.includes('airport'))
-        .map((place: any) => place.displayName.text || place.formattedAddress);
-      setAirportSuggestions(results);
-    } catch (error) {
-      console.error('Error fetching airports from Google Places:', {
-        status: (error as any).response?.status,
-        data: (error as any).response?.data,
-        message: (error as any).message,
-      });
-      Alert.alert('Error', 'Failed to fetch airport suggestions');
-    } finally {
-      setIsFetchingAirports(false);
-    }
-  };
-
-  const handleAirportInputChange = (text: string) => {
-    setAirportName(text);
-    fetchAirportSuggestions(text);
-  };
-
-  const handleSuggestionSelect = (suggestion: string) => {
-    setAirportName(suggestion);
-    setAirportSuggestions([]);
-  };
-
-  const getCurrentLocation = async () => {
-    try {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Permission to access location was denied');
-        return;
-      }
-
-      let location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-
-      const { latitude, longitude } = location.coords;
-      setCoordinates({ latitude, longitude });
-
-      let address = await Location.reverseGeocodeAsync({ latitude, longitude });
-      const displayAddress = address[0]?.name || address[0]?.street || 'Current Location';
-      setManualAddress(displayAddress);
-    } catch (error) {
-      console.error('Error getting location:', error);
-      Alert.alert('Error', 'Failed to get location');
-    }
-  };
-
-  const handlePickupSelection = (type: 'AIRPORT' | 'DELIVERY' | 'IN_PERSON' | 'PICKUPPOINT') => {
-    let info = '';
-    const travelerConfirmationNote =
-      'Note: Your selection requires confirmation from the traveler. After choosing this option, please wait for their acceptance. The traveler may also suggest an alternative pickup method if needed.';
-
-    switch (type) {
-      case 'AIRPORT':
-        info =
-          'Airport Pickup Process: Our staff has an employee stationed at the airport. The traveler delivers your package to our employee. Visit the designated pickup zone at the specified airport with your QR code to collect it. Check your package contents and confirm receipt with our staff. Requires traveler confirmation.\n\n' +
-          'IMPORTANT: This process is managed by our team for your convenience and safety.';
-        break;
-      case 'DELIVERY':
-        info =
-          'Home Delivery Process: Provide your address or use current location. Our delivery team brings the package to you. Receive a QR code for verification, inspect your package upon arrival, and confirm delivery completion. Requires traveler confirmation.\n\n' +
-          'IMPORTANT: This process is fully managed and guaranteed by us - no risk to you!';
-        break;
-      case 'IN_PERSON':
-        info =
-          'In-Person Pickup Terms: You arrange directly with the traveler for pickup. Agree on a meeting location and time with the traveler. Bring your QR code for identification, verify your package contents, and confirm receipt. Requires traveler confirmation.\n\n' +
-          'IMPORTANT: This process excludes us from the delivery arrangement. You are fully responsible for what happens during the handover. Our app is not liable for any issues.\n\n' +
-          'Advice: Choose a public place to meet the traveler to minimize any potential risks.';
-        break;
-      case 'PICKUPPOINT':
-        info =
-          'Designated Pickup Point Process: Choose a specific pickup location. The package is delivered to the point by the traveler. Visit within specified hours with your QR code, check your package, and confirm collection. Requires traveler confirmation. Provide clear instructions for smooth pickup.\n\n' +
-          'IMPORTANT: This process is managed by us once the package reaches the point - safe process!';
-        break;
-    }
-    setSelectedOptionInfo(info);
-    setModalVisible(true);
-    setPickupType(type);
-  };
-
-  const handleConfirmPickup = async () => {
-    const token = await AsyncStorage.getItem('jwtToken');
-    console.log('Token:', token);
-    if (!token) {
-      Alert.alert('Authentication Error', 'User is not authenticated.');
-      return;
-    }
-
-    if (!orderId && !pickupId) {
-      console.log(pickupId, "pickupiiid");
-      Alert.alert('Error', 'Order ID is required to create a new pickup.');
-      return;
-    }
-
-    if (!pickupType) {
-      Alert.alert('Error', 'Please select a valid pickup type');
-      return;
-    }
-
-    const headers = {
-      Authorization: `Bearer ${token}`,
-    };
-
-    const basePayload = {
-      pickupId: pickupId || undefined,
-      orderId: orderId || undefined,
-      pickupType,
-      contactPhoneNumber: contact || null,
-      scheduledTime: scheduledTime || new Date().toISOString(),
-      coordinates: coordinates ? `${coordinates.latitude},${coordinates.longitude}` : null,
-      qrCode: null,
-    };
-
-    let payload;
-    switch (pickupType) {
-      case 'AIRPORT':
-        payload = { ...basePayload, location: airportName || null, address: 'Airport Pickup Zone' };
-        break;
-      case 'DELIVERY':
-        payload = {
-          ...basePayload,
-          location: manualAddress ? 'manual' : 'current',
-          address: manualAddress || 'Current Location',
-        };
-        break;
-      case 'IN_PERSON':
-        payload = { ...basePayload, location: 'in_person', address: manualAddress || currentLocation || null };
-        break;
-      case 'PICKUPPOINT':
-        payload = {
-          ...basePayload,
-          location: 'custom_point',
-          address: manualAddress || null,
-          description: pickupDescription || null,
-        };
-        break;
-      default:
-        Alert.alert('Error', 'Invalid pickup type');
-        return;
-    }
-
-    try {
-      const response = await axiosInstance.post('/api/pickup/handle-confirm', payload, { headers });
-      Alert.alert(
-        'Success',
-        pickupId ? 'Pickup updated successfully!' : 'Pickup scheduled successfully! Awaiting traveler confirmation.'
-      );
-      setStep('select');
-      setPickupType('');
-      setLocation('');
-      setAddress('');
-      setContact('');
-      setScheduledTime('');
-      setCoordinates(null);
-    } catch (error) {
-      console.error('Pickup error:', error);
-      Alert.alert('Error', pickupId ? 'Failed to update pickup' : 'Failed to schedule pickup');
-    }
-  };
-
   return (
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {step === 'select' ? (
+        {step === "select" ? (
           <>
             <ThemedText style={styles.headerText}>Schedule Pickup</ThemedText>
             <ThemedText style={styles.subText}>Choose your pickup method</ThemedText>
 
             <View style={styles.pickupOptionsContainer}>
-              <TouchableOpacity 
-                style={[styles.pickupOption, pickupType === 'AIRPORT' && styles.selectedOption]}
-                onPress={() => handlePickupSelection('AIRPORT')}
+              <TouchableOpacity
+                style={[styles.pickupOption, pickupType === "AIRPORT" && styles.selectedOption]}
+                onPress={() => handlePickupSelection("AIRPORT")}
               >
                 <View style={styles.optionHeader}>
                   <FontAwesome5
                     name="plane"
                     size={20}
-                    color={pickupType === 'AIRPORT' ? Colors[colorScheme].primary : Colors[colorScheme].text}
+                    color={
+                      pickupType === "AIRPORT"
+                        ? Colors[colorScheme].primary
+                        : Colors[colorScheme].text
+                    }
                   />
                   <ThemedText style={styles.optionText}>
-                    Airport Pickup Point 
-                    {pickupType === 'AIRPORT' && <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />}
+                    Airport Pickup Point
+                    {pickupType === "AIRPORT" && (
+                      <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />
+                    )}
                   </ThemedText>
                 </View>
                 <ThemedText style={styles.descriptionText}>
@@ -419,19 +486,25 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
                 </ThemedText>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={[styles.pickupOption, pickupType === 'DELIVERY' && styles.selectedOption]}
-                onPress={() => handlePickupSelection('DELIVERY')}
+              <TouchableOpacity
+                style={[styles.pickupOption, pickupType === "DELIVERY" && styles.selectedOption]}
+                onPress={() => handlePickupSelection("DELIVERY")}
               >
                 <View style={styles.optionHeader}>
                   <FontAwesome5
                     name="home"
                     size={20}
-                    color={pickupType === 'DELIVERY' ? Colors[colorScheme].primary : Colors[colorScheme].text}
+                    color={
+                      pickupType === "DELIVERY"
+                        ? Colors[colorScheme].primary
+                        : Colors[colorScheme].text
+                    }
                   />
                   <ThemedText style={styles.optionText}>
                     Home Delivery
-                    {pickupType === 'DELIVERY' && <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />}
+                    {pickupType === "DELIVERY" && (
+                      <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />
+                    )}
                   </ThemedText>
                 </View>
                 <ThemedText style={styles.descriptionText}>
@@ -439,19 +512,25 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
                 </ThemedText>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={[styles.pickupOption, pickupType === 'IN_PERSON' && styles.selectedOption]}
-                onPress={() => handlePickupSelection('IN_PERSON')}
+              <TouchableOpacity
+                style={[styles.pickupOption, pickupType === "IN_PERSON" && styles.selectedOption]}
+                onPress={() => handlePickupSelection("IN_PERSON")}
               >
                 <View style={styles.optionHeader}>
                   <FontAwesome5
                     name="user"
                     size={20}
-                    color={pickupType === 'IN_PERSON' ? Colors[colorScheme].primary : Colors[colorScheme].text}
+                    color={
+                      pickupType === "IN_PERSON"
+                        ? Colors[colorScheme].primary
+                        : Colors[colorScheme].text
+                    }
                   />
                   <ThemedText style={styles.optionText}>
                     In-Person Pickup
-                    {pickupType === 'IN_PERSON' && <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />}
+                    {pickupType === "IN_PERSON" && (
+                      <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />
+                    )}
                   </ThemedText>
                 </View>
                 <ThemedText style={styles.descriptionText}>
@@ -459,19 +538,25 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
                 </ThemedText>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={[styles.pickupOption, pickupType === 'PICKUPPOINT' && styles.selectedOption]}
-                onPress={() => handlePickupSelection('PICKUPPOINT')}
+              <TouchableOpacity
+                style={[styles.pickupOption, pickupType === "PICKUPPOINT" && styles.selectedOption]}
+                onPress={() => handlePickupSelection("PICKUPPOINT")}
               >
                 <View style={styles.optionHeader}>
                   <FontAwesome5
                     name="map-marker"
                     size={20}
-                    color={pickupType === 'PICKUPPOINT' ? Colors[colorScheme].primary : Colors[colorScheme].text}
+                    color={
+                      pickupType === "PICKUPPOINT"
+                        ? Colors[colorScheme].primary
+                        : Colors[colorScheme].text
+                    }
                   />
                   <ThemedText style={styles.optionText}>
                     Designated Pickup Point
-                    {pickupType === 'PICKUPPOINT' && <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />}
+                    {pickupType === "PICKUPPOINT" && (
+                      <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />
+                    )}
                   </ThemedText>
                 </View>
                 <ThemedText style={styles.descriptionText}>
@@ -483,15 +568,17 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
         ) : (
           <View style={styles.formContainer}>
             <ThemedText style={styles.headerText}>
-              {pickupType === 'AIRPORT' && 'Enter Airport Details'}
-              {pickupType === 'DELIVERY' && 'Delivery Information'}
-              {pickupType === 'PICKUPPOINT' && 'Pickup Point Details'}
+              {pickupType === "AIRPORT" && "Enter Airport Details"}
+              {pickupType === "DELIVERY" && "Delivery Information"}
+              {pickupType === "PICKUPPOINT" && "Pickup Point Details"}
             </ThemedText>
 
-            {pickupType === 'AIRPORT' && (
+            {pickupType === "AIRPORT" && (
               <>
                 <ThemedText style={styles.modalText}>
-                  Airport Pickup Process: Our airport employee receives your package from the traveler. Visit the pickup zone with your QR code to collect it. Requires traveler confirmation.
+                  Airport Pickup Process: Our airport employee receives your package from the
+                  traveler. Visit the pickup zone with your QR code to collect it. Requires
+                  traveler confirmation.
                 </ThemedText>
                 <ThemedText style={styles.importantTextSafe}>
                   IMPORTANT: This process is managed by our team for your convenience and safety.
@@ -520,10 +607,11 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
               </>
             )}
 
-            {pickupType === 'DELIVERY' && (
+            {pickupType === "DELIVERY" && (
               <>
                 <ThemedText style={styles.modalText}>
-                  Home Delivery Process: We deliver to your door. Provide your address or use current location. Requires traveler confirmation.
+                  Home Delivery Process: We deliver to your door. Provide your address or use
+                  current location. Requires traveler confirmation.
                 </ThemedText>
                 <ThemedText style={styles.importantTextSafe}>
                   IMPORTANT: This process is fully managed and guaranteed by us - no risk to you!
@@ -545,13 +633,16 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
               </>
             )}
 
-            {pickupType === 'PICKUPPOINT' && (
+            {pickupType === "PICKUPPOINT" && (
               <>
                 <ThemedText style={styles.modalText}>
-                  Designated Pickup Point Process: Specify a location for traveler drop-off. Collect with QR code. Requires traveler confirmation. Provide clear instructions for smooth pickup.
+                  Designated Pickup Point Process: Specify a location for traveler drop-off.
+                  Collect with QR code. Requires traveler confirmation. Provide clear
+                  instructions for smooth pickup.
                 </ThemedText>
                 <ThemedText style={styles.importantTextSafe}>
-                  IMPORTANT: This process is managed by us once the package reaches the point - safe process!
+                  IMPORTANT: This process is managed by us once the package reaches the point -
+                  safe process!
                 </ThemedText>
                 <InputField
                   label="Address"
@@ -582,7 +673,7 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
             <View style={styles.formActions}>
               <BaseButton
                 variant="secondary"
-                onPress={() => setStep('select')}
+                onPress={() => setStep("select")}
                 style={styles.backButton}
               >
                 Back
@@ -598,7 +689,7 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
           </View>
         )}
 
-        {pickupType === 'IN_PERSON' && step === 'select' && (
+        {pickupType === "IN_PERSON" && step === "select" && (
           <BaseButton
             variant="primary"
             size="login"
@@ -618,24 +709,28 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
       >
         <View style={styles.modalView}>
           <View style={styles.modalContent}>
-            <ThemedText style={styles.modalTitle}>
-              {pickupType} Information
-            </ThemedText>
+            <ThemedText style={styles.modalTitle}>{pickupType} Information</ThemedText>
             <ScrollView>
               <ThemedText style={styles.modalText}>
-                {selectedOptionInfo.split('\n\n')[0]}
+                {selectedOptionInfo.split("\n\n")[0]}
               </ThemedText>
-              <ThemedText style={pickupType === 'IN_PERSON' ? styles.importantTextRisk : styles.importantTextSafe}>
-                {selectedOptionInfo.split('\n\n')[1]}
+              <ThemedText
+                style={
+                  pickupType === "IN_PERSON"
+                    ? styles.importantTextRisk
+                    : styles.importantTextSafe
+                }
+              >
+                {selectedOptionInfo.split("\n\n")[1]}
               </ThemedText>
-              {pickupType === 'IN_PERSON' && (
+              {pickupType === "IN_PERSON" && (
                 <ThemedText style={styles.modalText}>
-                  {selectedOptionInfo.split('\n\n')[2]}
+                  {selectedOptionInfo.split("\n\n")[2]}
                 </ThemedText>
               )}
-              {pickupType === 'PICKUPPOINT' && (
+              {pickupType === "PICKUPPOINT" && (
                 <ThemedText style={styles.modalText}>
-                  {selectedOptionInfo.split('\n\n')[2]}
+                  {selectedOptionInfo.split("\n\n")[2]}
                 </ThemedText>
               )}
             </ScrollView>
@@ -654,7 +749,7 @@ export default function Pickup({ pickupId }: { pickupId?: number }) {
                 variant="primary"
                 onPress={() => {
                   setModalVisible(false);
-                  if (pickupType !== 'IN_PERSON') setStep('form');
+                  if (pickupType !== "IN_PERSON") setStep("form");
                 }}
                 style={styles.confirmButton}
               >

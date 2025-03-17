@@ -131,7 +131,7 @@ export default function PaymentScreen() {
         Alert.alert("Success", "Payment successful!");
         console.log("Payment successful:", paymentIntent);
         router.replace({
-          pathname: "/processTrack/pickupSO",
+          pathname: "/pickup/pickup",
           params: params,
         });
       }
