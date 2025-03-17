@@ -15,9 +15,8 @@ import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { usePickupActions } from "../../hooks/usePickupActions";
 import { QRCodeModal } from "../pickup/QRCodeModal";
 import io from "socket.io-client";
-import { Console } from "console";
 
-const SOCKET_URL = "http://172.20.10.3:4000"; 
+const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL; 
 
 export default function PickupOwner() {
   const router = useRouter();
