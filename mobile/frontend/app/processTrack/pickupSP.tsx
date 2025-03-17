@@ -460,7 +460,7 @@ export default function PickupTraveler() {
               </Text>
             </View>
           )}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.suggestionsList}
         />
       )}
@@ -509,7 +509,7 @@ export default function PickupTraveler() {
             <FlatList
               data={pickups}
               renderItem={renderItem}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={(item) => item.id}
               refreshing={isLoading}
               onRefresh={fetchPickups}
               contentContainerStyle={styles.listContainer}

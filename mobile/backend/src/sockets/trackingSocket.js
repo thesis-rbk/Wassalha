@@ -16,7 +16,8 @@ module.exports = (io) => { // Changed from (server) to (io) since io is passed f
     socket.on("suggestionUpdate", (suggestionData) => {
       console.log("📩 Received suggestionUpdate:", suggestionData);
       try {
-        const { pickupId } = suggestionData;
+        const pickupId = suggestionData.pickupId || suggestionData.id; // Fallback to id
+        if (!pickupId) throw new Error("No pickupId or id in suggestionData");
         io.to(`pickup:${pickupId}`).emit("suggestionUpdate", suggestionData);
         console.log(`✅ Broadcasted suggestionUpdate to room: pickup:${pickupId}`);
       } catch (error) {

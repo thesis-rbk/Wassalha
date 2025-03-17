@@ -81,8 +81,8 @@ const handlePickup = async (req, res) => {
           contactPhoneNumber: contactPhoneNumber !== undefined ? contactPhoneNumber : existingPickup.contactPhoneNumber,
           scheduledTime: scheduledTime ? new Date(scheduledTime) : existingPickup.scheduledTime,
           status: 'IN_PROGRESS',
-          userconfirmed: isRequester ? true : existingPickup.userconfirmed,
-          travelerconfirmed: isTraveler ? true : existingPickup.travelerconfirmed,
+          userconfirmed: !existingPickup.userconfirmed,
+          travelerconfirmed: !existingPickup.travelerconfirmed,
         },
       });
 

@@ -283,6 +283,7 @@ export default function Pickup({ pickupId, orderId: initialOrderId }: { pickupId
       setContact("");
       setScheduledTime("");
       setCoordinates(null);
+      router.back();
       if (!pickupId) router.back(); // Navigate back if new pickup
     } catch (error) {
       console.error("Pickup error:", error);

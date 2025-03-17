@@ -68,7 +68,6 @@ async function seed() {
           googleId: hasGoogleAccount ? faker.string.alphanumeric(21) : undefined,
           password: hasGoogleAccount ? undefined : faker.internet.password(),
           hasCompletedOnboarding: faker.datatype.boolean(),
-          role: faker.helpers.enumValue(Role),
         },
       });
     })
@@ -107,7 +106,7 @@ async function seed() {
           phoneNumber: faker.phone.number(),
           isAnonymous: faker.datatype.boolean(),
           referralSource: faker.helpers.enumValue(ReferralSource),
-          imageId: faker.datatype.boolean() ? profileMedia[index].id : undefined, // Assign unique media or none
+          isSponsor: faker.datatype.boolean(),
         },
       })
     )

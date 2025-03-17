@@ -361,7 +361,7 @@ export default function PickupOwner() {
               </Text>
             </View>
           )}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.suggestionsList}
         />
       )}
@@ -401,7 +401,7 @@ export default function PickupOwner() {
             <FlatList
               data={pickups}
               renderItem={renderItem}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={(item) => item.id}
               refreshing={isLoading}
               onRefresh={fetchPickups}
               contentContainerStyle={styles.listContainer}

@@ -24,8 +24,9 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff",
-        "permissions": ["CAMERA"]
-
+        "permissions": [
+          "CAMERA"
+        ]
       }
     },
     "extra": {
@@ -54,7 +55,8 @@
           "cameraPermission": "The app needs access to your camera to take photos."
         }
       ],
-      "expo-barcode-scanner"
+      "expo-barcode-scanner",
+      "react-native-vision-camera"
     ],
     "experiments": {
       "typedRoutes": true
