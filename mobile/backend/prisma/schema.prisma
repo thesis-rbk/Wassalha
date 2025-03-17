@@ -789,4 +789,8 @@ model Ticket {
 
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   messages    Message[]    @relation("TicketMessages")
+
+  // Add this line for admin handling the ticket
+  adminId     Int?         // Optional field for the admin handling the ticket
+  admin       User?        @relation("AdminTickets", fields: [adminId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 }
