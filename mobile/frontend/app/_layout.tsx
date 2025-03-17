@@ -166,45 +166,6 @@ export default function RootLayout() {
                       options={{ title: "Make Offer" }}
                     />
 
-<<<<<<< HEAD
-                {/* Add the new success screens */}
-                <Stack.Screen
-                  name="screens/RequestSuccessScreen"
-                  options={{
-                    title: "Request Created",
-                  }}
-                />
-                <Stack.Screen
-                  name="screens/OrderSuccessScreen"
-                  options={{
-                    title: "Order Created",
-                  }}
-                />
-                <Stack.Screen
-                  name="verification/fetchAll"
-                  options={{ title: "Fetch Sub" }}
-                />
-                <Stack.Screen
-                  name="verification/CreateSponsorPost"
-                  options={{ title: "Create Sponsor Post" }}
-                />
-                <Stack.Screen
-                  name="verification/reviewSponsor"
-                  options={{ title: "Create Sponsor review" }}
-                />
-                <Stack.Screen
-                  name="screens/NotificationsScreen"
-                  options={{
-                    title: "Notifications",
-                  }}
-                />
-              </Stack>
-            )}
-          </NotificationProvider>
-        </Provider>
-      </ThemeProvider>
-    </StripeProvider>
-=======
                     {/* Add the new success screens */}
                     <Stack.Screen
                       name="screens/RequestSuccessScreen"
@@ -248,7 +209,7 @@ export default function RootLayout() {
                       name="sponsorshipTrack/deliveryBuyer"
                       options={{ title: "Delivery" }}
                     />
-                    
+
                     <Stack.Screen
                       name="sponsorshipTrack/initializationSponsor"
                       options={{ title: "Sponsorship Details" }}
@@ -273,6 +234,5 @@ export default function RootLayout() {
         </AuthProvider>
       </NotificationProvider>
     </Provider>
->>>>>>> f4741c0705710a4bc88760d811c5d7dcfa34b9e3
   );
 }
