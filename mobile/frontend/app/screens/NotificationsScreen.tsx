@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+
 import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -11,7 +11,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { Swipeable } from 'react-native-gesture-handler';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function NotificationsScreen() {
@@ -22,7 +22,7 @@ export default function NotificationsScreen() {
   
   // Get notifications from Redux
   const { items: notifications } = useSelector((state: RootState) => state.notifications);
-
+  
   // Use the notification context
   const { fetchNotifications, markAsRead, deleteNotification } = useNotification();
 

@@ -4,7 +4,7 @@ import { sendSocketNotification } from '@/services/notificationService';
 import { NotificationType, NotificationStatus } from '@/types/NotificationProcess';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
-import {
+import { 
   setNotifications,
   addNotification,
   markAsRead as markNotificationAsRead
@@ -12,7 +12,16 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BACKEND_URL } from '@/config';
 import { Socket } from 'socket.io-client';
-import { NotificationContextType } from '../types/notificationContext';
+
+// Define the shape of our context data
+interface NotificationContextType {
+  fetchNotifications: () => Promise<void>;   // Function to fetch notifications from API
+  markAsRead: (id: number) => Promise<void>; // Function to mark a notification as read
+  deleteNotification: (id: number) => Promise<void>; // Function to delete a notification
+  sendNotification: (eventName: string, data: any) => Promise<boolean>; // NEW: Function to send notifications
+  unreadCount: number;                        // Number of unread notifications
+}
+
 // Create the context with null initial value
 const NotificationContext = createContext<NotificationContextType | null>(null);
 
@@ -29,7 +38,7 @@ export const useNotification = () => {
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dispatch = useDispatch();
   const [socket, setSocket] = useState<Socket | null>(null);
-
+  
   // Get user from Redux state
   const { user } = useSelector((state: RootState) => state.auth);
 
@@ -41,6 +50,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     
     try {
       console.log('🔄 Fetching notifications from API');
+      
       // Get authentication token
       const token = await AsyncStorage.getItem('jwtToken');
       if (!token) {
@@ -81,9 +91,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   useEffect(() => {
     let mounted = true;
     let notificationSocket: Socket | null = null;
-
+    
     const initializeSocket = async () => {
-      if (!user?.id) {
       if (!user?.id) {
         console.log('👤 No user logged in, skipping notification socket setup');
         return;
@@ -99,22 +108,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         // Get new socket instance
         notificationSocket = await getSocket('notifications');
-
+        
         if (mounted) {
           setSocket(notificationSocket);
           
           // Make sure socket is connected and join room
           if (notificationSocket && !notificationSocket.connected) {
-            await connectSocket('notifications');
-          }
-
-          // Join room after connection is established
-          if (notificationSocket?.connected) {
-            notificationSocket.emit('join', user.id);
-          } else {
-            notificationSocket?.on('connect', () => {
-              notificationSocket?.emit('join', user.id);
-            });
             await connectSocket('notifications');
           }
 
@@ -139,10 +138,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       mounted = false;
       if (notificationSocket) {
         console.log('🧹 Cleaning up socket connection');
-        console.log('🧹 Cleaning up socket connection');
         notificationSocket.off('connect');
         notificationSocket.off('joined');
-        notificationSocket.disconnect();
         notificationSocket.disconnect();
       }
     };
@@ -154,9 +151,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (!socket || !user?.id) return;
 
     console.log('🔌 Setting up notification event listeners for user:', user.id);
-    console.log('🔌 Setting up notification event listeners for user:', user.id);
 
-    // Create event handler functions
     // Create event handler functions
     const handleNewOffer = (notification: any) => {
       console.log('📩 New offer notification received:', notification);
@@ -170,7 +165,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }));
       fetchNotifications();
     };
-
+    
     // Handler for offer response notifications
     const handleOfferResponse = (notification: any) => {
       console.log('📩 Offer response notification received:', notification);
@@ -182,11 +177,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || `Your offer has been ${notification.type === 'OFFER_ACCEPTED' ? 'accepted' : 'rejected'}!`,
         status: NotificationStatus.UNREAD
       }));
-
+      
       // Refresh notifications
       fetchNotifications();
     };
-
+    
     // Handler for order cancellation notifications
     const handleOrderCancelled = (notification: any) => {
       console.log('📩 Order cancellation notification received:', notification);
@@ -198,11 +193,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || 'An order has been cancelled by the requester',
         status: NotificationStatus.UNREAD
       }));
-
+      
       // Refresh notifications
       fetchNotifications();
     };
-
+    
     // Handler for offer cancellation notifications
     const handleOfferCancelled = (notification: any) => {
       console.log('📩 Offer cancellation notification received:', notification);
@@ -214,7 +209,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || 'A traveler has cancelled their offer',
         status: NotificationStatus.UNREAD
       }));
-
+      
       // Refresh notifications
       fetchNotifications();
     };
@@ -230,11 +225,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || 'A verification photo has been submitted for your review',
         status: NotificationStatus.UNREAD
       }));
-
+      
       // Refresh notifications
       fetchNotifications();
     };
-
+    
     // NEW: Handler for product confirmed notifications
     const handleProductConfirmed = (notification: any) => {
       console.log('📩 Product confirmed notification received:', notification);
@@ -246,11 +241,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || 'Your product has been confirmed by the requester',
         status: NotificationStatus.UNREAD
       }));
-
+      
       // Refresh notifications
       fetchNotifications();
     };
-
+    
     // NEW: Handler for new photo request notifications
     const handleNewPhotoRequest = (notification: any) => {
       console.log('📩 New photo request notification received:', notification);
@@ -262,11 +257,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || 'The requester has asked for another verification photo',
         status: NotificationStatus.UNREAD
       }));
-
+      
       // Refresh notifications
       fetchNotifications();
     };
-
+    
     // NEW: Handler for process cancelled notifications
     const handleProcessCancelled = (notification: any) => {
       console.log('📩 Process cancelled notification received:', notification);
@@ -278,7 +273,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || 'The verification process has been cancelled',
         status: NotificationStatus.UNREAD
       }));
-
+      
       // Refresh notifications
       fetchNotifications();
     };
@@ -288,7 +283,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       console.log('✅ Joined notification room:', data);
     };
 
-    // Setup event listeners
     // Setup event listeners
     socket.on('offer_made', handleNewOffer);
     socket.on('offer_response', handleOfferResponse);
@@ -304,16 +298,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       console.log('🔄 Socket reconnected, rejoining room for user:', user.id);
       socket.emit('join', user.id);
     });
-    // Rejoin room when socket reconnects
-    socket.on('connect', () => {
-      console.log('🔄 Socket reconnected, rejoining room for user:', user.id);
-      socket.emit('join', user.id);
-    });
 
     // Cleanup function
-    // Cleanup function
     return () => {
-      console.log('🧹 Removing notification event listeners');
       console.log('🧹 Removing notification event listeners');
       socket.off('offer_made', handleNewOffer);
       socket.off('offer_response', handleOfferResponse);
@@ -324,9 +311,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       socket.off('request_new_photo', handleNewPhotoRequest);
       socket.off('process_canceled', handleProcessCancelled);
       socket.off('connect');
-      socket.off('connect');
     };
-  }, [socket, user?.id, dispatch, fetchNotifications]) // Re-run when socket, user ID, or dispatch changes
   }, [socket, user?.id, dispatch, fetchNotifications]) // Re-run when socket, user ID, or dispatch changes
 
   // 3. API METHODS
@@ -337,7 +322,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const markAsRead = useCallback(async (id: number) => {
     try {
       console.log(`🔄 Marking notification ${id} as read`);
-
+      
       // Get authentication token
       const token = await AsyncStorage.getItem('jwtToken');
       if (!token) {
@@ -353,7 +338,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           'Content-Type': 'application/json',
         },
       });
-
+      
       // Update Redux store if successful
       if (response.ok) {
         console.log(`✅ Notification ${id} marked as read`);
@@ -370,14 +355,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const deleteNotification = useCallback(async (id: number) => {
     try {
       console.log(`🗑️ Deleting notification ${id}`);
-
+      
       // Get authentication token
       const token = await AsyncStorage.getItem('jwtToken');
       if (!token) {
         console.log('⚠️ No token available');
         return;
       }
-
+      
       // Make API request
       const response = await fetch(`${BACKEND_URL}/api/notifications/${id}`, {
         method: 'DELETE',
@@ -408,7 +393,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   useEffect(() => {
     if (user?.id) {
       console.log('👤 User changed, fetching notifications');
-      fetchNotifications();
+    fetchNotifications();
     }
   }, [user?.id, fetchNotifications]); // Run when user ID changes
 
