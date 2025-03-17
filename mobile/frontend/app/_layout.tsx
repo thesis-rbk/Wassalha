@@ -184,6 +184,10 @@ export default function RootLayout() {
                   options={{ title: "Create Sponsor Post" }}
                 />
                 <Stack.Screen
+                  name="verification/reviewSponsor"
+                  options={{ title: "Create Sponsor review" }}
+                />
+                <Stack.Screen
                   name="screens/NotificationsScreen"
                   options={{
                     title: "Notifications",

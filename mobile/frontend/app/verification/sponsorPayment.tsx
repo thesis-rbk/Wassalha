@@ -7,13 +7,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { decode as atob } from 'base-64';
 import { PaymentFormProps, PaymentFormData, RouteParams } from "@/types/Payment";
-
+import ReviewComponent from "./reviewSponsor";
 const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, amount }) => {
     const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
     const idy = route.params?.id;
     const [oneData, setOneData] = useState<{ price: number; sponsor: { id: number } } | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [ids, setId] = useState<number>(0);
+    const [isPaymentSuccessful, setIsPaymentSuccessful] = useState<boolean>(false);
     const [formData, setFormData] = useState<PaymentFormData>({
         email: "",
         cardNumber: "",
@@ -75,7 +76,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, amount }) => {
         // Show confirmation alert before proceeding with payment
         Alert.alert(
             "Confirm Payment",
-            `Are you sure you want to pay ${oneData?.price} USD for the subscription?`,
+            `Are you sure you want to pay ${oneData?.price} EUR for the subscription?`,
             [
                 {
                     text: "Cancel",
@@ -104,7 +105,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, amount }) => {
                             Alert.alert(
                                 "Payment Successful",
                                 "Your payment was successful. You will receive the subscription details in your email within 48 hours.",
-                                [{ text: "OK", onPress: () => console.log("OK Pressed") }]
+                                [{ text: "OK", onPress: () => setIsPaymentSuccessful(true) }]
                             );
 
                             // Call onSubmit with formData
@@ -129,104 +130,112 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, amount }) => {
             {/* Displaying the amount to be paid in Euros */}
             <Text style={styles.amount}>Amount: {oneData?.price}</Text>
 
-            <View style={styles.inputContainer}>
-                <Text style={styles.label}>Email</Text>
-                <TextInput
-                    style={styles.input}
-                    value={formData.email}
-                    onChangeText={(text) => setFormData({ ...formData, email: text })}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                />
-            </View>
-
-            <View style={styles.inputContainer}>
-                <Text style={styles.label}>Card Information</Text>
-                <View style={styles.cardNumberContainer}>
-                    <TextInput
-                        style={styles.cardNumberInput}
-                        value={formData.cardNumber}
-                        onChangeText={(text) => {
-                            const formatted = formatCardNumber(text);
-                            setFormData({ ...formData, cardNumber: formatted });
-                        }}
-                        keyboardType="numeric"
-                        placeholder="1234 1234 1234 1234"
-                    />
-                    <View style={styles.cardIcons}>
-                        <Image
-                            source={{ uri: "https://cdn.visa.com/v2/assets/images/logos/visa/blue/logo.png" }}
-                            style={styles.cardIcon}
-                            resizeMode="contain"
-                        />
-                        <Image
-                            source={{
-                                uri: "https://brand.mastercard.com/content/dam/mccom/brandcenter/thumbnails/mastercard_vrt_pos_92px_2x.png",
-                            }}
-                            style={styles.cardIcon}
-                            resizeMode="contain"
-                        />
-                    </View>
-                </View>
-
-                <View style={styles.cardDetailsRow}>
-                    <View style={styles.expiryContainer}>
+            {isPaymentSuccessful ? (
+                // Show the review component if payment is successful
+                <ReviewComponent />
+            ) : (
+                // Show the payment form fields if payment is not yet successful
+                <>
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.label}>Email</Text>
                         <TextInput
-                            style={styles.expiryInput}
-                            value={formData.cardExpiryMm}
-                            onChangeText={(text) => setFormData({ ...formData, cardExpiryMm: text })}
-                            placeholder="MM"
-                            keyboardType="numeric"
-                            maxLength={2}
+                            style={styles.input}
+                            value={formData.email}
+                            onChangeText={(text) => setFormData({ ...formData, email: text })}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
                         />
                     </View>
-                    <View style={styles.expiryContainer}>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.label}>Card Information</Text>
+                        <View style={styles.cardNumberContainer}>
+                            <TextInput
+                                style={styles.cardNumberInput}
+                                value={formData.cardNumber}
+                                onChangeText={(text) => {
+                                    const formatted = formatCardNumber(text);
+                                    setFormData({ ...formData, cardNumber: formatted });
+                                }}
+                                keyboardType="numeric"
+                                placeholder="1234 1234 1234 1234"
+                            />
+                            <View style={styles.cardIcons}>
+                                <Image
+                                    source={{ uri: "https://cdn.visa.com/v2/assets/images/logos/visa/blue/logo.png" }}
+                                    style={styles.cardIcon}
+                                    resizeMode="contain"
+                                />
+                                <Image
+                                    source={{
+                                        uri: "https://brand.mastercard.com/content/dam/mccom/brandcenter/thumbnails/mastercard_vrt_pos_92px_2x.png",
+                                    }}
+                                    style={styles.cardIcon}
+                                    resizeMode="contain"
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.cardDetailsRow}>
+                            <View style={styles.expiryContainer}>
+                                <TextInput
+                                    style={styles.expiryInput}
+                                    value={formData.cardExpiryMm}
+                                    onChangeText={(text) => setFormData({ ...formData, cardExpiryMm: text })}
+                                    placeholder="MM"
+                                    keyboardType="numeric"
+                                    maxLength={2}
+                                />
+                            </View>
+                            <View style={styles.expiryContainer}>
+                                <TextInput
+                                    style={styles.expiryInput}
+                                    value={formData.cardExpiryYyyy}
+                                    onChangeText={(text) => setFormData({ ...formData, cardExpiryYyyy: text })}
+                                    placeholder="YYYY"
+                                    keyboardType="numeric"
+                                    maxLength={4}
+                                />
+                            </View>
+                            <View style={styles.cvcContainer}>
+                                <TextInput
+                                    style={styles.cvcInput}
+                                    value={formData.cardCvc}
+                                    onChangeText={(text) => setFormData({ ...formData, cardCvc: text })}
+                                    placeholder="CVC"
+                                    keyboardType="numeric"
+                                    maxLength={4}
+                                    secureTextEntry
+                                />
+                            </View>
+                        </View>
+
                         <TextInput
-                            style={styles.expiryInput}
-                            value={formData.cardExpiryYyyy}
-                            onChangeText={(text) => setFormData({ ...formData, cardExpiryYyyy: text })}
-                            placeholder="YYYY"
-                            keyboardType="numeric"
-                            maxLength={4}
+                            style={styles.input}
+                            value={formData.cardholderName}
+                            onChangeText={(text) => setFormData({ ...formData, cardholderName: text })}
+                            placeholder="Cardholder's Name"
                         />
                     </View>
-                    <View style={styles.cvcContainer}>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.label}>Postal Code</Text>
                         <TextInput
-                            style={styles.cvcInput}
-                            value={formData.cardCvc}
-                            onChangeText={(text) => setFormData({ ...formData, cardCvc: text })}
-                            placeholder="CVC"
+                            style={styles.input}
+                            value={formData.postalCode}
+                            onChangeText={(text) => setFormData({ ...formData, postalCode: text })}
+                            placeholder="Postal Code"
                             keyboardType="numeric"
-                            maxLength={4}
-                            secureTextEntry
                         />
                     </View>
-                </View>
 
-                <TextInput
-                    style={styles.input}
-                    value={formData.cardholderName}
-                    onChangeText={(text) => setFormData({ ...formData, cardholderName: text })}
-                    placeholder="Cardholder's Name"
-                />
-            </View>
+                    <View style={styles.spacer} />
 
-            <View style={styles.inputContainer}>
-                <Text style={styles.label}>Postal Code</Text>
-                <TextInput
-                    style={styles.input}
-                    value={formData.postalCode}
-                    onChangeText={(text) => setFormData({ ...formData, postalCode: text })}
-                    placeholder="Postal Code"
-                    keyboardType="numeric"
-                />
-            </View>
-
-            <View style={styles.spacer} />
-
-            <TouchableOpacity style={styles.checkoutButton} onPress={handleSubmit}>
-                <Text style={styles.checkoutButtonText}>Checkout</Text>
-            </TouchableOpacity>
+                    <TouchableOpacity style={styles.checkoutButton} onPress={handleSubmit}>
+                        <Text style={styles.checkoutButtonText}>Checkout</Text>
+                    </TouchableOpacity>
+                </>
+            )}
 
             <View style={styles.footer}>
                 <Text style={styles.footerText}>Powered by Stripe</Text>

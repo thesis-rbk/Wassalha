@@ -68,7 +68,7 @@ const sponsor = {
         }
     },
     reviewCreate: async (req, res) => {
-        const { reviewer_id, reviewed_user_id, rating } = req.body;
+        const { reviewer_id = 1, reviewed_user_id = 1, rating } = req.body;
 
         try {
             // Validate required fields

@@ -15,6 +15,8 @@ type RootStackParamList = {
     'verification/CreateSponsorPost': { id: number };
     'verification/fetchAll': undefined;
     'verification/sponsorPayment': { id: number };
+    "verification/reviewSponsor";
+    "home": undefined;
 
 };
 
