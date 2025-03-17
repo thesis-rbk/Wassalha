@@ -32,8 +32,6 @@ const adminRoutes = require("./routes/admin.route");
 const notificationRoutes = require("./routes/notification.Route");
 const chatRoutes = require("./routes/chat.route");
 const paymentProcessRoutes = require("./routes/paymentProcess.route");
-const notificationRoutes = require("./routes/notification.route");
-const chatRoutes = require("./routes/chat.route");
 
 // Import socket initialization function
 const { initializeSocket } = require("./sockets/index");
