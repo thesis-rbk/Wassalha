@@ -353,7 +353,6 @@ async function seed() {
           amount: faker.number.float({ min: 100, max: 1000 }),
           category: { connect: { id: category.id } },
           sponsor: { connect: { id: sponsor.id } },
-          recipient: { connect: { id: recipient.id } },
         },
       });
     })

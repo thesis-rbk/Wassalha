@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -18,7 +18,9 @@ import {
   Moon,
   Sun,
   PenSquare,
-  Users
+  DollarSign,
+  Users,
+  Home
 } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -33,7 +35,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logout } from '../../store/authSlice';
 import { useNotification } from '@/context/NotificationContext';
 // Define valid app routes
-
+import axiosInstance from '@/config';
 
 // Updated SideMenu interface
 
@@ -49,6 +51,8 @@ export function TopNavigation({
   const { toggleTheme } = useTheme();
   const [menuAnimation] = useState(new Animated.Value(-MENU_WIDTH));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [tokeny, setToken] = useState<string | null>(null);
+  const [isSponsor, setIsSponsor] = useState<boolean>(false)
   const router = useRouter();
   const { user, token } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
@@ -58,17 +62,17 @@ export function TopNavigation({
   const handleLogout = async () => {
     try {
       console.log("Starting logout process...");
-      
+
       // 1. Clear Redux state
       dispatch(logout());
       console.log("Redux state cleared");
-      
+
       // 2. Clear ALL AsyncStorage items related to authentication
       await AsyncStorage.removeItem("jwtToken");
       await AsyncStorage.removeItem("token");
       await AsyncStorage.removeItem("user");
       console.log("AsyncStorage items cleared");
-      
+
       // 3. Navigate to login screen (only once)
       router.replace("/auth/login");
       console.log("Redirected to login");
@@ -76,7 +80,11 @@ export function TopNavigation({
       console.error('Logout error:', error);
     }
   };
-
+  const tokenVerif = async () => {
+    const tokenys = await AsyncStorage.getItem('jwtToken');
+    console.log("token:", tokenys);
+    setToken(tokenys);
+  };
   const toggleMenu = () => {
     const toValue = isMenuOpen ? -MENU_WIDTH : 0;
     Animated.timing(menuAnimation, {
@@ -88,15 +96,38 @@ export function TopNavigation({
   };
 
 
+  console.log("issss sponsor", isSponsor)
+  const check = async () => {
+    tokenVerif()
+    try {
+      const response = await axiosInstance.get('/api/checkSponsor', {
+        headers: {
+          'Authorization': `Bearer ${tokeny}`, // Correct way to pass the token in the header
+          'Accept': 'application/json',
+        },
+      });
+      console.log("is sponsor:", response.data);
+      setIsSponsor(response.data);
+    } catch (err) {
+      console.log("Error in check function:", err);
+    }
+  };
   const menuItems: SideMenu[] = [
     { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/screens/NotificationsScreen' },
     { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
     { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips', route: '/test/Travel' },
+    { icon: <Home size={24} color={Colors[colorScheme].text} />, label: 'Home', route: 'home' },
     { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request', route: '/productDetails/create-order' },
-    { icon: <Users size={24} color={Colors[colorScheme].text} />, label: 'Sponsorship', route: 'screens/SponsorshipScreen' as any },
+    {
+      icon: isSponsor ? <DollarSign size={24} color={Colors[colorScheme].text} /> : <Users size={24} color={Colors[colorScheme].text} />,
+      label: isSponsor ? 'Create Subscription' : 'Sponsorship',
+      route: isSponsor ? 'verification/CreateSponsorPost' : 'screens/SponsorshipScreen' as any
+    },
     { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out', onPress: handleLogout },
   ];
-
+  useEffect(() => {
+    check() // Check if user is a sponsor
+  }, [tokeny]);
   const handleRoutes = (item: SideMenu) => {
     try {
       if (item.onPress) {
@@ -124,7 +155,7 @@ export function TopNavigation({
           style={styles.searchInput}
           placeholder="Search"
         />
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => {
             try {
               console.log('Attempting to navigate to NotificationsScreen');
