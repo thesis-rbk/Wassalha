@@ -50,7 +50,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     
     try {
       console.log('🔄 Fetching notifications from API');
-      
       // Get authentication token
       const token = await AsyncStorage.getItem('jwtToken');
       if (!token) {
