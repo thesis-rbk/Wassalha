@@ -27,10 +27,10 @@ const paymentRoutes = require("./routes/payment.route");
 const serviceProviderRoutes = require("./routes/serviceProvider.Routes");
 const sponsorshipRoutes = require("./routes/sponsorship.route");
 const subscriptionRoutes = require("./routes/subscription.route");
-const stripeRoutes = require('./routes/stripe.route');
+const stripeRoutes = require("./routes/stripe.route");
 const adminRoutes = require("./routes/admin.route");
 const notificationRoutes = require("./routes/notification.Route");
-const chatRoutes = require('./routes/chat.route');
+const chatRoutes = require("./routes/chat.route");
 const paymentProcessRoutes = require("./routes/paymentProcess.route");
 const sponsorshipProcessRoutes=require("./routes/sponsorshipProcess.routes")
 // Import socket initialization function
@@ -43,17 +43,19 @@ const server = http.createServer(app);
 app.use(morgan("dev"));
 
 // Global middlewares
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Authorization']
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["Authorization"],
+  })
+);
 app.use(express.json());
 
 // Static uploads folder
-app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/api/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use("/api", fetchRoute); // sponsorSubscription.route
@@ -77,25 +79,25 @@ app.use("/api/mobile/requests", mobileRequestRoutes);
 app.use("/api/mobile/goods", mobileGoodsRoutes);
 app.use("/api/process", processRoutes);
 app.use("/api/admin", adminRoutes);
-app.use('/api/stripe', stripeRoutes);
+app.use("/api/stripe", stripeRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use('/api/chats', chatRoutes);
+app.use("/api/chats", chatRoutes);
 app.use("/api", all); // I kept this last since it may include mixed routes
 app.use("/api/payment-process", paymentProcessRoutes);
 app.use('/api/sponsorship-process',sponsorshipProcessRoutes);
 // Health check
-app.get('/api/health', (req, res) => {
-  console.log('Health check request received');
-  res.status(200).json({ status: 'ok' });
+app.get("/api/health", (req, res) => {
+  console.log("Health check request received");
+  res.status(200).json({ status: "ok" });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error("Error:", err);
   res.status(500).json({
     success: false,
     error: "Something went wrong!",
-    message: err.message
+    message: err.message,
   });
 });
 
