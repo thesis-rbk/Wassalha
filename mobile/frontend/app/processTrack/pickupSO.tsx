@@ -400,7 +400,7 @@ export default function PickupOwner() {
             <FlatList
               data={pickups}
               renderItem={renderItem}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item:any) => item.id}
               refreshing={isLoading}
               onRefresh={fetchPickups}
               contentContainerStyle={styles.listContainer}

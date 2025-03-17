@@ -24,7 +24,7 @@ import PickupMap from "./pickupMap";
 import axiosInstance from "@/config";
 import io from "socket.io-client";
 
-const SOCKET_URL = "http://172.20.10.3:4000"; // Match backend port from server.js
+const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 
 export default function Pickup({ pickupId, orderId: initialOrderId }: { pickupId?: number; orderId?: number }) {
   const router = useRouter();

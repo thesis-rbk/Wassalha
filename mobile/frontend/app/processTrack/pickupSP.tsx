@@ -25,7 +25,7 @@ import { QRCodeModal } from "../pickup/QRCodeModal";
 import io from "socket.io-client";
 // import { BarCodeScanner } from "expo-barcode-scanner"; // Left commented as in original
 
-const SOCKET_URL = "http://172.20.10.3:4000"; // Match backend port from server.js
+const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 
 export default function PickupTraveler() {
   const router = useRouter();
@@ -509,7 +509,7 @@ export default function PickupTraveler() {
             <FlatList
               data={pickups}
               renderItem={renderItem}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item:any) => item.id}
               refreshing={isLoading}
               onRefresh={fetchPickups}
               contentContainerStyle={styles.listContainer}
