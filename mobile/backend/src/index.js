@@ -33,7 +33,7 @@ const adminRoutes = require("./routes/admin.route");
 const notificationRoutes = require("./routes/notification.Route");
 const chatRoutes = require('./routes/chat.route');
 const paymentProcessRoutes = require("./routes/paymentProcess.route");
-
+const sponsorshipProcessRoutes=require("./routes/sponsorshipProcess.routes")
 // Import socket initialization function
 const { initializeSocket } = require("./sockets/index");
 const setupSocket = require("./sockets/trackingSocket");
@@ -102,6 +102,7 @@ app.use("/api", all); // I kept this last since it may include mixed routes
 app.use("/api/payment-process", paymentProcessRoutes);
 
 // Error logging middleware
+app.use('/api/sponsorship-process',sponsorshipProcessRoutes);
 // Health check
 app.get('/api/health', (req, res) => {
   console.log('Health check request received');

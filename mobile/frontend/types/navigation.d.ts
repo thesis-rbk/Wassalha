@@ -15,7 +15,8 @@ type RootStackParamList = {
     'verification/CreateSponsorPost': { id: number };
     'verification/fetchAll': undefined;
     'verification/sponsorPayment': { id: number };
-
+    'sponsorshipTrack/initializationBuyer': { id: number };
+    
 };
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
