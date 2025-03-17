@@ -25,16 +25,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BACKEND_URL } from "@/config";
 import { Socket } from "socket.io-client";
-
-// Define the shape of our context data
-interface NotificationContextType {
-  fetchNotifications: () => Promise<void>; // Function to fetch notifications from API
-  markAsRead: (id: number) => Promise<void>; // Function to mark a notification as read
-  deleteNotification: (id: number) => Promise<void>; // Function to delete a notification
-  sendNotification: (eventName: string, data: any) => Promise<boolean>; // NEW: Function to send notifications
-  unreadCount: number; // Number of unread notifications
-}
-
+import { NotificationContextType } from "../types/notificationContext";
 // Create the context with null initial value
 const NotificationContext = createContext<NotificationContextType | null>(null);
 
@@ -63,9 +54,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   const { unreadCount } = useSelector(
     (state: RootState) => state.notifications
   );
-
-  // 3. API METHODS
-  // Function to fetch notifications from the API
   const fetchNotifications = useCallback(async () => {
     // Only proceed if we have a user
     if (!user?.id) return;
@@ -110,7 +98,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error("❌ Error fetching notifications:", error);
     }
   }, [dispatch, user?.id]); // Only re-create when dispatch or user ID changes
-
   // 1. SOCKET INITIALIZATION
   // This effect runs when the user changes (login/logout)
   useEffect(() => {
@@ -381,6 +368,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
       socket.off("connect");
     };
   }, [socket, user?.id, dispatch, fetchNotifications]); // Re-run when socket, user ID, or dispatch changes
+
+  // 3. API METHODS
+  // Function to fetch notifications from the API
 
   // Function to mark a notification as read
   const markAsRead = useCallback(

@@ -9,6 +9,7 @@ export type Sponsorship = {
     updatedAt: string;
     category: { name: string };
     platform: string;
+    product: string;
     recipient?: {
         name: string; // Optional because we won't fetch recipient if active
     };

@@ -4,6 +4,7 @@ import axiosInstance from '@/config';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Sponsorship } from '@/types/Sponsorship';
 import NavigationProp from '@/types/navigation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SponsorshipsScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -11,7 +12,30 @@ const SponsorshipsScreen = () => {
     const [maxPrice, setMaxPrice] = useState('');
     const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
     const [loading, setLoading] = useState(false);
+    const [isSponsor, setIsSponsor] = useState<boolean>(false);
     const navigation = useNavigation<NavigationProp>();
+    const [token, setToken] = useState<null | string>(null);
+    const [id, setID] = useState<number>(0);
+    const tokenVerif = async () => {
+        const tokeny = await AsyncStorage.getItem('jwtToken');
+        console.log("token:", tokeny);
+        setToken(tokeny);
+    };
+    console.log("issss sponsor", isSponsor)
+    const check = async () => {
+        try {
+            const response = await axiosInstance.get('/api/checkSponsor', {
+                headers: {
+                    'Authorization': `Bearer ${token}`, // Correct way to pass the token in the header
+                    'Accept': 'application/json',
+                },
+            });
+            console.log("is sponsor:", response.data);
+            setIsSponsor(response.data);
+        } catch (err) {
+            console.log("Error in check function:", err);
+        }
+    };
 
     const fetchSponsorships = async () => {
         setLoading(true);
@@ -35,23 +59,25 @@ const SponsorshipsScreen = () => {
     };
 
     useEffect(() => {
-        fetchSponsorships();
-    }, [searchQuery, minPrice, maxPrice]);
+        tokenVerif();
+    }, []);
 
+    useEffect(() => {
+        check()
+    }, [token]);
 
     useFocusEffect(
         useCallback(() => {
             fetchSponsorships();
-        }, [])
+        }, [searchQuery, minPrice, maxPrice])
     );
 
-
     const handleBuyPress = (sponsorshipId: number) => {
-        navigation.navigate('verification/sponsorPayment')
+        navigation.navigate('verification/sponsorPayment', { id: sponsorshipId });
     };
 
-    const handleAddSponsorshipPress = () => {
-        navigation.navigate('verification/CreateSponsorPost'); // Use `navigate()` here
+    const handleAddSponsorshipPress = (sponsorshipId: number) => {
+        navigation.navigate('verification/CreateSponsorPost', { id: sponsorshipId });
     };
 
     // Render the sponsorship card
@@ -73,7 +99,7 @@ const SponsorshipsScreen = () => {
                 <Text
                     style={[
                         styles.cardStatus,
-                        { color: item.isActive ? 'green' : 'red' }, // Active = green, inactive = gray
+                        { color: item.isActive ? 'green' : 'red' },
                     ]}
                 >
                     {item.isActive ? 'Active' : 'Inactive'}
@@ -82,12 +108,13 @@ const SponsorshipsScreen = () => {
 
             <TouchableOpacity
                 style={styles.buyButton}
-                onPress={() => handleBuyPress(item.id)} // Handle buy press with the sponsorship ID
+                onPress={() => { handleBuyPress(item.id), setID(item.id) }}
             >
                 <Text style={styles.buyButtonText}>Buy</Text>
             </TouchableOpacity>
         </View>
     );
+
     return (
         <View style={styles.container}>
             <View style={styles.searchContainer}>
@@ -97,9 +124,11 @@ const SponsorshipsScreen = () => {
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                 />
-                <TouchableOpacity onPress={handleAddSponsorshipPress}>
-                    <Text style={styles.plusButton}>+</Text>
-                </TouchableOpacity>
+                {isSponsor && ( // Check if isSponsor is true before rendering the button
+                    <TouchableOpacity onPress={() => handleAddSponsorshipPress(id)}>
+                        <Text style={styles.plusButton}>+</Text>
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Price Range Inputs */}
