@@ -23,4 +23,5 @@ export  interface SafeLocation {
     order: {
       travelerId: number;
     };
+    qrCode?: string;
   }

@@ -1,14 +1,10 @@
-// pickupController.js
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+const prisma = require("../../prisma");
 
 const handlePickup = async (req, res) => {
   try {
-    // Extract data from request body (excluding userconfirmed and travelerconfirmed)
     const {
-      pickupId, // ID of the pickup to update (optional)
-      orderId,  // For creating a new pickup
+      pickupId,
+      orderId,
       pickupType,
       location,
       address,
@@ -18,15 +14,12 @@ const handlePickup = async (req, res) => {
       scheduledTime,
     } = req.body;
 
-    // Get userId from the middleware (assumes it's populated in req.user)
     const userId = req.user?.id;
 
-    // Basic validation: Check if userId is available
     if (!userId) {
       return res.status(400).json({ error: 'User ID is missing from the session' });
     }
 
-    // Log the suggestion into PickupSuggestion table
     const suggestionData = {
       orderId: orderId || (pickupId ? (await prisma.pickup.findUnique({ where: { id: pickupId } })).orderId : null),
       userId,
@@ -39,37 +32,34 @@ const handlePickup = async (req, res) => {
       scheduledTime: scheduledTime ? new Date(scheduledTime) : null,
     };
 
-    // If updating an existing pickup, link to pickupId
     if (pickupId) {
       suggestionData.pickupId = pickupId;
     }
 
-    // Create the suggestion record
-    await prisma.pickupSuggestion.create({
+    const newSuggestion = await prisma.pickupSuggestion.create({
       data: suggestionData,
     });
 
-    // If pickupId is provided, it's an update, otherwise it's a creation
+    let pickup;
+
     if (pickupId) {
-      // Update existing pickup
-      const pickup = await prisma.pickup.findUnique({
+      const existingPickup = await prisma.pickup.findUnique({
         where: { id: pickupId },
         include: {
           order: {
             include: {
-              request: true, // Include request to get requester's userId
+              request: true,
             },
           },
         },
       });
 
-      if (!pickup) {
+      if (!existingPickup) {
         return res.status(404).json({ error: 'Pickup not found' });
       }
 
-      // Ensure the user is the traveler or requester
-      const isTraveler = pickup.order.travelerId === userId;
-      const isRequester = pickup.order.request?.userId === userId;
+      const isTraveler = existingPickup.order.travelerId === userId;
+      const isRequester = existingPickup.order.request?.userId === userId;
 
       if (!isTraveler && !isRequester) {
         return res.status(403).json({
@@ -77,50 +67,44 @@ const handlePickup = async (req, res) => {
         });
       }
 
-      // Update the pickup with values from the request
-      const updatedPickup = await prisma.pickup.update({
+      pickup = await prisma.pickup.update({
         where: { id: pickupId },
         data: {
-          pickupType: pickupType || pickup.pickupType,
-          location: location !== undefined ? location : pickup.location,
-          address: address !== undefined ? address : pickup.address,
-          qrCode: qrCode !== undefined ? qrCode : pickup.qrCode,
-          coordinates: coordinates !== undefined ? coordinates : pickup.coordinates,
-          contactPhoneNumber: contactPhoneNumber !== undefined ? contactPhoneNumber : pickup.contactPhoneNumber,
-          scheduledTime: scheduledTime ? new Date(scheduledTime) : pickup.scheduledTime,
-          status: 'IN_PROGRESS', // Retain existing status unless specified otherwise
-          // Set confirmation flags based on user role exclusively
-          userconfirmed: isRequester ? true : false,
-          travelerconfirmed: isTraveler ? true : false,
+          pickupType: pickupType || existingPickup.pickupType,
+          location: location !== undefined ? location : existingPickup.location,
+          address: address !== undefined ? address : existingPickup.address,
+          qrCode: qrCode !== undefined ? qrCode : existingPickup.qrCode,
+          coordinates: coordinates !== undefined ? coordinates : existingPickup.coordinates,
+          contactPhoneNumber: contactPhoneNumber !== undefined ? contactPhoneNumber : existingPickup.contactPhoneNumber,
+          scheduledTime: scheduledTime ? new Date(scheduledTime) : existingPickup.scheduledTime,
+          status: 'IN_PROGRESS',
+          userconfirmed: !existingPickup.userconfirmed,
+          travelerconfirmed: !existingPickup.travelerconfirmed,
         },
       });
 
-      // Send success response for update
       return res.status(200).json({
         message: 'Pickup updated successfully',
-        pickup: updatedPickup,
+        pickup,
       });
     } else {
-      // Add a new pickup (since pickupId is not provided)
       if (!orderId || !pickupType) {
         return res.status(400).json({
           error: 'Missing required fields: orderId and pickupType are mandatory for creation',
         });
       }
 
-      // Check if the order exists and include related request data
       const order = await prisma.order.findUnique({
         where: { id: orderId },
         include: {
-          request: true, // Include request to get requester's userId
+          request: true,
         },
       });
-      console.log("order", order);
+
       if (!order) {
         return res.status(404).json({ error: 'Order not found' });
       }
 
-      // Check if a pickup already exists for this order
       const existingPickup = await prisma.pickup.findUnique({
         where: { orderId },
       });
@@ -131,7 +115,6 @@ const handlePickup = async (req, res) => {
         });
       }
 
-      // Determine the role of the user
       const isTraveler = order.travelerId === userId;
       const isRequester = order.request.userId === userId;
 
@@ -141,8 +124,7 @@ const handlePickup = async (req, res) => {
         });
       }
 
-      // Create the pickup with appropriate confirmation flag
-      const newPickup = await prisma.pickup.create({
+      pickup = await prisma.pickup.create({
         data: {
           orderId,
           pickupType,
@@ -151,49 +133,44 @@ const handlePickup = async (req, res) => {
           qrCode: qrCode || null,
           coordinates: coordinates || null,
           contactPhoneNumber: contactPhoneNumber || null,
-          status: 'IN_PROGRESS', // Default value from schema
+          status: 'IN_PROGRESS',
           scheduledTime: scheduledTime ? new Date(scheduledTime) : null,
-          // Set confirmation flags based on user role exclusively
           travelerconfirmed: isTraveler ? true : false,
           userconfirmed: isRequester ? true : false,
         },
       });
 
-      // Update the suggestion record with the new pickupId
       await prisma.pickupSuggestion.updateMany({
         where: {
           orderId,
-          pickupId: null, // Only update suggestions not yet linked to a pickup
+          pickupId: null,
           userId,
-          createdAt: { gte: new Date(Date.now() - 1000 * 60) }, // Last minute to avoid race conditions
+          createdAt: { gte: new Date(Date.now() - 1000 * 60) },
         },
-        data: { pickupId: newPickup.id },
+        data: { pickupId: pickup.id },
       });
 
-      // Send success response for creation
       return res.status(201).json({
         message: 'Pickup suggested successfully',
-        pickup: newPickup,
+        pickup,
       });
     }
   } catch (error) {
     console.error('Error handling pickup:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  } finally {
-    await prisma.$disconnect();
+    if (!res.headersSent) {
+      return res.status(500).json({ error: 'Internal server error' });
+    }
   }
 };
 
-// Keep other functions unchanged
-// Modified to fetch pickups where userId is the requester
-// Fetch pickups where userId (from middleware) is the requester
+// Fetch pickups where userId is the requester
 const getPickupsRequesterByUserId = async (userId) => {
   try {
     const pickups = await prisma.pickup.findMany({
       where: {
         order: {
           request: {
-            userId: userId, // Filter by userId as the requester in the Request model
+            userId: userId,
           },
         },
       },
@@ -202,7 +179,7 @@ const getPickupsRequesterByUserId = async (userId) => {
           include: {
             request: {
               select: {
-                userId: true, // Include requester's userId to verify the relation
+                userId: true,
               },
             },
           },
@@ -213,17 +190,13 @@ const getPickupsRequesterByUserId = async (userId) => {
   } catch (error) {
     console.error('Error fetching pickups by userId:', error);
     throw new Error('Failed to retrieve pickups');
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
 const getPickupsRequesterByUserIdHandler = async (req, res) => {
   try {
-    // Get userId from the authenticated user (set by middleware)
     const userId = req.user?.id;
 
-    // Validate that userId exists
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -237,24 +210,29 @@ const getPickupsRequesterByUserIdHandler = async (req, res) => {
       data: pickups,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Unknown error occurred',
-    });
+    console.error('Error in getPickupsRequesterByUserIdHandler:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Unknown error occurred',
+      });
+    }
   }
 };
+
+// Fetch pickups where userId is the traveler
 const getPickupsTravelerByUserId = async (userId) => {
   try {
     const pickups = await prisma.pickup.findMany({
       where: {
         order: {
-          travelerId: userId, // Filter by userId as the traveler in the Order model
+          travelerId: userId,
         },
       },
       include: {
         order: {
           select: {
-            travelerId: true, // Include travelerId to verify the relation
+            travelerId: true,
           },
         },
       },
@@ -263,18 +241,13 @@ const getPickupsTravelerByUserId = async (userId) => {
   } catch (error) {
     console.error('Error fetching pickups by userId:', error);
     throw new Error('Failed to retrieve pickups');
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
-// Updated handler to use req.user.id from middleware instead of req.params
 const getPickupsTravelerByUserIdHandler = async (req, res) => {
   try {
-    // Get userId from the authenticated user (set by middleware)
     const userId = req.user?.id;
 
-    // Validate that userId exists
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -288,15 +261,20 @@ const getPickupsTravelerByUserIdHandler = async (req, res) => {
       data: pickups,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Unknown error occurred',
-    });
+    console.error('Error in getPickupsTravelerByUserIdHandler:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Unknown error occurred',
+      });
+    }
   }
 };
+
+// Accept a pickup
 const acceptPickup = async (req, res) => {
   try {
-    const { pickupId } = req.body;
+    const { pickupId, qrCode } = req.body;
     const userId = req.user?.id;
 
     if (!pickupId) {
@@ -316,6 +294,7 @@ const acceptPickup = async (req, res) => {
         },
       },
     });
+
     if (!pickup) {
       return res.status(404).json({ error: 'Pickup not found' });
     }
@@ -330,9 +309,10 @@ const acceptPickup = async (req, res) => {
     const updatedPickup = await prisma.pickup.update({
       where: { id: pickupId },
       data: {
-        userconfirmed: true,
-        travelerconfirmed: true,
-        status: 'SCHEDULED',
+        userconfirmed: isRequester ? true : pickup.userconfirmed,
+        travelerconfirmed: isTraveler ? true : pickup.travelerconfirmed,
+        status: (pickup.userconfirmed || isRequester) && (pickup.travelerconfirmed || isTraveler) ? 'SCHEDULED' : pickup.status,
+        qrCode: qrCode || pickup.qrCode,
       },
     });
 
@@ -342,12 +322,13 @@ const acceptPickup = async (req, res) => {
     });
   } catch (error) {
     console.error('Error accepting pickup:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  } finally {
-    await prisma.$disconnect();
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 };
 
+// Update pickup status
 const updatePickupStatus = async (req, res) => {
   const { pickupId, newStatus } = req.body;
 
@@ -368,15 +349,17 @@ const updatePickupStatus = async (req, res) => {
     return res.status(200).json(updatedPickup);
   } catch (error) {
     console.error('Error updating pickup status:', error);
-    return res.status(500).json({ message: 'An error occurred while updating the pickup status' });
+    if (!res.headersSent) {
+      return res.status(500).json({ message: 'An error occurred while updating the pickup status' });
+    }
   }
 };
+
+// Fetch pickup suggestions by pickupId
 const getPickupSuggestionsByPickupId = async (req, res) => {
   try {
-    // Get pickupId from route parameter
     const { pickupId } = req.params;
 
-    // Validate input
     if (!pickupId) {
       return res.status(400).json({
         success: false,
@@ -384,10 +367,9 @@ const getPickupSuggestionsByPickupId = async (req, res) => {
       });
     }
 
-    // Query PickupSuggestion records by pickupId only
     const suggestions = await prisma.pickupSuggestion.findMany({
       where: {
-        pickupId: parseInt(pickupId, 10), // Convert to integer
+        pickupId: parseInt(pickupId, 10),
       },
       include: {
         pickup: {
@@ -405,11 +387,10 @@ const getPickupSuggestionsByPickupId = async (req, res) => {
         },
       },
       orderBy: {
-        createdAt: 'desc', // Latest suggestions first
+        createdAt: 'desc',
       },
     });
 
-    // Check if any suggestions were found
     if (suggestions.length === 0) {
       return res.status(404).json({
         success: false,
@@ -423,81 +404,84 @@ const getPickupSuggestionsByPickupId = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching pickup suggestions:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-    });
-  } finally {
-    await prisma.$disconnect();
-  }
-};
-const getAllPickups = async (req, res) => {
-  try {
-      const pickups = await prisma.pickup.findMany({
-          include: {
-              // Include any related models if necessary
-          },
-      });
-      res.status(200).json({
-          success: true,
-          data: pickups,
-      });
-  } catch (error) {
-      console.error("Error fetching pickups:", error);
+    if (!res.headersSent) {
       res.status(500).json({
-          success: false,
-          message: "Failed to fetch pickups",
-          error: error.message,
+        success: false,
+        error: 'Internal server error',
       });
+    }
   }
 };
 
-// Add delete pickup function
+// Fetch all pickups
+const getAllPickups = async (req, res) => {
+  try {
+    const pickups = await prisma.pickup.findMany({
+      include: {
+        order: true,
+      },
+    });
+    res.status(200).json({
+      success: true,
+      data: pickups,
+    });
+  } catch (error) {
+    console.error('Error fetching pickups:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch pickups',
+        error: error.message,
+      });
+    }
+  }
+};
+
+// Delete a pickup
 const deletePickup = async (req, res) => {
   const { id } = req.params;
 
   try {
-      // Check if pickup exists before attempting to delete
-      const existingPickup = await prisma.pickup.findUnique({
-          where: { id: parseInt(id) }
-      });
+    const existingPickup = await prisma.pickup.findUnique({
+      where: { id: parseInt(id) },
+    });
 
-      if (!existingPickup) {
-          return res.status(404).json({
-              success: false,
-              message: "Pickup not found"
-          });
-      }
-
-      await prisma.pickup.delete({
-          where: { id: parseInt(id) },
+    if (!existingPickup) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pickup not found',
       });
+    }
 
-      res.status(200).json({
-          success: true,
-          message: "Pickup deleted successfully",
-      });
+    await prisma.pickup.delete({
+      where: { id: parseInt(id) },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Pickup deleted successfully',
+    });
   } catch (error) {
-      console.error("Error deleting pickup:", error);
+    console.error('Error deleting pickup:', error);
+    if (!res.headersSent) {
       res.status(500).json({
-          success: false,
-          message: "Failed to delete pickup",
-          error: error.message,
+        success: false,
+        message: 'Failed to delete pickup',
+        error: error.message,
       });
+    }
   }
-}; 
+};
 
-// Export the controller with updated handlePickup
-module.exports = { 
-  getPickupsRequesterByUserIdHandler, 
-  getPickupsRequesterByUserId, 
-  handlePickup, 
-  acceptPickup, 
+module.exports = {
+  getPickupsRequesterByUserIdHandler,
+  getPickupsRequesterByUserId,
+  handlePickup,
+  acceptPickup,
   updatePickupStatus,
   getPickupsTravelerByUserId,
   getPickupsTravelerByUserIdHandler,
   getPickupSuggestionsByPickupId,
   getAllPickups,
-  deletePickup
+  deletePickup,
 };
-
