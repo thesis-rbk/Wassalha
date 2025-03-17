@@ -31,7 +31,7 @@ export const usePickupActions = (pickups: Pickup[], setPickups: (pickups: Pickup
       const updatedPickup = response.data.pickup; // Backend returns { message, pickup }
   
       // Emit Socket.IO event for real-time update
-      const socket = io("http://172.20.10.3:4000", { transports: ["websocket"] }); // Adjust URL if needed
+      const socket = io(process.env.EXPO_PUBLIC_API_URL, { transports: ["websocket"] }); // Adjust URL if needed
       socket.emit("pickupAccepted", updatedPickup);
       console.log(`✅ Emitted pickupAccepted for pickup:${pickupId}`);
   

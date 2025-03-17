@@ -2,12 +2,8 @@ import React from "react";
 import { Modal, View, Text, StyleSheet } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import { QRCodeModalProps } from "@/types/QRCodeModalProps";
 
-interface QRCodeModalProps {
-  visible: boolean;
-  qrCodeData: string;
-  onClose: () => void;
-}
 
 export const QRCodeModal: React.FC<QRCodeModalProps> = ({ visible, qrCodeData, onClose }) => {
   return (
