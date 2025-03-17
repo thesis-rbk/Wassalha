@@ -243,7 +243,7 @@ export default function DeliveryBuyer() {
       <View style={styles.footer}>
         <View style={styles.buttonContainer}>
           <BaseButton
-            variant="outline"
+            variant="secondary"
             onPress={handleRequestNewPhoto}
             style={[styles.button, styles.rejectButton]}
             disabled={rejecting || confirming}

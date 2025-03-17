@@ -12,7 +12,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import { BodyMedium, TitleLarge } from "@/components/StyledText";
+import { BodyMedium, TitleLarge } from "@/components/StyledTextProps";
 import ProgressBar from "@/components/ProgressBar";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useSponsorshipProcess } from "@/context/SponsorshipProcessContext";

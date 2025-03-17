@@ -2,11 +2,7 @@ import React from "react";
 import { Text, TextProps } from "react-native";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
-
-interface StyledTextProps extends TextProps {
-  lightColor?: string;
-  darkColor?: string;
-}
+import { StyledTextProps } from "@/types/StyledTextProps";
 
 export function BodyMedium(props: StyledTextProps) {
   const { style, lightColor, darkColor, ...otherProps } = props;

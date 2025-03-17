@@ -1,17 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
-
-type User = {
-  id: number;
-  email: string;
-  name: string;
-};
-
-type AuthContextType = {
-  user: User | null;
-  loading: boolean;
-};
+import { User } from '@/types/User';
+import { AuthContextType } from '@/types/AuthContextType';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

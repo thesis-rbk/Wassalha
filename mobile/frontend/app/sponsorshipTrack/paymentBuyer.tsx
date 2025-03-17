@@ -6,6 +6,8 @@ import {
   Alert,
   ActivityIndicator,
   TouchableOpacity,
+  ViewStyle,
+  TextStyle,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -25,6 +27,7 @@ import {
   Shield,
   DollarSign,
 } from "lucide-react-native";
+import { CardDetails, ProgressStep, PaymentBuyerStyles } from '@/types/PaymentBuyer';
 
 export default function PaymentBuyer() {
   const params = useLocalSearchParams();
@@ -34,12 +37,12 @@ export default function PaymentBuyer() {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [cardDetails, setCardDetails] = useState(null);
+  const [cardDetails, setCardDetails] = useState<CardDetails | null>(null);
   const { confirmPayment, loading: paymentLoading } = useConfirmPayment();
   const { updateSponsorshipStatus } = useSponsorshipProcess();
 
   // Progress steps
-  const progressSteps = [
+  const progressSteps: ProgressStep[] = [
     { id: 1, title: "Initialization", icon: "initialization", status: "completed" },
     { id: 2, title: "Verification", icon: "verification", status: "completed" },
     { id: 3, title: "Payment", icon: "payment", status: "current" },
@@ -50,7 +53,7 @@ export default function PaymentBuyer() {
   const serviceFee = price * 0.05; // 5% service fee
   const totalAmount = price + serviceFee;
 
-  const handlePayment = async () => {
+  const handlePayment = async (): Promise<void> => {
     if (!cardDetails?.complete) {
       Alert.alert("Error", "Please complete card details");
       return;
@@ -71,7 +74,7 @@ export default function PaymentBuyer() {
 
       // Confirm payment with Stripe
       const { error, paymentIntent } = await confirmPayment(response.data.clientSecret, {
-        type: "Card",
+        paymentMethodType: 'Card' as const,
       });
 
       if (error) {
@@ -88,7 +91,7 @@ export default function PaymentBuyer() {
           params: { processId: processId },
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Payment error:", error);
       Alert.alert("Payment Failed", error.message || "There was an error processing your payment");
     } finally {
@@ -133,7 +136,7 @@ export default function PaymentBuyer() {
           <View style={styles.cardContainer}>
             <CardField
               postalCodeEnabled={false}
-              placeholder={{
+              placeholders={{
                 number: "4242 4242 4242 4242",
               }}
               cardStyle={styles.cardStyle}
@@ -183,7 +186,7 @@ export default function PaymentBuyer() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<PaymentBuyerStyles>({
   container: {
     flex: 1,
   },
@@ -269,7 +272,7 @@ const styles = StyleSheet.create({
   },
   cardStyle: {
     backgroundColor: "#FFFFFF",
-    textColor: "#1A1A1A",
+    color: "#1A1A1A",
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#E0E0E0",
