@@ -35,8 +35,6 @@ export default function NotificationsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [refreshing, setRefreshing] = useState(false);
-
   // Get notifications from Redux
   const { items: notifications } = useSelector(
     (state: RootState) => state.notifications
