@@ -6,6 +6,7 @@ import { Dropdown } from '@/components/dropDown'; // Import the reusable Dropdow
 import { BaseButton } from "../../components/ui/buttons/BaseButton"; // Import BaseButton
 import { useNavigation } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import NavigationProp from '@/types/navigation';
 const SponsorshipPlatform = {
     FACEBOOK: 'Facebook',
     INSTAGRAM: 'Instagram',
@@ -16,7 +17,7 @@ const SponsorshipPlatform = {
 };
 
 const CreateRequestForm: React.FC = () => {
-    const navigate = useNavigation()
+    const navigate = useNavigation<NavigationProp>()
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
@@ -95,7 +96,7 @@ const CreateRequestForm: React.FC = () => {
             });
 
             if (response.status === 200) {
-                navigate.goBack()
+                navigate.navigate("verification/fetchAll");
             } else {
                 setError(response.data.message || 'Something went wrong');
             }

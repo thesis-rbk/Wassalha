@@ -18,7 +18,9 @@ import {
   Moon,
   Sun,
   PenSquare,
-  Users
+  DollarSign,
+  Users,
+  Home
 } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -63,7 +65,11 @@ export function TopNavigation({
       console.error('Logout error:', error);
     }
   };
-
+  const tokenVerif = async () => {
+    const tokenys = await AsyncStorage.getItem('jwtToken');
+    console.log("token:", tokenys);
+    setToken(tokenys);
+  };
   const toggleMenu = () => {
     const toValue = isMenuOpen ? -MENU_WIDTH : 0;
     Animated.timing(menuAnimation, {
@@ -74,13 +80,10 @@ export function TopNavigation({
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const tokenVerif = async () => {
-    const tokenys = await AsyncStorage.getItem('jwtToken');
-    console.log("token:", tokenys);
-    setToken(tokenys);
-  };
+
   console.log("issss sponsor", isSponsor)
   const check = async () => {
+    tokenVerif()
     try {
       const response = await axiosInstance.get('/api/checkSponsor', {
         headers: {
@@ -98,14 +101,18 @@ export function TopNavigation({
     { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/test/Notifications' },
     { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
     { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips', route: '/test/Travel' },
+    { icon: <Home size={24} color={Colors[colorScheme].text} />, label: 'Home', route: '/home' },
     { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request', route: '/productDetails/create-order' },
-    { icon: <Users size={24} color={Colors[colorScheme].text} />, label: 'Sponsorship', route: 'screens/SponsorshipScreen' as any },
+    {
+      icon: isSponsor ? <DollarSign size={24} color={Colors[colorScheme].text} /> : <Users size={24} color={Colors[colorScheme].text} />,
+      label: isSponsor ? 'Create Subscription' : 'Sponsorship',
+      route: isSponsor ? 'verification/CreateSponsorPost' : 'screens/SponsorshipScreen' as any
+    },
     { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out', onPress: handleLogout },
   ];
   useEffect(() => {
-    tokenVerif()
-    check()
-  }, []);
+    check() // Check if user is a sponsor
+  }, [tokeny]);
   const handleRoutes = (item: SideMenu) => {
     try {
       if (item.onPress) {
