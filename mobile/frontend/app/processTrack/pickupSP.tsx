@@ -18,8 +18,9 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Pickup } from "../../types/Pickup";
-import { MapPin, CheckCircle, AlertCircle } from "lucide-react-native";
+import { MapPin, CheckCircle, AlertCircle, MessageCircle } from "lucide-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import { navigateToChat } from "@/services/chatService";
 
 export default function PickupTraveler() {
   const router = useRouter();
@@ -201,6 +202,30 @@ export default function PickupTraveler() {
 
   const isRequester = (pickup: Pickup) => userId !== pickup.order.travelerId;
 
+  const handleChatWithRequester = async (pickup: Pickup) => {
+    if (!user) return;
+    
+    try {
+      const providerId = user.id;
+      const requesterId = pickup.order.userId;
+      const productId = pickup.order.goodsId;
+      
+      await navigateToChat(
+        requesterId, 
+        providerId, 
+        productId,
+        {
+          orderId: pickup.orderId,
+          goodsName: pickup.order.goods?.name || 'Item'
+        },
+        router
+      );
+    } catch (error) {
+      console.error('Error opening chat:', error);
+      alert('Failed to open chat. Please try again.');
+    }
+  };
+
   const renderItem = ({ item }: { item: Pickup }) => {
     const userIsRequester = isRequester(item);
 
@@ -210,13 +235,21 @@ export default function PickupTraveler() {
           <Text style={styles.sectionTitle}>
             Order #{item.orderId} - {item.pickupType}
           </Text>
-          <TouchableOpacity
-            style={styles.suggestionsLink}
-            onPress={() => fetchSuggestions(item.id)}
-          >
-            <Text style={styles.suggestionsText}>See Previous</Text>
-            <Text style={styles.suggestionsText}>Suggestions</Text>
-          </TouchableOpacity>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              style={styles.chatIconButton}
+              onPress={() => handleChatWithRequester(item)}
+            >
+              <MessageCircle size={20} color="#3b82f6" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.suggestionsLink}
+              onPress={() => fetchSuggestions(item.id)}
+            >
+              <Text style={styles.suggestionsText}>See Previous</Text>
+              <Text style={styles.suggestionsText}>Suggestions</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.orderRow}>
@@ -546,6 +579,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#1e293b",
     flexShrink: 1,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chatIconButton: {
+    padding: 8,
+    marginRight: 8,
+    borderRadius: 20,
+    backgroundColor: "#e0f2fe", // Light blue background
   },
   suggestionsLink: {
     paddingVertical: 4,

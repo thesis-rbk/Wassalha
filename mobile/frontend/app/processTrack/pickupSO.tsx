@@ -10,8 +10,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
 import { Pickup } from "../../types/Pickup";
-import { MapPin, CheckCircle, XCircle, AlertCircle } from "lucide-react-native";
+import { MapPin, CheckCircle, XCircle, AlertCircle, MessageCircle } from "lucide-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import { navigateToChat } from "@/services/chatService";
 
 export default function PickupOwner() {
   const router = useRouter();
@@ -145,6 +146,30 @@ export default function PickupOwner() {
 
   const isTraveler = (pickup: Pickup) => userId === pickup.order.travelerId;
 
+  const handleChatWithTraveler = async (pickup: Pickup) => {
+    if (!user) return;
+    
+    try {
+      const requesterId = user.id;
+      const providerId = pickup.order.travelerId;
+      const productId = pickup.order.goodsId;
+      
+      await navigateToChat(
+        requesterId, 
+        providerId, 
+        productId,
+        {
+          orderId: pickup.orderId,
+          goodsName: pickup.order.goods?.name || 'Item'
+        },
+        router
+      );
+    } catch (error) {
+      console.error('Error opening chat:', error);
+      alert('Failed to open chat. Please try again.');
+    }
+  };
+
   const renderItem = ({ item }: { item: Pickup }) => {
     const userIsTraveler = isTraveler(item);
     const userIsRequester = !userIsTraveler;
@@ -152,17 +177,25 @@ export default function PickupOwner() {
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-        <Text style={styles.sectionTitle}>
-          Order #{item.orderId} - {item.pickupType}
-        </Text>
-        <TouchableOpacity
-          style={styles.suggestionsLink}
-          onPress={() => fetchSuggestions(item.id)}
-        >
-          <Text style={styles.suggestionsText}>See Previous</Text>
-          <Text style={styles.suggestionsText}>Suggestions</Text>
-        </TouchableOpacity>
-      </View>
+          <Text style={styles.sectionTitle}>
+            Order #{item.orderId} - {item.pickupType}
+          </Text>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              style={styles.chatIconButton}
+              onPress={() => handleChatWithTraveler(item)}
+            >
+              <MessageCircle size={20} color="#3b82f6" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.suggestionsLink}
+              onPress={() => fetchSuggestions(item.id)}
+            >
+              <Text style={styles.suggestionsText}>See Previous</Text>
+              <Text style={styles.suggestionsText}>Suggestions</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <View style={styles.orderRow}>
           <View style={styles.iconContainer}>
@@ -430,6 +463,16 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-SemiBold",
     fontSize: 18,
     color: "#1e293b",
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chatIconButton: {
+    padding: 8,
+    marginRight: 8,
+    borderRadius: 20,
+    backgroundColor: "#e0f2fe", // Light blue background
   },
   suggestionsLink: {
     paddingVertical: 4,
