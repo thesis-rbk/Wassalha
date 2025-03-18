@@ -18,7 +18,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Pickup } from "../../types/Pickup";
-import { MapPin, CheckCircle, AlertCircle } from "lucide-react-native";
+import { MapPin, CheckCircle, AlertCircle, MessageCircle } from "lucide-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { usePickupActions } from "../../hooks/usePickupActions";
 import { QRCodeModal } from "../pickup/QRCodeModal";
@@ -649,6 +649,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#1e293b",
     flexShrink: 1,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chatIconButton: {
+    padding: 8,
+    marginRight: 8,
+    borderRadius: 20,
+    backgroundColor: "#e0f2fe", // Light blue background
   },
   suggestionsLink: {
     paddingVertical: 4,

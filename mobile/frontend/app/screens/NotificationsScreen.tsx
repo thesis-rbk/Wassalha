@@ -14,6 +14,11 @@ import { Swipeable } from 'react-native-gesture-handler';
 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+// Add these constants at the top of your file
+const SUCCESS_COLOR = '#4CAF50';  // Green color for success
+const ERROR_COLOR = '#F44336';    // Red color for error 
+const TINT_COLOR = '#008098';     // Use the same color as your primary
+
 export default function NotificationsScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const [isLoading, setIsLoading] = useState(false);
@@ -105,13 +110,13 @@ export default function NotificationsScreen() {
     
     if (item.type === NotificationType.ACCEPTED) {
       Icon = CheckCircle;
-      iconColor = Colors.success;
+      iconColor = SUCCESS_COLOR; // Use constant instead of Colors.success
     } else if (item.type === NotificationType.REJECTED) {
       Icon = XCircle;
-      iconColor = Colors.error;
+      iconColor = ERROR_COLOR; // Use constant instead of Colors.error
     } else if (item.type === NotificationType.REQUEST) {
       Icon = Package;
-      iconColor = Colors.primary;
+      iconColor = Colors[colorScheme].primary; // Use theme-specific primary color
     }
     
     return (
@@ -148,7 +153,10 @@ export default function NotificationsScreen() {
         {error && (
           <View style={styles.errorContainer}>
             <ThemedText style={styles.errorText}>{error}</ThemedText>
-            <TouchableOpacity style={styles.retryButton} onPress={loadNotifications}>
+            <TouchableOpacity 
+              style={[styles.retryButton, { backgroundColor: TINT_COLOR }]} 
+              onPress={loadNotifications}
+            >
               <ThemedText style={styles.retryButtonText}>Retry</ThemedText>
             </TouchableOpacity>
           </View>
@@ -156,7 +164,7 @@ export default function NotificationsScreen() {
         
         {isLoading && !refreshing && notifications.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors[colorScheme].tint} />
+            <ActivityIndicator size="large" color={TINT_COLOR} />
             <ThemedText style={styles.loadingText}>Loading notifications...</ThemedText>
           </View>
         ) : notifications.length > 0 ? (
@@ -173,7 +181,10 @@ export default function NotificationsScreen() {
           <View style={styles.emptyContainer}>
             <Bell color={Colors[colorScheme].text} size={48} />
             <ThemedText style={styles.emptyText}>No notifications yet</ThemedText>
-            <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
+            <TouchableOpacity 
+              style={[styles.refreshButton, { backgroundColor: TINT_COLOR }]} 
+              onPress={onRefresh}
+            >
               <ThemedText style={styles.refreshButtonText}>Refresh</ThemedText>
             </TouchableOpacity>
           </View>
@@ -244,7 +255,7 @@ const styles = StyleSheet.create({
   refreshButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: Colors.primary,
+    backgroundColor: TINT_COLOR,
     borderRadius: 8,
   },
   refreshButtonText: {
@@ -256,20 +267,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: Colors.error,
+    color: ERROR_COLOR,
     marginBottom: 12,
   },
   retryButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: Colors.primary,
+    backgroundColor: TINT_COLOR,
     borderRadius: 4,
   },
   retryButtonText: {
     color: 'white',
   },
   deleteAction: {
-    backgroundColor: Colors.error,
+    backgroundColor: ERROR_COLOR,
     justifyContent: 'center',
     alignItems: 'center',
     width: 80,
