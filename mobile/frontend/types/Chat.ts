@@ -11,4 +11,5 @@ export interface Chat {
     productId: number;
     goods: Goods;
     messages: Message[];
+    lastMessage?: Message;
 }
