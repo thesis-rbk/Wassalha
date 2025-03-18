@@ -13,9 +13,6 @@ const uerSPONSOR = async (req, res, next) => {
         const user = await prisma.serviceProvider.findUnique({
             where: { userId: decoded.id },
         });
-        if (!user) {
-            return res.status(401).json({ error: 'User not found' });
-        }
         console.log("user", user);
         req.user = user;
         next();

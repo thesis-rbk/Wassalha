@@ -126,7 +126,9 @@ export function TopNavigation({
     { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out', onPress: handleLogout },
   ];
   useEffect(() => {
-    check() // Check if user is a sponsor
+    if (tokeny) {
+      check(); // Check if user is a sponsor whenever the token is updated
+    }
   }, [tokeny]);
   const handleRoutes = (item: SideMenu) => {
     try {
