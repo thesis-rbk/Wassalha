@@ -36,53 +36,6 @@ export default function PaymentScreen() {
 
   console.log(params);
 
-  // TO BE REMOVED AND REPLACED IN THE NEXT PAGE (NEXT STEP)
-  // Navigate to chat screen
-  // const navigateToChat = () => {
-  //   router.push({
-  //     pathname: "../messages/chat",
-  //     params: {
-  //       senderId: user?.id,
-  //       recieverId: params.travelerId, // TO BE CHANGED IN THE OTHER INTERFACE (SP) BY requesterId
-  //       orderId: params.idOrder,
-  //     },
-  //   });
-  // };
-  // Handle creating a new chat room
-  const handleCreateChatRoom = async () => {
-    try {
-      const response = await axiosInstance.post(
-        "/api/chats",
-        {
-          requesterId: user?.id, // Current user
-          providerId: parseInt(params.travelerId.toString()), // Traveler
-          productId: parseInt(params.idGood.toString()), // Order ID
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const chatId = response.data.id;
-
-      // Navigate to the chat screen
-      router.push({
-        pathname: "/messages/chat",
-        params: {
-          chatId,
-          senderId: user?.id, // Current user
-          recieverId: params.travelerId, // Traveler
-          orderId: params.idOrder, // Order ID
-        },
-      });
-    } catch (error) {
-      console.error("Error creating chat room:", error);
-      Alert.alert("Error", "Failed to create chat room. Please try again.");
-    }
-  };
-
   // Handle payment submission
   const handlePayment = async () => {
     setIsProcessing(true);
@@ -298,14 +251,6 @@ export default function PaymentScreen() {
             {isProcessing || loading ? "Processing..." : "Complete Payment"}
           </Text>
         </BaseButton>
-
-        {/* Message Bubble */}
-        <TouchableOpacity
-          style={styles.messageBubble}
-          onPress={handleCreateChatRoom}
-        >
-          <MessageCircle size={24} color="#ffffff" />
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );
