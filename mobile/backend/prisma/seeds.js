@@ -3,7 +3,7 @@ import { faker } from "@faker-js/faker";
 import {
   Country,
   Gender,
-  ReferralSource, // Ensure ReferralSource is imported
+  ReferralSource,
   RequestStatus,
   OrderStatus,
   PaymentStatus,
@@ -22,6 +22,7 @@ import {
   FileExtension,
   MediaType,
   ProcessStatus,
+  Role,
 } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -29,6 +30,7 @@ const prisma = new PrismaClient();
 async function seed() {
   // Clean existing data
   await prisma.$transaction([
+    prisma.pickupSuggestion.deleteMany(),
     prisma.processEvent.deleteMany(),
     prisma.goodsProcess.deleteMany(),
     prisma.reputationTransaction.deleteMany(),
@@ -63,9 +65,7 @@ async function seed() {
           name: faker.person.fullName(),
           email: faker.internet.email(),
           phoneNumber: faker.phone.number(),
-          googleId: hasGoogleAccount
-            ? faker.string.alphanumeric(21)
-            : undefined,
+          googleId: hasGoogleAccount ? faker.string.alphanumeric(21) : undefined,
           password: hasGoogleAccount ? undefined : faker.internet.password(),
           hasCompletedOnboarding: faker.datatype.boolean(),
         },
@@ -73,9 +73,27 @@ async function seed() {
     })
   );
 
-  // Create Profiles
+  // Create Media for Profiles (one per profile that needs an image)
+  const profileMedia = await Promise.all(
+    Array.from({ length: users.length }).map(async () => {
+      return prisma.media.create({
+        data: {
+          url: faker.image.url(),
+          type: MediaType.IMAGE, // Profile images are typically images
+          mimeType: faker.system.mimeType(),
+          extension: faker.helpers.enumValue(FileExtension),
+          filename: faker.system.fileName(),
+          size: faker.number.float({ min: 1, max: 1000 }),
+          width: faker.number.int({ min: 100, max: 1920 }),
+          height: faker.number.int({ min: 100, max: 1080 }),
+        },
+      });
+    })
+  );
+
+  // Create Profiles with unique Media assignments
   const profiles = await Promise.all(
-    users.map((user) =>
+    users.map((user, index) =>
       prisma.profile.create({
         data: {
           userId: user.id,
@@ -94,8 +112,8 @@ async function seed() {
     )
   );
 
-  // Create Media
-  const media = await Promise.all(
+  // Create additional Media for other uses (e.g., Goods, Orders)
+  const additionalMedia = await Promise.all(
     Array.from({ length: 20 }).map(async () => {
       return prisma.media.create({
         data: {
@@ -107,10 +125,13 @@ async function seed() {
           size: faker.number.float({ min: 1, max: 1000 }),
           width: faker.number.int({ min: 100, max: 1920 }),
           height: faker.number.int({ min: 100, max: 1080 }),
+          duration: faker.datatype.boolean() ? faker.number.int({ min: 1, max: 3600 }) : undefined,
         },
       });
     })
   );
+
+  const media = [...profileMedia, ...additionalMedia]; // Combine all media for later use
 
   // Create ReviewSponsors
   const reviewSponsors = await Promise.all(
@@ -135,6 +156,7 @@ async function seed() {
         data: {
           name: faker.commerce.department(),
           description: faker.lorem.sentence(),
+          isDisabled: faker.datatype.boolean(),
         },
       });
     })
@@ -153,9 +175,7 @@ async function seed() {
           weight: faker.number.float({ min: 0.1, max: 50 }),
           price: faker.number.float({ min: 1, max: 1000 }),
           description: faker.commerce.productDescription(),
-          imageId: faker.datatype.boolean()
-            ? faker.helpers.arrayElement(media).id
-            : undefined,
+          imageId: faker.datatype.boolean() ? faker.helpers.arrayElement(additionalMedia).id : undefined,
           goodsUrl: faker.datatype.boolean() ? faker.internet.url() : undefined,
           isVerified: faker.datatype.boolean(),
           categoryId: faker.helpers.arrayElement(categories).id,
@@ -195,6 +215,9 @@ async function seed() {
           totalAmount: faker.number.float({ min: 10, max: 500 }),
           paymentStatus: faker.helpers.enumValue(PaymentStatus),
           orderStatus: faker.helpers.enumValue(OrderStatus),
+          verificationImageId: faker.datatype.boolean()
+            ? faker.helpers.arrayElement(additionalMedia).id
+            : undefined,
         },
       });
     })
@@ -206,12 +229,13 @@ async function seed() {
       return prisma.payment.create({
         data: {
           orderId: order.id,
-          amount:
-            order.totalAmount || faker.number.float({ min: 10, max: 500 }),
+          amount: order.totalAmount || faker.number.float({ min: 10, max: 500 }),
           currency: faker.helpers.enumValue(PaymentCurrency),
           status: faker.helpers.enumValue(PaymentState),
           paymentMethod: faker.helpers.enumValue(PaymentMethod),
           transactionId: faker.string.uuid(),
+          qrCode: faker.datatype.boolean() ? faker.string.uuid() : undefined,
+          paymentUrl: faker.datatype.boolean() ? faker.internet.url() : undefined,
         },
       });
     })
@@ -226,9 +250,44 @@ async function seed() {
           pickupType: faker.helpers.enumValue(PickupType),
           location: faker.location.city(),
           address: faker.location.streetAddress(),
+          qrCode: faker.datatype.boolean() ? faker.string.uuid() : undefined,
           coordinates: `${faker.location.latitude()},${faker.location.longitude()}`,
           contactPhoneNumber: faker.phone.number(),
+          travelerconfirmed: faker.datatype.boolean(),
+          userconfirmed: faker.datatype.boolean(),
           status: faker.helpers.enumValue(PickupStatus),
+          scheduledTime: faker.date.soon(),
+        },
+      });
+    })
+  );
+
+  // Update Requests with Pickup IDs
+  await Promise.all(
+    requests.map(async (request, index) => {
+      if (faker.datatype.boolean()) {
+        await prisma.request.update({
+          where: { id: request.id },
+          data: { pickupId: pickups[index % pickups.length].id },
+        });
+      }
+    })
+  );
+
+  // Create Pickup Suggestions
+  const pickupSuggestions = await Promise.all(
+    Array.from({ length: 5 }).map(async () => {
+      return prisma.pickupSuggestion.create({
+        data: {
+          pickupId: faker.datatype.boolean() ? faker.helpers.arrayElement(pickups).id : undefined,
+          orderId: faker.helpers.arrayElement(orders).id,
+          userId: faker.helpers.arrayElement(users).id,
+          pickupType: faker.helpers.enumValue(PickupType),
+          location: faker.location.city(),
+          address: faker.location.streetAddress(),
+          qrCode: faker.datatype.boolean() ? faker.string.uuid() : undefined,
+          coordinates: `${faker.location.latitude()},${faker.location.longitude()}`,
+          contactPhoneNumber: faker.phone.number(),
           scheduledTime: faker.date.soon(),
         },
       });
@@ -297,20 +356,18 @@ async function seed() {
           userId: user.id,
           type: faker.helpers.enumValue(ServiceProviderType),
           isVerified: faker.datatype.boolean(),
-          badge: faker.datatype.boolean()
-            ? faker.string.alphanumeric(8)
-            : undefined,
+          badge: faker.datatype.boolean() ? faker.string.alphanumeric(8) : undefined,
           idCard: faker.datatype.boolean()
             ? faker.number.int({ min: 100000000, max: 999999999 }).toString()
             : undefined,
-          passport: faker.datatype.boolean()
-            ? faker.string.alphanumeric(10)
-            : undefined,
+          passport: faker.datatype.boolean() ? faker.string.alphanumeric(10) : undefined,
           license: faker.datatype.boolean()
             ? faker.number.int({ min: 1000000000, max: 9999999999 }).toString()
             : undefined,
-          creditCard: faker.datatype.boolean()
-            ? faker.finance.creditCardNumber().slice(-4)
+          creditCard: faker.datatype.boolean() ? faker.finance.creditCardNumber().slice(-4) : undefined,
+          selfie: faker.datatype.boolean() ? faker.image.url() : undefined,
+          questionnaireAnswers: faker.datatype.boolean()
+            ? { question1: faker.lorem.word(), question2: faker.lorem.word() }
             : undefined,
           subscriptionLevel: faker.helpers.arrayElement(["BASIC", "PREMIUM"]),
         },
@@ -329,7 +386,10 @@ async function seed() {
           duration: faker.number.int({ min: 30, max: 365 }),
           type: faker.helpers.enumValue(SubscriptionType),
           categoryId: faker.helpers.arrayElement(categories).id,
-          users: { connect: [{ id: faker.helpers.arrayElement(users).id }] },
+          isActive: faker.datatype.boolean(),
+          users: {
+            connect: [{ id: faker.helpers.arrayElement(users).id }],
+          },
         },
       });
     })
@@ -349,6 +409,9 @@ async function seed() {
           price: faker.number.float({ min: 100, max: 1000 }),
           duration: faker.number.int({ min: 30, max: 365 }),
           platform: faker.helpers.enumValue(SponsorshipPlatform),
+          categoryId: category.id,
+          sponsorId: sponsor.id,
+          recipientId: recipient.id,
           product: faker.commerce.productName(),
           amount: faker.number.float({ min: 100, max: 1000 }),
           category: { connect: { id: category.id } },
@@ -388,10 +451,11 @@ async function seed() {
           type: "text",
           content: faker.lorem.sentence(),
           mediaId: faker.helpers.maybe(
-            () => faker.helpers.arrayElement(media).id,
+            () => faker.helpers.arrayElement(additionalMedia).id,
             { probability: 0.3 }
           ),
           isRead: faker.datatype.boolean(),
+          time: faker.date.recent(),
         },
       });
     })
@@ -415,7 +479,7 @@ async function seed() {
       return prisma.processEvent.create({
         data: {
           goodsProcessId: process.id,
-          fromStatus: ProcessStatus.INITIALIZED,
+          fromStatus: ProcessStatus.PREINITIALIZED,
           toStatus: process.status,
           changedByUserId: faker.helpers.arrayElement(users).id,
           note: faker.lorem.sentence(),
@@ -447,11 +511,7 @@ async function seed() {
         data: {
           reputationId: rep.id,
           change: faker.number.float({ min: -10, max: 10 }),
-          eventType: faker.helpers.arrayElement([
-            "REVIEW",
-            "FEEDBACK",
-            "ADMIN_ACTION",
-          ]),
+          eventType: faker.helpers.arrayElement(["REVIEW", "FEEDBACK", "ADMIN_ACTION"]),
           comment: faker.lorem.sentence(),
         },
       });
