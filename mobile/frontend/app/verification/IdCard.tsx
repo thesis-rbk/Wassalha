@@ -87,9 +87,13 @@ const IdCard = () => {
     <ThemedView style={styles.container}>
       <View style={styles.content}>
         {image ? (
-          <Image source={{ uri: image }} style={styles.image} />
+          <View style={styles.cardFrame}>
+            <Image source={{ uri: image }} style={styles.image} />
+          </View>
         ) : (
-          <ThemedText style={styles.instruction}>No image selected</ThemedText>
+          <View style={styles.cardFrame}>
+            <ThemedText style={styles.instruction}>No image selected</ThemedText>
+          </View>
         )}
         <ThemedText style={styles.title}>ID Card</ThemedText>
         <ThemedText style={styles.instruction}>
@@ -119,10 +123,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  image: {
+  cardFrame: {
     width: '100%',
     height: 200,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: Colors.light.primary,
+    overflow: 'hidden',
     marginBottom: 20,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   title: {
     fontSize: 24,

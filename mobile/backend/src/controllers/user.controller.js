@@ -1148,7 +1148,6 @@ const verifyCreditCard = async (req, res) => {
         where: { id: user.serviceProvider.id },
         data: {
           creditCard: `${brand} **** **** **** ${last4}`,
-          isVerified: true,
           updatedAt: new Date()
         }
       });
@@ -1158,16 +1157,15 @@ const verifyCreditCard = async (req, res) => {
           userId: parseInt(userId),
           type: 'SPONSOR',
           creditCard: `${brand} **** **** **** ${last4}`,
-          isVerified: true,
+          isVerified: false,
           updatedAt: new Date()
         }
       });
 
-      // Update user to be a sponsor
+      // Update user but don't set as sponsor yet
       await prisma.user.update({
         where: { id: parseInt(userId) },
         data: {
-          isSponsor: true,
           serviceProviderId: serviceProvider.id.toString()
         }
       });
@@ -1175,9 +1173,9 @@ const verifyCreditCard = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Credit card verified successfully',
+      message: 'Credit card added successfully, awaiting verification',
       data: {
-        isVerified: true,
+        isVerified: false,
         last4
       }
     });

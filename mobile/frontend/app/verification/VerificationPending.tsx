@@ -1,11 +1,18 @@
 import React from "react";
-import { View, StyleSheet, Image } from "react-native";
+import { View, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { Colors } from "@/constants/Colors";
-import { CheckCircle } from "lucide-react-native";
+import { CheckCircle, Home } from "lucide-react-native";
+import { useRouter } from "expo-router";
 
 const VerificationPending = () => {
+  const router = useRouter();
+
+  const goHome = () => {
+    router.push("/home");
+  };
+
   return (
     <ThemedView style={styles.container}>
       <View style={styles.content}>
@@ -53,6 +60,11 @@ const VerificationPending = () => {
             verification is complete.
           </ThemedText>
         </View>
+
+        <TouchableOpacity style={styles.homeButton} onPress={goHome}>
+          <Home size={24} color="white" style={styles.homeIcon} />
+          <ThemedText style={styles.homeButtonText}>Go Back Home</ThemedText>
+        </TouchableOpacity>
       </View>
     </ThemedView>
   );
@@ -135,6 +147,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: Colors.dark.secondary,
+  },
+  homeButton: {
+    backgroundColor: Colors.light.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 15,
+    borderRadius: 10,
+    width: '100%',
+    marginTop: 20,
+  },
+  homeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  homeIcon: {
+    marginRight: 4,
   },
 });
 
