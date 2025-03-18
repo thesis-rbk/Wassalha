@@ -23,13 +23,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import PickupMap from "./pickupMap";
 import axiosInstance from "@/config";
 import io from "socket.io-client";
-import { Pickup as PickupType } from "../../types/Pickup"; // Renamed to avoid conflict with component name
-interface PickupProps {
-  pickupId?: number;
-  orderId?: number; // Keeping your original prop
-  pickups?: PickupType[]; // Optional
-  setPickups?: (pickups: PickupType[]) => void; // Optional
-}
+import { PickupProps } from "@/types/PickupsProps";
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 
 export default function Pickups({ pickupId, orderId: initialOrderId, pickups, setPickups }: PickupProps) {  const router = useRouter();

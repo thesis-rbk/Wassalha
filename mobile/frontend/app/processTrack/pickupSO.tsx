@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import ProgressBar from "../../components/ProgressBar";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, FlatList, ActivityIndicator, Text, TouchableOpacity, Alert } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -14,7 +14,8 @@ import { MapPin, CheckCircle, XCircle, AlertCircle, MessageCircle } from "lucide
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { usePickupActions } from "../../hooks/usePickupActions";
 import { QRCodeModal } from "../pickup/QRCodeModal";
-import io from "socket.io-client";
+import io, { Socket } from "socket.io-client";
+
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function PickupOwner() {
@@ -41,51 +42,72 @@ export default function PickupOwner() {
     setPickups,
     userId
   );
-  useEffect(() => {
-    const socket = io(`${SOCKET_URL}/pickup`, { // Fixed namespace
-      transports: ["websocket"],
-    });
 
-    socket.on("connect", () => {
-      console.log("✅ Connected to Socket.IO server (PickupOwner)");
+  // Use ref to persist socket across renders
+  const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    // Initialize socket only once
+    if (!socketRef.current) {
+      socketRef.current = io(`${SOCKET_URL}/pickup`, {
+        transports: ["websocket"],
+      });
+
+      socketRef.current.on("connect", () => {
+        console.log("✅ Connected to Socket.IO server (PickupOwner)");
+        // Join rooms for existing pickups
+        pickups.forEach((pickup) => {
+          const room = `pickup:${pickup.id}`;
+          socketRef.current?.emit("joinPickupRoom", pickup.id);
+          console.log(`Joined room: ${room}`);
+        });
+      });
+
+      socketRef.current.on("connect_error", (error) => {
+        console.error("❌ Socket.IO connection error:", error.message);
+      });
+
+      socketRef.current.on("pickupAccepted", (updatedPickup: Pickup) => {
+        console.log("✅ Received pickupAccepted (PickupTraveler):", updatedPickup);
+        setPickups((prev) =>
+          prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
+        );
+      });
+
+      socketRef.current.on("suggestionUpdate", (data: Pickup) => {
+        console.log("📩 Received suggestionUpdate (Pickup):", data);
+        setPickups((prev) =>
+          prev.map((p) => (p.id === data.id ? data : p))
+        );
+        Alert.alert("Update", `Pickup #${data.id} has been updated.`);
+      });
+
+      socketRef.current.on("statusUpdate", (updatedPickup: Pickup) => {
+        console.log("🔄 Received statusUpdate (PickupTraveler):", updatedPickup);
+        setPickups((prev) =>
+          prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
+        );
+        Alert.alert("Status Updated", `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`);
+      });
+
+      socketRef.current.on("disconnect", () => {
+        console.log("❌ Disconnected from Socket.IO server (PickupTraveler)");
+      });
+    }
+
+    // Update room joins when pickups change
+    if (socketRef.current?.connected) {
       pickups.forEach((pickup) => {
         const room = `pickup:${pickup.id}`;
-        socket.emit("joinPickupRoom", pickup.id); // Backend expects pickupId
+        socketRef.current?.emit("joinPickupRoom", pickup.id);
         console.log(`Joined room: ${room}`);
       });
-    });
+    }
 
-    socket.on("connect_error", (error) => {
-      console.error("❌ Socket.IO connection error:", error.message);
-    });
-
-    socket.on("pickupAccepted", (updatedPickup: Pickup) => {
-      console.log("✅ Received pickupAccepted (PickupTraveler):", updatedPickup);
-      setPickups((prev) =>
-        prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
-      );
-    });
-    socket.on("suggestionUpdate", (data: Pickup) => {
-      console.log("📩 Received suggestionUpdate (Pickup):", data);
-      setPickups((prev) =>
-        prev.map((p) => (p.id === data.id ? data : p))
-      );
-      Alert.alert("Update", `Pickup #${data.id} has been updated.`);
-    });
-    socket.on("statusUpdate", (updatedPickup: Pickup) => {
-      console.log("🔄 Received statusUpdate (PickupTraveler):", updatedPickup);
-      setPickups((prev) =>
-        prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
-      );
-      Alert.alert("Status Updated", `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("❌ Disconnected from Socket.IO server (PickupTraveler)");
-    });
-
+    // Cleanup on unmount
     return () => {
-      socket.disconnect();
+      socketRef.current?.disconnect();
+      socketRef.current = null;
     };
   }, [pickups]);
 
@@ -351,7 +373,7 @@ export default function PickupOwner() {
               </Text>
             </View>
           )}
-          keyExtractor={(item) => item.id.toString()} // Ensure string key
+          keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.suggestionsList}
         />
       )}
@@ -371,7 +393,7 @@ export default function PickupOwner() {
       {showSuggestions ? (
         renderSuggestions()
       ) : showPickup ? (
-        <Pickups pickupId={pickupId} pickups={pickups} setPickups={setPickups}/>
+        <Pickups pickupId={pickupId} pickups={pickups} setPickups={setPickups} />
       ) : (
         <>
           <View style={styles.content}>
@@ -391,7 +413,7 @@ export default function PickupOwner() {
             <FlatList
               data={pickups}
               renderItem={renderItem}
-              keyExtractor={(item) => item.id.toString()} // Ensure string key
+              keyExtractor={(item) => item.id.toString()}
               refreshing={isLoading}
               onRefresh={fetchPickups}
               contentContainerStyle={styles.listContainer}
@@ -417,7 +439,6 @@ const getStatusColor = (status: string): string => {
   }
 };
 
-// Styles remain unchanged
 const styles = StyleSheet.create({
   container: {
     flex: 1,

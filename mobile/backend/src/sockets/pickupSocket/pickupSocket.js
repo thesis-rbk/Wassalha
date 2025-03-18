@@ -14,7 +14,7 @@ module.exports = (pickupIO) => {
     socket.on("suggestionUpdate", (suggestionData) => {
       console.log("📩 Received suggestionUpdate:", suggestionData);
       try {
-        const pickupId = suggestionData.pickupId || suggestionData.id; // Fallback to id
+        const pickupId = suggestionData.pickup.id // Fallback to id
         if (!pickupId) throw new Error("No pickupId or id in suggestionData");
         pickupIO.to(`pickup:${pickupId}`).emit("suggestionUpdate", suggestionData);
         console.log(`✅ Broadcasted suggestionUpdate to room: pickup:${pickupId}`);
@@ -22,7 +22,6 @@ module.exports = (pickupIO) => {
         console.error("❌ Error broadcasting suggestionUpdate:", error.message);
       }
     });
-
     // Handle pickup acceptance (from PickupTraveler.tsx or PickupOwner.tsx)
     socket.on("pickupAccepted", (pickupData) => {
       console.log("✅ Received pickupAccepted:", pickupData);
