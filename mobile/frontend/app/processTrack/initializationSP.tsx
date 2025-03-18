@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -43,7 +43,7 @@ import { decode as atob } from "base-64";
 import { Picker } from "@react-native-picker/picker";
 // import { useRoleDetection } from "@/hooks/useRoleDetection";
 import Card from "@/components/cards/ProcessCard";
-import { useNotification } from '@/context/NotificationContext';
+import { useNotification } from "@/context/NotificationContext";
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -136,18 +136,25 @@ export default function InitializationSP() {
     arrivalFlightCode: "",
     airline: Object.keys(AIRLINE_CODES)[0],
     flightNumber: FLIGHT_NUMBERS[0],
-    departureCountry: Object.keys(COUNTRIES)[0],
-    arrivalCountry: Object.keys(COUNTRIES)[0],
+    departureAirport: "",
+    arrivalAirport: "",
   });
+  const [departureAirportSuggestions, setDepartureAirportSuggestions] =
+    useState([]);
+  const [arrivalAirportSuggestions, setArrivalAirportSuggestions] = useState(
+    []
+  );
+  const [isFetchingAirports, setIsFetchingAirports] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchRequestDetails();
   }, [params.id]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadUserFromToken();
   }, []);
 
@@ -156,13 +163,13 @@ export default function InitializationSP() {
       // Get the request ID from params, with fallbacks
       const requestId = params.idRequest || params.id;
       console.log("Fetching details for request:", requestId);
-      
+
       if (!requestId) {
         console.error("No request ID found in params:", params);
         setLoading(false);
         return;
       }
-      
+
       const response = await axiosInstance.get(`/api/requests/${requestId}`);
       setRequestDetails((prev: typeof requestDetails) => ({
         ...response.data.data,
@@ -211,10 +218,10 @@ export default function InitializationSP() {
   const handleSubmitOffer = async () => {
     try {
       setIsSubmitting(true);
-      
+
       const requestId = params.idRequest || params.id || params.requestId;
       console.log("Using request ID for offer:", requestId);
-      
+
       const checkResponse = await axiosInstance.get(
         `/api/requests/${requestId}`
       );
@@ -234,42 +241,31 @@ export default function InitializationSP() {
       const trackingNumber = `${airlineCode}${flightNumber}`;
 
       const orderData = {
-        requestId: parseInt(Array.isArray(requestId) ? requestId[0] : requestId),
+        requestId: parseInt(
+          Array.isArray(requestId) ? requestId[0] : requestId
+        ),
         travelerId: currentUser?.id,
         departureDate: offerDetails.deliveryDate,
         arrivalDate: offerDetails.deliveryDate,
         trackingNumber: trackingNumber,
         orderStatus: "PENDING",
         paymentStatus: "ON_HOLD",
+        departureAirport: offerDetails.departureAirport, // New field
+        arrivalAirport: offerDetails.arrivalAirport, // New field
       };
-
-      console.log("🧪 DEBUGGING NOTIFICATION DATA:");
-      console.log("- Logged in user:", currentUser);
-      console.log("- Params received:", params);
-      console.log("- Request ID:", requestId);
-      console.log("- Notification data:", {
-        requesterId: params.requesterId, 
-        travelerId: currentUser?.id,
-        requestDetails: {
-          goodsName: requestDetails.goods.name,
-          requestId: params.idRequest || params.id
-        }
-      });
 
       const response = await axiosInstance.post("/api/orders", orderData);
 
       if (response.status === 201) {
-        sendNotification('offer_made', {
-          requesterId: params.requesterId, 
+        sendNotification("offer_made", {
+          requesterId: params.requesterId,
           travelerId: currentUser?.id,
           requestDetails: {
             goodsName: requestDetails.goods.name,
-            requestId: params.idRequest || params.id
-          }
+            requestId: params.idRequest || params.id,
+          },
         });
-        console.log("requeseteidinsppppppppppppppppppppp", params.requesterId);
-        console.log("traveleridinsppppppppppppppppppppp", currentUser?.id);
-        
+
         setTimeout(() => {
           router.replace({
             pathname: "/screens/OrderSuccessScreen",
@@ -366,9 +362,45 @@ export default function InitializationSP() {
     );
   };
 
-  const isValidFlightCode = (code: string) => {
-    const pattern = /^[A-Z]{2,3}\d{3,4}$/;
-    return pattern.test(code);
+  const fetchAirportSuggestions = async (
+    query: string,
+    setSuggestions: Function
+  ) => {
+    if (!query || query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    setIsFetchingAirports(true);
+    try {
+      const requestBody = {
+        textQuery: `${query} airport`,
+        includedType: "airport",
+        languageCode: "en",
+      };
+      const requestHeaders = {
+        "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY,
+        "Content-Type": "application/json",
+        "X-Goog-FieldMask":
+          "places.displayName,places.types,places.formattedAddress",
+      };
+
+      const response = await axiosInstance.post(
+        "https://places.googleapis.com/v1/places:searchText",
+        requestBody,
+        { headers: requestHeaders }
+      );
+
+      const results = response.data.places
+        .filter((place: any) => place.types.includes("airport"))
+        .map((place: any) => place.displayName.text || place.formattedAddress);
+      setSuggestions(results);
+    } catch (error) {
+      console.error("Error fetching airports from Google Places:", error);
+      Alert.alert("Error", "Failed to fetch airport suggestions");
+    } finally {
+      setIsFetchingAirports(false);
+    }
   };
 
   if (loading) {
@@ -432,10 +464,7 @@ export default function InitializationSP() {
                 ${requestDetails.goods.price.toFixed(2)}
               </BodyMedium>
             </View>
-            <BodyMedium style={styles.category}>
-              {/* {requestDetails.goods.category} */}
-              LINE387
-            </BodyMedium>
+            <BodyMedium style={styles.category}>{params.category}</BodyMedium>
           </View>
 
           <View style={styles.infoCard}>
@@ -491,7 +520,7 @@ export default function InitializationSP() {
                 <UserAvatar user={requestDetails.user} />
                 <View style={styles.requesterInfo}>
                   <BodyMedium style={styles.requesterName}>
-                    {requestDetails.user.name}
+                    {getInitials(requestDetails.user.name)}
                   </BodyMedium>
                   <ReputationDisplay
                     reputation={{
@@ -524,51 +553,76 @@ export default function InitializationSP() {
               <TitleLarge style={styles.formTitle}>Make an Offer</TitleLarge>
 
               <View style={styles.formField}>
-                <BodyMedium style={styles.label}>Departure Country</BodyMedium>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={offerDetails.departureCountry}
-                    style={styles.picker}
-                    onValueChange={(value) =>
-                      setOfferDetails((prev) => ({
-                        ...prev,
-                        departureCountry: value,
-                      }))
-                    }
-                  >
-                    {Object.keys(COUNTRIES).map((country) => (
-                      <Picker.Item
-                        key={country}
-                        label={country}
-                        value={country}
-                      />
+                <BodyMedium style={styles.label}>Departure Airport</BodyMedium>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter departure airport"
+                  value={offerDetails.departureAirport}
+                  onChangeText={(text) => {
+                    setOfferDetails((prev) => ({
+                      ...prev,
+                      departureAirport: text,
+                    }));
+                    fetchAirportSuggestions(
+                      text,
+                      setDepartureAirportSuggestions
+                    );
+                  }}
+                />
+                {departureAirportSuggestions.length > 0 && (
+                  <View style={styles.suggestionsContainer}>
+                    {departureAirportSuggestions.map((airport, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.suggestionItem}
+                        onPress={() => {
+                          setOfferDetails((prev) => ({
+                            ...prev,
+                            departureAirport: airport,
+                          }));
+                          setDepartureAirportSuggestions([]);
+                        }}
+                      >
+                        <Text style={styles.suggestionText}>{airport}</Text>
+                      </TouchableOpacity>
                     ))}
-                  </Picker>
-                </View>
+                  </View>
+                )}
               </View>
 
               <View style={styles.formField}>
-                <BodyMedium style={styles.label}>Arrival Country</BodyMedium>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={offerDetails.arrivalCountry}
-                    style={styles.picker}
-                    onValueChange={(value) =>
-                      setOfferDetails((prev) => ({
-                        ...prev,
-                        arrivalCountry: value,
-                      }))
-                    }
-                  >
-                    {Object.keys(COUNTRIES).map((country) => (
-                      <Picker.Item
-                        key={country}
-                        label={country}
-                        value={country}
-                      />
+                <BodyMedium style={styles.label}>Arrival Airport</BodyMedium>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter arrival airport"
+                  value={offerDetails.arrivalAirport}
+                  onChangeText={(text) => {
+                    setOfferDetails((prev) => ({
+                      ...prev,
+                      arrivalAirport: text,
+                    }));
+                    fetchAirportSuggestions(text, setArrivalAirportSuggestions);
+                  }}
+                />
+                {arrivalAirportSuggestions.length > 0 && (
+                  <View style={styles.suggestionsContainer}>
+                    {arrivalAirportSuggestions.map((airport, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.suggestionItem}
+                        onPress={() => {
+                          setOfferDetails((prev) => ({
+                            ...prev,
+                            arrivalAirport: airport,
+                          }));
+                          setArrivalAirportSuggestions([]);
+                        }}
+                      >
+                        <Text style={styles.suggestionText}>{airport}</Text>
+                      </TouchableOpacity>
                     ))}
-                  </Picker>
-                </View>
+                  </View>
+                )}
               </View>
 
               <View style={styles.formField}>
@@ -893,7 +947,7 @@ const styles = StyleSheet.create({
   },
   securityText: {
     fontSize: 13,
-    color: Colors.light.secondary,
+    color: "#64748b",
   },
   contactButton: {
     backgroundColor: Colors.light.primary,
@@ -1118,5 +1172,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#64748b",
     marginLeft: 8,
+  },
+  // For the suggestions of the airports
+  input: {
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: "white",
+  },
+  suggestionsContainer: {
+    marginTop: 8,
+    backgroundColor: "white",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    maxHeight: 150,
+    overflow: "hidden",
+  },
+  suggestionItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e2e8f0",
+  },
+  suggestionText: {
+    fontSize: 14,
+    color: "#1e293b",
   },
 });
