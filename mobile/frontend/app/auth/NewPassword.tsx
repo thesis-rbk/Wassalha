@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, ScrollView, Image, Alert, TextInput } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { InputField } from '@/components/InputField';
 import { InputFieldPassword } from '@/components/InputFieldPassword';
 import { BaseButton } from '@/components/ui/buttons/BaseButton';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -14,23 +13,68 @@ export default function NewPassword() {
   const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
   const { email } = useLocalSearchParams<{ email?: string }>();
-  
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [code, setCode] = useState('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [code, setCode] = useState<string[]>(['', '', '', '', '', '']); // 6-digit code array
+  const [timer, setTimer] = useState<number>(60); // 1 minute in seconds for testing (adjust to 300 for 5 min)
+  const [isTimerActive, setIsTimerActive] = useState<boolean>(true); // Track if timer should run
 
-  const validatePassword = (password: string) => {
+  // Refs for focusing TextInputs
+  const inputRefs = useRef<(TextInput | null)[]>([]);
+
+  // Timer logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout | undefined;
+
+    if (isTimerActive && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (timer <= 0) {
+      Alert.alert('Expired', 'The verification code has expired. Request a new one.');
+      setIsTimerActive(false); // Stop further alerts
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timer, isTimerActive]);
+
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs < 10 ? '0' + secs : secs}`;
+  };
+
+  const validatePassword = (password: string): string | null => {
     if (password.length < 8) return 'Password must be at least 8 characters';
     if (!/[A-Z]/.test(password)) return 'Must contain at least one uppercase letter';
     if (!/\d/.test(password)) return 'Must contain at least one number';
     return null;
   };
 
+  const handleCodeChange = (text: string, index: number) => {
+    const newCode = [...code];
+    newCode[index] = text;
+    setCode(newCode);
+
+    // Auto-focus next input
+    if (text && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
   const handleSubmit = async () => {
-    console.log('email:', email);
+    const fullCode = code.join('');
+    if (fullCode.length !== 6) {
+      Alert.alert('Error', 'Please enter a 6-digit verification code');
+      return;
+    }
+
     const passwordValidation = validatePassword(newPassword);
     const confirmValidation = newPassword !== confirmPassword ? 'Passwords do not match' : null;
 
@@ -42,16 +86,30 @@ export default function NewPassword() {
         setIsLoading(true);
         await axiosInstance.post('/api/users/reset-password', {
           email,
-          code,
-          newPassword: confirmPassword
+          code: fullCode,
+          newPassword: confirmPassword,
         });
 
-        router.push('/auth/login');
+        // Stop the timer on success
+        setIsTimerActive(false);
+
+        // Success alert
+        Alert.alert(
+          'Success',
+          'Your password has been reset successfully!',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.push('/auth/login'),
+            },
+          ],
+          { cancelable: false }
+        );
       } catch (error: any) {
         if (error.response?.data?.error) {
-          alert(`Password reset failed: ${error.response.data.error}`);
+          Alert.alert('Error', `Password reset failed: ${error.response.data.error}`);
         } else {
-          alert('Password reset failed. Please try again.');
+          Alert.alert('Error', 'Password reset failed. Please try again.');
         }
       } finally {
         setIsLoading(false);
@@ -62,26 +120,32 @@ export default function NewPassword() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Image
-          source={require('@/assets/images/11.jpeg')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-
         <ThemedText style={styles.title}>Create New Password</ThemedText>
         <ThemedText style={styles.subText}>
           Your new password must be different from previous used passwords
         </ThemedText>
 
         <View style={styles.inputContainer}>
-          <InputField
-            label="Verification Code"
-            placeholder="Enter 6-digit code"
-            value={code}
-            onChangeText={setCode}
-            keyboardType="numeric"
-            maxLength={6}
-          />
+          <ThemedText style={styles.label}>Verification Code</ThemedText>
+          <View style={styles.codeContainer}>
+            {code.map((digit, index) => (
+              <TextInput
+                key={index}
+                ref={(ref) => (inputRefs.current[index] = ref)}
+                style={styles.codeInput}
+                value={digit}
+                onChangeText={(text) => handleCodeChange(text, index)}
+                keyboardType="numeric"
+                maxLength={1}
+                textAlign="center"
+              />
+            ))}
+          </View>
+          {isTimerActive && (
+            <ThemedText style={styles.timerText}>
+              Time remaining: {formatTime(timer)}
+            </ThemedText>
+          )}
 
           <InputFieldPassword
             label="New Password"
@@ -107,17 +171,14 @@ export default function NewPassword() {
           size="login"
           style={styles.button}
           onPress={handleSubmit}
-          disabled={isLoading}
+          disabled={isLoading || (timer <= 0 && isTimerActive)}
         >
           {isLoading ? 'Resetting...' : 'Reset Password'}
         </BaseButton>
 
         <ThemedText style={styles.loginText}>
           Remember your password?{' '}
-          <ThemedText 
-            style={styles.loginLink}
-            onPress={() => router.push('/auth/login')}
-          >
+          <ThemedText style={styles.loginLink} onPress={() => router.push('/auth/login')}>
             Login
           </ThemedText>
         </ThemedText>
@@ -159,7 +220,29 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: 24,
   },
-  inputField: {
+  label: {
+    fontSize: 14,
+    fontFamily: 'InterSemiBold',
+    marginBottom: 8,
+  },
+  codeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  codeInput: {
+    width: 40,
+    height: 40,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    borderRadius: 8,
+    fontSize: 18,
+    backgroundColor: '#F5F5F5',
+  },
+  timerText: {
+    fontSize: 12,
+    textAlign: 'center',
+    color: Colors.light.primary,
     marginBottom: 16,
   },
   button: {

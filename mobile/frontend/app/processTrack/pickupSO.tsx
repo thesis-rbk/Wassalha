@@ -15,8 +15,7 @@ import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { usePickupActions } from "../../hooks/usePickupActions";
 import { QRCodeModal } from "../pickup/QRCodeModal";
 import io from "socket.io-client";
-
-const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL; 
+const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function PickupOwner() {
   const router = useRouter();
@@ -42,19 +41,16 @@ export default function PickupOwner() {
     setPickups,
     userId
   );
-
-  // Socket.IO setup
   useEffect(() => {
-    const socket = io(SOCKET_URL, {
+    const socket = io(`${SOCKET_URL}/pickup`, { // Fixed namespace
       transports: ["websocket"],
     });
 
     socket.on("connect", () => {
       console.log("✅ Connected to Socket.IO server (PickupOwner)");
-      // Join rooms for all existing pickups
       pickups.forEach((pickup) => {
         const room = `pickup:${pickup.id}`;
-        socket.emit("joinPickupRoom", pickup.id); // Backend expects just pickupId
+        socket.emit("joinPickupRoom", pickup.id); // Backend expects pickupId
         console.log(`Joined room: ${room}`);
       });
     });
@@ -63,28 +59,21 @@ export default function PickupOwner() {
       console.error("❌ Socket.IO connection error:", error.message);
     });
 
-    socket.on("suggestionUpdate", (data: any) => {
-      console.log("📩 Received suggestionUpdate (PickupOwner):", data);
-      // Update pickups if the pickup itself changes, otherwise add to suggestions
-      setPickups((prev) =>
-        prev.some((p) => p.id === data.pickupId)
-          ? prev.map((p) => (p.id === data.pickupId ? { ...p, ...data } : p))
-          : [...prev, { ...data, id: data.pickupId }]
-      );
-      setSuggestions((prev) => [...prev, data]);
-      Alert.alert("New Suggestion", `Traveler suggested a pickup for Order #${data.orderId}`);
-    });
-
     socket.on("pickupAccepted", (updatedPickup: Pickup) => {
-      console.log("✅ Received pickupAccepted (PickupOwner):", updatedPickup);
+      console.log("✅ Received pickupAccepted (PickupTraveler):", updatedPickup);
       setPickups((prev) =>
         prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
       );
-      Alert.alert("Pickup Accepted", `Pickup #${updatedPickup.id} is now scheduled!`);
     });
-
+    socket.on("suggestionUpdate", (data: Pickup) => {
+      console.log("📩 Received suggestionUpdate (Pickup):", data);
+      setPickups((prev) =>
+        prev.map((p) => (p.id === data.id ? data : p))
+      );
+      Alert.alert("Update", `Pickup #${data.id} has been updated.`);
+    });
     socket.on("statusUpdate", (updatedPickup: Pickup) => {
-      console.log("🔄 Received statusUpdate (PickupOwner):", updatedPickup);
+      console.log("🔄 Received statusUpdate (PickupTraveler):", updatedPickup);
       setPickups((prev) =>
         prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
       );
@@ -92,7 +81,7 @@ export default function PickupOwner() {
     });
 
     socket.on("disconnect", () => {
-      console.log("❌ Disconnected from Socket.IO server (PickupOwner)");
+      console.log("❌ Disconnected from Socket.IO server (PickupTraveler)");
     });
 
     return () => {
@@ -185,11 +174,13 @@ export default function PickupOwner() {
     }
   };
 
-  const isTraveler = (pickup: Pickup) =>console.log("pickup", pickup);
-    ;
+  const isTraveler = (pickup: Pickup) => {
+    console.log("pickup", pickup);
+    return false; // Placeholder logic; replace with actual check if needed
+  };
+
   const renderItem = ({ item }: { item: Pickup }) => {
     const userIsTraveler = isTraveler(item);
-    // const userIsRequester = !userIsTraveler;
 
     return (
       <View style={styles.card}>
@@ -360,7 +351,7 @@ export default function PickupOwner() {
               </Text>
             </View>
           )}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()} // Ensure string key
           contentContainerStyle={styles.suggestionsList}
         />
       )}
@@ -380,7 +371,7 @@ export default function PickupOwner() {
       {showSuggestions ? (
         renderSuggestions()
       ) : showPickup ? (
-        <Pickups pickupId={pickupId} />
+        <Pickups pickupId={pickupId} pickups={pickups} setPickups={setPickups}/>
       ) : (
         <>
           <View style={styles.content}>
@@ -400,7 +391,7 @@ export default function PickupOwner() {
             <FlatList
               data={pickups}
               renderItem={renderItem}
-              keyExtractor={(item:any) => item.id}
+              keyExtractor={(item) => item.id.toString()} // Ensure string key
               refreshing={isLoading}
               onRefresh={fetchPickups}
               contentContainerStyle={styles.listContainer}

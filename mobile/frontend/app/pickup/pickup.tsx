@@ -23,11 +23,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import PickupMap from "./pickupMap";
 import axiosInstance from "@/config";
 import io from "socket.io-client";
-
+import { Pickup as PickupType } from "../../types/Pickup"; // Renamed to avoid conflict with component name
+interface PickupProps {
+  pickupId?: number;
+  orderId?: number; // Keeping your original prop
+  pickups?: PickupType[]; // Optional
+  setPickups?: (pickups: PickupType[]) => void; // Optional
+}
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 
-export default function Pickup({ pickupId, orderId: initialOrderId }: { pickupId?: number; orderId?: number }) {
-  const router = useRouter();
+export default function Pickups({ pickupId, orderId: initialOrderId, pickups, setPickups }: PickupProps) {  const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
   const [location, setLocation] = useState<string>("");
   const [address, setAddress] = useState<string>("");
@@ -69,21 +74,7 @@ export default function Pickup({ pickupId, orderId: initialOrderId }: { pickupId
     socket.on("connect_error", (error) => {
       console.error("❌ Socket.IO connection error:", error.message);
     });
-
-    socket.on("suggestionUpdate", (data: any) => {
-      console.log("📩 Received suggestionUpdate (Pickup):", data);
-      Alert.alert("Update", `Pickup #${data.pickupId} has been updated.`);
-    });
-
-    socket.on("pickupAccepted", (updatedPickup: any) => {
-      console.log("✅ Received pickupAccepted (Pickup):", updatedPickup);
-      Alert.alert("Success", `Pickup #${updatedPickup.id} is now scheduled!`);
-    });
-
-    socket.on("statusUpdate", (updatedPickup: any) => {
-      console.log("🔄 Received statusUpdate (Pickup):", updatedPickup);
-      Alert.alert("Status Updated", `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`);
-    });
+        
 
     return () => {
       socket.disconnect();
@@ -262,14 +253,17 @@ export default function Pickup({ pickupId, orderId: initialOrderId }: { pickupId
 
     try {
       const response = await axiosInstance.post("/api/pickup/handle-confirm", payload, { headers });
-      const pickupData = response.data.pickup; // Backend returns { message, pickup }
+      console.log("Pickup response aaaaaaaaaaaaaaaaaaaaaaa:", response.data);
+      const pickupData = response.data; // Backend returns { message, pickup }
 
-      const socket = io(SOCKET_URL, { transports: ["websocket"] });
+      const socket = io(`${SOCKET_URL}/pickup`, { // Fixed namespace
+        transports: ["websocket"],
+      });
       const room = `pickup:${pickupData.id}`;
       socket.emit("joinPickupRoom", pickupData.id);
       socket.emit("suggestionUpdate", pickupData); // Match backend event name
       console.log(`✅ Emitted suggestionUpdate to room ${room}:`, pickupData);
-
+    
       Alert.alert(
         "Success",
         pickupId
@@ -284,7 +278,6 @@ export default function Pickup({ pickupId, orderId: initialOrderId }: { pickupId
       setScheduledTime("");
       setCoordinates(null);
       router.back();
-      if (!pickupId) router.back(); // Navigate back if new pickup
     } catch (error) {
       console.error("Pickup error:", error);
       Alert.alert("Error", pickupId ? "Failed to update pickup" : "Failed to schedule pickup");

@@ -28,7 +28,7 @@ export default function Login() {
   const [password, setPassword] = useState<string>("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const redirect = "https://auth.expo.io/@mrsadok/wassalha"
+  const redirect = "https://ee22-102-152-208-9.ngrok-free.app"
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId:
       process.env.EXPO_PUBLIC_GOOGLE_AUTH,
