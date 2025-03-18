@@ -1,15 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Chat } from '@/types/Chat';
 import { Message } from '@/types/Message';
-
-// Define the chat state shape
-interface ChatState {
-  chats: Chat[];
-  activeChat: Chat | null;
-  messages: { [chatId: number]: Message[] };
-  loading: boolean;
-  error: string | null;
-}
+import { ChatState } from '@/types/ChatState';
 
 // Initial state
 const initialState: ChatState = {
@@ -68,7 +60,7 @@ const chatSlice = createSlice({
     // Add a new message to a chat
     addMessage: (state, action: PayloadAction<Message>) => {
       const message = action.payload;
-      const chatId = message.chatId;
+      const chatId = message.chatId || message.chat.id;
       
       // Initialize messages array if it doesn't exist
       if (!state.messages[chatId]) {

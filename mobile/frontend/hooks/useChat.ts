@@ -15,6 +15,7 @@ import { getSocket } from '@/services/socketService';
 import { BACKEND_URL } from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Socket } from 'socket.io-client';
+import { Message } from '@/types/Message';
 
 /**
  * Custom hook for chat functionality
@@ -59,8 +60,15 @@ export function useChat(chatId?: number, userId?: string) {
     // Handle incoming messages from other users
     const handleNewMessage = (message: any) => {
       console.log('📥 New message received:', message);
+      
+      // Ensure message has chatId property for frontend use
+      const enhancedMessage: Message = {
+        ...message,
+        chatId: message.chatId || message.chat?.id,
+      };
+      
       // Add the message to Redux state
-      dispatch(addMessage(message));
+      dispatch(addMessage(enhancedMessage));
     };
     
     // Handle when another user reads your message
@@ -146,7 +154,18 @@ export function useChat(chatId?: number, userId?: string) {
       
       // Update Redux store with chat list
       if (Array.isArray(data)) {
-        dispatch(setChats(data));
+        // Add chatId property for frontend convenience
+        const enhancedChats = data.map(chat => ({
+          ...chat,
+          // If lastMessage exists, ensure it has chatId
+          ...(chat.lastMessage && {
+            lastMessage: {
+              ...chat.lastMessage,
+              chatId: chat.lastMessage.chatId || chat.id,
+            }
+          })
+        }));
+        dispatch(setChats(enhancedChats));
       } else {
         console.warn('API response is not an array:', data);
         dispatch(setChats([]));
@@ -215,7 +234,13 @@ export function useChat(chatId?: number, userId?: string) {
       
       // Store messages in Redux by chat ID
       if (data && data.data) {
-        dispatch(setMessages({ chatId, messages: data.data }));
+        // Add chatId to each message for frontend use
+        const enhancedMessages = data.data.map((message: any) => ({
+          ...message,
+          chatId: message.chatId || chatId,
+        }));
+        
+        dispatch(setMessages({ chatId, messages: enhancedMessages }));
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -259,15 +284,22 @@ export function useChat(chatId?: number, userId?: string) {
     socket.emit('send_message', messageData);
     
     // Add a simple message object to Redux so it shows immediately
-    dispatch(addMessage({
+    const clientMessage: Message = {
       id: Date.now(), // Simple temporary ID
       chatId: chatId,
+      chat: { id: chatId } as any, // Simplified chat object
       senderId: parseInt(userId),
+      receiverId: receiverId,
+      sender: { id: parseInt(userId) } as any, // Simplified sender
       content: content,
       type: type,
       isRead: false,
       time: new Date().toISOString(),
-    }));
+      isSender: true,
+      text: content
+    };
+    
+    dispatch(addMessage(clientMessage));
     
     return true;
   }, [chatId, userId, socket, activeChat, dispatch]);

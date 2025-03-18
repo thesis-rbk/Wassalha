@@ -35,11 +35,11 @@ export default function Travel() {
         requesterId,
         providerId,
         goodsId,
+        router,
         {
           orderId: 1, // Using a default order ID
           goodsName: "Test Item"
-        },
-        router
+        }
       );
     } catch (error) {
       console.error("Error opening test chat:", error);
