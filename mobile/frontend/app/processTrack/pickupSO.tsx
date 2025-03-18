@@ -29,6 +29,7 @@ import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { usePickupActions } from "../../hooks/usePickupActions";
 import { QRCodeModal } from "../pickup/QRCodeModal";
 import io, { Socket } from "socket.io-client";
+import { navigateToChat } from "@/services/chatService";
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
 
