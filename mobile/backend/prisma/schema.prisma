@@ -237,25 +237,27 @@ enum Role {
 
 // ========== USER ==========
 model User {
-  id                     Int            @id @default(autoincrement())
+  id                     Int       @id @default(autoincrement())
   name                   String
-  email                  String         @unique
+  email                  String    @unique
   phoneNumber            String?
   googleId               String?
   password               String?
-  hasCompletedOnboarding Boolean        @default(false)
-  role                   Role           @default(USER)
+  hasCompletedOnboarding Boolean   @default(false)
+  role                   Role      @default(USER)
   serviceProviderId      String?
   resetToken             String?
-  requests               Request[]
-  notifications          Notification[]
-  reviewsGiven           Review[]       @relation("ReviewsGiven")
-  reviewsReceived        Review[]       @relation("ReviewsReceived")
-  chatsRequested         Chat[]         @relation("ChatsRequested")
-  chatsProvided          Chat[]         @relation("ChatsProvided")
-  messagesSent           Message[]      @relation("MessagesSent")
-  messagesRecieved       Message[]      @relation("MessagesRecieved")
-  ordersTraveling        Order[]        @relation("TravelerOrders")
+  resetTokenExpiry       DateTime?
+
+  requests         Request[]
+  notifications    Notification[]
+  reviewsGiven     Review[]       @relation("ReviewsGiven")
+  reviewsReceived  Review[]       @relation("ReviewsReceived")
+  chatsRequested   Chat[]         @relation("ChatsRequested")
+  chatsProvided    Chat[]         @relation("ChatsProvided")
+  messagesSent     Message[]      @relation("MessagesSent")
+  messagesRecieved Message[]      @relation("MessagesRecieved")
+  ordersTraveling  Order[]        @relation("TravelerOrders")
 
   // Subscriptions / Sponsorships
   subscriptions Subscription[] @relation("UserSubscriptions")

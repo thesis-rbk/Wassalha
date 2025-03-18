@@ -27,7 +27,7 @@ import {
 const prisma = new PrismaClient();
 
 async function seed() {
-  // Clean existing data
+  // Clean existing data in the correct order to avoid foreign key constraint violations
   await prisma.$transaction([
     prisma.processEvent.deleteMany(),
     prisma.goodsProcess.deleteMany(),
@@ -37,6 +37,7 @@ async function seed() {
     prisma.goodsPost.deleteMany(),
     prisma.message.deleteMany(),
     prisma.chat.deleteMany(),
+    prisma.sponsorCheckout.deleteMany(),
     prisma.sponsorship.deleteMany(),
     prisma.subscription.deleteMany(),
     prisma.review.deleteMany(),
@@ -68,6 +69,7 @@ async function seed() {
             : undefined,
           password: hasGoogleAccount ? undefined : faker.internet.password(),
           hasCompletedOnboarding: faker.datatype.boolean(),
+          role: faker.helpers.enumValue(Role),
         },
       });
     })
@@ -83,12 +85,16 @@ async function seed() {
           lastName: faker.person.lastName(),
           bio: faker.lorem.sentence(),
           country: faker.helpers.enumValue(Country),
-          gender: faker.helpers.enumValue(Gender),
-          isVerified: faker.datatype.boolean(),
           phoneNumber: faker.phone.number(),
+          imageId: profileMedia[index].id,
+          gender: faker.helpers.enumValue(Gender),
           isAnonymous: faker.datatype.boolean(),
-          referralSource: faker.helpers.enumValue(ReferralSource),
+          isBanned: faker.datatype.boolean(),
+          isVerified: faker.datatype.boolean(),
+          isOnline: faker.datatype.boolean(),
           isSponsor: faker.datatype.boolean(),
+          preferredCategories: faker.commerce.department(),
+          referralSource: faker.helpers.enumValue(ReferralSource),
         },
       })
     )
@@ -116,12 +122,12 @@ async function seed() {
   const reviewSponsors = await Promise.all(
     profiles.map(async (reviewerProfile) => {
       const reviewedProfile = faker.helpers.arrayElement(
-        profiles.filter((p) => p.userId !== reviewerProfile.userId)
+        profiles.filter((p) => p.id !== reviewerProfile.id) // Use Profile.id, not userId
       );
       return prisma.reviewSponsor.create({
         data: {
-          reviewer_id: reviewerProfile.userId,
-          reviewed_user_id: reviewedProfile.userId,
+          reviewer_id: reviewerProfile.id, // Use Profile.id
+          reviewed_user_id: reviewedProfile.id, // Use Profile.id
           rating: faker.number.int({ min: 1, max: 5 }),
         },
       });
@@ -243,7 +249,7 @@ async function seed() {
         data: {
           userId: user.id,
           senderId: faker.helpers.maybe(
-            () => faker.helpers.arrayElement(users).id,
+            () => faker.helpers.arrayElement(users.filter((u) => u.id !== user.id)).id,
             { probability: 0.5 }
           ),
           type: faker.helpers.enumValue(NotificationType),
@@ -276,7 +282,6 @@ async function seed() {
       );
       return prisma.review.create({
         data: {
-          reviewerId: reviewer.id,
           reviewedId: reviewed.id,
           orderId: faker.helpers.arrayElement(orders).id,
           rating: faker.number.int({ min: 1, max: 5 }),
@@ -339,9 +344,6 @@ async function seed() {
   const sponsorships = await Promise.all(
     Array.from({ length: 5 }).map(async () => {
       const sponsor = faker.helpers.arrayElement(serviceProviders);
-      const recipient = faker.helpers.arrayElement(users);
-      const category = faker.helpers.arrayElement(categories);
-
       return prisma.sponsorship.create({
         data: {
           name: faker.company.name(),
@@ -351,8 +353,35 @@ async function seed() {
           platform: faker.helpers.enumValue(SponsorshipPlatform),
           product: faker.commerce.productName(),
           amount: faker.number.float({ min: 100, max: 1000 }),
-          category: { connect: { id: category.id } },
-          sponsor: { connect: { id: sponsor.id } },
+          status: faker.helpers.arrayElement(["pending", "active", "completed"]),
+          users: {
+            connect: [{ id: faker.helpers.arrayElement(users).id }],
+          },
+        },
+      });
+    })
+  );
+
+  // Create SponsorCheckouts
+  const sponsorCheckouts = await Promise.all(
+    sponsorships.map(async (sponsorship) => {
+      return prisma.sponsorCheckout.create({
+        data: {
+          buyerId: faker.helpers.arrayElement(users).id,
+          cardNumber: faker.finance.creditCardNumber(),
+          cardExpiryMm: faker.date.month({ format: "MM" }),
+          cardExpiryYyyy: faker.date.future().getFullYear().toString(),
+          cardCvc: faker.finance.creditCardCVV(),
+          cardholderName: faker.person.fullName(),
+          postalCode: faker.location.zipCode(),
+          amount: sponsorship.amount,
+          qrCode: faker.datatype.boolean() ? faker.string.uuid() : undefined,
+          paymentUrl: faker.datatype.boolean() ? faker.internet.url() : undefined,
+          currency: faker.helpers.enumValue(PaymentCurrency),
+          status: faker.helpers.enumValue(PaymentState),
+          paymentMethod: faker.helpers.enumValue(PaymentMethod),
+          transactionId: faker.datatype.boolean() ? faker.string.uuid() : undefined,
+          sponsorShipId: sponsorship.id,
         },
       });
     })
@@ -361,10 +390,12 @@ async function seed() {
   // Create Chats
   const chats = await Promise.all(
     Array.from({ length: 5 }).map(async () => {
+      const requester = faker.helpers.arrayElement(users);
+      const provider = faker.helpers.arrayElement(users.filter((u) => u.id !== requester.id));
       return prisma.chat.create({
         data: {
-          requesterId: faker.helpers.arrayElement(users).id,
-          providerId: faker.helpers.arrayElement(users).id,
+          requesterId: requester.id,
+          providerId: provider.id,
           productId: faker.helpers.arrayElement(goods).id,
         },
       });
