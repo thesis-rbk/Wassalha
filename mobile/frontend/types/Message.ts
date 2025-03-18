@@ -4,6 +4,7 @@ import { Chat } from "./Chat";
 export interface Message {
   id: number | string;
   chat: Chat;
+  chatId: number;
   receiverId: number;
   senderId: number;
   sender: User;
@@ -11,7 +12,7 @@ export interface Message {
   content?: string;
   mediaId?: number;
   isRead: boolean;
-  text: string;
+  text?: string;
   time: string;
   isSender: boolean;
 }
