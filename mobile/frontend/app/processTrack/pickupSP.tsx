@@ -68,7 +68,8 @@ export default function PickupTraveler() {
 
   // Socket.IO setup
   useEffect(() => {
-    const socket = io(SOCKET_URL, {
+    const socket = io(`${SOCKET_URL}/pickup`, {
+      // Fixed namespace
       transports: ["websocket"],
     });
 
@@ -85,20 +86,6 @@ export default function PickupTraveler() {
       console.error("❌ Socket.IO connection error:", error.message);
     });
 
-    socket.on("suggestionUpdate", (data: any) => {
-      console.log("📩 Received suggestionUpdate (PickupTraveler):", data);
-      setPickups((prev) =>
-        prev.some((p) => p.id === data.pickupId)
-          ? prev.map((p) => (p.id === data.pickupId ? { ...p, ...data } : p))
-          : [...prev, { ...data, id: data.pickupId }]
-      );
-      setSuggestions((prev) => [...prev, data]);
-      Alert.alert(
-        "New Suggestion",
-        `New pickup suggestion for Order #${data.orderId}`
-      );
-    });
-
     socket.on("pickupAccepted", (updatedPickup: Pickup) => {
       console.log(
         "✅ Received pickupAccepted (PickupTraveler):",
@@ -107,12 +94,11 @@ export default function PickupTraveler() {
       setPickups((prev) =>
         prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
       );
-      Alert.alert(
-        "Pickup Accepted",
-        `Pickup #${updatedPickup.id} is now scheduled!`
-      );
     });
-
+    socket.on("suggestionUpdate", (data: any) => {
+      console.log("📩 Received suggestionUpdate (Pickup):", data);
+      Alert.alert("Update", `Pickup #${data.pickupId} has been updated.`);
+    });
     socket.on("statusUpdate", (updatedPickup: Pickup) => {
       console.log("🔄 Received statusUpdate (PickupTraveler):", updatedPickup);
       setPickups((prev) =>
@@ -537,7 +523,7 @@ export default function PickupTraveler() {
               </Text>
             </View>
           )}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()} // Adjusted to string
           contentContainerStyle={styles.suggestionsList}
         />
       )}
@@ -566,7 +552,11 @@ export default function PickupTraveler() {
       {showSuggestions ? (
         renderSuggestions()
       ) : showPickup ? (
-        <Pickups pickupId={pickupId} />
+        <Pickups
+          pickupId={pickupId}
+          pickups={pickups}
+          setPickups={setPickups}
+        />
       ) : (
         <>
           <View style={styles.content}>
@@ -586,7 +576,7 @@ export default function PickupTraveler() {
             <FlatList
               data={pickups}
               renderItem={renderItem}
-              keyExtractor={(item: any) => item.id}
+              keyExtractor={(item: any) => item.id.toString()} // Adjusted to string
               refreshing={isLoading}
               onRefresh={fetchPickups}
               contentContainerStyle={styles.listContainer}

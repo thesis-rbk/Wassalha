@@ -28,10 +28,10 @@ export const usePickupActions = (pickups: Pickup[], setPickups: (pickups: Pickup
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
-      const updatedPickup = response.data.pickup; // Backend returns { message, pickup }
+      const updatedPickup = response.data.pickup;
   
       // Emit Socket.IO event for real-time update
-      const socket = io(process.env.EXPO_PUBLIC_API_URL, { transports: ["websocket"] }); // Adjust URL if needed
+      const socket = io(`${process.env.EXPO_PUBLIC_API_URL}/pickup`, { transports: ["websocket"] }); // Fixed namespace
       socket.emit("pickupAccepted", updatedPickup);
       console.log(`✅ Emitted pickupAccepted for pickup:${pickupId}`);
   
@@ -41,7 +41,7 @@ export const usePickupActions = (pickups: Pickup[], setPickups: (pickups: Pickup
           p.id === pickupId
             ? {
                 ...p,
-                ...updatedPickup, // Use full backend response to ensure accuracy
+                ...updatedPickup,
               }
             : p
         )
