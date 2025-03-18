@@ -16,6 +16,7 @@ import { BACKEND_URL } from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Socket } from 'socket.io-client';
 import { Message } from '@/types/Message';
+import axiosInstance from '@/config';
 
 /**
  * Custom hook for chat functionality
@@ -139,23 +140,17 @@ export function useChat(chatId?: number, userId?: string) {
       // Get authentication token
       const token = await AsyncStorage.getItem('jwtToken');
       
-      // Make API request
-      const response = await fetch(`${BACKEND_URL}/api/chats`, {
+      // Use axiosInstance instead of fetch
+      const response = await axiosInstance.get('/api/chats', {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch chats');
-      }
-      
-      const data = await response.json();
-      
       // Update Redux store with chat list
-      if (Array.isArray(data)) {
+      if (Array.isArray(response.data)) {
         // Add chatId property for frontend convenience
-        const enhancedChats = data.map(chat => ({
+        const enhancedChats = response.data.map(chat => ({
           ...chat,
           // If lastMessage exists, ensure it has chatId
           ...(chat.lastMessage && {
@@ -167,7 +162,7 @@ export function useChat(chatId?: number, userId?: string) {
         }));
         dispatch(setChats(enhancedChats));
       } else {
-        console.warn('API response is not an array:', data);
+        console.warn('API response is not an array:', response.data);
         dispatch(setChats([]));
       }
     } catch (error) {
@@ -189,20 +184,14 @@ export function useChat(chatId?: number, userId?: string) {
     
     try {
       const token = await AsyncStorage.getItem('jwtToken');
-      const response = await fetch(`${BACKEND_URL}/api/chats/${chatId}`, {
+      const response = await axiosInstance.get(`/api/chats/${chatId}`, {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch chat details');
-      }
-      
-      const data = await response.json();
-      
       // Set as active chat in Redux
-      dispatch(setActiveChat(data));
+      dispatch(setActiveChat(response.data));
     } catch (error) {
       console.error('Error fetching chat details:', error);
       dispatch(setError((error as Error).message));
@@ -220,22 +209,16 @@ export function useChat(chatId?: number, userId?: string) {
     
     try {
       const token = await AsyncStorage.getItem('jwtToken');
-      const response = await fetch(`${BACKEND_URL}/api/chats/${chatId}/messages?page=${page}&limit=${limit}`, {
+      const response = await axiosInstance.get(`/api/chats/${chatId}/messages?page=${page}&limit=${limit}`, {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch messages');
-      }
-      
-      const data = await response.json();
-      
       // Store messages in Redux by chat ID
-      if (data && data.data) {
+      if (response.data && response.data.data) {
         // Add chatId to each message for frontend use
-        const enhancedMessages = data.data.map((message: any) => ({
+        const enhancedMessages = response.data.data.map((message: any) => ({
           ...message,
           chatId: message.chatId || chatId,
         }));

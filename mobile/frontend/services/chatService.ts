@@ -4,6 +4,7 @@ import { Chat } from '@/types/Chat';
 import { store } from '@/store';
 import { addChat } from '@/store/chatSlice';
 import { getSocket } from '@/services/socketService';
+import axiosInstance from '@/config';
 
 /**
  * Create a chat between two users
@@ -26,31 +27,22 @@ export const createChat = async (
       return null;
     }
     
-    // Make request to API
-    const response = await fetch(`${BACKEND_URL}/api/chats`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ 
+    // Make request to API using axiosInstance
+    const response = await axiosInstance.post('/api/chats', 
+      { 
         requesterId, 
         providerId, 
         productId 
-      })
-    });
-    
-    // Handle error response
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('❌ Failed to create chat:', errorData);
-      return null;
-    }
-    
-    // Parse response data
-    const chat: Chat = await response.json();
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
     
     // Add to Redux store
+    const chat: Chat = response.data;
     store.dispatch(addChat(chat));
     
     console.log('✅ Chat created successfully:', chat.id);
@@ -121,23 +113,16 @@ export const sendMessage = async (
       return null;
     }
     
-    const response = await fetch(`${BACKEND_URL}/api/chats/${chatId}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ content, type })
-    });
+    const response = await axiosInstance.post(`/api/chats/${chatId}/messages`, 
+      { content, type },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
     
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('❌ Failed to send message:', errorData);
-      return null;
-    }
-    
-    const message = await response.json();
-    return message;
+    return response.data;
   } catch (error) {
     console.error('❌ Error sending message:', error);
     return null;

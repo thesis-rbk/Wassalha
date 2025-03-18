@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axiosInstance from "@/config";
+import { Message } from '@/types';
 import {
   View,
   Text,
@@ -53,20 +55,14 @@ export default function ChatScreen() {
     
     try {
       const token = await AsyncStorage.getItem('jwtToken');
-      const response = await fetch(`${BACKEND_URL}/api/chats/${chatId}/messages`, {
+      const response = await axiosInstance.get(`/api/chats/${chatId}/messages`, {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch messages');
-      }
-      
-      const data = await response.json();
-      
-      if (data && data.data) {
-        setMessages(data.data);
+      if (response.data && response.data.data) {
+        setMessages(response.data.data);
       }
       
       setError(null);
@@ -114,7 +110,7 @@ export default function ChatScreen() {
   };
 
   // Render message item
-  const renderMessage = ({ item }) => {
+  const renderMessage = ({ item }: { item: Message }) => {
     const isMyMessage = item.senderId?.toString() === userId;
     
     return (
