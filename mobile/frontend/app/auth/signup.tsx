@@ -10,12 +10,10 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import AwesomeAlert from "react-native-awesome-alerts";
-import axiosInstance from "../../config";
 import { InputFieldPassword } from "@/components/InputFieldPassword";
 import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
-
+import axiosInstance from "../../config";
 const Signup = () => {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
@@ -24,13 +22,12 @@ const Signup = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [image, setImage] = useState<any>(null); // Added image state
+  const [image, setImage] = useState<any>(null);
   const [passwordStrength, setPasswordStrength] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
-  const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
 
   // Password strength checker function
   const checkPasswordStrength = (pwd: string) => {
@@ -98,7 +95,7 @@ const Signup = () => {
     setConfirmPasswordError(text && text !== password ? "Passwords do not match" : null);
   };
 
-  // Image upload handler (copied from EditProfile)
+  // Image upload handler
   const handleImageUpload = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -127,7 +124,7 @@ const Signup = () => {
     }
   };
 
-  // Updated signup handler with FormData
+  // Updated signup handler with FormData and React Native Alert
   const handleEmailSignup = async () => {
     if (!name || !email || !password || !confirmPassword) {
       if (!name) setNameError("Name is required");
@@ -180,8 +177,17 @@ const Signup = () => {
 
       if (res.status === 201 || res.status === 200) {
         await AsyncStorage.setItem("jwtToken", data.token || "");
-        setShowSuccessAlert(true);
-        router.push("/auth/login");
+        Alert.alert(
+          "Success",
+          "Signup successful!",
+          [
+            {
+              text: "OK",
+              onPress: () => router.push("/auth/login"),
+            },
+          ],
+          { cancelable: false }
+        );
       } else {
         setEmailError(data.error || "Signup failed");
       }
@@ -207,7 +213,6 @@ const Signup = () => {
   return (
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-
         <ThemedText style={styles.welcomeText}>Join Us!</ThemedText>
         <ThemedText style={styles.subText}>Sign up to get started</ThemedText>
 
@@ -297,23 +302,6 @@ const Signup = () => {
           </ThemedText>
         </ThemedText>
       </ScrollView>
-
-      {/* AwesomeAlert for Success */}
-      <AwesomeAlert
-        show={showSuccessAlert}
-        showProgress={false}
-        title="Success"
-        message="Signup successful!"
-        closeOnTouchOutside={false}
-        closeOnHardwareBackPress={false}
-        showConfirmButton={true}
-        confirmText="OK"
-        confirmButtonColor="#00FF00"
-        onConfirmPressed={() => {
-          setShowSuccessAlert(false);
-          router.push("/auth/login");
-        }}
-      />
     </ThemedView>
   );
 };
@@ -327,12 +315,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     padding: 20,
-  },
-  logo: {
-    width: 150,
-    height: 150,
-    alignSelf: "center",
-    marginBottom: 20,
   },
   welcomeText: {
     fontSize: 24,
@@ -362,7 +344,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
-  // Styles copied from EditProfile for image upload
   photoSection: {
     alignItems: "center",
     marginBottom: 32,

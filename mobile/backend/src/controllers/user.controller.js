@@ -18,6 +18,9 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    rejectUnauthorized: false, // Bypass self-signed certificate check
+  },
 });
 
 const generateRandomCode = () => {
@@ -332,6 +335,7 @@ const requestPasswordReset = async (req, res) => {
     await transporter.sendMail(mailOptions);
     res.status(200).json({ message: "Password reset code sent to your email" });
   } catch (error) {
+    throw error
     console.error("Request password reset error:", error);
     res.status(500).json({ error: "Something went wrong" });
   } finally {
