@@ -403,6 +403,11 @@ export default function InitializationSP() {
     }
   };
 
+  const isValidFlightCode = (code: string) => {
+    const pattern = /^[A-Z]{2,3}\d{3,4}$/;
+    return pattern.test(code);
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -464,7 +469,9 @@ export default function InitializationSP() {
                 ${requestDetails.goods.price.toFixed(2)}
               </BodyMedium>
             </View>
-            <BodyMedium style={styles.category}>{params.category}</BodyMedium>
+            <BodyMedium style={styles.category}>
+              {requestDetails.goods.category.name}
+            </BodyMedium>
           </View>
 
           <View style={styles.infoCard}>

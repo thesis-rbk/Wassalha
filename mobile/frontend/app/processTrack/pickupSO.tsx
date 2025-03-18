@@ -1,7 +1,15 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import ProgressBar from "../../components/ProgressBar";
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, FlatList, ActivityIndicator, Text, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  Text,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import axiosInstance from "../../config";
@@ -10,18 +18,27 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
 import { Pickup } from "../../types/Pickup";
-import { MapPin, CheckCircle, XCircle, AlertCircle, MessageCircle } from "lucide-react-native";
+import {
+  MapPin,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  MessageCircle,
+} from "lucide-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { usePickupActions } from "../../hooks/usePickupActions";
 import { QRCodeModal } from "../pickup/QRCodeModal";
 import io from "socket.io-client";
+import { navigateToChat } from "@/services/chatService";
 
-const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL; 
+const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function PickupOwner() {
-  const router = useRouter();
+  const params = useLocalSearchParams();
   const { user } = useSelector((state: RootState) => state.auth);
   const userId = user?.id;
+
+  console.log("params from pickup so", params);
 
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -37,11 +54,13 @@ export default function PickupOwner() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const { handleAccept, showStoredQRCode, showQRCode, setShowQRCode, qrCodeData } = usePickupActions(
-    pickups,
-    setPickups,
-    userId
-  );
+  const {
+    handleAccept,
+    showStoredQRCode,
+    showQRCode,
+    setShowQRCode,
+    qrCodeData,
+  } = usePickupActions(pickups, setPickups, userId);
 
   // Socket.IO setup
   useEffect(() => {
@@ -72,7 +91,10 @@ export default function PickupOwner() {
           : [...prev, { ...data, id: data.pickupId }]
       );
       setSuggestions((prev) => [...prev, data]);
-      Alert.alert("New Suggestion", `Traveler suggested a pickup for Order #${data.orderId}`);
+      Alert.alert(
+        "New Suggestion",
+        `Traveler suggested a pickup for Order #${data.orderId}`
+      );
     });
 
     socket.on("pickupAccepted", (updatedPickup: Pickup) => {
@@ -80,7 +102,10 @@ export default function PickupOwner() {
       setPickups((prev) =>
         prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
       );
-      Alert.alert("Pickup Accepted", `Pickup #${updatedPickup.id} is now scheduled!`);
+      Alert.alert(
+        "Pickup Accepted",
+        `Pickup #${updatedPickup.id} is now scheduled!`
+      );
     });
 
     socket.on("statusUpdate", (updatedPickup: Pickup) => {
@@ -88,7 +113,10 @@ export default function PickupOwner() {
       setPickups((prev) =>
         prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
       );
-      Alert.alert("Status Updated", `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`);
+      Alert.alert(
+        "Status Updated",
+        `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`
+      );
     });
 
     socket.on("disconnect", () => {
@@ -104,20 +132,52 @@ export default function PickupOwner() {
     fetchPickups();
   }, []);
 
+  // Function to open a test chat with the provided IDs
+  const openChat = async () => {
+    if (!user?.id) {
+      Alert.alert("Error", "You need to be logged in to chat");
+      return;
+    }
+
+    try {
+      const requesterId = parseInt(params.requesterId.toString());
+      const providerId = parseInt(params.travelerId.toString());
+      const goodsId = parseInt(params.idGood.toString());
+
+      console.log("Opening chat with:", {
+        requesterId: user?.id,
+        providerId: parseInt(params.travelerId.toString()),
+        goodsId: parseInt(params.idGood.toString()),
+      });
+
+      await navigateToChat(requesterId, providerId, goodsId, {
+        orderId: parseInt(params.idOrder.toString()),
+        goodsName: params.goodsName?.toString() || "Item",
+      });
+    } catch (error) {
+      console.error("Error opening chat:", error);
+      Alert.alert(
+        "Chat Error",
+        "Failed to open chat. Error: " +
+          (error instanceof Error ? error.message : String(error))
+      );
+    }
+  };
+
   const fetchPickups = async (): Promise<void> => {
     try {
       setIsLoading(true);
       const token = await AsyncStorage.getItem("jwtToken");
       if (!token) throw new Error("No authentication token found");
 
-      const response = await axiosInstance.get<{ success: boolean; data: Pickup[] }>(
-        `/api/pickup/requester`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axiosInstance.get<{
+        success: boolean;
+        data: Pickup[];
+      }>(`/api/pickup/requester`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setPickups(response.data.data);
       console.log("Pickups fetched:", response.data.data);
     } catch (error) {
@@ -185,8 +245,7 @@ export default function PickupOwner() {
     }
   };
 
-  const isTraveler = (pickup: Pickup) =>console.log("pickup", pickup);
-    ;
+  const isTraveler = (pickup: Pickup) => console.log("pickup", pickup);
   const renderItem = ({ item }: { item: Pickup }) => {
     const userIsTraveler = isTraveler(item);
     // const userIsRequester = !userIsTraveler;
@@ -249,7 +308,9 @@ export default function PickupOwner() {
 
         {item.userconfirmed && !item.travelerconfirmed && (
           <View style={styles.note}>
-            <Text style={styles.waitingText}>Waiting for traveler to confirm</Text>
+            <Text style={styles.waitingText}>
+              Waiting for traveler to confirm
+            </Text>
           </View>
         )}
 
@@ -275,7 +336,8 @@ export default function PickupOwner() {
               <>
                 <Text style={styles.cancelledText}>Pickup Cancelled</Text>
                 <Text style={styles.warningText}>
-                  This pickup was cancelled. Please suggest a new pickup method to proceed.
+                  This pickup was cancelled. Please suggest a new pickup method
+                  to proceed.
                 </Text>
               </>
             ) : (
@@ -287,36 +349,38 @@ export default function PickupOwner() {
         )}
 
         <View style={styles.actionRow}>
-          {!item.userconfirmed && item.travelerconfirmed && item.status !== "CANCELLED" && (
-            <View style={styles.buttonContainer}>
-              <View style={styles.topRow}>
+          {!item.userconfirmed &&
+            item.travelerconfirmed &&
+            item.status !== "CANCELLED" && (
+              <View style={styles.buttonContainer}>
+                <View style={styles.topRow}>
+                  <BaseButton
+                    variant="primary"
+                    size="small"
+                    style={styles.actionButton}
+                    onPress={() => handleAccept(item.id)}
+                  >
+                    Accept
+                  </BaseButton>
+                  <BaseButton
+                    variant="primary"
+                    size="small"
+                    style={styles.actionButton}
+                    onPress={() => handleSuggest(item.id)}
+                  >
+                    Suggest Another
+                  </BaseButton>
+                </View>
                 <BaseButton
                   variant="primary"
                   size="small"
                   style={styles.actionButton}
-                  onPress={() => handleAccept(item.id)}
+                  onPress={() => handleCancel(item.id)}
                 >
-                  Accept
-                </BaseButton>
-                <BaseButton
-                  variant="primary"
-                  size="small"
-                  style={styles.actionButton}
-                  onPress={() => handleSuggest(item.id)}
-                >
-                  Suggest Another
+                  Cancel
                 </BaseButton>
               </View>
-              <BaseButton
-                variant="primary"
-                size="small"
-                style={styles.actionButton}
-                onPress={() => handleCancel(item.id)}
-              >
-                Cancel
-              </BaseButton>
-            </View>
-          )}
+            )}
           {item.status === "CANCELLED" && (
             <View style={styles.buttonContainer}>
               <BaseButton
@@ -340,7 +404,9 @@ export default function PickupOwner() {
       {isLoading ? (
         <ActivityIndicator size="large" color="#64748b" />
       ) : suggestions.length === 0 ? (
-        <Text style={styles.noSuggestionsText}>No previous suggestions found.</Text>
+        <Text style={styles.noSuggestionsText}>
+          No previous suggestions found.
+        </Text>
       ) : (
         <FlatList
           data={suggestions}
@@ -353,7 +419,10 @@ export default function PickupOwner() {
                 Location: {item.location || "N/A"}, {item.address || "N/A"}
               </Text>
               <Text style={styles.suggestionDetail}>
-                Scheduled: {item.scheduledTime ? new Date(item.scheduledTime).toLocaleString() : "N/A"}
+                Scheduled:{" "}
+                {item.scheduledTime
+                  ? new Date(item.scheduledTime).toLocaleString()
+                  : "N/A"}
               </Text>
               <Text style={styles.suggestionDetail}>
                 Created: {new Date(item.createdAt).toLocaleString()}
@@ -400,29 +469,44 @@ export default function PickupOwner() {
             <FlatList
               data={pickups}
               renderItem={renderItem}
-              keyExtractor={(item:any) => item.id}
+              keyExtractor={(item: any) => item.id}
               refreshing={isLoading}
               onRefresh={fetchPickups}
               contentContainerStyle={styles.listContainer}
               ListEmptyComponent={
-                <Text style={styles.noImageText}>No pickup requests found.</Text>
+                <Text style={styles.noImageText}>
+                  No pickup requests found.
+                </Text>
               }
             />
           )}
         </>
       )}
-      <QRCodeModal visible={showQRCode} qrCodeData={qrCodeData} onClose={() => setShowQRCode(false)} />
+      <QRCodeModal
+        visible={showQRCode}
+        qrCodeData={qrCodeData}
+        onClose={() => setShowQRCode(false)}
+      />
+      {/* Message Bubble */}
+      <TouchableOpacity style={styles.messageBubble} onPress={openChat}>
+        <MessageCircle size={24} color="#ffffff" />
+      </TouchableOpacity>
     </ThemedView>
   );
 }
 
 const getStatusColor = (status: string): string => {
   switch (status) {
-    case "PENDING": return "#f59e0b"; // orange
-    case "IN_PROGRESS": return "#3b82f6"; // blue
-    case "CANCELLED": return "#ef4444"; // red
-    case "COMPLETED": return "#10b981"; // green
-    default: return "#6b7280"; // gray
+    case "PENDING":
+      return "#f59e0b"; // orange
+    case "IN_PROGRESS":
+      return "#3b82f6"; // blue
+    case "CANCELLED":
+      return "#ef4444"; // red
+    case "COMPLETED":
+      return "#10b981"; // green
+    default:
+      return "#6b7280"; // gray
   }
 };
 
@@ -484,8 +568,8 @@ const styles = StyleSheet.create({
     color: "#1e293b",
   },
   headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   chatIconButton: {
     padding: 8,
@@ -637,5 +721,21 @@ const styles = StyleSheet.create({
     color: "#64748b",
     textAlign: "center",
     marginTop: 20,
+  },
+  messageBubble: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#3b82f6",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
 });

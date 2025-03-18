@@ -21,6 +21,7 @@ import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { router, useLocalSearchParams } from "expo-router";
 import axiosInstance, { BACKEND_URL } from "@/config";
+import { navigateToChat } from "@/services/chatService";
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
@@ -427,22 +428,5 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     backgroundColor: "#9ca3af",
-  },
-  //////////////////////////////////////:
-  messageBubble: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#3b82f6",
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
   },
 });

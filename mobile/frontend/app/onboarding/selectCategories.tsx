@@ -12,8 +12,8 @@ import { RootState } from "@/store";
 import axiosInstance from "@/config";
 
 export default function SelectCategoriesScreen() {
-  const [categories, setCategories] = useState<Category[]>([]); // Use the Category type
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]); // Store selected category IDs
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
 
@@ -28,7 +28,7 @@ export default function SelectCategoriesScreen() {
         const response = await axiosInstance.get("/api/categories");
         const data = await response.data;
         if (response.status === 200) {
-          setCategories(data.data); // Assuming the response contains a `data` array of category objects
+          setCategories(data.data);
         } else {
           console.error("Failed to fetch categories:", data.message);
         }
@@ -58,7 +58,8 @@ export default function SelectCategoriesScreen() {
       }
 
       // Send a POST request to update preferred categories
-      const response = await axiosInstance.post("/api/users/update-preferred-categories",
+      const response = await axiosInstance.post(
+        "/api/users/update-preferred-categories",
         {
           userId,
           preferredCategories: selectedCategories.join(","), // Convert array of IDs to comma-separated string
@@ -106,7 +107,7 @@ export default function SelectCategoriesScreen() {
               style={[
                 styles.categoryCard,
                 selectedCategories.includes(category.id) &&
-                styles.selectedCategoryCard,
+                  styles.selectedCategoryCard,
               ]}
             >
               <TouchableOpacity
@@ -117,7 +118,7 @@ export default function SelectCategoriesScreen() {
                   style={[
                     styles.categoryText,
                     selectedCategories.includes(category.id) &&
-                    styles.selectedCategoryText,
+                      styles.selectedCategoryText,
                   ]}
                 >
                   {category.name} {/* Render the category name */}
