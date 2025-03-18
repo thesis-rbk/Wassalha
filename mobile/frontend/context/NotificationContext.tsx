@@ -18,13 +18,6 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store";
 import {
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { getSocket, connectSocket, cleanupSockets } from '@/services/socketService';
-import { sendSocketNotification } from '@/services/notificationService';
-import { NotificationType, NotificationStatus } from '@/types/NotificationProcess';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '@/store';
-import { 
   setNotifications,
   addNotification,
   markAsRead as markNotificationAsRead,
