@@ -6,6 +6,7 @@ import {
   Animated,
   Dimensions,
   TextInput,
+  Text
 } from 'react-native';
 import {
   Bell,
@@ -151,12 +152,8 @@ export function TopNavigation({
         ]}
       >
         <TouchableOpacity onPress={toggleMenu}>
-          <Menu color="black" size={24} />
+          <Menu color="#007BFF" size={24} />
         </TouchableOpacity>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search"
-        />
         <TouchableOpacity
           onPress={() => {
             try {
@@ -168,12 +165,12 @@ export function TopNavigation({
           }}
         >
           <View style={styles.notificationContainer}>
-            <Bell color="black" size={24} />
+            <Bell color="#007BFF" size={24} />
             {unreadCount > 0 && (
               <View style={styles.badge}>
-                <ThemedText style={styles.badgeText}>
+                <Text style={styles.badgeText}>
                   {unreadCount > 99 ? '99+' : unreadCount}
-                </ThemedText>
+                </Text>
               </View>
             )}
           </View>
@@ -199,21 +196,21 @@ export function TopNavigation({
       >
         <View style={styles.profileSection}>
           <View style={styles.profileImage}>
-            <ThemedText style={styles.profileInitial}>
+            <Text style={styles.profileInitial}>
               {user?.name?.charAt(0) || 'U'}
-            </ThemedText>
+            </Text>
           </View>
           <View style={styles.profileInfo}>
-            <ThemedText style={styles.profileName}>
+            <Text style={styles.profileName}>
               {user?.name || 'User'}
-            </ThemedText>
+            </Text>
             <TouchableOpacity
               style={styles.viewProfile}
               onPress={() => router.push('/profile')}
             >
-              <ThemedText style={styles.viewProfileText}>
+              <Text style={styles.viewProfileText}>
                 View and edit profile
-              </ThemedText>
+              </Text>
               <ChevronRight size={16} color={Colors[colorScheme].text} />
             </TouchableOpacity>
           </View>
@@ -227,7 +224,7 @@ export function TopNavigation({
               onPress={() => handleRoutes(item)}
             >
               {item.icon}
-              <ThemedText style={styles.menuItemText}>{item.label}</ThemedText>
+              <Text style={styles.menuItemText}>{item.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -238,9 +235,9 @@ export function TopNavigation({
           ) : (
             <Moon size={24} color={Colors[colorScheme].text} />
           )}
-          <ThemedText style={styles.darkModeText}>
+          <Text style={styles.darkModeText}>
             {colorScheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-          </ThemedText>
+          </Text>
         </TouchableOpacity>
       </Animated.View>
     </>
@@ -343,14 +340,6 @@ const styles = StyleSheet.create({
   darkModeText: {
     fontSize: 16,
     marginLeft: 15,
-  },
-  searchInput: {
-    flex: 1,
-    height: 40,
-    marginHorizontal: 8,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    backgroundColor: "#e0e0e0",
   },
   notificationContainer: {
     position: 'relative',

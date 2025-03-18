@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { getSocket, connectSocket, cleanupSockets } from '@/services/socketService';
+import { getSocket, connectSocket } from '../services/socketService';
 import { sendSocketNotification } from '@/services/notificationService';
 import { NotificationType, NotificationStatus } from '@/types/NotificationProcess';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
-import { 
+import {
   setNotifications,
   addNotification,
   markAsRead as markNotificationAsRead
@@ -30,7 +30,7 @@ export const useNotification = () => {
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dispatch = useDispatch();
   const [socket, setSocket] = useState<Socket | null>(null);
-  
+
   // Get user from Redux state
   const { user } = useSelector((state: RootState) => state.auth);
 
@@ -39,10 +39,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const fetchNotifications = useCallback(async () => {
     // Only proceed if we have a user
     if (!user?.id) return;
-    
+
     try {
       console.log('🔄 Fetching notifications from API');
-      
+
       // Get authentication token
       const token = await AsyncStorage.getItem('jwtToken');
       if (!token) {
@@ -65,7 +65,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       // Parse response data
       const data = await response.json();
-      
+
       // Update Redux store
       if (Array.isArray(data)) {
         console.log(`✅ Fetched ${data.length} notifications`);
@@ -83,16 +83,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   useEffect(() => {
     let mounted = true;
     let notificationSocket: Socket | null = null;
-    
+
     const initializeSocket = async () => {
       if (!user?.id) {
         console.log('👤 No user logged in, skipping notification socket setup');
         return;
       }
-      
+
       try {
         console.log('🔄 Setting up notification socket for user:', user.id);
-        
+
         // Clean up any existing socket first
         if (socket) {
           socket.disconnect();
@@ -100,10 +100,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         // Get new socket instance
         notificationSocket = await getSocket('notifications');
-        
+
         if (mounted) {
           setSocket(notificationSocket);
-          
+
           // Make sure socket is connected and join room
           if (notificationSocket && !notificationSocket.connected) {
             await connectSocket('notifications');
@@ -122,9 +122,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         console.error('❌ Error initializing notification socket:', error);
       }
     };
-    
+
     initializeSocket();
-    
+
     // Cleanup function
     return () => {
       mounted = false;
@@ -157,7 +157,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }));
       fetchNotifications();
     };
-    
+
     // Handler for offer response notifications
     const handleOfferResponse = (notification: any) => {
       console.log('📩 Offer response notification received:', notification);
@@ -169,11 +169,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || `Your offer has been ${notification.type === 'OFFER_ACCEPTED' ? 'accepted' : 'rejected'}!`,
         status: NotificationStatus.UNREAD
       }));
-      
+
       // Refresh notifications
       fetchNotifications();
     };
-    
+
     // Handler for order cancellation notifications
     const handleOrderCancelled = (notification: any) => {
       console.log('📩 Order cancellation notification received:', notification);
@@ -185,11 +185,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || 'An order has been cancelled by the requester',
         status: NotificationStatus.UNREAD
       }));
-      
+
       // Refresh notifications
       fetchNotifications();
     };
-    
+
     // Handler for offer cancellation notifications
     const handleOfferCancelled = (notification: any) => {
       console.log('📩 Offer cancellation notification received:', notification);
@@ -201,7 +201,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || 'A traveler has cancelled their offer',
         status: NotificationStatus.UNREAD
       }));
-      
+
       // Refresh notifications
       fetchNotifications();
     };
@@ -217,11 +217,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || 'A verification photo has been submitted for your review',
         status: NotificationStatus.UNREAD
       }));
-      
+
       // Refresh notifications
       fetchNotifications();
     };
-    
+
     // NEW: Handler for product confirmed notifications
     const handleProductConfirmed = (notification: any) => {
       console.log('📩 Product confirmed notification received:', notification);
@@ -233,11 +233,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || 'Your product has been confirmed by the requester',
         status: NotificationStatus.UNREAD
       }));
-      
+
       // Refresh notifications
       fetchNotifications();
     };
-    
+
     // NEW: Handler for new photo request notifications
     const handleNewPhotoRequest = (notification: any) => {
       console.log('📩 New photo request notification received:', notification);
@@ -249,11 +249,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || 'The requester has asked for another verification photo',
         status: NotificationStatus.UNREAD
       }));
-      
+
       // Refresh notifications
       fetchNotifications();
     };
-    
+
     // NEW: Handler for process cancelled notifications
     const handleProcessCancelled = (notification: any) => {
       console.log('📩 Process cancelled notification received:', notification);
@@ -265,7 +265,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: notification.message || 'The verification process has been cancelled',
         status: NotificationStatus.UNREAD
       }));
-      
+
       // Refresh notifications
       fetchNotifications();
     };
@@ -308,13 +308,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // 3. API METHODS
   // Function to fetch notifications from the API
-  
+
 
   // Function to mark a notification as read
   const markAsRead = useCallback(async (id: number) => {
     try {
       console.log(`🔄 Marking notification ${id} as read`);
-      
+
       // Get authentication token
       const token = await AsyncStorage.getItem('jwtToken');
       if (!token) {
@@ -330,7 +330,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           'Content-Type': 'application/json',
         },
       });
-      
+
       // Update Redux store if successful
       if (response.ok) {
         console.log(`✅ Notification ${id} marked as read`);
@@ -347,14 +347,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const deleteNotification = useCallback(async (id: number) => {
     try {
       console.log(`🗑️ Deleting notification ${id}`);
-      
+
       // Get authentication token
       const token = await AsyncStorage.getItem('jwtToken');
       if (!token) {
         console.log('⚠️ No token available');
         return;
       }
-      
+
       // Make API request
       const response = await fetch(`${BACKEND_URL}/api/notifications/${id}`, {
         method: 'DELETE',
@@ -385,7 +385,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   useEffect(() => {
     if (user?.id) {
       console.log('👤 User changed, fetching notifications');
-    fetchNotifications();
+      fetchNotifications();
     }
   }, [user?.id, fetchNotifications]); // Run when user ID changes
 

@@ -6,6 +6,7 @@ import {
   Image,
   TextInput,
   Button,
+  Text
 } from "react-native";
 import axiosInstance from "@/config";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
@@ -42,27 +43,22 @@ export default function HomeScreen() {
   const services = [
     {
       title: "Travel",
-      icon: <Plane size={40} color="white" />,
+      icon: <Plane size={40} color="#007BFF" />,
       route: "../test/Travel" as const,
     },
     {
       title: "Order",
-      icon: <ShoppingBag size={40} color="white" />,
+      icon: <ShoppingBag size={40} color="#007BFF" />,
       route: "../orders&requests/order" as const,
     },
     {
       title: "PickupSO",
-      icon: <MapPin size={40} color="white" />,
+      icon: <MapPin size={40} color="#007BFF" />,
       route: "../processTrack/pickupSO" as const,
     },
     {
-      title: "PickupSP",
-      icon: <MapPin size={40} color="white" />,
-      route: "../processTrack/pickupSP" as const,
-    },
-    {
       title: "Subscription",
-      icon: <Crown size={40} color="white" />,
+      icon: <Crown size={40} color="#007BFF" />,
       route: "../verification/fetchAll" as const,
     },
   ];
@@ -169,17 +165,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   servicesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 16,
+    flexDirection: "column",
+    gap: 10,
     justifyContent: "space-between",
   },
   serviceCard: {
-    width: "47%",
+    width: "100%",
+    height: 80,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0, 128, 152,0.8)",
-    aspectRatio: 1,
+    backgroundColor: "white",
+    // aspectRatio: 1,
     padding: 16,
     borderRadius: 12,
     borderColor: "white",
@@ -192,15 +188,16 @@ const styles = StyleSheet.create({
   },
   serviceContent: {
     flex: 1,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     gap: 12,
   },
   serviceTitle: {
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
-    color: "white",
+    color: "#007BFF",
   },
   travelersSection: {
     marginTop: 16,

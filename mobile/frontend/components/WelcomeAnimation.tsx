@@ -18,7 +18,7 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
   // Animation values
   const welcomeTranslateX = useSharedValue(-width);
   const toTranslateX = useSharedValue(width);
-  
+
   // Individual letter opacities for "Wassalha"
   const letterOpacities = [
     useSharedValue(0), // W
@@ -30,7 +30,7 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
     useSharedValue(0), // h
     useSharedValue(0), // a
   ];
-  
+
   const letterScales = [
     useSharedValue(0.5), // W
     useSharedValue(0.5), // a
@@ -71,7 +71,7 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
 
   useEffect(() => {
     // Start the animation sequence
-    
+
     // 1. Animate "Welcome" from left to center
     welcomeTranslateX.value = withTiming(0, {
       duration: 800,
@@ -90,10 +90,10 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
     // 3. Animate each letter of "Wassalha" with a staggered delay
     const letterBaseDelay = 1400; // Start after "Welcome to" animations
     const letterStaggerDelay = 150; // Delay between each letter
-    
+
     letterOpacities.forEach((opacity, index) => {
       const delay = letterBaseDelay + (index * letterStaggerDelay);
-      
+
       // Animate opacity
       opacity.value = withDelay(
         delay,
@@ -102,7 +102,7 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
           easing: Easing.bezier(0.42, 0, 0.58, 1),
         })
       );
-      
+
       // Animate scale with a slight bounce effect
       letterScales[index].value = withDelay(
         delay,
@@ -140,8 +140,8 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
       </Animated.Text>
       <View style={styles.wassalhaContainer}>
         {wassalhaLetters.map((letter, index) => (
-          <Animated.Text 
-            key={index} 
+          <Animated.Text
+            key={index}
             style={[styles.wassalhaLetter, letterAnimatedStyles[index]]}
           >
             {letter}
@@ -157,18 +157,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#008098',
+    backgroundColor: '#007BFF',
   },
   welcomeText: {
     color: 'white',
     fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 10,
+    fontFamily: 'Lobster-Regular',
   },
   toText: {
     color: 'white',
     fontSize: 24,
     marginBottom: 10,
+    fontFamily: 'Lobster-Regular',
   },
   wassalhaContainer: {
     flexDirection: 'row',
@@ -179,5 +181,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 48,
     fontWeight: 'bold',
+    fontFamily: 'Pacifico',
   },
 });

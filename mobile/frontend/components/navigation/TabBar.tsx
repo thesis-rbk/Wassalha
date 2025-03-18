@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import {
   Home,
   ShoppingBag,
@@ -40,15 +40,8 @@ export function TabBar({
     },
     {
       name: "",
-      icon: (<View style={{
-        backgroundColor: "#008098",
-        borderRadius: 50,
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}>
-        <Plus size={24} color="white" /> // White icon on colored background
+      icon: (<View style={styles.plusIconContainer}>
+        <Plus size={24} color="white" />
       </View>),
       route: "/productDetails/create-order" as Route,
     },
@@ -85,14 +78,14 @@ export function TabBar({
           onPress={() => handleRoutes(tab)}
         >
           {tab.icon}
-          <ThemedText
+          <Text
             style={[
               styles.tabText,
               activeTab === tab.name && styles.activeTabText,
             ]}
           >
             {tab.name}
-          </ThemedText>
+          </Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -119,11 +112,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   plusIconContainer: {
-    backgroundColor: "#008098",
+    backgroundColor: "#007BFF",
     borderRadius: 50,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 60,
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: -30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
   },
 });
