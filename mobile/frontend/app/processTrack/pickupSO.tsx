@@ -1,5 +1,4 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import ProgressBar from "../../components/ProgressBar";
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -40,13 +39,6 @@ export default function PickupOwner() {
 
   console.log("params from pickup so", params);
 
-  const progressSteps = [
-    { id: 1, title: "Initialization", icon: "initialization" },
-    { id: 2, title: "Verification", icon: "verification" },
-    { id: 3, title: "Payment", icon: "payment" },
-    { id: 4, title: "Pickup", icon: "pickup" },
-  ];
-
   const [pickupId, setPickupId] = useState<number>(0);
   const [pickups, setPickups] = useState<Pickup[]>([]);
   const [showPickup, setShowPickup] = useState(false);
@@ -60,11 +52,9 @@ export default function PickupOwner() {
     userId
   );
 
-  // Use ref to persist socket across renders
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    // Initialize socket only once
     if (!socketRef.current) {
       socketRef.current = io(`${SOCKET_URL}/pickup`, {
         transports: ["websocket"],
@@ -72,7 +62,6 @@ export default function PickupOwner() {
 
       socketRef.current.on("connect", () => {
         console.log("✅ Connected to Socket.IO server (PickupOwner)");
-        // Join rooms for existing pickups
         pickups.forEach((pickup) => {
           const room = `pickup:${pickup.id}`;
           socketRef.current?.emit("joinPickupRoom", pickup.id);
@@ -85,40 +74,31 @@ export default function PickupOwner() {
       });
 
       socketRef.current.on("pickupAccepted", (updatedPickup: Pickup) => {
-        console.log(
-          "✅ Received pickupAccepted (PickupTraveler):",
-          updatedPickup
-        );
+        console.log("✅ Received pickupAccepted (PickupOwner):", updatedPickup);
         setPickups((prev) =>
           prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
         );
       });
 
       socketRef.current.on("suggestionUpdate", (data: Pickup) => {
-        console.log("📩 Received suggestionUpdate (Pickup) frontend SO:", data);
+        console.log("📩 Received suggestionUpdate (PickupOwner):", data);
         setPickups((prev) =>
           prev.map((p) => (p.id === data.id ? data : p))
         );
-        // Alert.alert("Update", `Pickup #${data.id} has been updated.`);
       });
 
       socketRef.current.on("statusUpdate", (updatedPickup: Pickup) => {
-        console.log(
-          "🔄 Received statusUpdate (PickupTraveler):",
-          updatedPickup
-        );
+        console.log("🔄 Received statusUpdate (PickupOwner):", updatedPickup);
         setPickups((prev) =>
           prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
         );
-        // Alert.alert("Status Updated", `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`);
       });
 
       socketRef.current.on("disconnect", () => {
-        console.log("❌ Disconnected from Socket.IO server (PickupTraveler)");
+        console.log("❌ Disconnected from Socket.IO server (PickupOwner)");
       });
     }
 
-    // Update room joins when pickups change
     if (socketRef.current?.connected) {
       pickups.forEach((pickup) => {
         const room = `pickup:${pickup.id}`;
@@ -127,7 +107,6 @@ export default function PickupOwner() {
       });
     }
 
-    // Cleanup on unmount
     return () => {
       socketRef.current?.disconnect();
       socketRef.current = null;
@@ -138,7 +117,6 @@ export default function PickupOwner() {
     fetchPickups();
   }, []);
 
-  // Function to open a test chat with the provided IDs
   const openChat = async () => {
     if (!user?.id) {
       Alert.alert("Error", "You need to be logged in to chat");
@@ -193,8 +171,6 @@ export default function PickupOwner() {
       setIsLoading(false);
     }
   };
-
- 
 
   const handleSuggest = async (pickupId: number): Promise<void> => {
     setPickupId(pickupId);
@@ -313,7 +289,8 @@ export default function PickupOwner() {
               style={styles.actionButton}
               onPress={() => showStoredQRCode(item)}
             >
-              Show QR Code
+              <CheckCircle size={14} color="#fff" />
+              <Text style={styles.buttonText}>Show QR</Text>
             </BaseButton>
           </View>
         )}
@@ -348,7 +325,8 @@ export default function PickupOwner() {
                     style={styles.actionButton}
                     onPress={() => handleAccept(item.id)}
                   >
-                    Accept
+                    <CheckCircle size={14} color="#fff" />
+                    <Text style={styles.buttonText}>Accept</Text>
                   </BaseButton>
                   <BaseButton
                     variant="primary"
@@ -356,7 +334,8 @@ export default function PickupOwner() {
                     style={styles.actionButton}
                     onPress={() => handleSuggest(item.id)}
                   >
-                    Suggest Another
+                    <MapPin size={14} color="#fff" />
+                    <Text style={styles.buttonText}>Suggest</Text>
                   </BaseButton>
                 </View>
                 <BaseButton
@@ -365,7 +344,8 @@ export default function PickupOwner() {
                   style={styles.actionButton}
                   onPress={() => handleCancel(item.id)}
                 >
-                  Cancel
+                  <XCircle size={14} color="#fff" />
+                  <Text style={styles.buttonText}>Cancel</Text>
                 </BaseButton>
               </View>
             )}
@@ -377,7 +357,8 @@ export default function PickupOwner() {
                 style={styles.actionButton}
                 onPress={() => handleSuggest(item.id)}
               >
-                Suggest Another
+                <MapPin size={14} color="#fff" />
+                <Text style={styles.buttonText}>Suggest</Text>
               </BaseButton>
             </View>
           )}
@@ -427,7 +408,7 @@ export default function PickupOwner() {
         style={styles.backButton}
         onPress={() => setShowSuggestions(false)}
       >
-        Back to Pickups
+        <Text style={styles.buttonText}>Back to Pickups</Text>
       </BaseButton>
     </ThemedView>
   );
@@ -449,7 +430,6 @@ export default function PickupOwner() {
             <Text style={styles.subtitle}>
               Choose how you'd like to receive your item.
             </Text>
-            <ProgressBar currentStep={4} steps={progressSteps} />
           </View>
 
           {isLoading && pickups.length === 0 ? (
@@ -479,7 +459,6 @@ export default function PickupOwner() {
         qrCodeData={qrCodeData}
         onClose={() => setShowQRCode(false)}
       />
-      {/* Message Bubble */}
       <TouchableOpacity style={styles.messageBubble} onPress={openChat}>
         <MessageCircle size={24} color="#ffffff" />
       </TouchableOpacity>
@@ -557,16 +536,6 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-SemiBold",
     fontSize: 18,
     color: "#1e293b",
-  },
-  headerButtons: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  chatIconButton: {
-    padding: 8,
-    marginRight: 8,
-    borderRadius: 20,
-    backgroundColor: "#e0f2fe", // Light blue background
   },
   suggestionsLink: {
     paddingVertical: 4,
@@ -646,20 +615,34 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: "100%",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     alignItems: "center",
+    gap: 8,
   },
   topRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     gap: 8,
     marginBottom: 8,
-    justifyContent: "center",
   },
   actionButton: {
     backgroundColor: "#007AFF",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderRadius: 6,
-    minWidth: 100,
+    minWidth: 80,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  buttonText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 12,
+    color: "#fff",
   },
   noImageText: {
     fontFamily: "Inter-Regular",
