@@ -3,7 +3,7 @@ import { faker } from "@faker-js/faker";
 import {
   Country,
   Gender,
-  ReferralSource, // Ensure ReferralSource is imported
+  ReferralSource,
   RequestStatus,
   OrderStatus,
   PaymentStatus,
@@ -55,51 +55,6 @@ async function seed() {
     prisma.user.deleteMany(),
   ]);
 
-  // Create Users
-  const users = await Promise.all(
-    Array.from({ length: 10 }).map(async () => {
-      const hasGoogleAccount = faker.datatype.boolean();
-      return prisma.user.create({
-        data: {
-          name: faker.person.fullName(),
-          email: faker.internet.email(),
-          phoneNumber: faker.phone.number(),
-          googleId: hasGoogleAccount
-            ? faker.string.alphanumeric(21)
-            : undefined,
-          password: hasGoogleAccount ? undefined : faker.internet.password(),
-          hasCompletedOnboarding: faker.datatype.boolean(),
-          role: faker.helpers.enumValue(Role),
-        },
-      });
-    })
-  );
-
-  // Create Profiles
-  const profiles = await Promise.all(
-    users.map((user) =>
-      prisma.profile.create({
-        data: {
-          userId: user.id,
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          bio: faker.lorem.sentence(),
-          country: faker.helpers.enumValue(Country),
-          phoneNumber: faker.phone.number(),
-          imageId: profileMedia[index].id,
-          gender: faker.helpers.enumValue(Gender),
-          isAnonymous: faker.datatype.boolean(),
-          isBanned: faker.datatype.boolean(),
-          isVerified: faker.datatype.boolean(),
-          isOnline: faker.datatype.boolean(),
-          isSponsor: faker.datatype.boolean(),
-          preferredCategories: faker.commerce.department(),
-          referralSource: faker.helpers.enumValue(ReferralSource),
-        },
-      })
-    )
-  );
-
   // Create Media
   const media = await Promise.all(
     Array.from({ length: 20 }).map(async () => {
@@ -118,17 +73,61 @@ async function seed() {
     })
   );
 
+  // Create Users
+  const users = await Promise.all(
+    Array.from({ length: 10 }).map(async () => {
+      const hasGoogleAccount = faker.datatype.boolean();
+      return prisma.user.create({
+        data: {
+          name: faker.person.fullName(),
+          email: faker.internet.email(),
+          phoneNumber: faker.phone.number(),
+          googleId: hasGoogleAccount ? faker.string.alphanumeric(21) : undefined,
+          password: hasGoogleAccount ? undefined : faker.internet.password(),
+          hasCompletedOnboarding: faker.datatype.boolean(),
+          role: "USER"
+        },
+      });
+    })
+  );
+
+  // Create Profiles
+  const profiles = await Promise.all(
+    users.map((user, index) =>
+      prisma.profile.create({
+        data: {
+          userId: user.id,
+          firstName: faker.person.firstName(),
+          lastName: faker.person.lastName(),
+          bio: faker.lorem.sentence(),
+          country: faker.helpers.enumValue(Country),
+          phoneNumber: faker.phone.number(),
+          imageId: media[index % media.length].id,
+          gender: faker.helpers.enumValue(Gender),
+          isAnonymous: faker.datatype.boolean(),
+          isBanned: faker.datatype.boolean(),
+          isVerified: faker.datatype.boolean(),
+          isOnline: faker.datatype.boolean(),
+          isSponsor: faker.datatype.boolean(),
+          preferredCategories: faker.commerce.department(),
+          referralSource: faker.helpers.enumValue(ReferralSource),
+        },
+      })
+    )
+  );
+
   // Create ReviewSponsors
   const reviewSponsors = await Promise.all(
     profiles.map(async (reviewerProfile) => {
       const reviewedProfile = faker.helpers.arrayElement(
-        profiles.filter((p) => p.id !== reviewerProfile.id) // Use Profile.id, not userId
+        profiles.filter((p) => p.id !== reviewerProfile.id)
       );
       return prisma.reviewSponsor.create({
         data: {
-          reviewer_id: reviewerProfile.id, // Use Profile.id
-          reviewed_user_id: reviewedProfile.id, // Use Profile.id
-          rating: faker.number.int({ min: 1, max: 5 }),
+          reviewer_id: reviewerProfile.id,
+          reviewed_user_id: reviewedProfile.id,
+          sponsorshipRating: faker.number.int({ min: 1, max: 5 }),
+          serviceProviderRating: faker.number.int({ min: 1, max: 5 }),
         },
       });
     })
@@ -282,6 +281,7 @@ async function seed() {
       );
       return prisma.review.create({
         data: {
+          reviewerId: reviewer.id,
           reviewedId: reviewed.id,
           orderId: faker.helpers.arrayElement(orders).id,
           rating: faker.number.int({ min: 1, max: 5 }),
@@ -346,12 +346,12 @@ async function seed() {
       const sponsor = faker.helpers.arrayElement(serviceProviders);
       return prisma.sponsorship.create({
         data: {
-          name: faker.company.name(),
           description: faker.lorem.sentence(),
           price: faker.number.float({ min: 100, max: 1000 }),
           duration: faker.number.int({ min: 30, max: 365 }),
           platform: faker.helpers.enumValue(SponsorshipPlatform),
-          product: faker.commerce.productName(),
+          categoryId: faker.helpers.arrayElement(categories).id,
+          sponsorId: sponsor.id,
           amount: faker.number.float({ min: 100, max: 1000 }),
           status: faker.helpers.arrayElement(["pending", "active", "completed"]),
           users: {

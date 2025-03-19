@@ -1,12 +1,11 @@
 import React from "react";
-<<<<<<< HEAD
 import { View, StyleSheet, TouchableOpacity, Text, Animated } from "react-native";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import { ChevronRight } from "lucide-react-native";
 import { CardProps } from "@/types/CardProps";
 
-// Use Animated for subtle press animations
+// Use Animated for press animations
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export function Card({
@@ -19,61 +18,51 @@ export function Card({
   showChevron = true,
 }: CardProps) {
   const colorScheme = useColorScheme() ?? "light";
-  // Animation for press effect
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
+  const backgroundAnim = React.useRef(new Animated.Value(0)).current; // For background color change on press
 
-  // Handle press-in animation (scale down slightly)
+  // Handle press-in animation (scale down + background change)
   const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.98, // Slightly scale down on press
-      friction: 8,
-      tension: 100,
-      useNativeDriver: true,
-    }).start();
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 0.95, // Slightly more pronounced scale down
+        friction: 8,
+        tension: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backgroundAnim, {
+        toValue: 1, // Trigger background color change
+        duration: 150,
+        useNativeDriver: false, // Background color animations don't support native driver
+      }),
+    ]).start();
   };
 
-  // Handle press-out animation (scale back up)
+  // Handle press-out animation (scale back up + reset background)
   const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 1, // Scale back to original size
-      friction: 8,
-      tension: 100,
-      useNativeDriver: true,
-    }).start();
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backgroundAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: false,
+      }),
+    ]).start();
   };
-=======
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  GestureResponderEvent,
-} from "react-native";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
-import { CardProps } from "@/types/CardProps";
 
-export function Card({ onPress, children, style }: CardProps) {
-  const colorScheme = useColorScheme() ?? "light";
-
-  if (onPress) {
-    return (
-      <TouchableOpacity
-        onPress={onPress}
-        style={[
-          styles.card,
-          {
-            backgroundColor: Colors[colorScheme].secondary,
-            shadowColor: colorScheme === "dark" ? "#000" : "#000",
-            shadowOpacity: colorScheme === "dark" ? 0.5 : 0.25,
-          },
-          style,
-        ]}
-      >
-        <View>{children}</View>
-      </TouchableOpacity>
-    );
-  }
->>>>>>> 8de170abdb49de702194fa32e4e815d29309ed75
+  // Interpolate background color for press effect
+  const backgroundColor = backgroundAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [
+      colorScheme === "dark" ? "#1C2526" : "#FFFFFF", // Default background
+      colorScheme === "dark" ? "#2A2E32" : "#F0F4F8", // Pressed background
+    ],
+  });
 
   return (
     <AnimatedTouchable
@@ -83,35 +72,29 @@ export function Card({ onPress, children, style }: CardProps) {
       style={[
         styles.card,
         {
-<<<<<<< HEAD
-          backgroundColor: colorScheme === "dark" ? "#1C2526" : "#FFFFFF", // Dark mode support
-          shadowColor: colorScheme === "dark" ? "#000" : "#4A4A4A", // Softer shadow color
-          shadowOpacity: colorScheme === "dark" ? 0.4 : 0.2, // Adjusted shadow opacity
-          transform: [{ scale: scaleAnim }], // Apply scale animation
-=======
-          backgroundColor: Colors[colorScheme].secondary,
-          shadowColor: colorScheme === "dark" ? "#000" : "#000",
-          shadowOpacity: colorScheme === "dark" ? 0.5 : 0.25,
->>>>>>> 8de170abdb49de702194fa32e4e815d29309ed75
+          backgroundColor, // Animated background color
+          shadowColor: colorScheme === "dark" ? "#000" : "#4A4A4A",
+          shadowOpacity: colorScheme === "dark" ? 0.4 : 0.2,
+          transform: [{ scale: scaleAnim }],
         },
         style,
       ]}
+      accessibilityRole="button" // Improve accessibility
+      accessibilityLabel={title} // Add label for screen readers
     >
-<<<<<<< HEAD
       {icon && (
         <View
           style={[
             styles.iconContainer,
             {
-              backgroundColor:
-                iconBackgroundColor ||
-                (colorScheme === "dark" ? "#2A2E32" : "#F0F4F8"), // Solid background color instead of gradient
+              backgroundColor: iconBackgroundColor || (colorScheme === "dark" ? "#2A2E32" : "#F0F4F8"),
+              // Add a subtle gradient (you can use a library like `react-native-linear-gradient` for this)
             },
           ]}
         >
           {React.cloneElement(icon as React.ReactElement, {
-            color: colorScheme === "dark" ? "#66B2FF" : "#007AFF", // Adjust icon color for dark mode
-            size: 20, // Slightly smaller icon for balance
+            color: iconBackgroundColor ? "#FFFFFF" : (colorScheme === "dark" ? "#66B2FF" : "#007AFF"),
+            size: 24, // Larger icon for better visibility
           })}
         </View>
       )}
@@ -120,25 +103,12 @@ export function Card({ onPress, children, style }: CardProps) {
           <Text
             style={[
               styles.title,
-              { color: colorScheme === "dark" ? "#E0E0E0" : "#1A1A1A" }, // Better contrast for dark/light mode
+              { color: colorScheme === "dark" ? "#E0E0E0" : "#1A1A1A" },
             ]}
           >
             {title}
           </Text>
         )}
-=======
-      <View
-        style={[
-          styles.card,
-          {
-            backgroundColor: Colors[colorScheme].secondary,
-            shadowColor: colorScheme === "dark" ? "#000" : "#000",
-            shadowOpacity: colorScheme === "dark" ? 0.5 : 0.25,
-          },
-          style,
-        ]}
-      >
->>>>>>> 8de170abdb49de702194fa32e4e815d29309ed75
         {children}
       </View>
       {showChevron && (
@@ -157,38 +127,43 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16, // Increased padding for better touch area
-    borderRadius: 20, // Softer, more modern border radius
-    borderWidth: 1, // Consolidated borderWidth (removed duplicate)
-    borderColor: "rgba(0, 0, 0, 0.05)", // Subtle border for definition
+    padding: 20, // Increased padding for better touch area
+    borderRadius: 24, // Softer, more modern border radius
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.05)",
     shadowOffset: {
       width: 0,
-      height: 4, // Slightly larger shadow offset for depth
+      height: 6, // Larger shadow for more depth
     },
-    shadowRadius: 6, // Softer shadow spread
-    elevation: 8, // Increased elevation for Android
-    marginVertical: 6, // More vertical spacing between cards
+    shadowRadius: 8,
+    elevation: 10, // Increased elevation for Android
+    marginVertical: 8, // More spacing between cards
     minWidth: "100%",
-    height: 70, // Slightly taller for better readability
+    height: 80, // Taller card for better readability
   },
   iconContainer: {
-    width: 40, // Slightly larger for better visibility
-    height: 40,
-    borderRadius: 12, // Softer corners
+    width: 48, // Larger icon container
+    height: 48,
+    borderRadius: 16, // Softer corners
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 16, // Increased spacing for balance
+    marginRight: 20, // More spacing between icon and text
   },
   textContainer: {
     flex: 1,
-    justifyContent: "center", // Center the text vertically
+    justifyContent: "center",
   },
   title: {
-    fontSize: 17, // Slightly larger for readability
-    fontWeight: "500", // Medium weight for better hierarchy
+    fontSize: 18, // Larger font for better readability
+    fontWeight: "600", // Bolder for better hierarchy
+  },
+  subtitle: {
+    fontSize: 14, // Smaller font for subtitle
+    fontWeight: "400",
+    marginTop: 2, // Spacing between title and subtitle
   },
   chevronContainer: {
     marginLeft: "auto",
-    justifyContent: "center", // Ensure chevron is vertically centered
+    justifyContent: "center",
   },
 });

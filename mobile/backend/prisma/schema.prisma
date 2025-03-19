@@ -313,13 +313,25 @@ model Profile {
 }
 
 model ReviewSponsor {
-  review_id        Int @id @default(autoincrement())
-  reviewer_id      Int
-  reviewed_user_id Int
-  rating           Int
+  review_id             Int  @id @default(autoincrement())
+  reviewer_id           Int
+  reviewed_user_id      Int
+  sponsorshipRating     Int? // Rating for the Sponsorship (e.g., 1 to 5)
+  serviceProviderRating Int? // Rating for the ServiceProvider (e.g., 1 to 5)
 
+  // Relationships to Reviewer and Reviewed User
   reviewer      Profile @relation("ReviewerReviews", fields: [reviewer_id], references: [id])
   reviewed_user Profile @relation("ReviewedUserReviews", fields: [reviewed_user_id], references: [id])
+
+  // Relationships to Sponsorship and ServiceProvider
+  sponsorshipId     Int? // Optional: ID of the sponsorship being reviewed
+  sponsorship       Sponsorship?     @relation("SponsorshipReviews", fields: [sponsorshipId], references: [id], onDelete: Cascade)
+  serviceProviderId Int? // Optional: ID of the service provider being reviewed
+  serviceProvider   ServiceProvider? @relation("ServiceProviderReviews", fields: [serviceProviderId], references: [id], onDelete: Cascade)
+
+  comment   String? // Optional comment for the review
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ========== SERVICE PROVIDER ==========
@@ -342,7 +354,8 @@ model ServiceProvider {
   subscriptionLevel    String?
 
   // Sponsorships relation
-  sponsorships Sponsorship[] @relation("ServiceProviderSponsors")
+  sponsorships Sponsorship[]   @relation("ServiceProviderSponsors")
+  reviews      ReviewSponsor[] @relation("ServiceProviderReviews")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -617,7 +630,6 @@ model Subscription {
 // ========== SPONSORSHIP ==========
 model Sponsorship {
   id          Int                 @id @default(autoincrement())
-  name        String
   description String?
   price       Float
   duration    Int
@@ -626,15 +638,16 @@ model Sponsorship {
   category    Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   isActive    Boolean             @default(true)
 
-  // New fields from your schema
+  // Existing fields
   sponsorId Int
   sponsor   ServiceProvider @relation("ServiceProviderSponsors", fields: [sponsorId], references: [id])
-  product   String
   amount    Float
   status    String          @default("pending")
 
+  // Relationships
   users            User[]            @relation("UserSponsorships")
   sponsorCheckouts SponsorCheckout[] @relation
+  reviews          ReviewSponsor[]   @relation("SponsorshipReviews") // Relationship to reviews
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
