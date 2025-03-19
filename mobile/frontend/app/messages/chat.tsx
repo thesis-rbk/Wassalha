@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import axiosInstance from "@/config";
-import { Message } from '@/types';
+import { Message } from "@/types";
 import {
   View,
   Text,
@@ -11,17 +11,17 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
-import { Send, ArrowLeft } from 'lucide-react-native';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { sendMessage as apiSendMessage } from '@/services/chatService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BACKEND_URL } from '@/config';
+  SafeAreaView,
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { Send, ArrowLeft } from "lucide-react-native";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { sendMessage as apiSendMessage } from "@/services/chatService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { BACKEND_URL } from "@/config";
 
 export default function ChatScreen() {
   const router = useRouter();
@@ -33,12 +33,12 @@ export default function ChatScreen() {
 
   const { user } = useSelector((state: RootState) => state.auth);
   const userId = user?.id.toString();
-  
-  const [newMessage, setNewMessage] = useState('');
+
+  const [newMessage, setNewMessage] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Auto-scroll to latest message
   const flatListRef = useRef<FlatList>(null);
 
@@ -50,25 +50,28 @@ export default function ChatScreen() {
   // Function to fetch messages from API
   const fetchMessages = async () => {
     if (!chatId) return;
-    
+
     setLoading(true);
-    
+
     try {
-      const token = await AsyncStorage.getItem('jwtToken');
-      const response = await axiosInstance.get(`/api/chats/${chatId}/messages`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+      const token = await AsyncStorage.getItem("jwtToken");
+      const response = await axiosInstance.get(
+        `/api/chats/${chatId}/messages`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
-      
+      );
+
       if (response.data && response.data.data) {
         setMessages(response.data.data);
       }
-      
+
       setError(null);
     } catch (error) {
-      console.error('Error fetching messages:', error);
-      setError('Failed to load messages');
+      console.error("Error fetching messages:", error);
+      setError("Failed to load messages");
     } finally {
       setLoading(false);
     }
@@ -76,12 +79,12 @@ export default function ChatScreen() {
 
   // Get other participant's name
   const getPartnerName = () => {
-    return 'Chat';  // Simplified for now
+    return "Chat"; // Simplified for now
   };
 
   const handleSend = async () => {
     if (!newMessage.trim() || !chatId) return;
-    
+
     // Add message to local state first for immediate UI feedback
     const tempMessage = {
       id: `temp-${Date.now()}`,
@@ -89,22 +92,22 @@ export default function ChatScreen() {
       senderId: user?.id,
       content: newMessage,
       time: new Date().toISOString(),
-      isRead: false
+      isRead: false,
     };
-    
+
     setMessages([tempMessage, ...messages]);
-    
+
     // Clear input
-    setNewMessage('');
-    
+    setNewMessage("");
+
     // Send to API
     try {
       await apiSendMessage(chatId, newMessage);
-      
+
       // Refetch messages to get the server-generated message
       fetchMessages();
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error("Error sending message:", error);
       // Handle error - maybe show an alert
     }
   };
@@ -112,43 +115,52 @@ export default function ChatScreen() {
   // Render message item
   const renderMessage = ({ item }: { item: Message }) => {
     const isMyMessage = item.senderId?.toString() === userId;
-    
+
     return (
-      <View style={[
-        styles.messageBubble,
-        isMyMessage ? styles.myMessage : styles.theirMessage
-      ]}>
-        <ThemedText style={[
-          styles.messageText,
-          isMyMessage ? styles.myMessageText : styles.theirMessageText
-        ]}>
+      <View
+        style={[
+          styles.messageBubble,
+          isMyMessage ? styles.myMessage : styles.theirMessage,
+        ]}
+      >
+        <ThemedText
+          style={[
+            styles.messageText,
+            isMyMessage ? styles.myMessageText : styles.theirMessageText,
+          ]}
+        >
           {item.content}
         </ThemedText>
         <ThemedText style={styles.messageTime}>
-          {new Date(item.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {new Date(item.time).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
         </ThemedText>
       </View>
     );
   };
-  
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         <ThemedView style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity 
-              style={styles.backButton} 
+            <TouchableOpacity
+              style={styles.backButton}
               onPress={() => router.back()}
             >
               <ArrowLeft size={24} color="#ffffff" />
             </TouchableOpacity>
             <View style={styles.headerInfo}>
-              <ThemedText style={styles.headerName}>{getPartnerName()}</ThemedText>
+              <ThemedText style={styles.headerName}>
+                {getPartnerName()}
+              </ThemedText>
               {orderId && goodsName && (
                 <ThemedText style={styles.headerSubtitle}>
                   Order #{orderId} - {goodsName}
@@ -156,25 +168,30 @@ export default function ChatScreen() {
               )}
             </View>
           </View>
-          
+
           {/* Context Banner (shown for pickup chats) */}
-          {context === 'pickup' && (
+          {context === "pickup" && (
             <View style={styles.contextBanner}>
               <ThemedText style={styles.contextText}>
-                This chat is for coordinating pickup details for Order #{orderId}
+                This chat is for coordinating pickup details for Order #
+                {orderId}
               </ThemedText>
             </View>
           )}
-          
+
           {/* Messages */}
           {loading && messages.length === 0 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#3b82f6" />
-              <ThemedText style={styles.loadingText}>Loading messages...</ThemedText>
+              <ThemedText style={styles.loadingText}>
+                Loading messages...
+              </ThemedText>
             </View>
           ) : error ? (
             <View style={styles.errorContainer}>
-              <ThemedText style={styles.errorText}>Failed to load messages: {error}</ThemedText>
+              <ThemedText style={styles.errorText}>
+                Failed to load messages: {error}
+              </ThemedText>
             </View>
           ) : (
             <FlatList
@@ -186,7 +203,7 @@ export default function ChatScreen() {
               contentContainerStyle={styles.messagesList}
             />
           )}
-          
+
           {/* Message input */}
           <View style={styles.inputContainer}>
             <TextInput
@@ -197,7 +214,7 @@ export default function ChatScreen() {
               placeholderTextColor="#9ca3af"
               multiline
             />
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.sendButton}
               onPress={handleSend}
               disabled={!newMessage.trim()}
@@ -216,10 +233,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
-    backgroundColor: '#3b82f6',
+    backgroundColor: "#3b82f6",
   },
   backButton: {
     marginRight: 12,
@@ -229,96 +246,96 @@ const styles = StyleSheet.create({
   },
   headerName: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: "bold",
+    color: "#ffffff",
   },
   headerSubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: "rgba(255, 255, 255, 0.8)",
   },
   contextBanner: {
     padding: 12,
-    backgroundColor: '#e0f2fe',
+    backgroundColor: "#e0f2fe",
     borderBottomWidth: 1,
-    borderBottomColor: '#bfdbfe',
+    borderBottomColor: "#bfdbfe",
   },
   contextText: {
     fontSize: 14,
-    color: '#1e40af',
-    textAlign: 'center',
+    color: "#1e40af",
+    textAlign: "center",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#64748b',
+    color: "#64748b",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   errorText: {
-    color: '#ef4444',
-    textAlign: 'center',
+    color: "#ef4444",
+    textAlign: "center",
   },
   messagesList: {
     padding: 16,
     paddingBottom: 20,
   },
   messageBubble: {
-    maxWidth: '80%',
+    maxWidth: "80%",
     padding: 12,
     borderRadius: 16,
     marginBottom: 12,
   },
   myMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#3b82f6',
+    alignSelf: "flex-end",
+    backgroundColor: "#3b82f6",
     borderBottomRightRadius: 4,
   },
   theirMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#e2e8f0',
+    alignSelf: "flex-start",
+    backgroundColor: "#e2e8f0",
     borderBottomLeftRadius: 4,
   },
   messageText: {
     fontSize: 16,
   },
   myMessageText: {
-    color: '#ffffff',
+    color: "#ffffff",
   },
   theirMessageText: {
-    color: '#1e293b',
+    color: "#1e293b",
   },
   messageTime: {
     fontSize: 12,
     marginTop: 4,
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     opacity: 0.7,
   },
   inputContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
+    borderTopColor: "#e2e8f0",
+    backgroundColor: "#f8fafc",
   },
   input: {
     flex: 1,
     minHeight: 40,
     maxHeight: 120,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: "#e2e8f0",
     fontSize: 16,
   },
   sendButton: {
@@ -326,9 +343,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'flex-end',
+    backgroundColor: "#3b82f6",
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "flex-end",
   },
 });
