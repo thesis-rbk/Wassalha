@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
+  Dimensions,
+  Animated,
+  Easing,
 } from "react-native";
 import SegmentedControl from "@/components/SegmentedControl";
 import { ThemedView } from "@/components/ThemedView";
@@ -14,11 +17,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { Request, RequestStatus, Goods } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
-import { MapPin, DollarSign, Package, Activity } from "lucide-react-native";
+import { MapPin, DollarSign, Package, Activity, ArrowRight } from "lucide-react-native";
 import { BACKEND_URL } from "@/config";
 import { useRouter } from "expo-router";
 import { decode as atob } from "base-64";
 import { GoodsProcess, ProcessStatus } from "@/types/GoodsProcess";
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = width * 0.85;
+const CARD_SPACING = 12;
 
 // Custom hook to ensure we have user data
 const useReliableAuth = () => {
@@ -94,6 +102,33 @@ export default function OrderPage() {
   const [requests, setRequests] = useState<Request[]>([]);
   const { user, loading: authLoading } = useReliableAuth();
   const router = useRouter();
+
+  // Animation value for the "Make Offer" button
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  
+  // Create pulse animation effect
+  useEffect(() => {
+    const pulsate = Animated.sequence([
+      Animated.timing(pulseAnim, {
+        toValue: 1.05,
+        duration: 1200,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(pulseAnim, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]);
+    
+    Animated.loop(pulsate).start();
+    
+    return () => {
+      pulseAnim.stopAnimation();
+    };
+  }, []);
 
   // Add a function to check if the current user is the owner of a request
   const isOwnRequest = (requestUserId: number): boolean => {
@@ -196,10 +231,42 @@ export default function OrderPage() {
     try {
       setIsLoading(true);
       const response = await axiosInstance.get("/api/requests");
-      setRequests(response.data.data || []);
+      
+      // Filter the requests to only show those that are in "PENDING" status
+      // AND either don't have an associated order OR have a cancelled order
+      const filteredRequests = (response.data.data || []).filter((request: Request) => {
+        // Check if the request is in PENDING status
+        const isPending = request.status === "PENDING";
+        
+        // Check if the request has no order or a cancelled order
+        const hasNoActiveOrder = !request.order || request.order.orderStatus === "CANCELLED";
+        
+        // Only include requests that meet both conditions
+        return isPending && hasNoActiveOrder;
+      });
+      
+      console.log(`Filtered from ${response.data.data?.length || 0} to ${filteredRequests.length} requests`);
+      
+      setRequests(filteredRequests);
     } catch (error) {
       console.error("Error fetching requests:", error);
       setRequests([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchGoodsProcesses = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axiosInstance.get("/api/process");
+      console.log("Current user ID:", user?.id);
+      // Set goodsProcesses to an empty array if no data is returned
+      setGoodsProcesses(response.data.data || []);
+    } catch (error: any) {
+      console.error("Error details:", error);
+      // Optionally set to empty array on error too, depending on your needs
+      setGoodsProcesses([]);
     } finally {
       setIsLoading(false);
     }
@@ -228,124 +295,91 @@ export default function OrderPage() {
         ? `${BACKEND_URL}${item.goods.goodsUrl}`
         : null,
     };
+    
+    // Check if this request has any offers
+    const hasOffers = false; // You'll need to replace this with actual logic to check if offers exist
 
     return (
-      <View style={styles.card}>
-        <View style={styles.imageSection}>
-          {parameters.imageUrl ? (
-            <Image
-              source={{ uri: parameters.imageUrl }}
-              style={styles.productImage}
-              contentFit="cover"
-            />
-          ) : (
-            <View style={styles.noImageContainer}>
-              <ThemedText style={styles.noImageText}>
-                No Image Available
-              </ThemedText>
-            </View>
-          )}
-        </View>
+      <TouchableOpacity
+        style={styles.cardContainer}
+        onPress={() => !isOwnRequest(item.userId) && router.push({
+          pathname: "/processTrack/initializationSP",
+          params: parameters,
+        })}
+      >
+        <View style={styles.card}>
+          <Image
+            source={{ uri: parameters.imageUrl || 'https://via.placeholder.com/400x200' }}
+            style={styles.productImage}
+            contentFit="cover"
+          />
+          
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.7)']}
+            style={styles.gradient}
+          />
 
-        <View style={styles.content}>
-          <View style={styles.headerContent}>
-            <View style={styles.titleRow}>
-              <ThemedText style={styles.productTitle}>
-                {parameters.goodsName}
-              </ThemedText>
-
-              <View style={styles.badgeContainer}>
-                {isOwnRequest(item.userId) && (
-                  <View style={styles.ownRequestBadge}>
-                    <ThemedText style={styles.badgeText}>
-                      Your Request
-                    </ThemedText>
-                  </View>
-                )}
-
-                <View
-                  style={[
-                    styles.statusBadge,
-                    {
-                      backgroundColor: getRequestStatusColor(item.status),
-                    },
-                  ]}
-                >
-                  <ThemedText style={styles.badgeText}>
-                    {item.status}
-                  </ThemedText>
+          <View style={styles.cardContent}>
+            {isOwnRequest(item.userId) && (
+              <View style={styles.badgeRow}>
+                <View style={styles.badge}>
+                  <ThemedText style={styles.badgeText}>Your Request</ThemedText>
                 </View>
               </View>
-            </View>
-
-            <View style={styles.detailsCard}>
-              <View style={styles.detailRow}>
-                <MapPin size={20} color="#64748b" />
-                <ThemedText style={styles.detailValue}>
-                  {parameters.location} → {parameters.destination}
-                </ThemedText>
-              </View>
-
-              <View style={styles.detailRow}>
-                <DollarSign size={20} color="#64748b" />
-                <ThemedText style={styles.priceValue}>
-                  ${parameters.price.toFixed(2)}
-                </ThemedText>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Package size={20} color="#64748b" />
-                <ThemedText style={styles.detailValue}>
-                  {parameters.quantity}
-                </ThemedText>
+            )}
+            
+            <View style={styles.headerRow}>
+              <ThemedText style={styles.title} numberOfLines={1} ellipsizeMode="tail">{parameters.goodsName}</ThemedText>
+              <View style={[styles.statusBadge, { backgroundColor: getRequestStatusColor(item.status) }]}>
+                <ThemedText style={styles.statusText}>{getRequestStatusText(item.status)}</ThemedText>
               </View>
             </View>
+
+            <View style={styles.locationContainer}>
+              <View style={styles.fromSection}>
+                <ThemedText style={styles.fromToLabel}>From:</ThemedText>
+                <ThemedText style={styles.cityText}>{parameters.location}</ThemedText>
+              </View>
+              
+              <View style={styles.routeArrow}>
+                <ArrowRight size={22} color="#fff" />
+              </View>
+              
+              <View style={styles.toSection}>
+                <ThemedText style={styles.fromToLabel}>To:</ThemedText>
+                <ThemedText style={styles.cityText}>{parameters.destination}</ThemedText>
+              </View>
+            </View>
+            
+            <View style={styles.priceRow}>
+              <ThemedText style={styles.price}>${parameters.price.toFixed(2)}</ThemedText>
+              <View style={styles.quantityContainer}>
+                <Package size={16} color="#fff" />
+                <ThemedText style={styles.quantityText}>{parameters.quantity}x</ThemedText>
+              </View>
+              <ArrowRight size={20} color="#fff" />
+            </View>
+            
+            {!isOwnRequest(item.userId) && (
+              <Animated.View style={[
+                styles.makeOfferBtnContainer,
+                { transform: [{ scale: pulseAnim }] }
+              ]}>
+                <TouchableOpacity
+                  style={styles.makeOfferBtn}
+                  onPress={() => router.push({
+                    pathname: "/processTrack/initializationSP",
+                    params: parameters,
+                  })}
+                >
+                  <ThemedText style={styles.makeOfferBtnText}>Make Offer</ThemedText>
+                </TouchableOpacity>
+              </Animated.View>
+            )}
           </View>
-
-          {parameters.description && (
-            <View style={styles.descriptionCard}>
-              <ThemedText style={styles.sectionTitle}>Description</ThemedText>
-              <ThemedText style={styles.description}>
-                {parameters.description}
-              </ThemedText>
-            </View>
-          )}
-
-          {/* Add "View Request" button for requests not owned by the current user */}
-          {!isOwnRequest(item.userId) && (
-            <TouchableOpacity
-              style={styles.viewRequestButton}
-              onPress={() =>
-                router.push({
-                  pathname: "/processTrack/initializationSP",
-                  params: parameters,
-                })
-              }
-            >
-              <ThemedText style={styles.viewRequestButtonText}>
-                View Request
-              </ThemedText>
-            </TouchableOpacity>
-          )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
-  };
-
-  const fetchGoodsProcesses = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axiosInstance.get("/api/process");
-      console.log("Current user ID:", user?.id);
-      // Set goodsProcesses to an empty array if no data is returned
-      setGoodsProcesses(response.data.data || []);
-    } catch (error: any) {
-      console.error("Error details:", error);
-      // Optionally set to empty array on error too, depending on your needs
-      setGoodsProcesses([]);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const renderOrderItem = ({ item }: { item: GoodsProcess }) => {
@@ -510,183 +544,65 @@ export default function OrderPage() {
     };
 
     return (
-      <View style={styles.card}>
-        <View style={styles.imageSection}>
-          {parameters.imageUrl ? (
-            <Image
-              source={{ uri: parameters.imageUrl }}
-              style={styles.productImage}
-              contentFit="cover"
-              onError={(error) => {
-                console.error("Image error:", error, {
-                  url: parameters.imageUrl,
-                  goods: parameters.goodsName,
-                });
-              }}
-            />
-          ) : (
-            <View style={styles.noImageContainer}>
-              <ThemedText style={styles.noImageText}>
-                No Image Available
-              </ThemedText>
-            </View>
-          )}
-        </View>
+      <TouchableOpacity
+        style={styles.cardContainer}
+        onPress={handleNavigation}
+      >
+        <View style={styles.card}>
+          <Image
+            source={{ uri: parameters.imageUrl || 'https://via.placeholder.com/400x200' }}
+            style={styles.productImage}
+            contentFit="cover"
+          />
+          
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.7)']}
+            style={styles.gradient}
+          />
 
-        <View style={styles.content}>
-          <View style={styles.headerContent}>
-            <View style={styles.titleRow}>
-              <ThemedText style={styles.productTitle}>
-                {parameters.goodsName}
-              </ThemedText>
-
-              <View style={styles.badgeContainer}>
-                {/* Show "Your Request" badge if it's the user's own request */}
-                {isOwnRequest(parseInt(parameters.requesterId)) && (
-                  <View style={styles.ownRequestBadge}>
-                    <ThemedText style={styles.badgeText}>
-                      Your Request
-                    </ThemedText>
-                  </View>
-                )}
-
-                {/* Show status badge if it has an order */}
-                {hasOrder && (
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      {
-                        backgroundColor: getProcessStatusColor(
-                          processStatus as ProcessStatus
-                        ),
-                      },
-                    ]}
-                  >
-                    <ThemedText style={styles.badgeText}>
-                      {getProcessStatusText(processStatus as ProcessStatus)}
-                    </ThemedText>
-                  </View>
-                )}
+          <View style={styles.cardContent}>
+            <View style={styles.headerRow}>
+              <ThemedText style={styles.title} numberOfLines={1} ellipsizeMode="tail">{parameters.goodsName}</ThemedText>
+              <View style={[styles.statusBadge, { backgroundColor: getProcessStatusColor(processStatus as ProcessStatus) }]}>
+                <ThemedText style={styles.statusText}>{getProcessStatusText(processStatus as ProcessStatus)}</ThemedText>
               </View>
             </View>
 
-            <View style={styles.detailsCard}>
-              <View style={styles.detailRow}>
-                <View style={styles.iconContainer}>
-                  <MapPin size={20} color="#64748b" />
+            <View style={styles.badgeRow}>
+              {isOwnRequest(parseInt(parameters.requesterId)) && (
+                <View style={styles.badge}>
+                  <ThemedText style={styles.badgeText}>Your Order</ThemedText>
                 </View>
-                <View style={styles.detailContent}>
-                  <ThemedText style={styles.detailLabel}>Route</ThemedText>
-                  <ThemedText style={styles.detailValue}>
-                    {parameters.location} → {parameters.destination}
-                  </ThemedText>
-                </View>
-              </View>
+              )}
+            </View>
 
-              <View style={styles.detailRow}>
-                <View style={styles.iconContainer}>
-                  <DollarSign size={20} color="#64748b" />
-                </View>
-                <View style={styles.detailContent}>
-                  <ThemedText style={styles.detailLabel}>Price</ThemedText>
-                  <ThemedText style={styles.priceValue}>
-                    ${parameters.price.toFixed(2)}
-                  </ThemedText>
-                </View>
+            <View style={styles.locationContainer}>
+              <View style={styles.fromSection}>
+                <ThemedText style={styles.fromToLabel}>From:</ThemedText>
+                <ThemedText style={styles.cityText}>{parameters.location}</ThemedText>
               </View>
+              
+              <View style={styles.routeArrow}>
+                <ArrowRight size={22} color="#fff" />
+              </View>
+              
+              <View style={styles.toSection}>
+                <ThemedText style={styles.fromToLabel}>To:</ThemedText>
+                <ThemedText style={styles.cityText}>{parameters.destination}</ThemedText>
+              </View>
+            </View>
 
-              <View style={styles.detailRow}>
-                <View style={styles.iconContainer}>
-                  <Package size={20} color="#64748b" />
-                </View>
-                <View style={styles.detailContent}>
-                  <ThemedText style={styles.detailLabel}>Quantity</ThemedText>
-                  <ThemedText style={styles.detailValue}>
-                    {parameters.quantity}
-                  </ThemedText>
-                </View>
+            <View style={styles.priceRow}>
+              <ThemedText style={styles.price}>${parameters.price.toFixed(2)}</ThemedText>
+              <View style={styles.quantityContainer}>
+                <Package size={16} color="#fff" />
+                <ThemedText style={styles.quantityText}>{parameters.quantity}x</ThemedText>
               </View>
-
-              <View style={styles.detailRow}>
-                <View style={styles.iconContainer}>
-                  <Activity size={20} color="#64748b" />
-                </View>
-                <View style={styles.detailContent}>
-                  <ThemedText style={styles.detailLabel}>Status</ThemedText>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      styles[
-                        parameters.status.toLowerCase() as Lowercase<RequestStatus>
-                      ],
-                    ]}
-                  >
-                    <ThemedText style={styles.statusText}>
-                      {parameters.status}
-                    </ThemedText>
-                  </View>
-                </View>
-              </View>
+              <ArrowRight size={20} color="#fff" />
             </View>
           </View>
-
-          {parameters.description && (
-            <View style={styles.descriptionCard}>
-              <ThemedText style={styles.sectionTitle}>Description</ThemedText>
-              <ThemedText style={styles.description}>
-                {parameters.description}
-              </ThemedText>
-            </View>
-          )}
-
-          <View style={styles.actionRow}>
-            <ThemedText style={styles.priceText}>
-              ${parameters.price} × {parameters.quantity}
-            </ThemedText>
-
-            {!isOwnRequest(parseInt(parameters.requesterId)) && hasOrder && (
-              <View style={styles.takenContainer}>
-                <ThemedText style={styles.takenText}>Already Taken</ThemedText>
-              </View>
-            )}
-
-            {/* Show View Order button for any order for SO */}
-            {isOwnRequest(parseInt(parameters.requesterId)) && hasOrder && (
-              <TouchableOpacity
-                style={styles.viewOrderButton}
-                onPress={handleNavigation}
-              >
-                <ThemedText style={styles.viewOrderButtonText}>
-                  View Order
-                </ThemedText>
-              </TouchableOpacity>
-            )}
-
-            {/* Show View Order button for any order for SO */}
-            {!isOwnRequest(parseInt(parameters.requesterId)) && hasOrder && (
-              <TouchableOpacity
-                style={styles.viewOrderButton}
-                onPress={handleNavigation}
-              >
-                <ThemedText style={styles.viewOrderButtonText}>
-                  View Order
-                </ThemedText>
-              </TouchableOpacity>
-            )}
-
-            {/* {isOwnRequest(parseInt(parameters.requesterId)) && !item.order && (
-              <TouchableOpacity
-                style={styles.viewOfferButton}
-                onPress={() => fetchOffersForRequest(item.id)}
-              >
-                <ThemedText style={styles.viewOfferButtonText}>
-                  Check for Offers
-                </ThemedText>
-              </TouchableOpacity>
-            )} */}
-          </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -704,35 +620,35 @@ export default function OrderPage() {
         </View>
       ) : view === "orders" ? (
         goodsProcesses.length === 0 ? (
-          <View style={styles.noOrdersContainer}>
-            <ThemedText style={styles.noOrdersText}>
-              No orders yet...
-            </ThemedText>
+          <View style={styles.emptyContainer}>
+            <ThemedText style={styles.emptyText}>No orders yet</ThemedText>
           </View>
         ) : (
           <FlatList
             data={goodsProcesses}
             renderItem={renderOrderItem}
             keyExtractor={(item) => item.id.toString()}
+            horizontal={false}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.verticalListContainer}
             refreshing={isLoading}
             onRefresh={fetchGoodsProcesses}
-            contentContainerStyle={styles.listContainer}
           />
         )
       ) : requests.length === 0 ? (
-        <View style={styles.noOrdersContainer}>
-          <ThemedText style={styles.noOrdersText}>
-            No requests yet...
-          </ThemedText>
+        <View style={styles.emptyContainer}>
+          <ThemedText style={styles.emptyText}>No requests yet</ThemedText>
         </View>
       ) : (
         <FlatList
           data={requests}
           renderItem={renderRequestItem}
           keyExtractor={(item) => item.id.toString()}
+          horizontal={false}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.verticalListContainer}
           refreshing={isLoading}
           onRefresh={fetchRequests}
-          contentContainerStyle={styles.listContainer}
         />
       )}
     </ThemedView>
@@ -742,257 +658,191 @@ export default function OrderPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f8fafc',
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   listContainer: {
     padding: 16,
+    paddingRight: width - CARD_WIDTH + 16,
+  },
+  verticalListContainer: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  cardContainer: {
+    width: '100%',
+    marginBottom: 16,
   },
   card: {
-    backgroundColor: "white",
-    marginBottom: 16,
-    borderRadius: 12,
-    overflow: "hidden",
-    shadowColor: "#000",
+    height: 400,
+    borderRadius: 24,
+    overflow: 'hidden',
+    backgroundColor: 'white',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
   },
-  imageSection: {
-    width: "100%",
-    height: 200,
-    backgroundColor: "#f8fafc",
-  },
   productImage: {
-    width: "100%",
-    height: "100%",
+    width: '100%',
+    height: '100%',
   },
-  noImageContainer: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f0f0f0",
+  gradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '70%',
   },
-  content: {
-    padding: 16,
+  cardContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
   },
-  productTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 16,
-    color: "#1e293b",
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    width: '100%',
   },
-  detailsCard: {
-    backgroundColor: "#f8fafc",
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
+  badgeRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
   },
-  detailRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 16,
-  },
-  iconContainer: {
-    width: 24,
-    alignItems: "center",
-  },
-  detailContent: {
-    marginLeft: 12,
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
     flex: 1,
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: "#64748b",
-    marginBottom: 2,
-  },
-  detailValue: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#1e293b",
-  },
-  priceValue: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#16a34a",
+    marginRight: 8,
   },
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
-  },
-  pending: {
-    backgroundColor: "#f59e0b",
-  },
-  accepted: {
-    backgroundColor: "#3b82f6",
-  },
-  cancelled: {
-    backgroundColor: "#ef4444",
-  },
-  rejected: {
-    backgroundColor: "#ef4444",
+    borderRadius: 20,
   },
   statusText: {
-    color: "orange",
+    color: '#fff',
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: '600',
   },
-  descriptionCard: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1e293b",
-    marginBottom: 8,
-  },
-  description: {
-    fontSize: 16,
-    color: "#334155",
-    lineHeight: 24,
-  },
-  offerButton: {
-    backgroundColor: "#007AFF",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  offerButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  noImageText: {
-    fontSize: 12,
-    textAlign: "center",
-    color: "#666",
-  },
-  ownRequestBadge: {
-    backgroundColor: "#4CAF50",
+  badge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
-    alignSelf: "flex-start",
-    marginBottom: 12,
-  },
-  ownRequestText: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  takenContainer: {
-    backgroundColor: "#f1f5f9",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#cbd5e1",
-  },
-  takenText: {
-    color: "#64748b",
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  headerContent: {
-    // Add any necessary styles for the header content
-  },
-  titleRow: {
-    // Add any necessary styles for the title row
-  },
-  badgeContainer: {
-    // Add any necessary styles for the badge container
+    borderRadius: 20,
+    alignSelf: 'flex-start',
   },
   badgeText: {
-    // Add any necessary styles for the badge text
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
-  actionRow: {
-    // Add any necessary styles for the action row
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    padding: 4,
   },
-  priceText: {
-    // Add any necessary styles for the price text
-  },
-  viewOrderButton: {
-    backgroundColor: "#3b82f6", // blue
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  viewOrderButtonText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  viewOfferButton: {
-    backgroundColor: "#3b82f6", // blue
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  viewOfferButtonText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  confirmButton: {
-    backgroundColor: "#8b5cf6", // purple
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  confirmButtonText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  noOrdersContainer: {
+  
+  fromSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
-  noOrdersText: {
+  
+  toSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  
+  fromToLabel: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 13,
+    fontWeight: '600',
+    marginRight: 4,
+  },
+  
+  cityText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  
+  routeArrow: {
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  price: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  quantityText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
     fontSize: 18,
-    fontWeight: "500",
-    color: "#64748b", // A muted color for better UX
+    color: '#94a3b8',
+    fontWeight: '500',
   },
-  toggleMenu: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginVertical: 16,
-  },
-  toggleButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginHorizontal: 4,
-  },
-  toggleButtonActive: {
-    backgroundColor: "#3b82f6",
-  },
-  toggleButtonText: {
-    color: "#1e293b",
-  },
-  toggleButtonTextActive: {
-    color: "white",
-  },
-  viewRequestButton: {
-    backgroundColor: "#3b82f6", // blue
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
+  makeOfferBtnContainer: {
+    alignItems: 'center',
     marginTop: 8,
   },
-  viewRequestButtonText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "600",
+  makeOfferBtn: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  makeOfferBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
 });

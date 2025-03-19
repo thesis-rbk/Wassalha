@@ -186,6 +186,179 @@ const notificationHandlers = (socket) => {
         });
     });
 
+    // When verification photo is submitted
+    socket.on('verification_photo_submitted', async ({ requesterId, travelerId, requestDetails }) => {
+        // Security check: Only allow travelers to create verification notifications
+        if (socket.user.id !== parseInt(travelerId)) {
+            console.log(`⚠️ Security warning: User ${socket.user.id} tried to submit verification as traveler ${travelerId}`);
+            return;
+        }
+
+        const roomName = `user_${requesterId}`;
+        console.log(`📸 Sending verification photo notification to room: ${roomName}`, {
+            requesterId,
+            travelerId,
+            requestDetails
+        });
+
+        // Save notification to database
+        try {
+            const notification = await prisma.notification.create({
+                data: {
+                    userId: parseInt(requesterId),
+                    senderId: parseInt(travelerId),
+                    type: "SYSTEM_ALERT", // Using enum value from schema
+                    title: "Verification Photo Submitted",
+                    message: `A verification photo has been submitted for your order.`,
+                    status: "UNREAD",
+                    requestId: requestDetails.requestId ? parseInt(requestDetails.requestId) : null,
+                    orderId: requestDetails.orderId ? parseInt(requestDetails.orderId) : null
+                }
+            });
+            console.log('✅ Notification saved to database:', notification.id);
+        } catch (error) {
+            console.error('❌ Error saving notification to database:', error);
+            console.error('Error details:', error.stack);
+        }
+
+        // Emit to the requester's room
+        socket.to(roomName).emit('verification_photo_submitted', {
+            type: 'VERIFICATION_PHOTO_SUBMITTED',
+            message: 'A verification photo has been submitted for your order.',
+            travelerId,
+            requestDetails
+        });
+    });
+
+    // When product is confirmed
+    socket.on('product_confirmed', async ({ travelerId, requesterId, requestDetails }) => {
+        // Security check: Only allow requesters to confirm products
+        if (socket.user.id !== parseInt(requesterId)) {
+            console.log(`⚠️ Security warning: User ${socket.user.id} tried to confirm product as requester ${requesterId}`);
+            return;
+        }
+        
+        const roomName = `user_${travelerId}`;
+        console.log(`✅ Sending product confirmation notification to room: ${roomName}`, {
+            travelerId,
+            requesterId,
+            requestDetails
+        });
+
+        // Save notification to database
+        try {
+            const notification = await prisma.notification.create({
+                data: {
+                    userId: parseInt(travelerId),
+                    senderId: socket.user.id,
+                    type: "ACCEPTED", // Using enum value from schema
+                    title: "Product Confirmed",
+                    message: `Your product verification has been confirmed.`,
+                    status: "UNREAD",
+                    requestId: requestDetails.requestId ? parseInt(requestDetails.requestId) : null,
+                    orderId: requestDetails.orderId ? parseInt(requestDetails.orderId) : null
+                }
+            });
+            console.log('✅ Notification saved to database:', notification.id);
+        } catch (error) {
+            console.error('❌ Error saving notification to database:', error);
+            console.error('Error details:', error.stack);
+        }
+
+        // Emit to the traveler's room
+        socket.to(roomName).emit('product_confirmed', {
+            type: 'PRODUCT_CONFIRMED',
+            message: 'Your product verification has been confirmed.',
+            requestDetails
+        });
+    });
+
+    // When another photo is requested
+    socket.on('request_new_photo', async ({ travelerId, requesterId, requestDetails }) => {
+        // Security check: Only allow requesters to request new photos
+        if (socket.user.id !== parseInt(requesterId)) {
+            console.log(`⚠️ Security warning: User ${socket.user.id} tried to request photo as requester ${requesterId}`);
+            return;
+        }
+        
+        const roomName = `user_${travelerId}`;
+        console.log(`📷 Sending new photo request notification to room: ${roomName}`, {
+            travelerId,
+            requesterId,
+            requestDetails
+        });
+
+        // Save notification to database
+        try {
+            const notification = await prisma.notification.create({
+                data: {
+                    userId: parseInt(travelerId),
+                    senderId: socket.user.id,
+                    type: "SYSTEM_ALERT", // Using enum value from schema
+                    title: "New Photo Requested",
+                    message: `The requester has asked for another verification photo.`,
+                    status: "UNREAD",
+                    requestId: requestDetails.requestId ? parseInt(requestDetails.requestId) : null,
+                    orderId: requestDetails.orderId ? parseInt(requestDetails.orderId) : null
+                }
+            });
+            console.log('✅ Notification saved to database:', notification.id);
+        } catch (error) {
+            console.error('❌ Error saving notification to database:', error);
+            console.error('Error details:', error.stack);
+        }
+
+        // Emit to the traveler's room
+        socket.to(roomName).emit('request_new_photo', {
+            type: 'NEW_PHOTO_REQUESTED',
+            message: 'The requester has asked for another verification photo.',
+            requestDetails
+        });
+    });
+
+    // When verification process is canceled
+    socket.on('process_canceled', async ({ travelerId, requesterId, requestDetails }) => {
+        // Security check: Only allow requesters to cancel verification
+        if (socket.user.id !== parseInt(requesterId)) {
+            console.log(`⚠️ Security warning: User ${socket.user.id} tried to cancel process as requester ${requesterId}`);
+            return;
+        }
+        
+        const roomName = `user_${travelerId}`;
+        console.log(`❌ Sending process cancellation notification to room: ${roomName}`, {
+            travelerId,
+            requesterId,
+            requestDetails
+        });
+
+        // Save notification to database
+        try {
+            const notification = await prisma.notification.create({
+                data: {
+                    userId: parseInt(travelerId),
+                    senderId: socket.user.id,
+                    type: "REJECTED", // Using enum value from schema
+                    title: "Process Cancelled",
+                    message: `The verification process has been cancelled by the requester.`,
+                    status: "UNREAD",
+                    requestId: requestDetails.requestId ? parseInt(requestDetails.requestId) : null,
+                    orderId: requestDetails.orderId ? parseInt(requestDetails.orderId) : null
+                }
+            });
+            console.log('✅ Notification saved to database:', notification.id);
+        } catch (error) {
+            console.error('❌ Error saving notification to database:', error);
+            console.error('Error details:', error.stack);
+        }
+
+        // Emit to the traveler's room
+        socket.to(roomName).emit('process_canceled', {
+            type: 'PROCESS_CANCELLED',
+            message: 'The verification process has been cancelled by the requester.',
+            requestDetails
+        });
+    });
+
     // Handle client disconnection
     socket.on('disconnect', () => {
         console.log('👋 User disconnected:', socket.id, 'User:', socket.user?.id);
