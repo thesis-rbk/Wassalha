@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions, Alert } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions, Alert, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -11,9 +11,30 @@ const { width } = Dimensions.get('window');
 
 const TermsAndConditions: React.FC = () => {
     const [isAgreed, setIsAgreed] = useState<boolean>(false);
+    const [hasReadToBottom, setHasReadToBottom] = useState<boolean>(false);
+    const scrollViewRef = useRef<ScrollView>(null);
     const router = useRouter();
 
+    const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+        const paddingToBottom = 20; // Adjust this value as needed
+        const isCloseToBottom = layoutMeasurement.height + contentOffset.y 
+            >= contentSize.height - paddingToBottom;
+
+        if (isCloseToBottom && !hasReadToBottom) {
+            setHasReadToBottom(true);
+        }
+    };
+
     const toggleCheckbox = () => {
+        if (!hasReadToBottom) {
+            Alert.alert(
+                "Please Read Terms",
+                "Please read the entire terms and conditions before accepting.",
+                [{ text: "OK" }]
+            );
+            return;
+        }
         setIsAgreed((prev) => !prev);
     };
 
@@ -56,7 +77,13 @@ const TermsAndConditions: React.FC = () => {
                 <ThemedText style={styles.updated}>Last Updated: March 04, 2025</ThemedText>
 
                 {/* Inner ScrollView for Terms Content */}
-                <ScrollView style={styles.innerScroll} contentContainerStyle={styles.innerContent}>
+                <ScrollView 
+                    ref={scrollViewRef}
+                    style={styles.innerScroll} 
+                    contentContainerStyle={styles.innerContent}
+                    onScroll={handleScroll}
+                    scrollEventThrottle={400}
+                >
                     <ThemedText style={styles.intro}>
                         Welcome to The Tribe! These Terms and Conditions ("Terms") govern your participation in our global sponsorship community. By joining our community, you agree to these Terms. Please read them carefully.
                     </ThemedText>
@@ -160,31 +187,44 @@ const TermsAndConditions: React.FC = () => {
                     </View>
                 </ScrollView>
 
-                {/* Checkbox for agreement */}
+                {!hasReadToBottom && (
+                    <View style={styles.scrollReminder}>
+                        <ThemedText style={styles.reminderText}>
+                            Please scroll to read the entire document
+                        </ThemedText>
+                    </View>
+                )}
+
                 <TouchableOpacity 
-                    style={styles.checkboxContainer} 
+                    style={[
+                        styles.checkboxContainer,
+                        !hasReadToBottom && styles.checkboxContainerDisabled
+                    ]} 
                     onPress={toggleCheckbox}
-                    activeOpacity={0.7}
+                    activeOpacity={hasReadToBottom ? 0.7 : 1}
                 >
                     <View style={[
                         styles.checkbox,
-                        isAgreed ? styles.checkboxChecked : {}
+                        isAgreed && styles.checkboxChecked,
+                        !hasReadToBottom && styles.checkboxDisabled
                     ]}>
                         {isAgreed && <Check size={16} color="#fff" />}
                     </View>
-                    <ThemedText style={styles.checkboxLabel}>
+                    <ThemedText style={[
+                        styles.checkboxLabel,
+                        !hasReadToBottom && styles.checkboxLabelDisabled
+                    ]}>
                         I have read and agree to the Terms and Conditions
                     </ThemedText>
                 </TouchableOpacity>
 
-                {/* Continue button */}
                 <TouchableOpacity 
                     style={[
                         styles.nextButton,
-                        !isAgreed ? styles.nextButtonDisabled : {}
+                        (!isAgreed || !hasReadToBottom) && styles.nextButtonDisabled
                     ]} 
                     onPress={handleNextPress}
-                    disabled={!isAgreed}
+                    disabled={!isAgreed || !hasReadToBottom}
                 >
                     <ThemedText style={styles.nextButtonText}>Continue</ThemedText>
                 </TouchableOpacity>
@@ -196,52 +236,59 @@ const TermsAndConditions: React.FC = () => {
 const styles = StyleSheet.create({
     outerContainer: {
         flex: 1,
-        padding: 0,
+        backgroundColor: '#FFFFFF',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingHorizontal: 20,
+        paddingVertical: 20,
+        backgroundColor: '#FFF',
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
+        borderBottomColor: '#E2E8F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
     },
     backButton: {
         padding: 8,
     },
     headerTitle: {
-        fontSize: 18,
-        fontWeight: '600',
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1E293B',
     },
     card: {
         flex: 1,
         backgroundColor: '#fff',
-        padding: 20,
-        width: '100%',
+        padding: 24,
     },
     title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#0891b2',
+        fontSize: 28,
+        fontWeight: '800',
+        color: '#007BFF',
         textAlign: 'center',
-        marginBottom: 10,
+        marginBottom: 12,
     },
     updated: {
-        fontSize: 12,
-        color: '#666',
+        fontSize: 14,
+        color: '#64748B',
         textAlign: 'center',
-        marginBottom: 20,
+        marginBottom: 32,
     },
     innerScroll: {
         flex: 1,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
-        borderRadius: 8,
-        marginBottom: 20,
+        borderColor: '#E2E8F0',
+        borderRadius: 20,
+        marginBottom: 24,
+        backgroundColor: '#F8FAFC',
     },
     innerContent: {
-        padding: 16,
+        padding: 24,
     },
     intro: {
         fontSize: 14,
@@ -253,10 +300,11 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     sectionTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#0891b2',
-        marginBottom: 8,
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#007BFF',
+        marginBottom: 16,
+        marginTop: 32,
     },
     subSectionTitle: {
         fontSize: 14,
@@ -266,37 +314,38 @@ const styles = StyleSheet.create({
         marginBottom: 5,
     },
     sectionText: {
-        fontSize: 14,
-        color: '#444',
-        lineHeight: 20,
+        fontSize: 16,
+        color: '#475569',
+        lineHeight: 26,
     },
     listItem: {
-        fontSize: 14,
-        color: '#444',
-        marginLeft: 10,
-        marginBottom: 5,
-        lineHeight: 20,
+        fontSize: 16,
+        color: '#475569',
+        marginLeft: 16,
+        marginBottom: 12,
+        lineHeight: 26,
     },
     checkboxContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 15,
+        paddingVertical: 24,
+        paddingHorizontal: 24,
         borderTopWidth: 1,
-        borderTopColor: '#e5e7eb',
+        borderTopColor: '#E2E8F0',
+        backgroundColor: '#FFF',
     },
     checkbox: {
-        width: 22,
-        height: 22,
+        width: 28,
+        height: 28,
         borderWidth: 2,
-        borderColor: '#0891b2',
-        borderRadius: 4,
+        borderColor: '#007BFF',
+        borderRadius: 8,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 10,
+        marginRight: 16,
     },
     checkboxChecked: {
-        backgroundColor: '#0891b2',
+        backgroundColor: '#007BFF',
     },
     checkmark: {
         color: '#fff',
@@ -304,23 +353,53 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     checkboxLabel: {
-        fontSize: 14,
-        color: '#333',
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#1E293B',
+        flex: 1,
+        lineHeight: 24,
     },
     nextButton: {
-        backgroundColor: '#0891b2',
-        paddingVertical: 14,
-        borderRadius: 8,
+        backgroundColor: '#007BFF',
+        paddingVertical: 20,
+        borderRadius: 16,
         alignItems: 'center',
-        marginTop: 10,
+        margin: 24,
+        shadowColor: '#007BFF',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.25,
+        shadowRadius: 16,
+        elevation: 8,
     },
     nextButtonDisabled: {
-        backgroundColor: '#cbd5e1',
+        backgroundColor: '#94A3B8',
+        shadowOpacity: 0,
     },
     nextButtonText: {
         color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 18,
+        fontWeight: '700',
+    },
+    scrollReminder: {
+        padding: 12,
+        backgroundColor: '#F0F7FF',
+        borderRadius: 8,
+        marginBottom: 16,
+        alignItems: 'center',
+    },
+    reminderText: {
+        fontSize: 14,
+        color: '#007BFF',
+        fontWeight: '500',
+    },
+    checkboxContainerDisabled: {
+        opacity: 0.6,
+    },
+    checkboxDisabled: {
+        borderColor: '#94A3B8',
+    },
+    checkboxLabelDisabled: {
+        color: '#94A3B8',
     },
 });
 
