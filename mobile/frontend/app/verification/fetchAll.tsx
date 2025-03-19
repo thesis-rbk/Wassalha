@@ -20,8 +20,6 @@ import { SponsorshipCard } from "../../components/sponsorCards";
 
 const SponsorshipsScreen: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState<string>("");
-    const [minPrice, setMinPrice] = useState<string>("");
-    const [maxPrice, setMaxPrice] = useState<string>("");
     const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [isSponsor, setIsSponsor] = useState<boolean>(false);
@@ -92,8 +90,6 @@ const SponsorshipsScreen: React.FC = () => {
             const response = await axiosInstance.get("api/search", {
                 params: {
                     nameContains: searchQuery,
-                    minPrice: minPrice || undefined,
-                    maxPrice: maxPrice || undefined,
                 },
             });
             const sorted = response.data.sort(
@@ -118,11 +114,11 @@ const SponsorshipsScreen: React.FC = () => {
         check();
     }, [token]);
 
-    // Fetch sponsorships when search query or price range changes
+    // Fetch sponsorships when search query changes
     useFocusEffect(
         useCallback(() => {
             fetchSponsorships();
-        }, [searchQuery, minPrice, maxPrice])
+        }, [searchQuery])
     );
 
     // Handle "Buy" button press
@@ -173,26 +169,6 @@ const SponsorshipsScreen: React.FC = () => {
                     </TouchableOpacity>
                 )}
             </Animated.View>
-
-            {/* Price Range Inputs */}
-            <View style={styles.priceRangeContainer}>
-                <TextInput
-                    style={styles.priceInput}
-                    placeholder="Min Price"
-                    value={minPrice}
-                    keyboardType="numeric"
-                    onChangeText={setMinPrice}
-                    accessibilityLabel="Minimum price input"
-                />
-                <TextInput
-                    style={styles.priceInput}
-                    placeholder="Max Price"
-                    value={maxPrice}
-                    keyboardType="numeric"
-                    onChangeText={setMaxPrice}
-                    accessibilityLabel="Maximum price input"
-                />
-            </View>
 
             {/* Sponsorships List */}
             {loading ? (
@@ -255,20 +231,6 @@ const styles = StyleSheet.create({
         fontSize: 20,
         color: "#FFFFFF",
         fontWeight: "bold",
-    },
-    priceRangeContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginBottom: 20,
-    },
-    priceInput: {
-        width: "45%",
-        height: 40,
-        borderColor: "#ccc",
-        borderWidth: 1,
-        borderRadius: 5,
-        paddingLeft: 10,
-        backgroundColor: "#FFFFFF",
     },
     loading: {
         marginTop: 20,
