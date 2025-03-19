@@ -161,14 +161,14 @@ console.log("slmmmmmmmmmmmmmmmm alykom",params);
     }
   };
 
-  if (loading) {
-    return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-        <ThemedText style={styles.loadingText}>Loading sponsorship details...</ThemedText>
-      </ThemedView>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <ThemedView style={styles.loadingContainer}>
+  //       <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+  //       <ThemedText style={styles.loadingText}>Loading sponsorship details...</ThemedText>
+  //     </ThemedView>
+  //   );
+  // }
 
   return (
     <ThemedView style={styles.container}>
