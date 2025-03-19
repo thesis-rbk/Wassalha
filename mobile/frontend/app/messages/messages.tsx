@@ -11,17 +11,18 @@ import {
 } from "react-native";
 import axiosInstance from "@/config";
 import { Message, User, Profile } from "../../types";
-import { router } from "expo-router";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
 export default function MessagesScreen() {
+  const { user } = useSelector((state: RootState) => state.auth);
   const [conversations, setConversations] = useState<
     { user: User; lastMessage: Message; unreadCount: number }[]
   >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // For demo purposes, we'll assume current user is user1
-  const currentUserId = 1; // TO BE CHANGED !!
+  const currentUserId = user?.id;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -127,7 +128,7 @@ export default function MessagesScreen() {
             source={{
               uri: user.profile?.imageId
                 ? `https://your-backend-url.com/images/${user.profile.imageId}`
-                : "https://images.unsplash.com/photo-1599566150163-29194dcaad36", // Fallback image
+                : "https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-Transparent-Clip-Art-PNG.png", // Fallback image
             }}
             style={styles.avatar}
           />

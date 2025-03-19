@@ -7,7 +7,12 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { CreditCard, Lock, CheckCircle } from "lucide-react-native";
+import {
+  CreditCard,
+  Lock,
+  CheckCircle,
+  MessageCircle,
+} from "lucide-react-native";
 import ProgressBar from "../../components/ProgressBar";
 import Card from "../../components/cards/ProcessCard";
 import { RootState } from "@/store";
@@ -15,7 +20,8 @@ import { useSelector } from "react-redux";
 import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { router, useLocalSearchParams } from "expo-router";
-import { BACKEND_URL } from "@/config";
+import axiosInstance, { BACKEND_URL } from "@/config";
+import { navigateToChat } from "@/services/chatService";
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();

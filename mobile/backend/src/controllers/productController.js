@@ -133,21 +133,57 @@ const verifyProduct = async (req, res) => {
 };
 
 const confirmProduct = async (req, res) => {
-  const { orderId } = req.body;
+  const { orderId, userId, note } = req.body;
+  const status = "CONFIRMED";
 
   try {
     const updatedOrder = await prisma.goodsProcess.update({
       where: { orderId: parseInt(orderId) },
       data: {
-        status: "CONFIRMED",
+        status: "INITIALIZED",
       },
     });
 
-    res.status(200).json({
-      success: true,
-      message: "Product verified successfully",
-      data: updatedOrder,
+    // Get current process
+    const currentProcess = await prisma.goodsProcess.findUnique({
+      where: { orderId: parseInt(orderId) },
     });
+
+    // Update process and create event
+    const updatedProcess = await prisma.goodsProcess.update({
+      where: { orderId: parseInt(orderId) },
+      data: {
+        status,
+        updatedAt: new Date(),
+        events: {
+          create: {
+            fromStatus: currentProcess.status,
+            toStatus: status,
+            changedByUserId: parseInt(userId),
+            note,
+            createdAt: new Date(),
+          },
+        },
+      },
+      include: {
+        events: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          include: {
+            changedByUser: true,
+          },
+        },
+        order: {
+          include: {
+            request: true,
+            traveler: true,
+          },
+        },
+      },
+    });
+
+    res.json({ success: true, data: updatedProcess });
   } catch (error) {
     console.error("Error confirming product:", error);
     res.status(500).json({

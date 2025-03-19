@@ -13,8 +13,8 @@ import { STRIPE_PUBLISHABLE_KEY } from "@/config";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
-import { AuthProvider } from '@/context/AuthContext';
-import { SponsorshipProcessProvider } from '@/context/SponsorshipProcessContext';
+import { AuthProvider } from "@/context/AuthContext";
+import { SponsorshipProcessProvider } from "@/context/SponsorshipProcessContext";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -47,7 +47,9 @@ export default function RootLayout() {
                 merchantIdentifier="merchant.com.wassalha"
               >
                 {!loadingComplete ? (
-                  <MainLoading onLoadingComplete={() => setLoadingComplete(true)} />
+                  <MainLoading
+                    onLoadingComplete={() => setLoadingComplete(true)}
+                  />
                 ) : !animationComplete ? (
                   <WelcomeAnimation
                     onAnimationComplete={() => setAnimationComplete(true)}
@@ -55,8 +57,14 @@ export default function RootLayout() {
                 ) : (
                   <Stack>
                     {/* Optionally define specific screens if needed */}
-                    <Stack.Screen name="auth/signup" options={{ title: "Sign Up" }} />
-                    <Stack.Screen name="auth/login" options={{ title: "Log In" }} />
+                    <Stack.Screen
+                      name="auth/signup"
+                      options={{ title: "Sign Up" }}
+                    />
+                    <Stack.Screen
+                      name="auth/login"
+                      options={{ title: "Log In" }}
+                    />
                     <Stack.Screen name="home" />
                     <Stack.Screen
                       name="auth/ResetPassword"
@@ -109,9 +117,18 @@ export default function RootLayout() {
                       name="test/Terms&&Conditions"
                       options={{ title: "terms n conditions" }}
                     />
-                    <Stack.Screen name="test/Travel" options={{ title: "Travel" }} />
-                    <Stack.Screen name="test/Pickup" options={{ title: "Pickup" }} />
-                    <Stack.Screen name="test/chat" options={{ title: "Chat" }} />
+                    <Stack.Screen
+                      name="test/Travel"
+                      options={{ title: "Travel" }}
+                    />
+                    <Stack.Screen
+                      name="test/Pickup"
+                      options={{ title: "Pickup" }}
+                    />
+                    <Stack.Screen
+                      name="test/chat"
+                      options={{ title: "Chat" }}
+                    />
                     <Stack.Screen
                       name="verification/start"
                       options={{ title: "verification" }}
@@ -209,7 +226,7 @@ export default function RootLayout() {
                       name="sponsorshipTrack/deliveryBuyer"
                       options={{ title: "Delivery" }}
                     />
-                    
+
                     <Stack.Screen
                       name="sponsorshipTrack/initializationSponsor"
                       options={{ title: "Sponsorship Details" }}
