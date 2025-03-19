@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import ProgressBar from "../../components/ProgressBar";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react"; // Added useRef
 import {
   View,
   Text,
@@ -22,8 +22,7 @@ import { MapPin, CheckCircle, AlertCircle, MessageCircle } from "lucide-react-na
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { usePickupActions } from "../../hooks/usePickupActions";
 import { QRCodeModal } from "../pickup/QRCodeModal";
-import io from "socket.io-client";
-// import { BarCodeScanner } from "expo-barcode-scanner"; // Left commented as in original
+import io, { Socket } from "socket.io-client"; // Updated import to include Socket type
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -50,57 +49,75 @@ export default function PickupTraveler() {
   const [showScanner, setShowScanner] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
-  const { handleAccept, showStoredQRCode, showQRCode, setShowQRCode, qrCodeData } = usePickupActions(
-    pickups,
-    setPickups,
-    userId
-  );
+  const { handleAccept, showStoredQRCode, showQRCode, setShowQRCode, qrCodeData, handleCancel } = usePickupActions(
+      pickups,
+      setPickups,
+      userId
+    );
 
-  // Socket.IO setup
+  // Socket.IO setup with useRef
+  const socketRef = useRef<Socket | null>(null);
+
   useEffect(() => {
-    const socket = io(`${SOCKET_URL}/pickup`, { // Fixed namespace
-      transports: ["websocket"],
-    });
+    if (!socketRef.current) {
+      socketRef.current = io(`${SOCKET_URL}/pickup`, {
+        transports: ["websocket"],
+      });
 
-    socket.on("connect", () => {
-      console.log("✅ Connected to Socket.IO server (PickupTraveler)");
+      socketRef.current.on("connect", () => {
+        console.log("✅ Connected to Socket.IO server (PickupTraveler)");
+        pickups.forEach((pickup) => {
+          const room = `pickup:${pickup.id}`;
+          socketRef.current?.emit("joinPickupRoom", pickup.id);
+          console.log(`Joined room: ${room}`);
+        });
+      });
+
+      socketRef.current.on("connect_error", (error) => {
+        console.error("❌ Socket.IO connection error:", error.message);
+      });
+
+      socketRef.current.on("pickupAccepted", (updatedPickup: Pickup) => {
+        console.log("✅ Received pickupAccepted (PickupTraveler):", updatedPickup);
+        setPickups((prev) =>
+          prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
+        );
+      });
+
+      socketRef.current.on("suggestionUpdate", (data: Pickup) => {
+        console.log("📩 Received suggestionUpdate (PickupTraveler):", data);
+        setPickups((prev) => {
+          const updatedPickups = prev.map((p) => (p.id === data.id ? data : p));
+          console.log("Updated pickups in PickupTraveler:", updatedPickups);
+          return updatedPickups;
+        });
+        // Alert.alert("Update", `Pickup #${data.id} has been updated.`); // Uncomment if needed
+      });
+
+      socketRef.current.on("statusUpdate", (updatedPickup: Pickup) => {
+        console.log("🔄 Received statusUpdate (PickupTraveler):", updatedPickup);
+        setPickups((prev) =>
+          prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
+        );
+        // Alert.alert("Status Updated", `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`);
+      });
+
+      socketRef.current.on("disconnect", () => {
+        console.log("❌ Disconnected from Socket.IO server (PickupTraveler)");
+      });
+    }
+
+    if (socketRef.current?.connected) {
       pickups.forEach((pickup) => {
         const room = `pickup:${pickup.id}`;
-        socket.emit("joinPickupRoom", pickup.id); // Backend expects pickupId
+        socketRef.current?.emit("joinPickupRoom", pickup.id);
         console.log(`Joined room: ${room}`);
       });
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error("❌ Socket.IO connection error:", error.message);
-    });
-
-
-
-    socket.on("pickupAccepted", (updatedPickup: Pickup) => {
-      console.log("✅ Received pickupAccepted (PickupTraveler):", updatedPickup);
-      setPickups((prev) =>
-        prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
-      );
-    });
-    socket.on("suggestionUpdate", (data: any) => {
-      console.log("📩 Received suggestionUpdate (Pickup):", data);
-      Alert.alert("Update", `Pickup #${data.pickupId} has been updated.`);
-    });
-    socket.on("statusUpdate", (updatedPickup: Pickup) => {
-      console.log("🔄 Received statusUpdate (PickupTraveler):", updatedPickup);
-      setPickups((prev) =>
-        prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
-      );
-      Alert.alert("Status Updated", `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("❌ Disconnected from Socket.IO server (PickupTraveler)");
-    });
+    }
 
     return () => {
-      socket.disconnect();
+      socketRef.current?.disconnect();
+      socketRef.current = null;
     };
   }, [pickups]);
 
@@ -144,28 +161,7 @@ export default function PickupTraveler() {
     setShowPickup(true);
   };
 
-  const handleCancel = async (pickupId: number): Promise<void> => {
-    try {
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) throw new Error("No authentication token found");
-
-      await axiosInstance.put(
-        "/api/pickup/status",
-        { pickupId, newStatus: "CANCELLED" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      Alert.alert("Success", "Pickup cancelled!");
-      setPickups((prev) =>
-        prev.map((pickup) =>
-          pickup.id === pickupId ? { ...pickup, status: "CANCELLED" } : pickup
-        )
-      );
-    } catch (error) {
-      console.error("Error cancelling pickup:", error);
-      Alert.alert("Error", "Failed to cancel pickup. Please try again.");
-    }
-  };
+  
 
   const handleUpdateStatus = async (pickupId: number, newStatus: Pickup["status"]): Promise<void> => {
     try {
@@ -265,6 +261,7 @@ export default function PickupTraveler() {
   };
 
   const isRequester = (pickup: Pickup) => console.log("pickup", pickup);
+
   const renderItem = ({ item }: { item: Pickup }) => {
     const userIsRequester = isRequester(item);
 
@@ -453,7 +450,7 @@ export default function PickupTraveler() {
               </Text>
             </View>
           )}
-          keyExtractor={(item) => item.id.toString()} // Adjusted to string
+          keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.suggestionsList}
         />
       )}
@@ -482,7 +479,7 @@ export default function PickupTraveler() {
       {showSuggestions ? (
         renderSuggestions()
       ) : showPickup ? (
-        <Pickups pickupId={pickupId} pickups={pickups} setPickups={setPickups}/>
+        <Pickups pickupId={pickupId} pickups={pickups} setPickups={setPickups} />
       ) : (
         <>
           <View style={styles.content}>
@@ -502,7 +499,7 @@ export default function PickupTraveler() {
             <FlatList
               data={pickups}
               renderItem={renderItem}
-              keyExtractor={(item: any) => item.id.toString()} // Adjusted to string
+              keyExtractor={(item: any) => item.id.toString()}
               refreshing={isLoading}
               onRefresh={fetchPickups}
               contentContainerStyle={styles.listContainer}
@@ -558,26 +555,7 @@ export default function PickupTraveler() {
         visible={showScanner}
         onRequestClose={() => setShowScanner(false)}
       >
-        {/* <View style={styles.scannerOverlay}>
-          {hasPermission === null ? (
-            <Text style={styles.scannerText}>Requesting camera permission...</Text>
-          ) : hasPermission === false ? (
-            <Text style={styles.scannerText}>Camera permission denied</Text>
-          ) : (
-            <BarCodeScanner
-              onBarCodeScanned={handleScan}
-              style={StyleSheet.absoluteFillObject}
-            />
-          )}
-          <BaseButton
-            variant="primary"
-            size="small"
-            style={styles.cancelModalButton}
-            onPress={() => setShowScanner(false)}
-          >
-            Cancel
-          </BaseButton>
-        </View> */}
+        {/* Scanner modal content remains commented out as in original */}
       </Modal>
     </ScrollView>
   );
@@ -651,14 +629,14 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   chatIconButton: {
     padding: 8,
     marginRight: 8,
     borderRadius: 20,
-    backgroundColor: "#e0f2fe", // Light blue background
+    backgroundColor: "#e0f2fe",
   },
   suggestionsLink: {
     paddingVertical: 4,

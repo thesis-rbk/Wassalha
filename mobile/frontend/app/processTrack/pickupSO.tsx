@@ -37,7 +37,7 @@ export default function PickupOwner() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const { handleAccept, showStoredQRCode, showQRCode, setShowQRCode, qrCodeData } = usePickupActions(
+  const { handleAccept, showStoredQRCode, showQRCode, setShowQRCode, qrCodeData, handleCancel } = usePickupActions(
     pickups,
     setPickups,
     userId
@@ -75,11 +75,11 @@ export default function PickupOwner() {
       });
 
       socketRef.current.on("suggestionUpdate", (data: Pickup) => {
-        console.log("📩 Received suggestionUpdate (Pickup):", data);
+        console.log("📩 Received suggestionUpdate (Pickup) frontend SO:", data);
         setPickups((prev) =>
           prev.map((p) => (p.id === data.id ? data : p))
         );
-        Alert.alert("Update", `Pickup #${data.id} has been updated.`);
+        // Alert.alert("Update", `Pickup #${data.id} has been updated.`);
       });
 
       socketRef.current.on("statusUpdate", (updatedPickup: Pickup) => {
@@ -87,7 +87,7 @@ export default function PickupOwner() {
         setPickups((prev) =>
           prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
         );
-        Alert.alert("Status Updated", `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`);
+        // Alert.alert("Status Updated", `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`);
       });
 
       socketRef.current.on("disconnect", () => {
@@ -139,28 +139,7 @@ export default function PickupOwner() {
     }
   };
 
-  const handleCancel = async (pickupId: number): Promise<void> => {
-    try {
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) throw new Error("No authentication token found");
-
-      await axiosInstance.put(
-        "/api/pickup/status",
-        { pickupId, newStatus: "CANCELLED" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      Alert.alert("Success", "Pickup cancelled!");
-      setPickups((prev) =>
-        prev.map((pickup) =>
-          pickup.id === pickupId ? { ...pickup, status: "CANCELLED" } : pickup
-        )
-      );
-    } catch (error) {
-      console.error("Error cancelling pickup:", error);
-      Alert.alert("Error", "Failed to cancel pickup. Please try again.");
-    }
-  };
+ 
 
   const handleSuggest = async (pickupId: number): Promise<void> => {
     setPickupId(pickupId);
