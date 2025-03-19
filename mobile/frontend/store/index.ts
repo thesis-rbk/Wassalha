@@ -1,26 +1,29 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './authSlice';
-import notificationsReducer from './notificationsSlice';
-import chatReducer from './chatSlice';
+import { configureStore } from "@reduxjs/toolkit";
+import authReducer from "./authSlice";
+import notificationsReducer from "./notificationsSlice";
+import chatReducer from "./chatSlice";
+import processTrackReducer from "./processTrackSlice";
 
-console.log('Starting store setup...');
-console.log('authReducer:', authReducer);
+console.log("Starting store setup...");
+console.log("authReducer:", authReducer);
 
-if (typeof authReducer !== 'function') {
-  throw new Error('authReducer is not a function - check authSlice export');
+if (typeof authReducer !== "function") {
+  throw new Error("authReducer is not a function - check authSlice export");
 }
 
 const reducerConfig = {
   auth: authReducer,
   notifications: notificationsReducer,
   chat: chatReducer,
+  processTrack: processTrackReducer,
 };
-console.log('Reducer config:', reducerConfig);
+console.log("Reducer config:", reducerConfig);
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     notifications: notificationsReducer,
     chat: chatReducer,
+    processTrack: processTrackReducer,
   },
 });
 

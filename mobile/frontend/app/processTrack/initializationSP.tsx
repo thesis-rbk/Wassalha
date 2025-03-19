@@ -27,7 +27,7 @@ import {
   Wallet,
   Clock,
 } from "lucide-react-native";
-import { BACKEND_URL } from "@/config";
+import { BACKEND_URL, SOCKET_URL } from "@/config";
 import axiosInstance from "@/config";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
@@ -44,6 +44,7 @@ import { Picker } from "@react-native-picker/picker";
 // import { useRoleDetection } from "@/hooks/useRoleDetection";
 import Card from "@/components/cards/ProcessCard";
 import { useNotification } from "@/context/NotificationContext";
+import { io } from "socket.io-client";
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -90,6 +91,8 @@ export default function InitializationSP() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
   const { sendNotification } = useNotification();
+  const [socket, setSocket] = useState<any>(null); // Socket.IO state
+  const [offerAccepted, setOfferAccepted] = useState(false); // Track offer acceptance
 
   console.log("kjslkdsldslsd", params);
 
@@ -149,6 +152,53 @@ export default function InitializationSP() {
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    const newSocket = io(`${SOCKET_URL}/processTracking`, {
+      transports: ["websocket"],
+    });
+
+    newSocket.on("connect", () => {
+      console.log("✅ Connected to Socket.IO server (InitializationSP)");
+    });
+
+    newSocket.on("connect_error", (error: any) => {
+      console.error("❌ Socket.IO connection error:", error.message);
+    });
+
+    newSocket.on("disconnect", () => {
+      console.log("❌ Disconnected from Socket.IO server (InitializationSP)");
+    });
+
+    // Listen for offerAccepted event
+    newSocket.on("offerAccepted", (data: any) => {
+      if (data.orderId === params.idOrder) {
+        setOfferAccepted(true); // Update state to reflect offer acceptance
+        Alert.alert(
+          "Offer Accepted",
+          "The requester has accepted your offer!",
+          [
+            {
+              text: "Proceed to Verification",
+              onPress: () => {
+                router.replace({
+                  pathname: "/processTrack/verificationSP",
+                  params: params,
+                });
+              },
+            },
+          ]
+        );
+      }
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [params.idOrder]);
 
   useEffect(() => {
     fetchRequestDetails();

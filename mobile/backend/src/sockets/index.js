@@ -9,7 +9,8 @@ const {
   authenticateSocket,
   setIO,
 } = require("./chat/chatSocket");
-const pickupSocket = require("./pickupSocket/pickupSocket"); // Adjust path if needed
+const pickupSocket = require("./pickupSocket/pickupSocket");
+const processTrackingSocket = require("./processTracking/processTrackingSocket"); // Adjust path if needed
 
 // ADD THIS: Create authentication middleware for notifications
 const jwt = require("jsonwebtoken");
@@ -61,6 +62,7 @@ const initializeSocket = (server) => {
   const tracking = io.of("/tracking"); // Tracking channel
   const chat = io.of("/chat"); // Chat channel
   const pickup = io.of("/pickup"); // Pickup channel
+  const processTracking = io.of("/processTracking"); // Process Tracking channel
 
   // Handle connections to notification namespace
   notifications
@@ -91,6 +93,12 @@ const initializeSocket = (server) => {
   pickup.on("connection", (socket) => {
     console.log("🚚 Client connected to pickup:", socket.id);
     pickupSocket(pickup); // Pass the pickup namespace to pickupSocket
+  });
+
+  // Handle connections to pickup namespace
+  processTracking.on("connection", (socket) => {
+    console.log("🚚 Client connected to process Tracking:", socket.id);
+    processTrackingSocket(processTracking); // Pass the processTracking namespace to processTrackingSocket
   });
 
   return io;

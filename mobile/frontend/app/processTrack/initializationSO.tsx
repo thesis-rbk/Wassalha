@@ -21,13 +21,14 @@ import {
   CheckCircle,
   Award,
 } from "lucide-react-native";
-import axiosInstance from "@/config";
+import axiosInstance, { SOCKET_URL } from "@/config";
 import ProgressBar from "@/components/ProgressBar";
 import { BACKEND_URL } from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useNotification } from "@/context/NotificationContext";
+import { io } from "socket.io-client";
 
 export default function InitializationSO() {
   const params = useLocalSearchParams();
@@ -41,6 +42,7 @@ export default function InitializationSO() {
   const [processing, setProcessing] = useState(false);
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
+  const [socket, setSocket] = useState<any>(null);
 
   // Progress steps
   const progressSteps = [
@@ -49,6 +51,31 @@ export default function InitializationSO() {
     { id: 3, title: "Payment", icon: "payment" },
     { id: 4, title: "Pickup", icon: "pickup" },
   ];
+
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    const newSocket = io(`${SOCKET_URL}/processTracking`, {
+      transports: ["websocket"],
+    });
+
+    newSocket.on("connect", () => {
+      console.log("✅ Connected to Socket.IO server (InitializationSO)");
+    });
+
+    newSocket.on("connect_error", (error) => {
+      console.error("❌ Socket.IO connection error:", error.message);
+    });
+
+    newSocket.on("disconnect", () => {
+      console.log("❌ Disconnected from Socket.IO server (InitializationSO)");
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
 
   // Load user data
   useEffect(() => {
@@ -86,6 +113,34 @@ export default function InitializationSO() {
   useEffect(() => {
     fetchOrderDetails();
     console.log("InitializationSO params:", { orderId, processId, params });
+    ///////////////
+    // const socket = io(`${SOCKET_URL}/processTracking`, {
+    //   // Fixed namespace
+    //   transports: ["websocket"],
+    // });
+
+    // socket.on("connect", () => {
+    //   console.log(
+    //     "✅ Connected to Socket.IO server (InitializationSO)",
+    //     socket.id
+    //   );
+    //   const room = `Order:${order.id}`;
+    //   socket.emit("offerAccepted", order.id); // Backend expects orderId
+    //   console.log(`Joined room: ${room}`);
+    // });
+
+    // socket.on("connect_error", (error) => {
+    //   console.error("❌ Socket.IO connection error:", error.message);
+    // });
+
+    // socket.on("disconnect", () => {
+    //   console.log("❌ Disconnected from Socket.IO server (InitializationSO)");
+    // });
+
+    // return () => {
+    //   socket.disconnect();
+    // };
+    //////////////
   }, [orderId]);
 
   const fetchOrderDetails = async () => {
@@ -133,6 +188,14 @@ export default function InitializationSO() {
             orderId: params.idOrder,
           },
         });
+
+        // Emit real-time event to notify the traveler
+        if (socket) {
+          socket.emit("offerAccepted", {
+            orderId: orderId,
+            travelerId: params.travelerId,
+          });
+        }
 
         sendNotification("offer_response", {
           travelerId: params.travelerId,

@@ -31,7 +31,7 @@ export default function Travel() {
         goodsId: 3,
       });
 
-      await navigateToChat(requesterId, providerId, goodsId, router, {
+      await navigateToChat(requesterId, providerId, goodsId, {
         orderId: 1, // Using a default order ID
         goodsName: "Test Item",
       });
