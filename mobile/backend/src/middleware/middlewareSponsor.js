@@ -13,9 +13,13 @@ const uerSPONSOR = async (req, res, next) => {
         const user = await prisma.serviceProvider.findUnique({
             where: { userId: decoded.id },
         });
-        console.log("user", user);
-        req.user = user;
-        next();
+        if (!user) {
+            req.user = false;
+            next()
+        } else {
+            req.user = user;
+            next();
+        }
     } catch (error) {
         console.error('Authentication error:', error);
         return res.status(401).json({

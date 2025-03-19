@@ -10,8 +10,6 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-
-
 const { width } = Dimensions.get('window');
 
 export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimationProps) {
@@ -161,16 +159,24 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     color: 'white',
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 36,
+    fontWeight: '700', // You can increase weight for more emphasis
     marginBottom: 10,
-    fontFamily: 'Lobster-Regular',
+    fontFamily: 'Roboto-Bold', // You can change to a better font
+    letterSpacing: 1, // Adds space between letters
+    textShadowColor: 'rgba(0, 0, 0, 0.2)', // Adds subtle shadow
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   toText: {
     color: 'white',
-    fontSize: 24,
+    fontSize: 28,
     marginBottom: 10,
-    fontFamily: 'Lobster-Regular',
+    fontFamily: 'Roboto-Regular',
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   wassalhaContainer: {
     flexDirection: 'row',
@@ -179,8 +185,12 @@ const styles = StyleSheet.create({
   },
   wassalhaLetter: {
     color: 'white',
-    fontSize: 48,
-    fontWeight: 'bold',
-    fontFamily: 'Pacifico',
+    fontSize: 56,
+    fontWeight: '700', // Make it bold for better emphasis
+    fontFamily: 'Pacifico', // Or another fancy font
+    letterSpacing: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
 });

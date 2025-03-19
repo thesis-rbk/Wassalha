@@ -24,7 +24,7 @@ export const getSocket = async (namespace: string): Promise<Socket | null> => {
     }
 
     console.log(`🔄 Creating new ${namespace} socket connection`);
-    
+
     // Create socket with authentication
     const socket = io(`${SOCKET_URL}/${namespace}`, {
       auth: { token },
@@ -62,7 +62,7 @@ export const connectSocket = (namespace: string): void => {
     console.log(`⚠️ No socket found for ${namespace}`);
     return;
   }
-  
+
   if (!activeSockets[namespace].connected) {
     console.log(`🔄 Reconnecting ${namespace} socket...`);
     activeSockets[namespace].connect();
@@ -74,7 +74,7 @@ export const connectSocket = (namespace: string): void => {
  */
 export const cleanupSockets = (): void => {
   console.log('🧹 Cleaning up all socket connections');
-  
+
   Object.keys(activeSockets).forEach(namespace => {
     if (activeSockets[namespace]) {
       console.log(`🔌 Disconnecting ${namespace} socket`);

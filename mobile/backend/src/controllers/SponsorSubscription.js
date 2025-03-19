@@ -330,8 +330,8 @@ const sponsor = {
     checkSponsor: async (req, res) => {
         const sponsorId = req.user.id
         try {
-            if (sponsorId === null) {
-                return res.status(200).send(false)
+            if (!sponsorId) {
+                res.status(200).send(false)
             } else {
                 res.status(200).send(true)
             }
