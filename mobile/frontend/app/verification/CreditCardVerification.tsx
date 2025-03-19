@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
-import { CreditCard } from 'lucide-react-native';
+import { CreditCard, Shield, Lock } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import axiosInstance from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
-const [token, setToken] = useState<null | string>(null);
-
 
 const CreditCardVerification = () => {
   const router = useRouter();
@@ -188,84 +187,119 @@ const CreditCardVerification = () => {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <CreditCard size={40} color={Colors.light.primary} />
-        <ThemedText style={styles.title}>Credit Card Verification</ThemedText>
-        <ThemedText style={styles.subtitle}>
-          Add your credit card details for verification
+      <LinearGradient
+        colors={['#4F46E5', '#7C3AED']}
+        style={styles.header}
+      >
+        <Shield size={32} color="#FFF" />
+        <ThemedText style={styles.headerTitle}>Card Verification</ThemedText>
+        <ThemedText style={styles.headerSubtitle}>
+          Add your credit card details securely
         </ThemedText>
-      </View>
+      </LinearGradient>
 
-      <View style={styles.form}>
-        <View style={styles.inputGroup}>
-          <ThemedText style={styles.label}>Card Number</ThemedText>
-          <TextInput
-            style={styles.input}
-            placeholder="1234 5678 9012 3456"
-            placeholderTextColor="#999"
-            value={cardNumber}
-            onChangeText={handleCardNumberChange}
-            keyboardType="numeric"
-            maxLength={19}
-          />
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.cardPreview}>
+          <LinearGradient
+            colors={['#1E293B', '#334155']}
+            style={styles.cardBackground}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <CreditCard size={32} color="#FFF" style={styles.cardIcon} />
+            <ThemedText style={styles.cardNumber}>
+              {cardNumber || '•••• •••• •••• ••••'}
+            </ThemedText>
+            <View style={styles.cardDetails}>
+              <View>
+                <ThemedText style={styles.cardLabel}>CARDHOLDER NAME</ThemedText>
+                <ThemedText style={styles.cardValue}>
+                  {cardholderName || 'YOUR NAME'}
+                </ThemedText>
+              </View>
+              <View>
+                <ThemedText style={styles.cardLabel}>EXPIRES</ThemedText>
+                <ThemedText style={styles.cardValue}>
+                  {expiryDate || 'MM/YY'}
+                </ThemedText>
+              </View>
+            </View>
+          </LinearGradient>
         </View>
 
-        <View style={styles.row}>
-          <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
-            <ThemedText style={styles.label}>Expiry Date</ThemedText>
+        <View style={styles.form}>
+          <View style={styles.inputGroup}>
+            <ThemedText style={styles.label}>Card Number</ThemedText>
             <TextInput
               style={styles.input}
-              placeholder="MM/YY"
-              placeholderTextColor="#999"
-              value={expiryDate}
-              onChangeText={handleExpiryDateChange}
+              placeholder="1234 5678 9012 3456"
+              placeholderTextColor="#94A3B8"
+              value={cardNumber}
+              onChangeText={handleCardNumberChange}
               keyboardType="numeric"
-              maxLength={5}
+              maxLength={19}
             />
           </View>
 
-          <View style={[styles.inputGroup, { flex: 1 }]}>
-            <ThemedText style={styles.label}>CVV</ThemedText>
+          <View style={styles.row}>
+            <View style={[styles.inputGroup, { flex: 1, marginRight: 12 }]}>
+              <ThemedText style={styles.label}>Expiry Date</ThemedText>
+              <TextInput
+                style={styles.input}
+                placeholder="MM/YY"
+                placeholderTextColor="#94A3B8"
+                value={expiryDate}
+                onChangeText={handleExpiryDateChange}
+                keyboardType="numeric"
+                maxLength={5}
+              />
+            </View>
+
+            <View style={[styles.inputGroup, { flex: 1 }]}>
+              <ThemedText style={styles.label}>CVV</ThemedText>
+              <TextInput
+                style={styles.input}
+                placeholder="123"
+                placeholderTextColor="#94A3B8"
+                value={cvv}
+                onChangeText={handleCvvChange}
+                keyboardType="numeric"
+                maxLength={3}
+                secureTextEntry
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <ThemedText style={styles.label}>Cardholder Name</ThemedText>
             <TextInput
               style={styles.input}
-              placeholder="123"
-              placeholderTextColor="#999"
-              value={cvv}
-              onChangeText={handleCvvChange}
-              keyboardType="numeric"
-              maxLength={3}
-              secureTextEntry
+              placeholder="Name as shown on card"
+              placeholderTextColor="#94A3B8"
+              value={cardholderName}
+              onChangeText={setCardholderName}
+              autoCapitalize="characters"
             />
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <ThemedText style={styles.label}>Cardholder Name</ThemedText>
-          <TextInput
-            style={styles.input}
-            placeholder="John Doe"
-            placeholderTextColor="#999"
-            value={cardholderName}
-            onChangeText={setCardholderName}
-          />
-        </View>
-      </View>
-
-      <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[styles.submitButton, loading && styles.submitButtonDisabled]}
           onPress={handleSubmit}
           disabled={loading}
         >
-          <ThemedText style={styles.buttonText}>
+          <ThemedText style={styles.submitButtonText}>
             {loading ? 'Verifying...' : 'Verify Card'}
           </ThemedText>
         </TouchableOpacity>
-      </View>
 
-      <ThemedText style={styles.disclaimer}>
-        Your card details are securely encrypted and will only be used for verification purposes.
-      </ThemedText>
+        <View style={styles.securityNote}>
+          <Lock size={16} color="#64748B" />
+          <ThemedText style={styles.securityText}>
+            Your card details are encrypted and secure
+          </ThemedText>
+        </View>
+      </ScrollView>
     </ThemedView>
   );
 };
@@ -273,68 +307,115 @@ const CreditCardVerification = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: '#F8FAFC',
   },
   header: {
+    padding: 24,
     alignItems: 'center',
-    marginBottom: 30,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  title: {
+  headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 8,
+    fontWeight: '700',
+    color: '#FFF',
+    marginTop: 12,
   },
-  subtitle: {
+  headerSubtitle: {
     fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 8,
     textAlign: 'center',
-    opacity: 0.7,
+  },
+  content: {
+    padding: 20,
+  },
+  cardPreview: {
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  cardBackground: {
+    padding: 24,
+    borderRadius: 16,
+    height: 200,
+  },
+  cardIcon: {
+    marginBottom: 24,
+  },
+  cardNumber: {
+    fontSize: 22,
+    color: '#FFF',
+    letterSpacing: 2,
+    marginBottom: 24,
+  },
+  cardDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  cardLabel: {
+    fontSize: 10,
+    color: '#94A3B8',
+    marginBottom: 4,
+  },
+  cardValue: {
+    fontSize: 14,
+    color: '#FFF',
+    textTransform: 'uppercase',
   },
   form: {
-    marginBottom: 30,
+    marginBottom: 24,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   label: {
     fontSize: 14,
+    color: '#64748B',
     marginBottom: 8,
     fontWeight: '500',
   },
   input: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 15,
-    fontSize: 16,
+    backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: '#1E293B',
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    marginBottom: 16,
   },
-  footer: {
-    marginTop: 'auto',
-  },
-  button: {
+  submitButton: {
     backgroundColor: Colors.light.primary,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
+    marginBottom: 16,
   },
-  buttonDisabled: {
-    backgroundColor: '#cccccc',
+  submitButtonDisabled: {
+    opacity: 0.5,
   },
-  buttonText: {
+  submitButtonText: {
+    color: '#FFF',
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: '600',
   },
-  disclaimer: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 16,
-    opacity: 0.7,
+  securityNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  securityText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#64748B',
   },
 });
 

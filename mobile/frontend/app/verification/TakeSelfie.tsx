@@ -150,18 +150,20 @@ const TakeSelfie = () => {
           >
             <View style={styles.overlay}>
               <View style={[styles.faceFrame, faceInFrame ? styles.frameMatch : styles.frameNoMatch]}>
-                {faceDetected && (
-                  <MaterialIcons 
-                    name="face" 
-                    size={40} 
-                    color={faceInFrame ? "green" : "yellow"} 
-                  />
-                )}
-                <ThemedText style={styles.guideText}>
-                  {faceInFrame 
-                    ? (manualMode ? "Ready to capture!" : "Perfect! Taking photo...") 
-                    : "Position your face in the circle"}
-                </ThemedText>
+                <View style={styles.cardShape}>
+                  {faceDetected && (
+                    <MaterialIcons 
+                      name="face" 
+                      size={40} 
+                      color={faceInFrame ? "green" : "yellow"} 
+                    />
+                  )}
+                  <ThemedText style={styles.guideText}>
+                    {faceInFrame 
+                      ? (manualMode ? "Ready to capture!" : "Perfect! Taking photo...") 
+                      : "Position your face in the circle"}
+                  </ThemedText>
+                </View>
               </View>
               
               {manualMode && (
@@ -288,6 +290,16 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     width: '90%',
     alignItems: 'center',
+  },
+  cardShape: {
+    width: '90%',
+    height: '90%',
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
 });
 

@@ -21,7 +21,7 @@ export default function SponsorshipScreen() {
     try {
       const accepted = await AsyncStorage.getItem('sponsorshipTermsAccepted');
       if (accepted === 'true') {
-        setHasAcceptedTerms(true);
+        setHasAcceptedTerms(false);
       } else {
         setHasAcceptedTerms(false);
       }
@@ -74,7 +74,7 @@ export default function SponsorshipScreen() {
         
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Globe size={24} color="#0891b2" />
+            <Globe size={24} color="#007BFF" />
             <ThemedText style={styles.cardHeaderText}>Global Community</ThemedText>
           </View>
           
@@ -158,7 +158,7 @@ export default function SponsorshipScreen() {
           <ThemedText style={styles.sectionTitle}>Benefits of Joining</ThemedText>
           
           <View style={styles.benefitCard}>
-            <Shield size={24} color="#0891b2" />
+            <Shield size={24} color="#007BFF" />
             <View style={styles.benefitContent}>
               <ThemedText style={styles.benefitTitle}>Trusted Network</ThemedText>
               <ThemedText style={styles.benefitDescription}>
@@ -168,7 +168,7 @@ export default function SponsorshipScreen() {
           </View>
           
           <View style={styles.benefitCard}>
-            <Globe size={24} color="#0891b2" />
+            <Globe size={24} color="#007BFF" />
             <View style={styles.benefitContent}>
               <ThemedText style={styles.benefitTitle}>Global Reach</ThemedText>
               <ThemedText style={styles.benefitDescription}>
@@ -178,7 +178,7 @@ export default function SponsorshipScreen() {
           </View>
           
           <View style={styles.benefitCard}>
-            <Award size={24} color="#0891b2" />
+            <Award size={24} color="#007BFF" />
             <View style={styles.benefitContent}>
               <ThemedText style={styles.benefitTitle}>Recognition</ThemedText>
               <ThemedText style={styles.benefitDescription}>
@@ -211,97 +211,114 @@ export default function SponsorshipScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
   scrollContent: {
-    padding: 16,
+    padding: 24,
   },
   header: {
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: 32,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#e0f2fe',
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: '#F0F7FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
+    shadowColor: '#007BFF',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 8,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748b',
-    marginBottom: 24,
+    fontSize: 17,
+    color: '#64748B',
+    marginBottom: 32,
+    textAlign: 'center',
+    lineHeight: 24,
   },
   card: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: 24,
     backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#007BFF',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 8,
     overflow: 'hidden',
-    marginBottom: 24,
+    marginBottom: 32,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f0f9ff',
+    padding: 20,
+    backgroundColor: '#F0F7FF',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0f2fe',
+    borderBottomColor: '#E6F0FF',
   },
   cardHeaderText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-    color: '#0891b2',
+    fontSize: 18,
+    fontWeight: '700',
+    marginLeft: 12,
+    color: '#007BFF',
   },
   image: {
     width: '100%',
     height: 180,
   },
   cardContent: {
-    padding: 16,
+    padding: 24,
   },
   cardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginBottom: 16,
   },
   cardDescription: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#4b5563',
-    marginBottom: 16,
+    fontSize: 16,
+    lineHeight: 26,
+    color: '#64748B',
+    marginBottom: 24,
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
-    paddingTop: 16,
+    marginTop: 24,
+    paddingTop: 24,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: '#F1F5F9',
   },
   statItem: {
     alignItems: 'center',
+    flex: 1,
   },
   statNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0891b2',
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#007BFF',
+    marginBottom: 8,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#64748b',
-    marginTop: 4,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   infoSection: {
     marginBottom: 24,
@@ -313,22 +330,26 @@ const styles = StyleSheet.create({
   },
   stepItem: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: 28,
     alignItems: 'flex-start',
   },
   stepNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#0891b2',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#007BFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-    marginTop: 2,
+    marginRight: 16,
+    shadowColor: '#007BFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   stepNumberText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
   },
   stepContent: {
     flex: 1,
@@ -336,27 +357,30 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#1E293B',
     marginBottom: 4,
   },
   stepDescription: {
     fontSize: 14,
-    lineHeight: 20,
-    color: '#4b5563',
+    lineHeight: 22,
+    color: '#64748B',
   },
   benefitsSection: {
     marginBottom: 24,
   },
   benefitCard: {
     flexDirection: 'row',
-    padding: 16,
+    padding: 20,
     backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    borderRadius: 16,
+    marginBottom: 16,
+    shadowColor: '#007BFF',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   benefitContent: {
     marginLeft: 12,
@@ -373,19 +397,24 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   joinButton: {
-    backgroundColor: '#0891b2',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: '#007BFF',
+    borderRadius: 16,
+    paddingVertical: 20,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+    shadowColor: '#007BFF',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
   },
   joinButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginRight: 8,
+    fontSize: 18,
+    fontWeight: '700',
+    marginRight: 12,
   },
   termsNote: {
     textAlign: 'center',

@@ -78,14 +78,14 @@ export default function PaymentSponsor() {
     });
   };
 
-  if (loading) {
-    return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-        <ThemedText style={styles.loadingText}>Loading payment details...</ThemedText>
-      </ThemedView>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <ThemedView style={styles.loadingContainer}>
+  //       <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+  //       <ThemedText style={styles.loadingText}>Loading payment details...</ThemedText>
+  //     </ThemedView>
+  //   );
+  // }
 
   return (
     <ThemedView style={styles.container}>

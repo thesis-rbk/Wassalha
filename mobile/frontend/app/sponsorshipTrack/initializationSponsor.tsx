@@ -85,11 +85,11 @@ export default function InitializationSponsor() {
   }, []);
 
   // Fetch process details
-  useEffect(() => {
-    if (processId) {
-      fetchProcessDetails();
-    }
-  }, [processId]);
+  // useEffect(() => {
+  //   if (processId) {
+  //     fetchProcessDetails();
+  //   }
+  // }, [processId]);
 
   const fetchProcessDetails = async () => {
     try {
@@ -186,14 +186,14 @@ export default function InitializationSponsor() {
     }
   };
 
-  if (loading) {
-    return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-        <ThemedText style={styles.loadingText}>Loading process details...</ThemedText>
-      </ThemedView>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <ThemedView style={styles.loadingContainer}>
+  //       <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+  //       <ThemedText style={styles.loadingText}>Loading process details...</ThemedText>
+  //     </ThemedView>
+  //   );
+  // }
 
   return (
     <ThemedView style={styles.container}>

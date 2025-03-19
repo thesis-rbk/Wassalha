@@ -124,14 +124,14 @@ export default function DeliveryBuyer() {
     }
   };
 
-  if (loading) {
-    return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-        <ThemedText style={styles.loadingText}>Loading delivery details...</ThemedText>
-      </ThemedView>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <ThemedView style={styles.loadingContainer}>
+  //       <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+  //       <ThemedText style={styles.loadingText}>Loading delivery details...</ThemedText>
+  //     </ThemedView>
+  //   );
+  // }
 
   // If delivery is not yet provided
   if (!process.verificationImage) {
