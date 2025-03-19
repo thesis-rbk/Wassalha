@@ -1,26 +1,6 @@
 // mobile/backend/src/sockets/chat/chatSocket.js
 const prisma = require('../../../prisma/index');
 const chatService = require('../../services/chatService');
-
-/**
- * IMPORTANT: This is a temporary authentication bypass
- * 
- * TODO: Implement proper JWT authentication for socket connections
- * 
- * Currently using a simple pass-through authentication to allow development
- * and testing of the chat functionality. This should be replaced with proper
- * token verification before deploying to production.
- * 
- * Security risks of the current implementation:
- * 1. Any client can connect to the socket without authentication
- * 2. No verification of user identity for message sending
- * 3. Potential for message spoofing (sending as another user)
- * 
- * The proper implementation should:
- * 1. Verify JWT tokens from the handshake auth or query
- * 2. Attach the verified user object to the socket
- * 3. Reject connections with invalid or missing tokens
- */
 const authenticateSocket = async (socket, next) => {
   // TEMPORARY: Attach a mock user object to the socket
   // This allows socket.user.id to work in our handlers

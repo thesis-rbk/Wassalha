@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
 import axios from 'axios';
-import AwesomeAlert from 'react-native-awesome-alerts';
 import { useRouter } from 'expo-router';
 import axiosInstance from '../../config';
 import { ThemedView } from '@/components/ThemedView';
@@ -13,7 +12,6 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 const ForgotPassword = () => {
   const router = useRouter();
   const [email, setEmail] = useState<string>('');
-  const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
   const colorScheme = useColorScheme() ?? 'light';
 
   const handleRequestReset = async () => {
@@ -30,8 +28,18 @@ const ForgotPassword = () => {
     try {
       const response = await axiosInstance.post(`/api/users/reset-password/request`, { email });
       if (response.status === 200) {
-        setShowSuccessAlert(true);
-        router.push({ pathname: '/auth/NewPassword', params: { email } });
+        // Replace AwesomeAlert with Alert
+        Alert.alert(
+          'Success',
+          'A reset link has been sent to your email. Check your inbox.',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.push({ pathname: '/auth/NewPassword', params: { email } }),
+            },
+          ],
+          { cancelable: false }
+        );
       }
     } catch (error) {
       console.error('Request reset error:', error);
@@ -74,22 +82,6 @@ const ForgotPassword = () => {
           </ThemedText>
         </ThemedText>
       </ScrollView>
-
-      <AwesomeAlert
-        show={showSuccessAlert}
-        showProgress={false}
-        title="Success"
-        message="A reset link has been sent to your email. Check your inbox."
-        closeOnTouchOutside={false}
-        closeOnHardwareBackPress={false}
-        showConfirmButton={true}
-        confirmText="OK"
-        confirmButtonColor="#00FF00"
-        onConfirmPressed={() => {
-          setShowSuccessAlert(false);
-          router.push('/auth/login');
-        }}
-      />
     </ThemedView>
   );
 };

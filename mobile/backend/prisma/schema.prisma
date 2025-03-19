@@ -254,6 +254,8 @@ model User {
   hasCompletedOnboarding Boolean @default(false)
   role                   Role    @default(USER)
   serviceProviderId      String?
+  resetToken             String?
+  resetTokenExpiry       DateTime?
 
   requests         Request[]
   notifications    Notification[]

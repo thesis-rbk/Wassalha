@@ -1,8 +1,11 @@
+require("dotenv").config();
+
 // Import Socket.IO server and our feature handlers
 const { Server } = require('socket.io');
 const notificationHandlers = require('./notifications/notificationSocket');
 const { trackingHandlers } = require('./tracking/trackingSocket');
 const { chatHandlers, authenticateSocket, setIO } = require('./chat/chatSocket');
+const pickupSocket = require('./pickupSocket/pickupSocket'); // Adjust path if needed
 
 // ADD THIS: Create authentication middleware for notifications
 const jwt = require('jsonwebtoken');
@@ -14,17 +17,12 @@ let io;
 // Authentication middleware for notification sockets
 const authenticateNotificationSocket = async (socket, next) => {
     try {
-        // Get token from handshake auth
         const token = socket.handshake.auth.token;
-        
         if (!token) {
             return next(new Error('Authentication required'));
         }
         
-        // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
-        // Find user in database
         const user = await prisma.user.findUnique({
             where: { id: decoded.id }
         });
@@ -33,7 +31,6 @@ const authenticateNotificationSocket = async (socket, next) => {
             return next(new Error('User not found'));
         }
         
-        // Attach user to socket
         socket.user = user;
         next();
     } catch (error) {
@@ -45,7 +42,6 @@ const authenticateNotificationSocket = async (socket, next) => {
 // Main socket initialization function - takes HTTP server as parameter
 const initializeSocket = (server) => {
     // Create single Socket.IO instance with CORS settings
-    // This is our main socket server that all features will use
     io = new Server(server, {
         cors: {
             origin: "*",     // Allow all origins (modify in production)
@@ -57,30 +53,33 @@ const initializeSocket = (server) => {
     setIO(io);
 
     // Create separate channels (namespaces) for different features
-    // This helps organize different socket functionalities
     const notifications = io.of('/notifications');  // Notification channel
     const tracking = io.of('/tracking');           // Tracking channel
-    const chat = io.of('/chat');                  // Chat channel
+    const chat = io.of('/chat');                   // Chat channel
+    const pickup = io.of('/pickup');               // Pickup channel
 
     // Handle connections to notification namespace
     notifications.use(authenticateNotificationSocket).on('connection', (socket) => {
         console.log('👋 User connected to notifications:', socket.id, 'User:', socket.user.id);
-        // Pass socket to notification handlers to manage notification events
         notificationHandlers(socket);
     });
 
     // Handle connections to tracking namespace
     tracking.on('connection', (socket) => {
         console.log('✈️ Client connected to tracking:', socket.id);
-        // Pass socket to tracking handlers to manage tracking events
         trackingHandlers(socket);
     });
 
     // Handle connections to chat namespace
     chat.use(authenticateSocket).on('connection', (socket) => {
         console.log('💬 Client connected to chat:', socket.id);
-        // Pass socket to chat handlers to manage chat events
         chatHandlers(socket);
+    });
+
+    // Handle connections to pickup namespace
+    pickup.on('connection', (socket) => {
+        console.log('🚚 Client connected to pickup:', socket.id);
+        pickupSocket(pickup); // Pass the pickup namespace to pickupSocket
     });
 
     return io;
