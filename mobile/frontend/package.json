@@ -27,6 +27,7 @@
     "@stripe/stripe-react-native": "^0.43.0",
     "axios": "^1.8.1",
     "base-64": "^1.0.0",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "expo": "~52.0.37",
     "expo-auth-session": "^6.0.3",
