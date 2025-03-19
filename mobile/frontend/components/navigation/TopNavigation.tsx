@@ -6,6 +6,7 @@ import {
   Animated,
   Dimensions,
   TextInput,
+  ScrollView,
 } from 'react-native';
 import {
   Bell,
@@ -128,6 +129,11 @@ export function TopNavigation({
       label: 'Make a report', 
       route: '/reporting-system/create-ticket'
     },
+    { 
+      icon: <PenSquare size={24} color={Colors[colorScheme].text} />,  
+      label: 'Become a traveler', 
+      route: '/traveler/becomeTraveler'
+    },
     { icon: <Users size={24} color={Colors[colorScheme].text} />, label: 'Sponsorship', route: '/test/sponsorShip' },
     { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out', onPress: handleLogout },
   ];
@@ -200,57 +206,63 @@ export function TopNavigation({
           },
         ]}
       >
-        <View style={styles.profileSection}>
-          <View style={styles.profileImage}>
-            <ThemedText style={styles.profileInitial}>
-              {user?.name?.charAt(0) || 'U'}
-            </ThemedText>
-          </View>
-          <View style={styles.profileInfo}>
-            <ThemedText style={styles.profileName}>
-              {user?.name || 'User'}
-            </ThemedText>
-            <TouchableOpacity
-              style={styles.viewProfile}
-              onPress={() => router.push('/profile')}
-            >
-              <ThemedText style={styles.viewProfileText}>
-                View and edit profile
+        <View style={styles.menuContent}>
+          <View style={styles.profileSection}>
+            <View style={styles.profileImage}>
+              <ThemedText style={styles.profileInitial}>
+                {user?.name?.charAt(0) || 'U'}
               </ThemedText>
-              <ChevronRight size={16} color={Colors[colorScheme].text} />
-            </TouchableOpacity>
+            </View>
+            <View style={styles.profileInfo}>
+              <ThemedText style={styles.profileName}>
+                {user?.name || 'User'}
+              </ThemedText>
+              <TouchableOpacity
+                style={styles.viewProfile}
+                onPress={() => router.push('/profile')}
+              >
+                <ThemedText style={styles.viewProfileText}>
+                  View and edit profile
+                </ThemedText>
+                <ChevronRight size={16} color={Colors[colorScheme].text} />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.menuItems}>
-          {menuItems.map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.menuItem}
-              onPress={() => handleRoutes(item)}
-            >
-              {item.icon}
-              <ThemedText style={styles.menuItemText}>{item.label}</ThemedText>
-            </TouchableOpacity>
-          ))}
-        </View>
+          <ScrollView 
+            style={styles.menuItemsContainer}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.menuItemsContent}
+          >
+            {menuItems.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.menuItem}
+                onPress={() => handleRoutes(item)}
+              >
+                {item.icon}
+                <ThemedText style={styles.menuItemText}>{item.label}</ThemedText>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
 
-        <TouchableOpacity style={styles.darkModeToggle} onPress={toggleTheme}>
-          {colorScheme === 'dark' ? (
-            <Sun size={24} color={Colors[colorScheme].text} />
-          ) : (
-            <Moon size={24} color={Colors[colorScheme].text} />
-          )}
-          <ThemedText style={styles.darkModeText}>
-            {colorScheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-          </ThemedText>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.darkModeToggle} onPress={toggleTheme}>
+            {colorScheme === 'dark' ? (
+              <Sun size={24} color={Colors[colorScheme].text} />
+            ) : (
+              <Moon size={24} color={Colors[colorScheme].text} />
+            )}
+            <ThemedText style={styles.darkModeText}>
+              {colorScheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
       </Animated.View>
     </>
   );
 }
 
-// Styles remain the same
+// Updated styles
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
@@ -283,13 +295,19 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: MENU_WIDTH,
     zIndex: 2,
+  },
+  menuContent: {
+    flex: 1,
     paddingTop: 40,
     paddingHorizontal: 20,
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
   },
   profileSection: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 20,
   },
   profileImage: {
     width: 50,
@@ -311,7 +329,7 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 5,
+    marginBottom: 4,
   },
   viewProfile: {
     flexDirection: "row",
@@ -319,18 +337,20 @@ const styles = StyleSheet.create({
   },
   viewProfileText: {
     fontSize: 14,
-    marginRight: 5,
-    color: "#2196F3",
+    marginRight: 4,
   },
-  menuItems: {
+  menuItemsContainer: {
     flex: 1,
+  },
+  menuItemsContent: {
+    paddingBottom: 20,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 15,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.1)",
+    borderBottomColor: "rgba(0,0,0,0.05)",
   },
   menuItemText: {
     fontSize: 16,
@@ -339,21 +359,13 @@ const styles = StyleSheet.create({
   darkModeToggle: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.1)",
+    paddingVertical: 16,
+    marginTop: 10,
+    marginBottom: 20,
   },
   darkModeText: {
     fontSize: 16,
     marginLeft: 15,
-  },
-  searchInput: {
-    flex: 1,
-    height: 40,
-    marginHorizontal: 8,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    backgroundColor: "#e0e0e0",
   },
   notificationContainer: {
     position: 'relative',
@@ -366,13 +378,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     minWidth: 20,
     height: 20,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
   },
   badgeText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: 'bold',
-    paddingHorizontal: 4,
   },
 });

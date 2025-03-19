@@ -1,7 +1,9 @@
 import Card from "@/components/cards/ProcessCard";
 import ProgressBar from "@/components/ProgressBar";
+import axiosInstance from "@/config";
+import { useLocalSearchParams } from "expo-router";
 import { CheckCircle, Bell, Clock, AlertCircle } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -11,9 +13,16 @@ import {
   Switch,
   TouchableOpacity,
 } from "react-native";
+import { TimelineEvent } from "../../types/TimelineEvent";
 
 const PaymentScreen = () => {
+  const params = useLocalSearchParams();
+  const orderId = parseInt(params.idOrder.toString());
+  const requesterName = params.requesterName;
+  const [timelineData, setTimelineData] = useState<TimelineEvent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
   const progressSteps = [
     {
       id: 1,
@@ -25,6 +34,43 @@ const PaymentScreen = () => {
     { id: 3, title: "Payment", icon: "payment", status: "pending" },
     { id: 4, title: "Pickup", icon: "pickup", status: "pending" },
   ];
+
+  useEffect(() => {
+    const fetchTimelineData = async () => {
+      try {
+        const response = await axiosInstance.get(`api/process/${orderId}`);
+        if (response.data.success) {
+          setTimelineData(response.data.data.events);
+          console.log("Timeline Data:!!!!!!!!!!", response.data.data.events);
+        }
+      } catch (error) {
+        console.error("Error fetching timeline data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTimelineData();
+  }, [orderId]);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString(); // Adjust the format as needed
+  };
+
+  let dateEvents: string[] = [];
+  timelineData.map((event, index) =>
+    dateEvents.push(formatDate(event.createdAt))
+  );
+
+  const getInitials = (name: string) => {
+    if (!name) return "??";
+    const names = name.split(" ");
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return names[0][0].toUpperCase();
+  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -46,24 +92,29 @@ const PaymentScreen = () => {
           </View>
 
           <Text style={styles.statusText}>
-            <Text style={{ fontFamily: "Inter-SemiBold" }}>John Smith</Text>{" "}
-            needs to complete the payment within 24 hours. We'll notify you
-            immediately when the payment is confirmed.
+            The requester{" "}
+            <Text style={{ fontFamily: "Inter-SemiBold" }}>
+              {getInitials(requesterName.toString())}
+            </Text>{" "}
+            needs to complete the payment process. We'll notify you immediately
+            when the payment is confirmed.
           </Text>
 
           <View style={styles.timeline}>
             <View style={styles.timelineItem}>
               <View style={[styles.timelineDot, styles.completedDot]} />
               <Text style={styles.timelineText}>
-                Order initialized (May 15, 10:30 AM)
+                Offer initialized: {dateEvents[1]}
               </Text>
             </View>
+
             <View style={styles.timelineItem}>
               <View style={[styles.timelineDot, styles.completedDot]} />
               <Text style={styles.timelineText}>
-                Verification completed (May 15, 11:45 AM)
+                Verification completed: {dateEvents[0]}
               </Text>
             </View>
+
             <View style={styles.timelineItem}>
               <View style={[styles.timelineDot, styles.pendingDot]} />
               <Text style={styles.timelineText}>

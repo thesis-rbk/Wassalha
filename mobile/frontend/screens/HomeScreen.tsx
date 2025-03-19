@@ -65,6 +65,11 @@ export default function HomeScreen() {
       icon: <Crown size={40} color="white" />,
       route: "../verification/fetchAll" as const,
     },
+    {
+      title: "Traveler Posts",
+      icon: <Crown size={40} color="white" />,
+      route: "../goodPost/goodpostpage" as const,
+    },
   ];
 
   const handleCardPress = (service: (typeof services)[0]) => {

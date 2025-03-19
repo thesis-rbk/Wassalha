@@ -1,4 +1,3 @@
-import { User } from './User';
 import { Category } from './Category';
 
 export interface GoodsPost {
@@ -6,7 +5,12 @@ export interface GoodsPost {
     title?: string;
     content?: string;
     travelerId: number;
-    traveler: User;
+    traveler: {
+        firstName: string;
+        lastName: string;
+        gender?: "MALE" | "FEMALE";
+        imageUrl?: string;
+    };
     arrivalDate?: Date;
     availableKg?: number;
     phoneNumber?: string;

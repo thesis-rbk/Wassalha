@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import {
   Home,
   ShoppingBag,
@@ -39,17 +39,12 @@ export function TabBar({
       route: "../orders&requests/order" as Route,
     },
     {
-      name: "",
-      icon: (<View style={{
-        backgroundColor: "#008098",
-        borderRadius: 50,
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}>
-        <Plus size={24} color="white" /> // White icon on colored background
-      </View>),
+      name: "Create",
+      icon: (
+        <View style={styles.plusIconContainer}>
+          <Plus size={24} color="white" />
+        </View>
+      ),
       route: "/productDetails/create-order" as Route,
     },
     {
@@ -68,7 +63,7 @@ export function TabBar({
       onTabPress(tab.name); // Call the parent callback
       router.push(tab.route);
     } catch (err) {
-      console.error("errrrrr from tab", err);
+      console.error("Error navigating from tab:", err);
     }
   };
   return (
