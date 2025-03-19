@@ -243,7 +243,12 @@ export default function RootLayout() {
                       name="sponsorshipTrack/deliverySponsor"
                       options={{ title: "Delivery" }}
                     />
+                    <Stack.Screen
+                      name="pickup/PickupDashboard"
+                      options={{ title: "Pickup" }}
+                    />
                   </Stack>
+                  
                 )}
               </StripeProvider>
             </SponsorshipProcessProvider>
