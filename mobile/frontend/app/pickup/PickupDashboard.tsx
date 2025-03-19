@@ -3,8 +3,8 @@ import { StyleSheet, View, ActivityIndicator } from "react-native";
 import SegmentedControl from "@react-native-segmented-control/segmented-control";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import PickupReceiver from "../processTrack/pickupSO"; 
-import PickupDeliverer from "../processTrack/pickupSP"; 
+import PickupReceiver from "../processTrack/pickupSO";
+import PickupDeliverer from "../processTrack/pickupSP";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 
@@ -47,7 +47,11 @@ export default function PickupDashboard() {
         values={["To Receive", "To Deliver"]}
         selectedIndex={view === "toReceive" ? 0 : 1}
         onChange={(event) => {
-          setView(event.nativeEvent.selectedSegmentIndex === 0 ? "toReceive" : "toDeliver");
+          setView(
+            event.nativeEvent.selectedSegmentIndex === 0
+              ? "toReceive"
+              : "toDeliver"
+          );
         }}
         style={styles.segmentedControl}
         tintColor={Colors[colorScheme].primary}
