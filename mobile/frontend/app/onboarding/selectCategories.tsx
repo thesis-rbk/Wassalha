@@ -5,7 +5,6 @@ import { ThemedText } from "@/components/ThemedText";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useRouter } from "expo-router";
-import { Card } from "@/components/Card";
 import { Category } from "@/types";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
@@ -102,29 +101,28 @@ export default function SelectCategoriesScreen() {
       <ScrollView style={styles.content}>
         <View style={styles.categoriesGrid}>
           {categories.map((category) => (
-            <Card
-              key={category.id} // Use category ID as the key
+            <TouchableOpacity
+              key={category.id}
               style={[
                 styles.categoryCard,
-                selectedCategories.includes(category.id) &&
-                  styles.selectedCategoryCard,
+                {
+                  backgroundColor: selectedCategories.includes(category.id)
+                    ? Colors[colorScheme].primary
+                    : Colors[colorScheme].secondary,
+                },
               ]}
+              onPress={() => toggleCategory(category.id)}
             >
-              <TouchableOpacity
-                style={styles.categoryButton}
-                onPress={() => toggleCategory(category.id)} // Pass category ID to toggle function
+              <ThemedText
+                style={[
+                  styles.categoryText,
+                  selectedCategories.includes(category.id) &&
+                    styles.selectedCategoryText,
+                ]}
               >
-                <ThemedText
-                  style={[
-                    styles.categoryText,
-                    selectedCategories.includes(category.id) &&
-                      styles.selectedCategoryText,
-                  ]}
-                >
-                  {category.name} {/* Render the category name */}
-                </ThemedText>
-              </TouchableOpacity>
-            </Card>
+                {category.name}
+              </ThemedText>
+            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
@@ -182,25 +180,23 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   categoryCard: {
-    width: "48%", // Adjust width to fit two cards per row
-    height: 100, // Adjust height as needed
+    width: "48%", // Two cards per row
+    height: 100, // Fixed height for consistency
     justifyContent: "center",
     alignItems: "center",
-  },
-  selectedCategoryCard: {
-    backgroundColor: Colors.light.primary, // Change to your selected color
-  },
-  categoryButton: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3, // For Android shadow
   },
   categoryText: {
     fontSize: 16,
+    color: "#333333", // Default text color
   },
   selectedCategoryText: {
-    color: "#FFFFFF", // Change to your selected text color
+    color: "#FFFFFF", // Selected text color
     fontWeight: "bold",
   },
   footer: {

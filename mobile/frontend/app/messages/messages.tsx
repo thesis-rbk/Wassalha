@@ -128,7 +128,7 @@ export default function MessagesScreen() {
             source={{
               uri: user.profile?.imageId
                 ? `https://your-backend-url.com/images/${user.profile.imageId}`
-                : "https://images.unsplash.com/photo-1599566150163-29194dcaad36", // Fallback image
+                : "https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-Transparent-Clip-Art-PNG.png", // Fallback image
             }}
             style={styles.avatar}
           />
