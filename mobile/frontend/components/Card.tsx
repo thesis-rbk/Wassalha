@@ -1,11 +1,16 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, GestureResponderEvent } from 'react-native';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
-import { CardProps } from '@/types/CardProps';
+import React from "react";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  GestureResponderEvent,
+} from "react-native";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
+import { CardProps } from "@/types/CardProps";
 
 export function Card({ onPress, children, style }: CardProps) {
-  const colorScheme = useColorScheme() ?? 'light';
+  const colorScheme = useColorScheme() ?? "light";
 
   if (onPress) {
     return (
@@ -15,15 +20,13 @@ export function Card({ onPress, children, style }: CardProps) {
           styles.card,
           {
             backgroundColor: Colors[colorScheme].secondary,
-            shadowColor: colorScheme === 'dark' ? '#000' : '#000',
-            shadowOpacity: colorScheme === 'dark' ? 0.5 : 0.25,
+            shadowColor: colorScheme === "dark" ? "#000" : "#000",
+            shadowOpacity: colorScheme === "dark" ? 0.5 : 0.25,
           },
           style,
         ]}
       >
-        <View>
-          {children}
-        </View>
+        <View>{children}</View>
       </TouchableOpacity>
     );
   }
@@ -35,10 +38,10 @@ export function Card({ onPress, children, style }: CardProps) {
         styles.card,
         {
           backgroundColor: Colors[colorScheme].secondary,
-          shadowColor: colorScheme === 'dark' ? '#000' : '#000',
-          shadowOpacity: colorScheme === 'dark' ? 0.5 : 0.25,
+          shadowColor: colorScheme === "dark" ? "#000" : "#000",
+          shadowOpacity: colorScheme === "dark" ? 0.5 : 0.25,
         },
-        style
+        style,
       ]}
     >
       <View
@@ -46,8 +49,8 @@ export function Card({ onPress, children, style }: CardProps) {
           styles.card,
           {
             backgroundColor: Colors[colorScheme].secondary,
-            shadowColor: colorScheme === 'dark' ? '#000' : '#000',
-            shadowOpacity: colorScheme === 'dark' ? 0.5 : 0.25,
+            shadowColor: colorScheme === "dark" ? "#000" : "#000",
+            shadowOpacity: colorScheme === "dark" ? 0.5 : 0.25,
           },
           style,
         ]}

@@ -27,7 +27,7 @@ import { BACKEND_URL } from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import { useNotification } from '@/context/NotificationContext';
+import { useNotification } from "@/context/NotificationContext";
 
 export default function InitializationSO() {
   const params = useLocalSearchParams();
@@ -125,24 +125,24 @@ export default function InitializationSO() {
         console.log("- Params received:", params);
         console.log("- Notification data:", {
           travelerId: params.travelerId,
-          status: 'ACCEPTED',
+          status: "ACCEPTED",
           requestDetails: {
             requesterId: user?.id,
             goodsName: params.goodsName,
             requestId: params.idRequest,
-            orderId: params.idOrder
-          }
+            orderId: params.idOrder,
+          },
         });
 
-        sendNotification('offer_response', {
+        sendNotification("offer_response", {
           travelerId: params.travelerId,
-          status: 'ACCEPTED',
+          status: "ACCEPTED",
           requestDetails: {
             requesterId: user?.id,
             goodsName: params.goodsName,
             requestId: params.idRequest,
-            orderId: params.idOrder
-          }
+            orderId: params.idOrder,
+          },
         });
 
         router.replace({
@@ -207,12 +207,12 @@ export default function InitializationSO() {
                   travelerId: params.travelerId,
                   requestDetails: {
                     requesterId: user?.id,
-                    goodsName: params.goodsName || 'this item',
+                    goodsName: params.goodsName || "this item",
                     requestId: params.idRequest,
-                    orderId: order.id
-                  }
+                    orderId: order.id,
+                  },
                 });
-                
+
                 Alert.alert(
                   "Order Cancelled",
                   "The request is now available for new offers.",
@@ -305,7 +305,7 @@ export default function InitializationSO() {
             <Clock size={16} color="#64748b" />
             <ThemedText style={styles.detailText}>
               Estimated Delivery:{" "}
-              {new Date(displayData.estimatedDeliveryDate).toLocaleDateString()}
+              {new Date(displayData.arrivalDate).toLocaleDateString()}
             </ThemedText>
           </View>
         </View>
@@ -331,7 +331,7 @@ export default function InitializationSO() {
 
               <View style={styles.travelerInfo}>
                 <ThemedText style={styles.travelerName}>
-                  {getObfuscatedName(params.travelerName?.toString())}
+                  {getInitials(params.travelerName?.toString())}
                 </ThemedText>
 
                 <View style={styles.reputationRow}>
@@ -370,14 +370,6 @@ export default function InitializationSO() {
             </View>
           </View>
         </View>
-
-        {/* <View style={[styles.imageContainer, { marginTop: 16 }]}>
-          <Image
-            source={{ uri: getImageUrl(displayData) }}
-            style={styles.productImage}
-            contentFit="cover"
-          />
-        </View> */}
       </View>
 
       <View style={styles.bottomActions}>
