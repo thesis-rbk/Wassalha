@@ -11,7 +11,12 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "This app needs camera access to scan QR codes."
+        "NSCameraUsageDescription": "This app needs camera access to scan QR codes.",
+      "bundleIdentifier": "com.yourcompany.yourapp",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show your position on the map.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location to show your position on the map even when the app is in the background."
+      }
       }
     },
     "platforms": [
@@ -27,7 +32,9 @@
         "permissions": [
           "CAMERA"
         ]
-      }
+      },
+      "package": "com.yourcompany.yourapp",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
     },
     "extra": {
       "GOOGLE_MAPS_KEY": "your-google-maps-key"

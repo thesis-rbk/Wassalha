@@ -51,14 +51,9 @@ export default function HomeScreen() {
       route: "../orders&requests/order" as const,
     },
     {
-      title: "PickupSO",
+      title: "Pickup",
       icon: <MapPin size={40} color="white" />,
-      route: "../processTrack/pickupSO" as const,
-    },
-    {
-      title: "PickupSP",
-      icon: <MapPin size={40} color="white" />,
-      route: "../processTrack/pickupSP" as const,
+      route: "../pickup/PickupDashboard" as const,
     },
     {
       title: "Subscription",

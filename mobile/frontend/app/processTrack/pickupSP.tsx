@@ -1,6 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import ProgressBar from "../../components/ProgressBar";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -21,15 +20,15 @@ import { Pickup } from "../../types/Pickup";
 import {
   MapPin,
   CheckCircle,
+  XCircle,
   AlertCircle,
   MessageCircle,
 } from "lucide-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { usePickupActions } from "../../hooks/usePickupActions";
 import { QRCodeModal } from "../pickup/QRCodeModal";
-import io from "socket.io-client";
+import io, { Socket } from "socket.io-client";
 import { navigateToChat } from "@/services/chatService";
-// import { BarCodeScanner } from "expo-barcode-scanner"; // Left commented as in original
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -39,13 +38,6 @@ export default function PickupTraveler() {
   const userId = user?.id;
 
   console.log("params from pickup sp", params);
-
-  const progressSteps = [
-    { id: 1, title: "Initialization", icon: "initialization" },
-    { id: 2, title: "Verification", icon: "verification" },
-    { id: 3, title: "Payment", icon: "payment" },
-    { id: 4, title: "Pickup", icon: "pickup" },
-  ];
 
   const [pickupId, setPickupId] = useState<number>(0);
   const [pickups, setPickups] = useState<Pickup[]>([]);
@@ -58,64 +50,72 @@ export default function PickupTraveler() {
   const [showScanner, setShowScanner] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
-  const {
-    handleAccept,
-    showStoredQRCode,
-    showQRCode,
-    setShowQRCode,
-    qrCodeData,
-  } = usePickupActions(pickups, setPickups, userId);
+  const { handleAccept, showStoredQRCode, showQRCode, setShowQRCode, qrCodeData, handleCancel } = usePickupActions(
+    pickups,
+    setPickups,
+    userId
+  );
 
-  // Socket.IO setup
+  const socketRef = useRef<Socket | null>(null);
+
   useEffect(() => {
-    const socket = io(`${SOCKET_URL}/pickup`, {
-      // Fixed namespace
-      transports: ["websocket"],
-    });
+    if (!socketRef.current) {
+      socketRef.current = io(`${SOCKET_URL}/pickup`, {
+        transports: ["websocket"],
+      });
 
-    socket.on("connect", () => {
-      console.log("✅ Connected to Socket.IO server (PickupTraveler)");
+      socketRef.current.on("connect", () => {
+        console.log("✅ Connected to Socket.IO server (PickupTraveler)");
+        pickups.forEach((pickup) => {
+          const room = `pickup:${pickup.id}`;
+          socketRef.current?.emit("joinPickupRoom", pickup.id);
+          console.log(`Joined room: ${room}`);
+        });
+      });
+
+      socketRef.current.on("connect_error", (error) => {
+        console.error("❌ Socket.IO connection error:", error.message);
+      });
+
+      socketRef.current.on("pickupAccepted", (updatedPickup: Pickup) => {
+        console.log("✅ Received pickupAccepted (PickupTraveler):", updatedPickup);
+        setPickups((prev) =>
+          prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
+        );
+      });
+
+      socketRef.current.on("suggestionUpdate", (data: Pickup) => {
+        console.log("📩 Received suggestionUpdate (PickupTraveler):", data);
+        setPickups((prev) => {
+          const updatedPickups = prev.map((p) => (p.id === data.id ? data : p));
+          console.log("Updated pickups in PickupTraveler:", updatedPickups);
+          return updatedPickups;
+        });
+      });
+
+      socketRef.current.on("statusUpdate", (updatedPickup: Pickup) => {
+        console.log("🔄 Received statusUpdate (PickupTraveler):", updatedPickup);
+        setPickups((prev) =>
+          prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
+        );
+      });
+
+      socketRef.current.on("disconnect", () => {
+        console.log("❌ Disconnected from Socket.IO server (PickupTraveler)");
+      });
+    }
+
+    if (socketRef.current?.connected) {
       pickups.forEach((pickup) => {
         const room = `pickup:${pickup.id}`;
-        socket.emit("joinPickupRoom", pickup.id); // Backend expects pickupId
+        socketRef.current?.emit("joinPickupRoom", pickup.id);
         console.log(`Joined room: ${room}`);
       });
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error("❌ Socket.IO connection error:", error.message);
-    });
-
-    socket.on("pickupAccepted", (updatedPickup: Pickup) => {
-      console.log(
-        "✅ Received pickupAccepted (PickupTraveler):",
-        updatedPickup
-      );
-      setPickups((prev) =>
-        prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
-      );
-    });
-    socket.on("suggestionUpdate", (data: any) => {
-      console.log("📩 Received suggestionUpdate (Pickup):", data);
-      Alert.alert("Update", `Pickup #${data.pickupId} has been updated.`);
-    });
-    socket.on("statusUpdate", (updatedPickup: Pickup) => {
-      console.log("🔄 Received statusUpdate (PickupTraveler):", updatedPickup);
-      setPickups((prev) =>
-        prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
-      );
-      Alert.alert(
-        "Status Updated",
-        `Pickup #${updatedPickup.id} status: ${updatedPickup.status}`
-      );
-    });
-
-    socket.on("disconnect", () => {
-      console.log("❌ Disconnected from Socket.IO server (PickupTraveler)");
-    });
+    }
 
     return () => {
-      socket.disconnect();
+      socketRef.current?.disconnect();
+      socketRef.current = null;
     };
   }, [pickups]);
 
@@ -124,7 +124,6 @@ export default function PickupTraveler() {
     requestCameraPermission();
   }, []);
 
-  // Function to open a chat with the provided IDs
   const openChat = async () => {
     if (!user?.id) {
       Alert.alert("Error", "You need to be logged in to chat");
@@ -157,9 +156,7 @@ export default function PickupTraveler() {
   };
 
   const requestCameraPermission = async () => {
-    // const { status } = await BarCodeScanner.requestPermissionsAsync();
-    // setHasPermission(status === "granted");
-    setHasPermission(true); // Placeholder until BarCodeScanner is uncommented
+    setHasPermission(true); // Placeholder until BarCodeScanner is implemented
   };
 
   const fetchPickups = async (): Promise<void> => {
@@ -189,29 +186,6 @@ export default function PickupTraveler() {
   const handleSuggest = async (pickupId: number): Promise<void> => {
     setPickupId(pickupId);
     setShowPickup(true);
-  };
-
-  const handleCancel = async (pickupId: number): Promise<void> => {
-    try {
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) throw new Error("No authentication token found");
-
-      await axiosInstance.put(
-        "/api/pickup/status",
-        { pickupId, newStatus: "CANCELLED" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      Alert.alert("Success", "Pickup cancelled!");
-      setPickups((prev) =>
-        prev.map((pickup) =>
-          pickup.id === pickupId ? { ...pickup, status: "CANCELLED" } : pickup
-        )
-      );
-    } catch (error) {
-      console.error("Error cancelling pickup:", error);
-      Alert.alert("Error", "Failed to cancel pickup. Please try again.");
-    }
   };
 
   const handleUpdateStatus = async (
@@ -321,6 +295,7 @@ export default function PickupTraveler() {
   };
 
   const isRequester = (pickup: Pickup) => console.log("pickup", pickup);
+
   const renderItem = ({ item }: { item: Pickup }) => {
     const userIsRequester = isRequester(item);
 
@@ -401,30 +376,37 @@ export default function PickupTraveler() {
             <Text style={styles.successText}>
               Pickup Accepted! Package on the way.
             </Text>
-            <BaseButton
-              variant="primary"
-              size="small"
-              style={styles.actionButton}
-              onPress={() => openStatusModal(item.id)}
-            >
-              Update Status
-            </BaseButton>
-            <BaseButton
-              variant="primary"
-              size="small"
-              style={styles.actionButton}
-              onPress={() => showStoredQRCode(item)}
-            >
-              Show QR Code
-            </BaseButton>
-            <BaseButton
-              variant="primary"
-              size="small"
-              style={styles.actionButton}
-              onPress={() => setShowScanner(true)}
-            >
-              Scan QR Code
-            </BaseButton>
+            <View style={styles.buttonContainer}>
+              <View style={styles.topRow}>
+                <BaseButton
+                  variant="primary"
+                  size="small"
+                  style={styles.actionButton}
+                  onPress={() => openStatusModal(item.id)}
+                >
+                  <CheckCircle size={14} color="#fff" />
+                  <Text style={styles.buttonText}>Update</Text>
+                </BaseButton>
+                <BaseButton
+                  variant="primary"
+                  size="small"
+                  style={styles.actionButton}
+                  onPress={() => showStoredQRCode(item)}
+                >
+                  <CheckCircle size={14} color="#fff" />
+                  <Text style={styles.buttonText}>Show QR</Text>
+                </BaseButton>
+              </View>
+              <BaseButton
+                variant="primary"
+                size="small"
+                style={styles.actionButton}
+                onPress={() => setShowScanner(true)}
+              >
+                <MapPin size={14} color="#fff" />
+                <Text style={styles.buttonText}>Scan QR</Text>
+              </BaseButton>
+            </View>
           </View>
         )}
 
@@ -452,7 +434,8 @@ export default function PickupTraveler() {
                     style={styles.actionButton}
                     onPress={() => handleSuggest(item.id)}
                   >
-                    Suggest Another
+                    <MapPin size={14} color="#fff" />
+                    <Text style={styles.buttonText}>Suggest</Text>
                   </BaseButton>
                 </View>
               </>
@@ -465,7 +448,8 @@ export default function PickupTraveler() {
                     style={styles.actionButton}
                     onPress={() => handleAccept(item.id)}
                   >
-                    Accept
+                    <CheckCircle size={14} color="#fff" />
+                    <Text style={styles.buttonText}>Accept</Text>
                   </BaseButton>
                   <BaseButton
                     variant="primary"
@@ -473,7 +457,8 @@ export default function PickupTraveler() {
                     style={styles.actionButton}
                     onPress={() => handleSuggest(item.id)}
                   >
-                    Suggest Another
+                    <MapPin size={14} color="#fff" />
+                    <Text style={styles.buttonText}>Suggest</Text>
                   </BaseButton>
                 </View>
                 <BaseButton
@@ -482,7 +467,8 @@ export default function PickupTraveler() {
                   style={styles.actionButton}
                   onPress={() => handleCancel(item.id)}
                 >
-                  Cancel
+                  <XCircle size={14} color="#fff" />
+                  <Text style={styles.buttonText}>Cancel</Text>
                 </BaseButton>
               </View>
             )}
@@ -523,7 +509,7 @@ export default function PickupTraveler() {
               </Text>
             </View>
           )}
-          keyExtractor={(item) => item.id.toString()} // Adjusted to string
+          keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.suggestionsList}
         />
       )}
@@ -533,7 +519,7 @@ export default function PickupTraveler() {
         style={styles.backButton}
         onPress={() => setShowSuggestions(false)}
       >
-        Back to Pickups
+        <Text style={styles.buttonText}>Back</Text>
       </BaseButton>
     </View>
   );
@@ -552,11 +538,7 @@ export default function PickupTraveler() {
       {showSuggestions ? (
         renderSuggestions()
       ) : showPickup ? (
-        <Pickups
-          pickupId={pickupId}
-          pickups={pickups}
-          setPickups={setPickups}
-        />
+        <Pickups pickupId={pickupId} pickups={pickups} setPickups={setPickups} />
       ) : (
         <>
           <View style={styles.content}>
@@ -564,7 +546,6 @@ export default function PickupTraveler() {
             <Text style={styles.subtitle}>
               Choose how you'd like to receive your item.
             </Text>
-            <ProgressBar currentStep={4} steps={progressSteps} />
           </View>
 
           {isLoading && pickups.length === 0 ? (
@@ -576,7 +557,7 @@ export default function PickupTraveler() {
             <FlatList
               data={pickups}
               renderItem={renderItem}
-              keyExtractor={(item: any) => item.id.toString()} // Adjusted to string
+              keyExtractor={(item: any) => item.id.toString()}
               refreshing={isLoading}
               onRefresh={fetchPickups}
               contentContainerStyle={styles.listContainer}
@@ -629,7 +610,8 @@ export default function PickupTraveler() {
               style={styles.cancelModalButton}
               onPress={() => setStatusModalVisible(false)}
             >
-              Cancel
+              <XCircle size={14} color="#fff" />
+              <Text style={styles.buttonText}>Cancel</Text>
             </BaseButton>
           </View>
         </View>
@@ -641,28 +623,9 @@ export default function PickupTraveler() {
         visible={showScanner}
         onRequestClose={() => setShowScanner(false)}
       >
-        {/* <View style={styles.scannerOverlay}>
-          {hasPermission === null ? (
-            <Text style={styles.scannerText}>Requesting camera permission...</Text>
-          ) : hasPermission === false ? (
-            <Text style={styles.scannerText}>Camera permission denied</Text>
-          ) : (
-            <BarCodeScanner
-              onBarCodeScanned={handleScan}
-              style={StyleSheet.absoluteFillObject}
-            />
-          )}
-          <BaseButton
-            variant="primary"
-            size="small"
-            style={styles.cancelModalButton}
-            onPress={() => setShowScanner(false)}
-          >
-            Cancel
-          </BaseButton>
-        </View> */}
+        {/* Scanner modal content remains commented out */}
       </Modal>
-      {/* Message Bubble */}
+
       <TouchableOpacity style={styles.messageBubble} onPress={openChat}>
         <MessageCircle size={24} color="#ffffff" />
       </TouchableOpacity>
@@ -742,16 +705,6 @@ const styles = StyleSheet.create({
     color: "#1e293b",
     flexShrink: 1,
   },
-  headerButtons: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  chatIconButton: {
-    padding: 8,
-    marginRight: 8,
-    borderRadius: 20,
-    backgroundColor: "#e0f2fe", // Light blue background
-  },
   suggestionsLink: {
     paddingVertical: 4,
     paddingHorizontal: 8,
@@ -829,20 +782,34 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: "100%",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     alignItems: "center",
+    gap: 8,
   },
   topRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     gap: 8,
     marginBottom: 8,
-    justifyContent: "center",
   },
   actionButton: {
     backgroundColor: "#007AFF",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderRadius: 6,
-    minWidth: 100,
+    minWidth: 80,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  buttonText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 12,
+    color: "#fff",
   },
   noImageText: {
     fontFamily: "Inter-Regular",
@@ -893,10 +860,14 @@ const styles = StyleSheet.create({
   },
   cancelModalButton: {
     backgroundColor: "#FF4444",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderRadius: 6,
-    minWidth: 100,
+    minWidth: 80,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
     marginTop: 10,
   },
   suggestionsContainer: {
@@ -938,6 +909,15 @@ const styles = StyleSheet.create({
   backButton: {
     marginTop: 16,
     alignSelf: "center",
+    backgroundColor: "#007AFF",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    minWidth: 80,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
   },
   noSuggestionsText: {
     fontFamily: "Inter-Regular",
@@ -945,19 +925,6 @@ const styles = StyleSheet.create({
     color: "#64748b",
     textAlign: "center",
     marginTop: 20,
-  },
-  scannerOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  scannerText: {
-    fontFamily: "Poppins-SemiBold",
-    fontSize: 18,
-    color: "white",
-    textAlign: "center",
-    marginBottom: 20,
   },
   messageBubble: {
     position: "absolute",

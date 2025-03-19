@@ -12,11 +12,11 @@ module.exports = (pickupIO) => {
 
     // Handle suggestion updates (from Pickup.tsx)
     socket.on("suggestionUpdate", (suggestionData) => {
-      console.log("📩 Received suggestionUpdate:", suggestionData);
+      console.log("📩 Received suggestionUpdate backend:", suggestionData);
       try {
         const pickupId = suggestionData.pickup.id // Fallback to id
         if (!pickupId) throw new Error("No pickupId or id in suggestionData");
-        pickupIO.to(`pickup:${pickupId}`).emit("suggestionUpdate", suggestionData);
+        pickupIO.to(`pickup:${pickupId}`).emit("suggestionUpdate", suggestionData.pickup);
         console.log(`✅ Broadcasted suggestionUpdate to room: pickup:${pickupId}`);
       } catch (error) {
         console.error("❌ Error broadcasting suggestionUpdate:", error.message);
