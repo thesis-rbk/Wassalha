@@ -8,17 +8,20 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Modal,
 } from "react-native";
 import ProgressBar from "../../components/ProgressBar";
 import { MaterialIcons } from "@expo/vector-icons";
 import axiosInstance, { BACKEND_URL } from "@/config";
 import { router, useLocalSearchParams } from "expo-router";
 import { Order } from "@/types";
+import Animated from "react-native-reanimated";
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const orderId = params.idOrder;
 
   const progressSteps = [
@@ -37,45 +40,18 @@ export default function VerificationScreen() {
       } catch (error) {
         console.error("Error fetching order:", error);
         Alert.alert("Error", "Failed to fetch order details");
+        setIsLoading(false);
       }
     };
 
     fetchOrder();
-    console.log(order);
   }, [orderId]);
-
-  const getImageUrl = () => {
-    // If no image data at all, return null
-    if (!params.imageUrl) return null;
-
-    // If ordersUrl has the full path
-    if (params.imageUrl.toString().startsWith("/api/uploads/")) {
-      return `${BACKEND_URL}${params.imageUrl}`;
-    }
-
-    // If ordersUrl is just the filename
-    if (params.imageUrl) {
-      return `${BACKEND_URL}/api/uploads/${params.imageUrl}`;
-    }
-
-    console.log(params, getImageUrl());
-
-    // If we have imageId but no direct access to filename
-    // if (orders.verificationImageId) {
-    //   // Use the imageId to construct the URL
-    //   return `${BACKEND_URL}/api/uploads/${orders.verificationImageId}`;
-    // }
-
-    return null;
-  };
 
   const confirmProduct = async () => {
     try {
       const response = await axiosInstance.post(
         "/api/products/confirm-product",
-        {
-          orderId,
-        }
+        { orderId, userId: params.requesterId, note: "Product Confirmed" }
       );
 
       if (response.status === 200) {
@@ -95,9 +71,7 @@ export default function VerificationScreen() {
     try {
       const response = await axiosInstance.post(
         "/api/products/request-new-photo",
-        {
-          orderId,
-        }
+        { orderId }
       );
 
       if (response.status === 200) {
@@ -105,7 +79,7 @@ export default function VerificationScreen() {
         if (order) {
           setOrder({
             ...order,
-            // verificationImageId: null,
+            verificationImageId: undefined,
           });
         }
       }
@@ -144,13 +118,12 @@ export default function VerificationScreen() {
           <Text style={styles.title}>Verification</Text>
           <Text style={styles.subtitle}>
             {order?.verificationImageId
-              ? "Product Image recieved successfully!"
+              ? "Product Image received successfully!"
               : "Waiting for the service provider to upload the product photo."}
           </Text>
 
           <ProgressBar currentStep={2} steps={progressSteps} />
 
-          {/* Waiting Message */}
           {!order?.verificationImageId && (
             <View style={styles.loadingContainer}>
               <MaterialIcons name="hourglass-empty" size={48} color="#64748b" />
@@ -161,19 +134,50 @@ export default function VerificationScreen() {
             </View>
           )}
 
-          {/* Uploaded Image Section */}
           {order?.verificationImageId && (
             <View style={styles.imageSection}>
               <Text style={styles.imageTitle}>Uploaded Photo</Text>
-              <Image
-                source={{ uri: order?.verificationImage?.url }}
-                style={styles.image}
-                resizeMode="contain"
-              />
+              <TouchableOpacity onPress={() => setIsImageModalVisible(true)}>
+                <Image
+                  source={{
+                    uri: `${BACKEND_URL}/api/uploads/${order.verificationImage?.filename}`,
+                  }}
+                  style={styles.image}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             </View>
           )}
 
-          {/* Confirmation Section */}
+          {/* Modal for enlarged image */}
+          <Modal
+            visible={isImageModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setIsImageModalVisible(false)}
+          >
+            <View style={styles.modalContainer}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => {
+                  setIsImageModalVisible(false);
+                }}
+              >
+                <MaterialIcons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+
+              <Animated.View style={styles.modalBackground}>
+                <Animated.Image
+                  source={{
+                    uri: `${BACKEND_URL}/api/uploads/${order?.verificationImage?.filename}`,
+                  }}
+                  style={styles.enlargedImage}
+                  resizeMode="contain"
+                />
+              </Animated.View>
+            </View>
+          </Modal>
+
           {order?.verificationImageId && (
             <View style={styles.confirmationSection}>
               <Text style={styles.confirmationText}>
@@ -196,7 +200,6 @@ export default function VerificationScreen() {
             </View>
           )}
 
-          {/* Cancel Button */}
           <TouchableOpacity style={styles.cancelButton} onPress={cancelProcess}>
             <Text style={styles.cancelButtonText}>Cancel Process</Text>
           </TouchableOpacity>
@@ -206,7 +209,6 @@ export default function VerificationScreen() {
   );
 }
 
-// Add your styles here
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -254,6 +256,33 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 10,
     marginBottom: 20,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    height: "100%",
+  },
+  enlargedImage: {
+    width: "90%",
+    height: "80%",
+    borderRadius: 10,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 20,
+    padding: 8,
   },
   confirmationSection: {
     alignItems: "center",

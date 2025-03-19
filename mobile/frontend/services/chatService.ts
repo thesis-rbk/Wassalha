@@ -1,10 +1,11 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BACKEND_URL } from '@/config';
-import { Chat } from '@/types/Chat';
-import { store } from '@/store';
-import { addChat } from '@/store/chatSlice';
-import { getSocket } from '@/services/socketService';
-import axiosInstance from '@/config';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { BACKEND_URL } from "@/config";
+import { Chat } from "@/types/Chat";
+import { store } from "@/store";
+import { addChat } from "@/store/chatSlice";
+import { getSocket } from "@/services/socketService";
+import axiosInstance from "@/config";
+import { router } from "expo-router";
 
 /**
  * Create a chat between two users
@@ -14,41 +15,42 @@ import axiosInstance from '@/config';
  * @returns The created chat object or null if creation failed
  */
 export const createChat = async (
-  requesterId: number, 
-  providerId: number, 
+  requesterId: number,
+  providerId: number,
   productId: number
 ): Promise<Chat | null> => {
   try {
     // Get auth token
-    const token = await AsyncStorage.getItem('jwtToken');
-    
+    const token = await AsyncStorage.getItem("jwtToken");
+
     if (!token) {
-      console.error('❌ No authentication token available');
+      console.error("❌ No authentication token available");
       return null;
     }
-    
+
     // Make request to API using axiosInstance
-    const response = await axiosInstance.post('/api/chats', 
-      { 
-        requesterId, 
-        providerId, 
-        productId 
+    const response = await axiosInstance.post(
+      "/api/chats",
+      {
+        requesterId,
+        providerId,
+        productId,
       },
       {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       }
     );
-    
+
     // Add to Redux store
     const chat: Chat = response.data;
     store.dispatch(addChat(chat));
-    
-    console.log('✅ Chat created successfully:', chat.id);
+
+    console.log("✅ Chat created successfully:", chat.id);
     return chat;
   } catch (error) {
-    console.error('❌ Error creating chat:', error);
+    console.error("❌ Error creating chat:", error);
     return null;
   }
 };
@@ -59,36 +61,34 @@ export const createChat = async (
  * @param requesterId - ID of the requester (buyer)
  * @param providerId - ID of the provider (seller)
  * @param productId - ID of the product/goods
- * @param router - The Expo router for navigation
  */
 export const initiateChatAfterPayment = async (
   requesterId: number,
   providerId: number,
-  productId: number,
-  router: any
+  productId: number
 ) => {
   try {
-    console.log('🔄 Initiating chat after payment...');
-    
+    console.log("🔄 Initiating chat after payment...");
+
     // Create or find existing chat
     const chat = await createChat(requesterId, providerId, productId);
-    
+
     if (!chat) {
-      console.error('❌ Failed to create chat after payment');
+      console.error("❌ Failed to create chat after payment");
       return false;
     }
-    
+
     // Navigate to chat screen with the chat ID
     router.push({
-      pathname: '/messages/chat',
-      params: { 
-        chatId: chat.id 
-      }
+      pathname: "/messages/chat",
+      params: {
+        chatId: chat.id,
+      },
     });
-    
+
     return true;
   } catch (error) {
-    console.error('❌ Error initiating chat after payment:', error);
+    console.error("❌ Error initiating chat after payment:", error);
     return false;
   }
 };
@@ -103,28 +103,29 @@ export const initiateChatAfterPayment = async (
 export const sendMessage = async (
   chatId: number,
   content: string,
-  type: string = 'text'
+  type: string = "text"
 ): Promise<any | null> => {
   try {
-    const token = await AsyncStorage.getItem('jwtToken');
-    
+    const token = await AsyncStorage.getItem("jwtToken");
+
     if (!token) {
-      console.error('❌ No authentication token available');
+      console.error("❌ No authentication token available");
       return null;
     }
-    
-    const response = await axiosInstance.post(`/api/chats/${chatId}/messages`, 
+
+    const response = await axiosInstance.post(
+      `/api/chats/${chatId}/messages`,
       { content, type },
       {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       }
     );
-    
+
     return response.data;
   } catch (error) {
-    console.error('❌ Error sending message:', error);
+    console.error("❌ Error sending message:", error);
     return null;
   }
 };
@@ -136,44 +137,41 @@ export const sendMessage = async (
  * @param providerId - ID of the provider (seller)
  * @param productId - ID of the product/goods
  * @param orderInfo - Optional order info to display in chat
- * @param router - The Expo router for navigation
  */
 export const navigateToChat = async (
   requesterId: number,
   providerId: number,
   productId: number,
-  router: any,
   orderInfo?: {
-    orderId: number,
-    goodsName: string
-  },
- 
+    orderId: number;
+    goodsName: string;
+  }
 ) => {
   try {
-    console.log('🔄 Opening chat from pickup screen...');
-    
+    console.log("🔄 Opening chat from pickup screen...");
+
     // Create or find existing chat
     const chat = await createChat(requesterId, providerId, productId);
-    
+
     if (!chat) {
-      console.error('❌ Failed to create chat');
+      console.error("❌ Failed to create chat");
       return false;
     }
-    
+
     // Navigate to chat screen with the chat ID and order info
     router.push({
-      pathname: '/messages/chat',
-      params: { 
+      pathname: "/messages/chat",
+      params: {
         chatId: chat.id,
         orderId: orderInfo?.orderId,
         goodsName: orderInfo?.goodsName,
-        context: 'pickup' // Tells the chat screen this is about pickup
-      }
+        context: "pickup", // Tells the chat screen this is about pickup
+      },
     });
-    
+
     return true;
   } catch (error) {
-    console.error('❌ Error navigating to chat:', error);
+    console.error("❌ Error navigating to chat:", error);
     return false;
   }
 };

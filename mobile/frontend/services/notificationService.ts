@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { getSocket } from './socketService';
+=======
+import { getSocket } from "@/services/socketService";
+>>>>>>> 8de170abdb49de702194fa32e4e815d29309ed75
 
 /**
  * Send a notification via socket
@@ -9,10 +13,14 @@ export const sendSocketNotification = async (
 ): Promise<boolean> => {
   console.log(`🔍 NOTIFICATION SERVICE: Attempting to send ${eventName}`, data);
   try {
+<<<<<<< HEAD
     const socket = await getSocket('notifications');
+=======
+    const socket = await getSocket("notifications");
+>>>>>>> 8de170abdb49de702194fa32e4e815d29309ed75
 
     if (!socket || !socket.connected) {
-      console.log('⚠️ Socket not connected, cannot send notification');
+      console.log("⚠️ Socket not connected, cannot send notification");
       return false;
     }
 
@@ -20,7 +28,7 @@ export const sendSocketNotification = async (
     socket.emit(eventName, data);
     return true;
   } catch (error) {
-    console.error('❌ Error sending notification:', error);
+    console.error("❌ Error sending notification:", error);
     return false;
   }
 };

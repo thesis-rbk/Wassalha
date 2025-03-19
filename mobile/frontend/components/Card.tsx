@@ -1,4 +1,5 @@
 import React from "react";
+<<<<<<< HEAD
 import { View, StyleSheet, TouchableOpacity, Text, Animated } from "react-native";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
@@ -40,6 +41,39 @@ export function Card({
       useNativeDriver: true,
     }).start();
   };
+=======
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  GestureResponderEvent,
+} from "react-native";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
+import { CardProps } from "@/types/CardProps";
+
+export function Card({ onPress, children, style }: CardProps) {
+  const colorScheme = useColorScheme() ?? "light";
+
+  if (onPress) {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        style={[
+          styles.card,
+          {
+            backgroundColor: Colors[colorScheme].secondary,
+            shadowColor: colorScheme === "dark" ? "#000" : "#000",
+            shadowOpacity: colorScheme === "dark" ? 0.5 : 0.25,
+          },
+          style,
+        ]}
+      >
+        <View>{children}</View>
+      </TouchableOpacity>
+    );
+  }
+>>>>>>> 8de170abdb49de702194fa32e4e815d29309ed75
 
   return (
     <AnimatedTouchable
@@ -49,14 +83,21 @@ export function Card({
       style={[
         styles.card,
         {
+<<<<<<< HEAD
           backgroundColor: colorScheme === "dark" ? "#1C2526" : "#FFFFFF", // Dark mode support
           shadowColor: colorScheme === "dark" ? "#000" : "#4A4A4A", // Softer shadow color
           shadowOpacity: colorScheme === "dark" ? 0.4 : 0.2, // Adjusted shadow opacity
           transform: [{ scale: scaleAnim }], // Apply scale animation
+=======
+          backgroundColor: Colors[colorScheme].secondary,
+          shadowColor: colorScheme === "dark" ? "#000" : "#000",
+          shadowOpacity: colorScheme === "dark" ? 0.5 : 0.25,
+>>>>>>> 8de170abdb49de702194fa32e4e815d29309ed75
         },
         style,
       ]}
     >
+<<<<<<< HEAD
       {icon && (
         <View
           style={[
@@ -85,6 +126,19 @@ export function Card({
             {title}
           </Text>
         )}
+=======
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: Colors[colorScheme].secondary,
+            shadowColor: colorScheme === "dark" ? "#000" : "#000",
+            shadowOpacity: colorScheme === "dark" ? 0.5 : 0.25,
+          },
+          style,
+        ]}
+      >
+>>>>>>> 8de170abdb49de702194fa32e4e815d29309ed75
         {children}
       </View>
       {showChevron && (

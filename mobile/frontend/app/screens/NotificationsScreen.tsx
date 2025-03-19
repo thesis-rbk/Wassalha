@@ -1,35 +1,55 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
-import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { useNotification } from '@/context/NotificationContext';
-import { NotificationType, NotificationStatus } from '@/types/NotificationProcess';
-import { Bell, CheckCircle, XCircle, Package, Trash2 } from 'lucide-react-native';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
-import { Swipeable } from 'react-native-gesture-handler';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+} from "react-native";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { useNotification } from "@/context/NotificationContext";
+import {
+  NotificationType,
+  NotificationStatus,
+} from "@/types/NotificationProcess";
+import {
+  Bell,
+  CheckCircle,
+  XCircle,
+  Package,
+  Trash2,
+} from "lucide-react-native";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { Swipeable } from "react-native-gesture-handler";
 
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 // Add these constants at the top of your file
-const SUCCESS_COLOR = '#4CAF50';  // Green color for success
-const ERROR_COLOR = '#F44336';    // Red color for error 
-const TINT_COLOR = '#008098';     // Use the same color as your primary
+const SUCCESS_COLOR = "#4CAF50"; // Green color for success
+const ERROR_COLOR = "#F44336"; // Red color for error
+const TINT_COLOR = "#008098"; // Use the same color as your primary
 
 export default function NotificationsScreen() {
-  const colorScheme = useColorScheme() ?? 'light';
+  const colorScheme = useColorScheme() ?? "light";
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Get notifications from Redux
-  const { items: notifications } = useSelector((state: RootState) => state.notifications);
-  
+  const { items: notifications } = useSelector(
+    (state: RootState) => state.notifications
+  );
+
   // Use the notification context
-  const { fetchNotifications, markAsRead, deleteNotification } = useNotification();
+  const { fetchNotifications, markAsRead, deleteNotification } =
+    useNotification();
 
   // Load notifications on mount
   useEffect(() => {
@@ -43,8 +63,8 @@ export default function NotificationsScreen() {
       setError(null);
       await fetchNotifications();
     } catch (err) {
-      setError('Failed to load notifications');
-      console.error('Error loading notifications:', err);
+      setError("Failed to load notifications");
+      console.error("Error loading notifications:", err);
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +75,7 @@ export default function NotificationsScreen() {
     try {
       await fetchNotifications();
     } catch (err) {
-      console.error('Error refreshing notifications:', err);
+      console.error("Error refreshing notifications:", err);
     } finally {
       setRefreshing(false);
     }
@@ -69,20 +89,20 @@ export default function NotificationsScreen() {
   // Handle notification deletion
   const handleDelete = async (id: number) => {
     Alert.alert(
-      'Delete Notification',
-      'Are you sure you want to delete this notification?',
+      "Delete Notification",
+      "Are you sure you want to delete this notification?",
       [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
           onPress: async () => {
             try {
               await deleteNotification(id);
             } catch (err) {
-              console.error('Error deleting notification:', err);
+              console.error("Error deleting notification:", err);
             }
-          } 
+          },
         },
       ]
     );
@@ -91,7 +111,7 @@ export default function NotificationsScreen() {
   // Render right swipe actions (delete)
   const renderRightActions = (id: number) => {
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.deleteAction}
         onPress={() => handleDelete(id)}
       >
@@ -103,11 +123,11 @@ export default function NotificationsScreen() {
   // Render a notification item
   const renderNotification = ({ item }: { item: any }) => {
     const isUnread = item.status === NotificationStatus.UNREAD;
-    
+
     // Determine icon based on notification type
     let Icon = Bell;
     let iconColor = Colors[colorScheme].text;
-    
+
     if (item.type === NotificationType.ACCEPTED) {
       Icon = CheckCircle;
       iconColor = SUCCESS_COLOR; // Use constant instead of Colors.success
@@ -118,7 +138,7 @@ export default function NotificationsScreen() {
       Icon = Package;
       iconColor = Colors[colorScheme].primary; // Use theme-specific primary color
     }
-    
+
     return (
       <Swipeable renderRightActions={() => renderRightActions(item.id)}>
         <TouchableOpacity
@@ -130,12 +150,13 @@ export default function NotificationsScreen() {
           </View>
           <View style={styles.contentContainer}>
             <ThemedText style={[styles.title, isUnread && styles.unreadText]}>
-              {item.title || 'Notification'}
+              {item.title || "Notification"}
             </ThemedText>
             <ThemedText style={styles.message}>{item.message}</ThemedText>
             {item.createdAt && (
               <ThemedText style={styles.timestamp}>
-                {new Date(item.createdAt).toLocaleDateString()} {new Date(item.createdAt).toLocaleTimeString()}
+                {new Date(item.createdAt).toLocaleDateString()}{" "}
+                {new Date(item.createdAt).toLocaleTimeString()}
               </ThemedText>
             )}
           </View>
@@ -145,7 +166,7 @@ export default function NotificationsScreen() {
   };
 
   // Debug log to see what's happening
-  console.log('Notifications data:', notifications);
+  console.log("Notifications data:", notifications);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -153,19 +174,21 @@ export default function NotificationsScreen() {
         {error && (
           <View style={styles.errorContainer}>
             <ThemedText style={styles.errorText}>{error}</ThemedText>
-            <TouchableOpacity 
-              style={[styles.retryButton, { backgroundColor: TINT_COLOR }]} 
+            <TouchableOpacity
+              style={[styles.retryButton, { backgroundColor: TINT_COLOR }]}
               onPress={loadNotifications}
             >
               <ThemedText style={styles.retryButtonText}>Retry</ThemedText>
             </TouchableOpacity>
           </View>
         )}
-        
+
         {isLoading && !refreshing && notifications.length === 0 ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={TINT_COLOR} />
-            <ThemedText style={styles.loadingText}>Loading notifications...</ThemedText>
+            <ThemedText style={styles.loadingText}>
+              Loading notifications...
+            </ThemedText>
           </View>
         ) : notifications.length > 0 ? (
           <FlatList
@@ -180,9 +203,11 @@ export default function NotificationsScreen() {
         ) : (
           <View style={styles.emptyContainer}>
             <Bell color={Colors[colorScheme].text} size={48} />
-            <ThemedText style={styles.emptyText}>No notifications yet</ThemedText>
-            <TouchableOpacity 
-              style={[styles.refreshButton, { backgroundColor: TINT_COLOR }]} 
+            <ThemedText style={styles.emptyText}>
+              No notifications yet
+            </ThemedText>
+            <TouchableOpacity
+              style={[styles.refreshButton, { backgroundColor: TINT_COLOR }]}
               onPress={onRefresh}
             >
               <ThemedText style={styles.refreshButtonText}>Refresh</ThemedText>
@@ -202,28 +227,28 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   notificationItem: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   unreadItem: {
-    backgroundColor: 'rgba(0, 122, 255, 0.05)',
+    backgroundColor: "rgba(0, 122, 255, 0.05)",
   },
   iconContainer: {
     marginRight: 16,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   contentContainer: {
     flex: 1,
   },
   title: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: 4,
   },
   unreadText: {
-    fontWeight: '700',
+    fontWeight: "700",
   },
   message: {
     fontSize: 14,
@@ -235,22 +260,22 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     marginTop: 12,
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
   },
   emptyText: {
     fontSize: 16,
     marginVertical: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   refreshButton: {
     paddingVertical: 10,
@@ -259,12 +284,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   refreshButtonText: {
-    color: 'white',
-    fontWeight: '500',
+    color: "white",
+    fontWeight: "500",
   },
   errorContainer: {
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   errorText: {
     color: ERROR_COLOR,
@@ -277,12 +302,12 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   retryButtonText: {
-    color: 'white',
+    color: "white",
   },
   deleteAction: {
     backgroundColor: ERROR_COLOR,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     width: 80,
   },
 });
