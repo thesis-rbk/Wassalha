@@ -1,5 +1,4 @@
 import { StyleSheet } from 'react-native';
-import { Colors } from '@/constants/Colors';
 
 export const verificationStyles = StyleSheet.create({
   container: {
@@ -24,12 +23,12 @@ export const verificationStyles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.light.primary,
+    color: '#007BFF',
     textAlign: 'center',
   },
   headerSubtitle: {
     fontSize: 16,
-    color: Colors.light.secondary,
+    color: '#64748B',
     textAlign: 'center',
     marginTop: 8,
   },
@@ -43,7 +42,7 @@ export const verificationStyles = StyleSheet.create({
     marginBottom: 16,
   },
   button: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: '#007BFF',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -62,7 +61,7 @@ export const verificationStyles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: Colors.light.secondary,
+    color: '#64748B',
     lineHeight: 20,
   },
   securityNote: {
@@ -76,7 +75,7 @@ export const verificationStyles = StyleSheet.create({
   },
   securityText: {
     fontSize: 14,
-    color: Colors.light.secondary,
+    color: '#64748B',
   },
   frameContainer: {
     aspectRatio: 1.6,
@@ -84,7 +83,7 @@ export const verificationStyles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: Colors.light.primary,
+    borderColor: '#007BFF',
     marginVertical: 24,
   },
   cameraPreview: {

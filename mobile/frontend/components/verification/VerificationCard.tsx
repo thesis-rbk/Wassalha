@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
-import { Colors } from '@/constants/Colors';
 
 export const VerificationCard = ({ 
   children, 
@@ -36,12 +35,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.primary,
+    color: '#007BFF',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.light.secondary,
+    color: '#64748B',
     marginBottom: 16,
   },
 }); 
