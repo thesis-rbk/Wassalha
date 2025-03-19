@@ -1,20 +1,24 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const notificationController = require('../controllers/notification.controller.js');
-const { authenticateUser } = require('../middleware/middleware.js');
+const notificationController = require("../controllers/notification.controller");
+const { authenticateUser } = require("../middleware/middleware");
 
 // Protected routes - require authentication
-router.get('/', authenticateUser, notificationController.getAllNotifications);
-router.get('/unread', authenticateUser, notificationController.getUnreadCount);
-router.patch('/:id', authenticateUser, notificationController.markAsRead);
-router.delete('/:id', authenticateUser, notificationController.deleteNotification);
+router.get("/", authenticateUser, notificationController.getAllNotifications);
+router.get("/unread", authenticateUser, notificationController.getUnreadCount);
+router.patch("/:id", authenticateUser, notificationController.markAsRead);
+router.delete(
+  "/:id",
+  authenticateUser,
+  notificationController.deleteNotification
+);
 
 // Add logging middleware at the end
 router.use((req, res, next) => {
-  console.log('📡 Notification route accessed:', {
+  console.log("📡 Notification route accessed:", {
     method: req.method,
     path: req.path,
-    userId: req.user?.id
+    userId: req.user?.id,
   });
   next();
 });
