@@ -272,22 +272,18 @@ export default function ChatScreen() {
       });
       
       // Upload the file
-      const response = await fetch(`${BACKEND_URL}/api/chats/${chatId}/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-        body: formData
-      });
+      const response = await axiosInstance.post(
+        `/api/chats/${chatId}/upload`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
       
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.message || 'Upload failed');
-      }
-      
-      console.log('Upload successful:', result);
+      // Access your data from response.data instead of response.json()
+      const data = response.data;
       
       // Step 2: Now create a message with this media
       if (socket && socket.connected) {
@@ -295,14 +291,14 @@ export default function ChatScreen() {
           chatId: parseInt(chatId.toString()),
           content: `Sent a file: ${document.name || 'document'}`,
           type: 'document',
-          mediaId: parseInt(result.mediaId)
+          mediaId: parseInt(data.mediaId)
         });
         
         socket.emit('send_message', {
           chatId: parseInt(chatId.toString()),
           content: `Sent a file: ${document.name || 'document'}`,
           type: 'document',
-          mediaId: parseInt(result.mediaId)
+          mediaId: parseInt(data.mediaId)
         });
         
         // Wait a bit and refresh messages
@@ -317,7 +313,7 @@ export default function ChatScreen() {
           {
             content: `Sent a file: ${document.name || 'document'}`,
             type: 'document',
-            mediaId: parseInt(result.mediaId)
+            mediaId: parseInt(data.mediaId)
           },
           {
             headers: {
