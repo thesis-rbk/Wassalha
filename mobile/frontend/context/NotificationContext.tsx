@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import axiosInstance from '@/config';
 import { getSocket, connectSocket, cleanupSockets } from '@/services/socketService';
 import { sendSocketNotification } from '@/services/notificationService';
 import { NotificationType, NotificationStatus } from '@/types/NotificationProcess';
@@ -50,21 +51,20 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return;
       }
 
-      // Make API request
-      const response = await fetch(`${BACKEND_URL}/api/notifications`, {
+      // CHANGE 1: Replace fetch with axiosInstance.get
+      // Benefits:
+      // - No need to specify full URL, just the endpoint
+      // - No need to handle JSON conversion manually
+      // - Automatically handles non-2xx responses as errors
+      const response = await axiosInstance.get('/api/notifications', {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`, // Still sending token in headers
         },
       });
 
-      // Handle error responses
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch notifications: ${response.status} ${errorText}`);
-      }
-
-      // Parse response data
-      const data = await response.json();
+      // CHANGE 2: With axiosInstance the data is directly available in response.data
+      // No need to call response.json()
+      const data = response.data;
       
       // Update Redux store
       if (Array.isArray(data)) {
@@ -75,9 +75,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         dispatch(setNotifications([]));
       }
     } catch (error) {
+      // CHANGE 3: Error handling with axios
+      // Axios automatically throws for non-2xx responses
+      // No need to check response.ok
       console.error('❌ Error fetching notifications:', error);
     }
-  }, [dispatch, user?.id]); // Only re-create when dispatch or user ID changes
+  }, [dispatch, user?.id]); // Dependencies remain unchanged
   // 1. SOCKET INITIALIZATION
   // This effect runs when the user changes (login/logout)
   useEffect(() => {
@@ -394,24 +397,27 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return;
       }
 
-      // Make API request
-      const response = await fetch(`${BACKEND_URL}/api/notifications/${id}`, {
-        method: 'PATCH',
+      // CHANGE 1: Replace fetch with axiosInstance.patch
+      // Benefits:
+      // - Cleaner syntax for PATCH requests
+      // - Second parameter is the request body (empty object in this case)
+      // - Third parameter is for config options like headers
+      await axiosInstance.patch(`/api/notifications/${id}`, {}, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          // No need to specify Content-Type as it's set by default in axiosInstance
         },
       });
       
-      // Update Redux store if successful
-      if (response.ok) {
-        console.log(`✅ Notification ${id} marked as read`);
-        dispatch(markNotificationAsRead(id));
-      } else {
-        console.error(`❌ Failed to mark notification ${id} as read:`, response.status);
-      }
+      // CHANGE 2: No need to check response.ok
+      // If we reach this point, it means the request was successful
+      // Axios would have thrown an error for non-2xx responses
+      console.log(`✅ Notification ${id} marked as read`);
+      dispatch(markNotificationAsRead(id));
     } catch (error) {
-      console.error('❌ Error marking notification as read:', error);
+      // CHANGE 3: Simplified error handling
+      // We can directly log the error without checking response status
+      console.error(`❌ Failed to mark notification ${id} as read:`, error);
     }
   }, [dispatch]); // Only re-create when dispatch changes
 
@@ -427,23 +433,24 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return;
       }
       
-      // Make API request
-      const response = await fetch(`${BACKEND_URL}/api/notifications/${id}`, {
-        method: 'DELETE',
+      // CHANGE 1: Replace fetch with axiosInstance.delete
+      // Benefits:
+      // - Clear method name that matches the HTTP method
+      // - Simplified syntax with config options as second parameter
+      await axiosInstance.delete(`/api/notifications/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      // Refresh notifications if successful
-      if (response.ok) {
-        console.log(`✅ Notification ${id} deleted`);
-        fetchNotifications();
-      } else {
-        console.error(`❌ Failed to delete notification ${id}:`, response.status);
-      }
+      // CHANGE 2: No need to check response.ok
+      // If the code reaches here, the delete was successful
+      // Axios would have thrown an error otherwise
+      console.log(`✅ Notification ${id} deleted`);
+      fetchNotifications(); // Refresh the notifications list
     } catch (error) {
-      console.error('❌ Error deleting notification:', error);
+      // CHANGE 3: Simplified error handling
+      console.error(`❌ Failed to delete notification ${id}:`, error);
     }
   }, [fetchNotifications]); // Only re-create when fetchNotifications changes
 
