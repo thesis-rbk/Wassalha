@@ -114,7 +114,7 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         ) : (
           <Camera
             style={styles.camera}
-            type="back" // Use string literal instead of CameraType.back
+            type="back" 
             onBarCodeScanned={scanned ? undefined : handleScan}
             barCodeScannerSettings={{
               barCodeTypes: ["qr"],
