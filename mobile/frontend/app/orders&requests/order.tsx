@@ -699,21 +699,21 @@ export default function OrderPage() {
   };
 
   const handleNotificationPress = () => {
-    router.push("/notifications");
+    router.push("./notifications");
   };
-  
+
   const handleProfilePress = () => {
     router.push("/profile");
   };
 
   return (
     <ThemedView style={styles.container}>
-      <TopNavigation 
-        title="Orders & Requests" 
+      <TopNavigation
+        title="Orders & Requests"
         onNotificationPress={handleNotificationPress}
         onProfilePress={handleProfilePress}
       />
-      
+
       <SegmentedControl
         values={["Requests", "Orders"]}
         selectedIndex={view === "requests" ? 0 : 1}
@@ -757,7 +757,7 @@ export default function OrderPage() {
           contentContainerStyle={styles.listContainer}
         />
       )}
-      
+
       {/* Add TabBar at the bottom of the screen */}
       <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
