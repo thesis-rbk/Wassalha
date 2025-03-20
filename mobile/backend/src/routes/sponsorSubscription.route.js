@@ -16,4 +16,5 @@ router.get("/allNot/:id", sponsor.getAllNotificationById)
 router.post("/payment", sponsor.paymentSponsor)
 router.get("/checkSponsor", midd.uerSPONSOR, sponsor.checkSponsor)
 router.get("/one/:id", sponsor.findOneSponsor)
+router.get("/allRev/:id", sponsor.sponsorShipReview)
 module.exports = router

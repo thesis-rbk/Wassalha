@@ -166,7 +166,6 @@ export function TopNavigation({
 
 
         <TouchableOpacity
-          <TouchableOpacity
           onPress={() => {
             try {
               console.log('Attempting to navigate to NotificationsScreen');
@@ -266,7 +265,7 @@ export function TopNavigation({
               </TouchableOpacity>
             ))}
           </ScrollView>
-          <View style={styles.menuItems}>
+          <View style={styles.menuItem}>
             {menuItems.map((item, index) => (
               <TouchableOpacity
                 key={index}

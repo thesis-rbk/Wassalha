@@ -311,6 +311,9 @@ model User {
 
   // Add this line
   tickets Ticket[]
+
+  // Add this relation field
+  sponsorshipsCreated Sponsorship[] @relation("UserSponsorshipsCreated")
 }
 
 // ========== PROFILE ==========
@@ -684,11 +687,12 @@ model Sponsorship {
   // Relationships
   users            User[]            @relation("UserSponsorships")
   sponsorCheckouts SponsorCheckout[] @relation
+  User             User?             @relation("UserSponsorshipsCreated", fields: [userId], references: [id])
+  userId           Int?
+  updatedAt        DateTime          @updatedAt
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  User      User?    @relation(fields: [userId], references: [id])
-  userId    Int?
+  // Add this line
+  recipients User[] @relation("SponsorshipRecipients")
 }
 
 // ========== GOODS POSTS ==========

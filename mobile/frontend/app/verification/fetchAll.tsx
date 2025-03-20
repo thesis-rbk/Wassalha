@@ -10,7 +10,7 @@ import {
     Animated,
     PlatformColor,
 } from "react-native";
-import Icon from 'react-native-vector-icons/Feather'; // Add this for icons
+import Icon from 'react-native-vector-icons/Feather';
 import axiosInstance from "@/config";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Sponsorship } from "@/types/Sponsorship";
@@ -18,9 +18,10 @@ import NavigationProp from "@/types/navigation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams, useRouter } from "expo-router";
 import { SponsorshipCard } from "../../components/sponsorCards";
-import { platform } from "os";
+import { TabBar } from "@/components/navigation/TabBar";
 
 const SponsorshipsScreen: React.FC = () => {
+    const [activeTab, setActiveTab] = useState("home"); // Set to "home" to match the screenshot
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -90,7 +91,7 @@ const SponsorshipsScreen: React.FC = () => {
         try {
             const response = await axiosInstance.get("/api/search", {
                 params: {
-                    searchTerm: searchQuery || "", // Use single searchTerm for both platform and description
+                    searchTerm: searchQuery || "",
                 },
             });
             const sorted = response.data.sort(
@@ -136,6 +137,16 @@ const SponsorshipsScreen: React.FC = () => {
         navigation.navigate("verification/CreateSponsorPost", { id: sponsorshipId });
     };
 
+    // Handle tab press
+    const handleTabPress = (tab: string) => {
+        setActiveTab(tab);
+        if (tab === "create") {
+            navigation.navigate("verification/CreateSponsorPost", { id });
+        } else {
+            navigation.navigate(tab as any);
+        }
+    };
+
     // Render the sponsorship card using SponsorshipCard component
     const renderItem = ({ item }: { item: Sponsorship }) => (
         <SponsorshipCard
@@ -144,8 +155,8 @@ const SponsorshipsScreen: React.FC = () => {
             price={`$${item.price.toFixed(2)}`}
             description={item.description ?? ""}
             isActive={item.isActive}
-            onPress={() => navigation.navigate("verification/CreateSponsorPost", { id: item.id })}
-            onBuyPress={() => console.log("Buy button pressed")}
+            onPress={() => navigation.navigate("verification/SponsorshipDetails", { id: item.id })}
+            onBuyPress={() => handleBuyPress(item.id)}
         />
     );
 
@@ -184,8 +195,12 @@ const SponsorshipsScreen: React.FC = () => {
                     renderItem={renderItem}
                     keyExtractor={(item) => item.id.toString()}
                     ListEmptyComponent={<Text style={styles.emptyText}>No sponsorships found.</Text>}
+                    contentContainerStyle={styles.listContent}
                 />
             )}
+
+            {/* TabBar */}
+            <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
         </View>
     );
 };
@@ -193,7 +208,6 @@ const SponsorshipsScreen: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
         backgroundColor: "#F5F5F5",
     },
     searchContainer: {
@@ -203,12 +217,13 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         paddingHorizontal: 12,
         paddingVertical: 8,
-        marginBottom: 20,
+        margin: 20,
+        marginBottom: 10,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        elevation: 3, // For Android shadow
+        elevation: 3,
     },
     searchIcon: {
         marginRight: 8,
@@ -245,6 +260,10 @@ const styles = StyleSheet.create({
         marginTop: 20,
         fontSize: 16,
         color: "#666666",
+    },
+    listContent: {
+        padding: 20,
+        paddingBottom: 80, // Add padding to avoid content being hidden behind TabBar
     },
 });
 

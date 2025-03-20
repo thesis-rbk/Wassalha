@@ -141,9 +141,10 @@ const sponsor = {
                         },
                     },
                     users: { select: { id: true, name: true } },
-                    reviews: true,
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy: {
+                    updatedAt: "desc", // Changed from `createdAt` to `updatedAt`
+                },
             });
             return res.status(200).json(sponsorships);
         } catch (err) {
@@ -282,6 +283,16 @@ const sponsor = {
             res.status(200).send(sponsor);
         } catch (err) {
             console.log("err", err)
+        }
+    },
+    sponsorShipReview: async (req, res) => {
+        const { id } = req.params;
+        try {
+            const allRev = await prisma.reviewSponsor.findMany({ where: { sponsorshipId: parseInt(id) } });
+            res.status(200).send(allRev);
+        } catch (err) {
+            console.log("err", err)
+            res.status(400).send({ message: err });
         }
     }
 }

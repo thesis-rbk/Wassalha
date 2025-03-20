@@ -114,7 +114,7 @@ export default function HomeScreen() {
     {
       title: "Travel",
       icon: <Plane size={40} color="#007BFF" />,
-      route: "../test/Travel" as const,
+      route: "../goodPost/goodpostpage" as const,
     },
     {
       title: "Order",
@@ -130,11 +130,6 @@ export default function HomeScreen() {
       title: "Subscription",
       icon: <Crown size={40} color="#007BFF" />,
       route: "../verification/fetchAll" as const,
-    },
-    {
-      title: "Traveler Posts",
-      icon: <Crown size={40} color="white" />,
-      route: "../goodPost/goodpostpage" as const,
     },
   ];
 
