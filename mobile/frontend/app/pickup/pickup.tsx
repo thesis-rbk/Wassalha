@@ -24,6 +24,7 @@ import PickupMap from "./pickupMap";
 import axiosInstance from "@/config";
 import io from "socket.io-client";
 import { PickupProps } from "@/types/PickupsProps";
+
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 
 export default function Pickups({ pickupId, orderId: initialOrderId, pickups, setPickups }: PickupProps) {  const router = useRouter();
@@ -440,11 +441,7 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
 
   return (
     <ThemedView style={styles.container}>
-      <TopNavigation 
-        title="Pickup" 
-        onNotificationPress={handleNotificationPress}
-        onProfilePress={handleProfilePress}
-      />
+    
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {step === "select" ? (
@@ -753,7 +750,7 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
         </View>
       </Modal>
       
-      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
+    
     </ThemedView>
   );
 }

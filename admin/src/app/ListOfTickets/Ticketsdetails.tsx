@@ -5,16 +5,10 @@ import api from '@/lib/api';
 import { X, Send, Trash2 } from 'lucide-react';
 import { Ticket } from '@/types/Ticket';
 import { Message } from '@/types/Message';
+import { TicketDetailsProps } from '@/types/TicketDetailsProps';
+  
 
 
-
-interface TicketDetailsProps {
-  ticket: Ticket;
-  onClose: () => void;
-  visible: boolean;
-  onStatusUpdate: (ticketId: number, newStatus: 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED') => void;
-  onDelete: (ticketId: number) => void;
-}
 
 const getStatusBadgeClass = (status: string) => {
   switch (status) {

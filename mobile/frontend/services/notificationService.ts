@@ -1,4 +1,4 @@
-import { getSocket } from "@/services/SocketService";
+import { getSocket } from "@/services/socketService";
 
 /**
  * Send a notification via socket
