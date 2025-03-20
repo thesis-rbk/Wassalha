@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const fetch = require("../controllers/fetch")
-const sponsor = require("../controllers/SponsorSubscription")
+const sponsor = require("../controllers/sponsorSubscription")
 const midd = require("../middleware/middlewareSponsor")
 router.get("/besttarveler", fetch.All)
 router.get("/filter", fetch.searchRequestsTraveler)

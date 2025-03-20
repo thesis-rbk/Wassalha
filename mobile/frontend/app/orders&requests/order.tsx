@@ -19,6 +19,8 @@ import { BACKEND_URL } from "@/config";
 import { useRouter } from "expo-router";
 import { decode as atob } from "base-64";
 import { GoodsProcess, ProcessStatus } from "@/types/GoodsProcess";
+import { TabBar } from "@/components/navigation/TabBar";
+import { TopNavigation } from "@/components/navigation/TopNavigation";
 
 // Custom hook to ensure we have user data
 const useReliableAuth = () => {
@@ -94,6 +96,7 @@ export default function OrderPage() {
   const [requests, setRequests] = useState<Request[]>([]);
   const { user, loading: authLoading } = useReliableAuth();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState("Order");
 
   // Add a function to check if the current user is the owner of a request
   const isOwnRequest = (requestUserId: number): boolean => {
@@ -690,8 +693,27 @@ export default function OrderPage() {
     );
   };
 
+  // Add this function to handle tab press
+  const handleTabPress = (tabName: string) => {
+    setActiveTab(tabName);
+  };
+
+  const handleNotificationPress = () => {
+    router.push("/notifications");
+  };
+  
+  const handleProfilePress = () => {
+    router.push("/profile");
+  };
+
   return (
     <ThemedView style={styles.container}>
+      <TopNavigation 
+        title="Orders & Requests" 
+        onNotificationPress={handleNotificationPress}
+        onProfilePress={handleProfilePress}
+      />
+      
       <SegmentedControl
         values={["Requests", "Orders"]}
         selectedIndex={view === "requests" ? 0 : 1}
@@ -735,6 +757,9 @@ export default function OrderPage() {
           contentContainerStyle={styles.listContainer}
         />
       )}
+      
+      {/* Add TabBar at the bottom of the screen */}
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   );
 }

@@ -1,31 +1,32 @@
 /* Base styles and CSS variables */
+/* Base Theme for Light Mode */
 :root {
-  /* Colors - Light theme */
-  --color-background: #ffffff;
-  --color-text: #000000;
-  --color-primary: #008098;
-  --color-secondary: #2BB3CD;
-  --color-dark: #01013D;
-  --color-success: #00C500;
-  --color-danger: #F70000;
-  --color-warning: #F77900;
-  
-  /* Border Radius */
-  --radius-full: 100%;
-  --radius-large: 12px;
-  --radius-medium: 8px;
-  --radius-small: 4px;
-  
-  /* Spacing */
-  --space-362: 362px;
-  --space-50: 50px;
+  --primary-blue: #00A9E0; /* Sky Blue */
+  /* --primary-blue:  #007bff; */
+  --secondary-blue: #57C5D6; /* Light Blue */
+  --dark-blue: #1A5C6D; /* Deep Sky Blue */
+  --success-green: #00C500; /* Success Color */
+  --error-red: #F70000; /* Error Color */
+  --warning-yellow: #F7B600; /* Warning Color */
+  --neutral-gray: #B0B0B0; /* Neutral Gray */
+  --background-light: #F0F0F0; /* Light Background */
+  --text-dark: #01013D; /* Dark Text */
+  --text-light: #F8F8F8; /* Light Text */
 }
 
-/* Dark theme */
+/* Dark Mode Theme */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-background: #000000;
-    --color-text: #ffffff;
+    --primary-blue: #0A3C56; /* Night Sky */
+    --secondary-blue: #1C4C70; /* Moonlit Blue */
+    --dark-blue: #0E2A39; /* Midnight Blue */
+    --success-green: #00D100; /* Success Color */
+    --error-red: #F70000; /* Error Color */
+    --warning-yellow: #F7B600; /* Warning Color */
+    --neutral-gray: #A0A0A0; /* Neutral Gray */
+    --background-dark: #101C27; /* Dark Background */
+    --text-dark: #F0F0F0; /* Light Text for Dark Mode */
+    --text-light: #01013D; /* Dark Text for Light Background */
   }
 }
 

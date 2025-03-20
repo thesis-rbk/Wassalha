@@ -8,10 +8,10 @@ const router = express.Router();
 router.get("/", getGoodsPosts);
 
 // Route to create a new goods post
-router.post("/", upload.single('image'), createGoodsPost); // Assuming the image is uploaded as 'image'
+router.post("/",  createGoodsPost); // Assuming the image is uploaded as 'image'
 
 // Route to update a goods post
-router.put("/:id", upload.single('image'), updateGoodsPost); // Assuming the image is uploaded as 'image'
+router.put("/:id", updateGoodsPost); // Assuming the image is uploaded as 'image'
 
 // Route to delete a goods post
 router.delete("/:id", deleteGoodsPost);

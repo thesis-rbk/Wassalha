@@ -3,7 +3,7 @@ import { User } from './User';
 export interface ServiceProvider {
     id: number;
     userId: number;
-    type: 'SPONSOR' | 'SUBSCRIBER';  // From ServiceProviderType enum
+    type: 'PENDING_SPONSOR' | 'SPONSOR' | 'SUBSCRIBER';  // Updated to match ServiceProviderType enum
     isVerified: boolean;
     badge?: string;
     subscriptionLevel?: string;
@@ -12,14 +12,18 @@ export interface ServiceProvider {
     licenseNumber?: string;
     passportNumber?: string;
     user: {
+        id: number;
         name: string;
         email: string;
+        role: string;
+        serviceProviderId?: number;
         profile?: {
             firstName: string;
             lastName: string;
             bio?: string;
             isBanned: boolean;
             isVerified: boolean;
+            isSponsor: boolean;  // Added this field to match the profile schema
             image?: {
                 url: string;
             };

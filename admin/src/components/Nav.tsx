@@ -21,7 +21,8 @@ import {
   Award,
   Bookmark,
   Store,
-  LogOut
+  LogOut,
+  Ticket
 } from "lucide-react";
 
 export default function Nav() {
@@ -139,10 +140,8 @@ export default function Nav() {
 
   return (
     <div className={`${styles.layout} ${isDarkMode ? styles.darkMode : ''}`}>
-      <nav className={styles.nav}>
-        <div className={styles.logo}>
-          Admin Dashboard 
-        </div>
+      <nav className={`${styles.nav} ${styles.veryTransparentNav}`}>
+        <div className={styles.navSpacer}></div>
         <div className={styles.navItems}>
           <Bell className={`${styles.bellIcon} ${styles.icon}`} />
           <div 
@@ -237,6 +236,11 @@ export default function Nav() {
           <ShoppingCart size={20} />
           <span className={styles.itemText}>List of Orders</span>
         </Link>
+        <Link href="/ListOfTickets" className={styles.sidebarItem}>
+          <Ticket size={20} />
+          <span className={styles.itemText}>List of Support Tickets</span>
+        </Link>
+
         <Link href="/ListOfRequests" className={styles.sidebarItem}>
           <FileText size={20} />
           <span className={styles.itemText}>List of Requests</span>

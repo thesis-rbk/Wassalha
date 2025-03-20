@@ -152,30 +152,41 @@ export default function ListOfServiceProviders() {
                 return;
             }
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/service-providers/verify-sponsor/${userId}`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to verify service provider');
+            const response = await api.put(`/api/service-providers/verify/${userId}`);
+            
+            if (response.data.success) {
+                console.log('Verification successful:', response.data);
+                
+                // Update the providers state with the updated data
+                setProviders((prevProviders) =>
+                    prevProviders.map((provider) => {
+                        if (provider.userId === userId) {
+                            return {
+                                ...provider,
+                                isVerified: true,
+                                type: 'SPONSOR',
+                                user: {
+                                    ...provider.user,
+                                    profile: provider.user.profile ? {
+                                        ...provider.user.profile,
+                                        isSponsor: true,
+                                        isVerified: true
+                                    } : undefined
+                                }
+                            };
+                        }
+                        return provider;
+                    })
+                );
+                
+                // Refresh the data to ensure we have the latest state
+                fetchProviders();
+            } else {
+                throw new Error(response.data.message || 'Failed to verify service provider');
             }
-
-            const data = await response.json();
-            console.log('Verification successful:', data);
-
-            // Update the provider's verification status in the state
-            setProviders((prevProviders) =>
-                prevProviders.map((provider) =>
-                    provider.userId === userId ? { ...provider, isVerified: data.data.isVerified } : provider
-                )
-            );
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error verifying provider:', error);
-            setError('Failed to verify service provider');
+            setError(error.response?.data?.message || error.message || 'Failed to verify service provider');
         }
     };
 
@@ -267,10 +278,10 @@ export default function ListOfServiceProviders() {
                         <table className={`${tableStyles.table} ${isDarkMode ? tableStyles.darkMode : ''}`}>
                             <thead>
                                 <tr>
-                                <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>ID</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>ID</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>User ID</th>
                                     <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Profile</th>
                                     <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Name</th>
-                           
                                     <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Type</th>
                                     <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Badge</th>
                                     <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Subscription</th>
@@ -286,9 +297,9 @@ export default function ListOfServiceProviders() {
                             <tbody>
                                 {displayedProviders.map((provider) => (
                                     <tr key={provider.id} className={`${tableStyles.tr} ${isDarkMode ? tableStyles.darkMode : ''}`}>
-                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.id}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.id}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.userId}</td>
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
-                                            
                                             {provider.user.profile?.image?.url ? (
                                                 <Image
                                                     src={provider.user.profile.image.url}
@@ -320,7 +331,6 @@ export default function ListOfServiceProviders() {
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
                                             {provider.user.profile?.firstName} {provider.user.profile?.lastName}
                                         </td>
-                                       
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.type}</td>
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.badge || 'N/A'}</td>
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.subscriptionLevel || 'N/A'}</td>

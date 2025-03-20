@@ -415,35 +415,8 @@ async function seed() {
           sponsorId: sponsor.id,
           product: faker.commerce.productName(),
           amount: faker.number.float({ min: 100, max: 1000 }),
-          status: faker.helpers.arrayElement(["pending", "active", "completed"]),
-          users: {
-            connect: [{ id: faker.helpers.arrayElement(users).id }],
-          },
-        },
-      });
-    })
-  );
-
-  // Create SponsorCheckouts
-  const sponsorCheckouts = await Promise.all(
-    sponsorships.map(async (sponsorship) => {
-      return prisma.sponsorCheckout.create({
-        data: {
-          buyerId: faker.helpers.arrayElement(users).id,
-          cardNumber: faker.finance.creditCardNumber(),
-          cardExpiryMm: faker.date.month({ format: "MM" }),
-          cardExpiryYyyy: faker.date.future().getFullYear().toString(),
-          cardCvc: faker.finance.creditCardCVV(),
-          cardholderName: faker.person.fullName(),
-          postalCode: faker.location.zipCode(),
-          amount: sponsorship.amount,
-          qrCode: faker.datatype.boolean() ? faker.string.uuid() : undefined,
-          paymentUrl: faker.datatype.boolean() ? faker.internet.url() : undefined,
-          currency: faker.helpers.enumValue(PaymentCurrency),
-          status: faker.helpers.enumValue(PaymentState),
-          paymentMethod: faker.helpers.enumValue(PaymentMethod),
-          transactionId: faker.datatype.boolean() ? faker.string.uuid() : undefined,
-          sponsorShipId: sponsorship.id,
+          category: { connect: { id: category.id } },
+          sponsor: { connect: { id: sponsor.id } },
         },
       });
     })
