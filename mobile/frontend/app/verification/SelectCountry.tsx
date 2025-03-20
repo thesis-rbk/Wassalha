@@ -3,9 +3,9 @@ import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Globe2, CreditCard, FileText, Home, ChevronRight, Shield } from 'lucide-react-native';
 import RNPickerSelect from 'react-native-picker-select';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
 
 const countries = {
@@ -51,138 +51,212 @@ const countries = {
 };
 
 const SelectCountry = () => {
-  const colorScheme = useColorScheme() ?? 'light';
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const router = useRouter();
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.content}>
-        <ThemedText style={styles.title}>Select the country where your ID document was issued</ThemedText>
-        
-        <RNPickerSelect
-          onValueChange={(value) => setSelectedCountry(value)}
-          items={Object.entries(countries).map(([name, id]) => ({ label: name, value: id }))}
-          style={pickerSelectStyles}
-          placeholder={{ label: 'Select a country...', value: null }}
-        />
+      <LinearGradient
+        colors={['#4F46E5', '#7C3AED']}
+        style={styles.header}
+      >
+        <Shield size={32} color="#FFF" />
+        <ThemedText style={styles.headerTitle}>Verify Your Identity</ThemedText>
+        <ThemedText style={styles.headerSubtitle}>
+          Select your document's country of issue
+        </ThemedText>
+      </LinearGradient>
 
-        <ThemedText style={styles.subtitle}>Select your document type</ThemedText>
-        <ScrollView style={styles.scrollContainer}>
-          <TouchableOpacity
-            style={styles.linkOption}
-            onPress={() => router.push('/verification/IdCard' as any)}
-            activeOpacity={0.7}
+      <ScrollView style={styles.content}>
+        <View style={styles.countrySection}>
+          <View style={styles.iconContainer}>
+            <Globe2 size={24} color={Colors.light.primary} />
+          </View>
+          <ThemedText style={styles.sectionTitle}>Country of Issue</ThemedText>
+          
+          <View style={styles.pickerContainer}>
+            <RNPickerSelect
+              onValueChange={(value) => setSelectedCountry(value)}
+              items={Object.entries(countries).map(([name, id]) => ({ 
+                label: name, 
+                value: id 
+              }))}
+              style={pickerSelectStyles}
+              placeholder={{ label: 'Select your country...', value: null }}
+            />
+          </View>
+        </View>
+
+        <View style={styles.documentsSection}>
+          <ThemedText style={styles.sectionTitle}>Choose Document Type</ThemedText>
+          
+          <TouchableOpacity 
+            style={styles.documentCard}
+            onPress={() => router.push('/verification/IdCard')}
           >
-            <View style={styles.optionContent}>
-              <Icon name="credit-card" size={24} color="black" style={styles.icon} />
-              <ThemedText style={styles.optionText}>ID Card</ThemedText>
-              <Icon name="chevron-right" size={24} color="black" style={styles.chevronIcon} />
+            <View style={styles.documentIcon}>
+              <CreditCard size={24} color={Colors.light.primary} />
             </View>
+            <View style={styles.documentInfo}>
+              <ThemedText style={styles.documentTitle}>ID Card</ThemedText>
+              <ThemedText style={styles.documentDescription}>
+                National ID or Driver's License
+              </ThemedText>
+            </View>
+            <ChevronRight size={20} color="#94A3B8" />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.linkOption}
-            onPress={() => router.push('/verification/IdCard' as any)}
-            activeOpacity={0.7}
+          <TouchableOpacity 
+            style={styles.documentCard}
+            onPress={() => router.push('/verification/IdCard')}
           >
-            <View style={styles.optionContent}>
-              <Icon name="public" size={24} color="black" style={styles.icon} />
-              <ThemedText style={styles.optionText}>Passport</ThemedText>
-              <Icon name="chevron-right" size={24} color="black" style={styles.chevronIcon} />
+            <View style={styles.documentIcon}>
+              <FileText size={24} color={Colors.light.primary} />
             </View>
+            <View style={styles.documentInfo}>
+              <ThemedText style={styles.documentTitle}>Passport</ThemedText>
+              <ThemedText style={styles.documentDescription}>
+                International passport
+              </ThemedText>
+            </View>
+            <ChevronRight size={20} color="#94A3B8" />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.linkOption}
-            onPress={() => router.push('/verification/IdCard' as any)}
-            activeOpacity={0.7}
+          <TouchableOpacity 
+            style={styles.documentCard}
+            onPress={() => router.push('/verification/IdCard')}
           >
-            <View style={styles.optionContent}>
-              <Icon name="home" size={24} color="black" style={styles.icon} />
-              <ThemedText style={styles.optionText}>Residence Permit</ThemedText>
-              <Icon name="chevron-right" size={24} color="black" style={styles.chevronIcon} />
+            <View style={styles.documentIcon}>
+              <Home size={24} color={Colors.light.primary} />
             </View>
+            <View style={styles.documentInfo}>
+              <ThemedText style={styles.documentTitle}>Residence Permit</ThemedText>
+              <ThemedText style={styles.documentDescription}>
+                Official residence documentation
+              </ThemedText>
+            </View>
+            <ChevronRight size={20} color="#94A3B8" />
           </TouchableOpacity>
-        </ScrollView>
-      </View>
+        </View>
+      </ScrollView>
     </ThemedView>
   );
 };
 
-export default SelectCountry;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: Colors.light.background,
+    backgroundColor: '#F8FAFC',
+  },
+  header: {
+    padding: 24,
+    alignItems: 'center',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFF',
+    marginTop: 12,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 8,
+    textAlign: 'center',
   },
   content: {
-    flex: 1,
+    padding: 20,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: Colors.light.primary,
+  countrySection: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  subtitle: {
-    fontSize: 20,
-    marginTop: 20,
-    marginBottom: 10,
-    color: Colors.light.secondary,
-  },
-  scrollContainer: {
-    maxHeight: 220,
-    marginBottom: 20,
-
-  },
-  linkOption: {
-    padding: 18,
-    borderRadius: 10,
-    marginBottom: 10,
-    flexDirection: 'row',
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'transparent',
+    marginBottom: 16,
   },
-  optionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  icon: {
-    marginRight: 10,
-  },
-  chevronIcon: {
-    marginLeft: 'auto',
-  },
-  optionText: {
+  sectionTitle: {
     fontSize: 18,
-    color: 'black',
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 16,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+  },
+  documentsSection: {
+    marginBottom: 24,
+  },
+  documentCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  documentIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  documentInfo: {
+    flex: 1,
+    marginLeft: 16,
+    marginRight: 8,
+  },
+  documentTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 4,
+  },
+  documentDescription: {
+    fontSize: 14,
+    color: '#64748B',
   },
 });
 
-// Styles for the picker
 const pickerSelectStyles = StyleSheet.create({
   inputIOS: {
-    fontSize: 18,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    color: 'black',
-    marginBottom: 20,
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    color: '#1E293B',
+    borderRadius: 12,
   },
   inputAndroid: {
-    fontSize: 18,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    color: 'black',
-    marginBottom: 20,
+    fontSize: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    color: '#1E293B',
+    borderRadius: 12,
   },
 });
+
+export default SelectCountry;
