@@ -6,7 +6,22 @@ exports.getGoodsPosts = async (req, res) => {
     console.log("Fetching goods posts..."); // Debugging line
     const goodsPosts = await prisma.goodsPost.findMany({
       include: {
-        traveler: { include: { profile: true } }, // Include traveler details
+        traveler: {
+          include: {
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true,
+                gender: true,
+                image: {
+                  select: {
+                    url: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         category: true, // Include category details
       },
     });
@@ -18,9 +33,13 @@ exports.getGoodsPosts = async (req, res) => {
       content: post.content,
       arrivalDate: post.arrivalDate,
       availableKg: post.availableKg,
-      phoneNumber: post.phoneNumber,
       airportLocation: post.airportLocation,
-      traveler: post.traveler,
+      traveler: {
+        firstName: post.traveler.profile.firstName,
+        lastName: post.traveler.profile.lastName,
+        gender: post.traveler.profile.gender,
+        imageUrl: post.traveler.profile.image?.url,
+      },
       category: post.category,
     }));
 
@@ -41,18 +60,69 @@ exports.getGoodsPosts = async (req, res) => {
 
 // Create a new goods post
 exports.createGoodsPost = async (req, res) => {
-  const { title, content, travelerId } = req.body;
-  const { imageId } = req.file ? req.file : {}; // Assuming imageId is passed from the uploaded file
+  const { title, content, travelerId, arrivalDate, availableKg, airportLocation, categoryId } = req.body;
 
   try {
+    console.log("Creating goods post with data:", req.body); // Debug log
+    
+    // Validate required fields
+    if (!title || !content || !travelerId) {
+      return res.status(400).json({
+        success: false,
+        message: "Title, content, and travelerId are required fields",
+      });
+    }
+
+    // Check if the traveler exists
+    const traveler = await prisma.traveler.findUnique({
+      where: { userId: parseInt(travelerId) },
+    });
+
+    if (!traveler) {
+      return res.status(404).json({
+        success: false,
+        message: "Traveler not found",
+        errorCode: "TRAVELER_NOT_FOUND"
+      });
+    }
+
+    // Check if traveler is verified
+    if (!traveler.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message: "Only verified travelers can create goods posts",
+        errorCode: "TRAVELER_NOT_VERIFIED"
+      });
+    }
+
+    // Check if the category exists
+    if (categoryId) {
+      const categoryExists = await prisma.category.findUnique({
+        where: { id: parseInt(categoryId) },
+      });
+
+      if (!categoryExists) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid category ID",
+        });
+      }
+    }
+
     const newGoodsPost = await prisma.goodsPost.create({
       data: {
         title,
         content,
-        imageId,
-        travelerId,
+        travelerId: parseInt(travelerId),
+        arrivalDate: new Date(arrivalDate),
+        availableKg: parseFloat(availableKg),
+        airportLocation,
+        categoryId: categoryId ? parseInt(categoryId) : undefined,
       },
     });
+
+    console.log("Created goods post:", newGoodsPost); // Debug log
+
     res.status(201).json({
       success: true,
       data: newGoodsPost,
