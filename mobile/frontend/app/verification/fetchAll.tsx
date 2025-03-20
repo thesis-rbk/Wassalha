@@ -139,7 +139,7 @@ const SponsorshipsScreen: React.FC = () => {
     // Render the sponsorship card using SponsorshipCard component
     const renderItem = ({ item }: { item: Sponsorship }) => (
         <SponsorshipCard
-            id={item.id} // Pass the ID to the SponsorshipCard component
+            id={item.id}
             platform={item.platform}
             price={`$${item.price.toFixed(2)}`}
             description={item.description ?? ""}

@@ -124,8 +124,8 @@ async function seed() {
       );
       return prisma.reviewSponsor.create({
         data: {
-          reviewer_id: reviewerProfile.id,
-          reviewed_user_id: reviewedProfile.id,
+          reviewer: { connect: { id: reviewerProfile.id } },
+          reviewed_user: { connect: { id: reviewedProfile.id } },
           sponsorshipRating: faker.number.int({ min: 1, max: 5 }),
           serviceProviderRating: faker.number.int({ min: 1, max: 5 }),
         },

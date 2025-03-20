@@ -324,14 +324,16 @@ model ReviewSponsor {
   reviewed_user Profile @relation("ReviewedUserReviews", fields: [reviewed_user_id], references: [id])
 
   // Relationships to Sponsorship and ServiceProvider
-  sponsorshipId     Int? // Optional: ID of the sponsorship being reviewed
-  sponsorship       Sponsorship?     @relation("SponsorshipReviews", fields: [sponsorshipId], references: [id], onDelete: Cascade)
+  sponsorshipId     Int
   serviceProviderId Int? // Optional: ID of the service provider being reviewed
   serviceProvider   ServiceProvider? @relation("ServiceProviderReviews", fields: [serviceProviderId], references: [id], onDelete: Cascade)
 
   comment   String? // Optional comment for the review
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // One clear relationship to Sponsorship
+  Sponsorship Sponsorship @relation(fields: [sponsorshipId], references: [id])
 }
 
 // ========== SERVICE PROVIDER ==========
@@ -639,15 +641,14 @@ model Sponsorship {
   isActive    Boolean             @default(true)
 
   // Existing fields
-  sponsorId Int
-  sponsor   ServiceProvider @relation("ServiceProviderSponsors", fields: [sponsorId], references: [id])
-  amount    Float
-  status    String          @default("pending")
-
+  sponsorId        Int
+  sponsor          ServiceProvider   @relation("ServiceProviderSponsors", fields: [sponsorId], references: [id])
+  amount           Float
+  status           String            @default("pending")
+  reviewsponsor    ReviewSponsor[] // This links to the ReviewSponsor model
   // Relationships
   users            User[]            @relation("UserSponsorships")
   sponsorCheckouts SponsorCheckout[] @relation
-  reviews          ReviewSponsor[]   @relation("SponsorshipReviews") // Relationship to reviews
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

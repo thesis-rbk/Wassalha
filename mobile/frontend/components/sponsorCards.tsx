@@ -1,19 +1,19 @@
-import React from "react";
-import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
-import { useColorScheme } from "react-native";
-import { Image as ExpoImage } from "expo-image";
-import { useNavigation } from "@react-navigation/native";
-import platformImages from "../types/Sponsorship";
-import NavigationProp from "@/types/navigation";
+import type React from "react"
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native"
+import { useColorScheme } from "react-native"
+import { Image as ExpoImage } from "expo-image"
+import { useNavigation } from "@react-navigation/native"
+import platformImages from "../types/Sponsorship"
+import type NavigationProp from "@/types/navigation"
 // Define the props interface for TypeScript
 interface SponsorshipCardProps {
-    id: number; // Add the ID prop
-    platform: string;
-    price: string;
-    description: string;
-    isActive: boolean;
-    onPress: () => void;
-    onBuyPress: () => void;
+    id: number // Add the ID prop
+    platform: string
+    price: string
+    description: string
+    isActive: boolean
+    onPress: () => void
+    onBuyPress: () => void
 }
 
 // Constants for theme colors
@@ -38,14 +38,14 @@ const COLORS = {
         activeBadge: "#34C759",
         inactiveBadge: "#FF3B30",
     },
-};
+}
 
 // Constants for description truncation
-const DESCRIPTION_MAX_LENGTH = 20;
+const DESCRIPTION_MAX_LENGTH = 20
 
 // Component to render the platform image
 const PlatformImage: React.FC<{ platform: string }> = ({ platform }) => {
-    const platformImage = platformImages[platform as keyof typeof platformImages] || platformImages["OTHER"];
+    const platformImage = platformImages[platform as keyof typeof platformImages] || platformImages["OTHER"]
 
     return (
         <View style={styles.imageContainer}>
@@ -60,52 +60,45 @@ const PlatformImage: React.FC<{ platform: string }> = ({ platform }) => {
                 <View style={[styles.platformImage, styles.fallbackImage]} />
             )}
         </View>
-    );
-};
+    )
+}
 
 // Component to render the description with "See More" link
 const DescriptionWithSeeMore: React.FC<{
-    description: string;
-    onPress: () => void;
-    textColor: string;
-    linkColor: string;
+    description: string
+    onPress: () => void
+    textColor: string
+    linkColor: string
 }> = ({ description, onPress, textColor, linkColor }) => {
     const truncatedDescription =
-        description.length > DESCRIPTION_MAX_LENGTH
-            ? `${description.substring(0, DESCRIPTION_MAX_LENGTH)}...`
-            : description;
+        description.length > DESCRIPTION_MAX_LENGTH ? `${description.substring(0, DESCRIPTION_MAX_LENGTH)}...` : description
 
     return (
         <View style={styles.descriptionContainer}>
-            <Text style={[styles.description, { color: textColor }]}>
-                {truncatedDescription}
-            </Text>
+            <Text style={[styles.description, { color: textColor }]}>{truncatedDescription}</Text>
             {description.length > DESCRIPTION_MAX_LENGTH && (
                 <TouchableOpacity onPress={onPress}>
                     <Text style={[styles.seeMore, { color: linkColor }]}>See More</Text>
                 </TouchableOpacity>
             )}
         </View>
-    );
-};
+    )
+}
 
 // Component to render the action buttons and status
 const ActionButtons: React.FC<{
-    isActive: boolean;
-    onBuyPress: () => void;
-    activeColor: string;
-    inactiveColor: string;
-    buttonColor: string;
+    isActive: boolean
+    onBuyPress: () => void
+    activeColor: string
+    inactiveColor: string
+    buttonColor: string
 }> = ({ isActive, onBuyPress, activeColor, inactiveColor, buttonColor }) => (
     <View style={styles.actionContainer}>
-        <TouchableOpacity
-            onPress={onBuyPress}
-            style={[styles.buyButton, { backgroundColor: buttonColor }]}
-        >
+        <TouchableOpacity onPress={onBuyPress} style={[styles.buyButton, { backgroundColor: buttonColor }]}>
             <Text style={styles.buyButtonText}>Buy Now</Text>
         </TouchableOpacity>
     </View>
-);
+)
 
 export const SponsorshipCard: React.FC<SponsorshipCardProps> = ({
     id, // Destructure the ID prop
@@ -116,13 +109,13 @@ export const SponsorshipCard: React.FC<SponsorshipCardProps> = ({
     onPress,
     onBuyPress,
 }) => {
-    const colorScheme = useColorScheme() ?? "light";
-    const theme = COLORS[colorScheme];
-    const navigation = useNavigation<NavigationProp>();
+    const colorScheme = useColorScheme() ?? "light"
+    const theme = COLORS[colorScheme]
+    const navigation = useNavigation<NavigationProp>()
 
     const handleSeeMore = () => {
-        navigation.navigate("verification/SponsorshipDetails", { id });
-    };
+        navigation.navigate("verification/SponsorshipDetails", { id })
+    }
 
     return (
         <TouchableOpacity
@@ -142,23 +135,12 @@ export const SponsorshipCard: React.FC<SponsorshipCardProps> = ({
 
             <View style={styles.contentContainer}>
                 <View style={styles.headerContainer}>
-                    <Text style={[styles.platform, { color: theme.platformText }]}>
-                        {platform}
-                    </Text>
-                    <View
-                        style={[
-                            styles.statusBadge,
-                            { backgroundColor: isActive ? theme.activeBadge : theme.inactiveBadge },
-                        ]}
-                    >
-                        <Text style={styles.statusText}>
-                            {isActive ? "Active" : "Inactive"}
-                        </Text>
+                    <Text style={[styles.platform, { color: theme.platformText }]}>{platform}</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: isActive ? theme.activeBadge : theme.inactiveBadge }]}>
+                        <Text style={styles.statusText}>{isActive ? "Active" : "Inactive"}</Text>
                     </View>
                 </View>
-                <Text style={[styles.price, { color: theme.secondaryText }]}>
-                    Price: {price}
-                </Text>
+                <Text style={[styles.price, { color: theme.secondaryText }]}>Price: {price}</Text>
                 <DescriptionWithSeeMore
                     description={description}
                     onPress={handleSeeMore} // Use the handleSeeMore function
@@ -174,8 +156,8 @@ export const SponsorshipCard: React.FC<SponsorshipCardProps> = ({
                 />
             </View>
         </TouchableOpacity>
-    );
-};
+    )
+}
 
 const styles = StyleSheet.create({
     card: {
@@ -258,4 +240,5 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "600",
     },
-});
+})
+
