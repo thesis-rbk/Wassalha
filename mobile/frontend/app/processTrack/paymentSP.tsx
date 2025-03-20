@@ -1,9 +1,7 @@
 import Card from "@/components/cards/ProcessCard";
 import ProgressBar from "@/components/ProgressBar";
-import axiosInstance from "@/config";
-import { useLocalSearchParams } from "expo-router";
 import { CheckCircle, Bell, Clock, AlertCircle } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -12,68 +10,199 @@ import {
   Image,
   Switch,
   TouchableOpacity,
+  RefreshControl
 } from "react-native";
-import { TimelineEvent } from "../../types/TimelineEvent";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import axiosInstance from "@/config";
+import { format } from "date-fns";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { decode as atob } from "base-64";
+import { useIsFocused } from "@react-navigation/native";
+import { useNotification } from '@/context/NotificationContext';
 
 const PaymentScreen = () => {
-  const params = useLocalSearchParams();
-  const orderId = parseInt(params.idOrder.toString());
-  const requesterName = params.requesterName;
-  const [timelineData, setTimelineData] = useState<TimelineEvent[]>([]);
-  const [loading, setLoading] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [processData, setProcessData] = useState<any>(null);
+  const [orderData, setOrderData] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
+  const params = useLocalSearchParams();
+  const router = useRouter();
+  const isFocused = useIsFocused();
+  const { sendNotification } = useNotification();
+  
   const progressSteps = [
-    {
-      id: 1,
-      title: "Initialization",
-      icon: "initialization",
-      status: "completed",
-    },
-    { id: 2, title: "Verification", icon: "verification", status: "completed" },
-    { id: 3, title: "Payment", icon: "payment", status: "pending" },
-    { id: 4, title: "Pickup", icon: "pickup", status: "pending" },
+    { id: 1, title: "Initialization", icon: "initialization" },
+    { id: 2, title: "Verification", icon: "verification" },
+    { id: 3, title: "Payment", icon: "payment" },
+    { id: 4, title: "Pickup", icon: "pickup" },
   ];
 
+  // Load user data
   useEffect(() => {
-    const fetchTimelineData = async () => {
+    const loadUserData = async () => {
       try {
-        const response = await axiosInstance.get(`api/process/${orderId}`);
-        if (response.data.success) {
-          setTimelineData(response.data.data.events);
-          console.log("Timeline Data:!!!!!!!!!!", response.data.data.events);
+        const userData = await AsyncStorage.getItem("user");
+        if (userData) {
+          setUser(JSON.parse(userData));
+          return;
+        }
+
+        const token = await AsyncStorage.getItem("jwtToken");
+        if (token) {
+          const tokenParts = token.split(".");
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(atob(tokenParts[1]));
+            if (payload.id) {
+              setUser({
+                id: payload.id,
+                email: payload.email,
+                name: payload.name,
+              });
+            }
+          }
         }
       } catch (error) {
-        console.error("Error fetching timeline data:", error);
-      } finally {
-        setLoading(false);
+        console.error("Error loading user data:", error);
       }
     };
 
-    fetchTimelineData();
-  }, [orderId]);
+    loadUserData();
+  }, []);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString(); // Adjust the format as needed
+  // Fetch process data
+  const fetchProcessData = async () => {
+    try {
+      setLoading(true);
+      const processId = params.idProcess;
+      const orderId = params.idOrder;
+      
+      if (!processId && !orderId) {
+        console.error("No process ID or order ID provided");
+        setLoading(false);
+        return;
+      }
+      
+      let response;
+      if (processId) {
+        response = await axiosInstance.get(`/api/process/${processId}`);
+      } else {
+        response = await axiosInstance.get(`/api/process/order/${orderId}`);
+      }
+      
+      setProcessData(response.data.data);
+      
+      // Also fetch order details
+      if (response.data.data?.orderId) {
+        const orderResponse = await axiosInstance.get(`/api/orders/${response.data.data.orderId}`);
+        setOrderData(orderResponse.data.data);
+      }
+      
+    } catch (error) {
+      console.error("Error fetching process data:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
-  let dateEvents: string[] = [];
-  timelineData.map((event, index) =>
-    dateEvents.push(formatDate(event.createdAt))
-  );
-
-  const getInitials = (name: string) => {
-    if (!name) return "??";
-    const names = name.split(" ");
-    if (names.length >= 2) {
-      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+  // Fetch data on component mount and when focused
+  useEffect(() => {
+    if (isFocused) {
+      fetchProcessData();
     }
-    return names[0][0].toUpperCase();
+  }, [isFocused, params.idProcess, params.idOrder]);
+
+  // Add notification subscription when payment status changes
+  useEffect(() => {
+    if (processData?.status === 'PAYMENT_COMPLETED') {
+      sendNotification('payment_completed', {
+        type: 'payment_completed',
+        title: 'Payment Confirmed',
+        message: `Payment has been confirmed for order #${orderData?.orderNumber}`,
+        data: {
+          processId: processData.id,
+          orderId: orderData?.id,
+          amount: orderData?.totalAmount,
+          travelerId: user?.id,
+          requesterId: orderData?.request?.userId
+        }
+      });
+    } else if (processData?.status === 'PAYMENT_FAILED') {
+      sendNotification('payment_failed', {
+        type: 'payment_failed',
+        title: 'Payment Failed',
+        message: `Payment failed for order #${orderData?.orderNumber}`,
+        data: {
+          processId: processData.id,
+          orderId: orderData?.id,
+          travelerId: user?.id,
+          requesterId: orderData?.request?.userId
+        }
+      });
+    }
+  }, [processData?.status]);
+
+  // Add notification toggle handler
+  const toggleNotifications = async () => {
+    try {
+      setNotificationsEnabled(!notificationsEnabled);
+      await AsyncStorage.setItem('notificationsEnabled', String(!notificationsEnabled));
+    } catch (error) {
+      console.error('Error toggling notifications:', error);
+    }
+  };
+
+  // Load notification preferences
+  useEffect(() => {
+    const loadNotificationPreferences = async () => {
+      try {
+        const enabled = await AsyncStorage.getItem('notificationsEnabled');
+        if (enabled !== null) {
+          setNotificationsEnabled(enabled === 'true');
+        }
+      } catch (error) {
+        console.error('Error loading notification preferences:', error);
+      }
+    };
+
+    loadNotificationPreferences();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchProcessData();
+  };
+
+  // Format date function
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'MMM d, h:mm a');
+    } catch (e) {
+      return "Date unknown";
+    }
+  };
+
+  // Function to get user name
+  const getRequesterName = () => {
+    if (orderData?.request?.user?.name) {
+      return orderData.request.user.name;
+    }
+    return params.requesterName || "the requester";
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      }
+    >
       <View style={styles.content}>
         <Text style={styles.title}>Order Processing</Text>
         <Text style={styles.subtitle}>
@@ -92,35 +221,55 @@ const PaymentScreen = () => {
           </View>
 
           <Text style={styles.statusText}>
-            The requester{" "}
-            <Text style={{ fontFamily: "Inter-SemiBold" }}>
-              {getInitials(requesterName.toString())}
-            </Text>{" "}
-            needs to complete the payment process. We'll notify you immediately
-            when the payment is confirmed.
+            <Text style={{ fontFamily: "Inter-SemiBold" }}>{getRequesterName()}</Text>{" "}
+            needs to complete the payment for this order. You'll be notified immediately when the payment is confirmed.
           </Text>
 
           <View style={styles.timeline}>
             <View style={styles.timelineItem}>
               <View style={[styles.timelineDot, styles.completedDot]} />
               <Text style={styles.timelineText}>
-                Offer initialized: {dateEvents[1]}
+                Order initialized {processData?.createdAt && `(${formatDate(processData.createdAt)})`}
               </Text>
             </View>
-
             <View style={styles.timelineItem}>
               <View style={[styles.timelineDot, styles.completedDot]} />
               <Text style={styles.timelineText}>
-                Verification completed: {dateEvents[0]}
+                Verification completed {processData?.events?.find((e: any) => e.toStatus === 'CONFIRMED')?.createdAt && 
+                  `(${formatDate(processData.events.find((e: any) => e.toStatus === 'CONFIRMED').createdAt)})`}
               </Text>
             </View>
-
             <View style={styles.timelineItem}>
               <View style={[styles.timelineDot, styles.pendingDot]} />
               <Text style={styles.timelineText}>
                 Payment confirmation pending
               </Text>
             </View>
+          </View>
+        </Card>
+
+        {/* Add this Notification Card */}
+        <Card style={styles.notificationCard}>
+          <View style={styles.notificationHeader}>
+            <Bell size={20} color="#1e40af" />
+            <Text style={styles.notificationTitle}>Notification Settings</Text>
+          </View>
+          <View style={styles.notificationRow}>
+            <Text style={styles.notificationText}>Payment Updates</Text>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={toggleNotifications}
+              trackColor={{ false: "#e2e8f0", true: "#93c5fd" }}
+              thumbColor={notificationsEnabled ? "#2563eb" : "#94a3b8"}
+            />
+          </View>
+          <Text style={styles.notificationHint}>
+            You'll receive notifications for:
+          </Text>
+          <View style={styles.bulletList}>
+            <Text style={styles.bulletItem}>• Payment confirmation</Text>
+            <Text style={styles.bulletItem}>• Payment failures</Text>
+            <Text style={styles.bulletItem}>• Process status updates</Text>
           </View>
         </Card>
 
@@ -135,8 +284,7 @@ const PaymentScreen = () => {
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>Payment Verification</Text>
               <Text style={styles.stepDescription}>
-                Our system will automatically verify the payment within 1 hour
-                of receipt
+                Our system will automatically verify the payment when it's processed
               </Text>
             </View>
           </View>
@@ -145,8 +293,7 @@ const PaymentScreen = () => {
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>Notification Updates</Text>
               <Text style={styles.stepDescription}>
-                You'll receive push notifications and email updates about
-                Payment confirmation status
+                You'll receive notifications about payment confirmation status
               </Text>
             </View>
           </View>
@@ -155,18 +302,10 @@ const PaymentScreen = () => {
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>Pickup Scheduling</Text>
               <Text style={styles.stepDescription}>
-                Once confirmed, you'll be directed to the next step to choose
-                where you want to deliver the item
+                Once payment is confirmed, you'll be directed to the next step to arrange pickup
               </Text>
             </View>
           </View>
-
-          {/* We will see if there will be a button to contact us or not */}
-          {/* <TouchableOpacity style={styles.helpButton}>
-            <Text style={styles.helpButtonText}>
-              Need Help? Chat with Support
-            </Text>
-          </TouchableOpacity> */}
         </Card>
       </View>
     </ScrollView>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,12 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import {
-  CreditCard,
-  Lock,
-  CheckCircle,
-  MessageCircle,
-} from "lucide-react-native";
+import { CreditCard, Lock, CheckCircle } from "lucide-react-native";
 import ProgressBar from "../../components/ProgressBar";
 import Card from "../../components/cards/ProcessCard";
 import { RootState } from "@/store";
@@ -20,8 +15,10 @@ import { useSelector } from "react-redux";
 import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { router, useLocalSearchParams } from "expo-router";
-import axiosInstance, { BACKEND_URL } from "@/config";
-import { navigateToChat } from "@/services/chatService";
+import { BACKEND_URL } from "@/config";
+import { useNotification } from '@/context/NotificationContext';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { decode as atob } from "base-64";
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
@@ -29,6 +26,8 @@ export default function PaymentScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const { user, token } = useSelector((state: RootState) => state.auth);
   const { confirmPayment, loading } = useConfirmPayment();
+  const [userData, setUserData] = useState<any>(null);
+  const { sendNotification } = useNotification();
 
   const totalPrice =
     parseInt(params.quantity.toString()) * parseInt(params.price.toString());
@@ -37,11 +36,57 @@ export default function PaymentScreen() {
 
   console.log(params);
 
+  // Add user data loading effect
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("user");
+        if (userData) {
+          setUserData(JSON.parse(userData));
+          return;
+        }
+
+        const token = await AsyncStorage.getItem("jwtToken");
+        if (token) {
+          const tokenParts = token.split(".");
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(atob(tokenParts[1]));
+            if (payload.id) {
+              setUserData({
+                id: payload.id,
+                email: payload.email,
+                name: payload.name,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error);
+      }
+    };
+
+    loadUserData();
+  }, []);
+
   // Handle payment submission
   const handlePayment = async () => {
     setIsProcessing(true);
 
     try {
+      // Send payment initiated notification
+      if (userData?.id) {
+        sendNotification('payment_initiated', {
+          travelerId: params.travelerId,
+          requesterId: userData.id,
+          requestDetails: {
+            goodsName: params.goodsName || 'your ordered item',
+            requestId: params.idRequest,
+            orderId: params.idOrder,
+            processId: params.idProcess
+          }
+        });
+      }
+
       // Step 1: Create a payment intent
       const response = await fetch(
         `${BACKEND_URL}/api/payment-process/create-payment-intent`,
@@ -55,6 +100,8 @@ export default function PaymentScreen() {
             amount: totalAmount * 100, // Convert to cents
             currency: "usd",
             orderId: parseInt(params.idOrder.toString()),
+            requesterId: userData?.id,
+            travelerId: params.travelerId,
           }),
         }
       );
@@ -82,6 +129,21 @@ export default function PaymentScreen() {
       }
 
       if (paymentIntent) {
+        // Send payment completed notification
+        if (userData?.id) {
+          sendNotification('payment_completed', {
+            travelerId: params.travelerId,
+            requesterId: userData.id,
+            requestDetails: {
+              goodsName: params.goodsName || 'your ordered item',
+              requestId: params.idRequest,
+              orderId: params.idOrder,
+              processId: params.idProcess,
+              amount: totalAmount.toFixed(2)
+            }
+          });
+        }
+
         Alert.alert("Success", "Payment successful!");
         console.log("Payment successful:", paymentIntent);
         router.replace({
@@ -91,6 +153,22 @@ export default function PaymentScreen() {
       }
     } catch (error: Error | any) {
       console.error("Payment error:", error);
+      
+      // Send payment failed notification
+      if (userData?.id) {
+        sendNotification('payment_failed', {
+          travelerId: params.travelerId,
+          requesterId: userData.id,
+          requestDetails: {
+            goodsName: params.goodsName || 'your ordered item',
+            requestId: params.idRequest,
+            orderId: params.idOrder,
+            processId: params.idProcess,
+            errorMessage: error.message || "Payment processing failed"
+          }
+        });
+      }
+      
       Alert.alert("Error", error.message || "Something went wrong");
     } finally {
       setIsProcessing(false);
