@@ -74,7 +74,6 @@ export default function RootLayout() {
                       name="auth/NewPassword"
                       options={{ title: "New Password" }}
                     />
-
                     <Stack.Screen
                       name="productDetails"
                       options={{
@@ -203,6 +202,22 @@ export default function RootLayout() {
                     <Stack.Screen
                       name="verification/CreateSponsorPost"
                       options={{ title: "Create Sponsor Post" }}
+                    />
+                    <Stack.Screen
+                      name="reporting-system/create-ticket"
+                      options={{ title: "Create Report" }}
+                    />
+                      <Stack.Screen
+                      name="goodPost/goodpostpage"
+                      options={{ title: "Traveler Posts" }}
+                    />
+                    <Stack.Screen
+                      name="goodPost/createGoodsPost"
+                      options={{ title: "Create Goods Post" }}
+                    />
+                    <Stack.Screen
+                      name="traveler/becomeTraveler"
+                      options={{ title: "Become Traveler" }}
                     />
                     <Stack.Screen
                       name="screens/NotificationsScreen"

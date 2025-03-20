@@ -32,6 +32,9 @@ const adminRoutes = require("./routes/admin.route");
 const notificationRoutes = require("./routes/notification.Route");
 const chatRoutes = require("./routes/chat.route");
 const paymentProcessRoutes = require("./routes/paymentProcess.route");
+const ticketRoutes = require("./routes/Ticket.route");
+const travelerRoutes = require('./routes/traveler.route');
+
 const sponsorshipProcessRoutes=require("./routes/sponsorshipProcess.routes")
 // Import socket initialization function
 const { initializeSocket } = require("./sockets/index");
@@ -84,6 +87,9 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api", all); // I kept this last since it may include mixed routes
 app.use("/api/payment-process", paymentProcessRoutes);
+app.use("/api/tickets", ticketRoutes);
+app.use('/api/travelers', travelerRoutes);
+
 app.use('/api/sponsorship-process',sponsorshipProcessRoutes);
 // Health check
 app.get("/api/health", (req, res) => {
