@@ -10,7 +10,7 @@ router.post('/apply', travelerController.submitTravelerApplication);
 router.get('/check/:userId', travelerController.checkTravelerStatus);
 
 // Route to verify a traveler
-router.put('/:id/verify',  travelerController.verifyTraveler);
+router.put('/:id/verify', authenticateAdmin, travelerController.verifyTraveler);
 
 // Route to get all travelers
 router.get('/', authenticateUser, travelerController.getAllTravelers);
