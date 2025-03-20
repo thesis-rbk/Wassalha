@@ -180,7 +180,9 @@ export default function InitializationSO() {
           onPress: async () => {
             try {
               setProcessing(true);
-              const response = await axiosInstance.patch(
+              
+              // First, update the order status to CANCELLED
+              const orderResponse = await axiosInstance.patch(
                 `/api/orders/${order.id}/status`,
                 {
                   status: "CANCELLED",
@@ -188,8 +190,20 @@ export default function InitializationSO() {
                 }
               );
 
-              if (response.status === 200) {
-                sendNotification("order_cancelled", {
+              if (orderResponse.status === 200) {
+                // Then, update the associated request directly (not using the status endpoint)
+                const requestId = params.idRequest;
+                if (requestId) {
+                  await axiosInstance.put(
+                    `/api/requests/${requestId}`,
+                    {
+                      status: "PENDING"
+                    }
+                  );
+                }
+
+                // Send notification about cancellation
+                sendNotification('order_cancelled', {
                   travelerId: params.travelerId,
                   requestDetails: {
                     requesterId: user?.id,

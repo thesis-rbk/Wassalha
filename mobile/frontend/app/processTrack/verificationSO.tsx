@@ -15,6 +15,9 @@ import { MaterialIcons } from "@expo/vector-icons";
 import axiosInstance, { BACKEND_URL } from "@/config";
 import { router, useLocalSearchParams } from "expo-router";
 import { Order } from "@/types";
+import { useNotification } from '@/context/NotificationContext';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { decode as atob } from "base-64";
 import Animated from "react-native-reanimated";
 
 export default function VerificationScreen() {
@@ -23,6 +26,8 @@ export default function VerificationScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const orderId = params.idOrder;
+  const [user, setUser] = useState<any>(null);
+  const { sendNotification } = useNotification();
 
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -47,6 +52,62 @@ export default function VerificationScreen() {
     fetchOrder();
   }, [orderId]);
 
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("user");
+        if (userData) {
+          setUser(JSON.parse(userData));
+          return;
+        }
+
+        const token = await AsyncStorage.getItem("jwtToken");
+        if (token) {
+          const tokenParts = token.split(".");
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(atob(tokenParts[1]));
+            if (payload.id) {
+              setUser({
+                id: payload.id,
+                email: payload.email,
+                name: payload.name,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error);
+      }
+    };
+
+    loadUserData();
+  }, []);
+
+  const getImageUrl = () => {
+    // If no image data at all, return null
+    if (!params.imageUrl) return null;
+
+    // If ordersUrl has the full path
+    if (params.imageUrl.toString().startsWith("/api/uploads/")) {
+      return `${BACKEND_URL}${params.imageUrl}`;
+    }
+
+    // If ordersUrl is just the filename
+    if (params.imageUrl) {
+      return `${BACKEND_URL}/api/uploads/${params.imageUrl}`;
+    }
+
+    console.log(params, getImageUrl());
+
+    // If we have imageId but no direct access to filename
+    // if (orders.verificationImageId) {
+    //   // Use the imageId to construct the URL
+    //   return `${BACKEND_URL}/api/uploads/${orders.verificationImageId}`;
+    // }
+
+    return null;
+  };
+
   const confirmProduct = async () => {
     try {
       const response = await axiosInstance.post(
@@ -55,6 +116,17 @@ export default function VerificationScreen() {
       );
 
       if (response.status === 200) {
+        sendNotification('product_confirmed', {
+          travelerId: params.travelerId,
+          requesterId: user?.id,
+          requestDetails: {
+            goodsName: params.goodsName || 'this product',
+            requestId: params.idRequest,
+            orderId: params.idOrder,
+            processId: params.idProcess
+          }
+        });
+        
         Alert.alert("Success", "Product confirmed successfully");
         router.replace({
           pathname: "/processTrack/paymentSO",
@@ -75,6 +147,17 @@ export default function VerificationScreen() {
       );
 
       if (response.status === 200) {
+        sendNotification('request_new_photo', {
+          travelerId: params.travelerId,
+          requesterId: user?.id,
+          requestDetails: {
+            goodsName: params.goodsName || 'this product',
+            requestId: params.idRequest,
+            orderId: params.idOrder,
+            processId: params.idProcess
+          }
+        });
+        
         Alert.alert("Success", "Another photo has been requested");
         if (order) {
           setOrder({
@@ -94,6 +177,17 @@ export default function VerificationScreen() {
       const response = await axiosInstance.delete(`/api/process/${orderId}`);
 
       if (response.status === 200) {
+        sendNotification('process_canceled', {
+          travelerId: params.travelerId,
+          requesterId: user?.id,
+          requestDetails: {
+            goodsName: params.goodsName || 'this product',
+            requestId: params.idRequest,
+            orderId: params.idOrder,
+            processId: params.idProcess
+          }
+        });
+        
         Alert.alert("Success", "Process cancelled successfully");
         router.push("/home");
       }

@@ -19,8 +19,8 @@ export * from './PromoPost';
 export * from './InfoItemProps';
 export * from './ProfileState';
 export * from './ProfileImage';
-
+export * from './Media';
+export * from './Message';
 export * from './Role';
-
 export * from './Traveler';
 export * from './VerificationStatusProps';

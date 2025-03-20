@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,12 +14,17 @@ import { MaterialIcons } from "@expo/vector-icons";
 import axiosInstance from "@/config";
 import { useLocalSearchParams } from "expo-router";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import { useNotification } from '@/context/NotificationContext';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { decode as atob } from "base-64";
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
   const [image, setImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const { sendNotification } = useNotification();
 
   console.log(params);
 
@@ -53,6 +58,38 @@ export default function VerificationScreen() {
     }
   };
 
+  // Add user data loading effect
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("user");
+        if (userData) {
+          setUser(JSON.parse(userData));
+          return;
+        }
+
+        const token = await AsyncStorage.getItem("jwtToken");
+        if (token) {
+          const tokenParts = token.split(".");
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(atob(tokenParts[1]));
+            if (payload.id) {
+              setUser({
+                id: payload.id,
+                email: payload.email,
+                name: payload.name,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error);
+      }
+    };
+
+    loadUserData();
+  }, []);
+
   // Upload the photo for verification
   const uploadPhoto = async () => {
     if (!image) {
@@ -69,8 +106,8 @@ export default function VerificationScreen() {
         name: "verification_photo.jpg",
         type: "image/jpeg",
       };
-      formData.append("file", fileData as any); // Type assertion due to FormData limitations
-      formData.append("orderId", params.idOrder as string); // Send orderId
+      formData.append("file", fileData as any);
+      formData.append("orderId", params.idOrder as string);
 
       const response = await axiosInstance.post(
         "/api/products/verify-product",
@@ -83,8 +120,20 @@ export default function VerificationScreen() {
       );
 
       if (response.status === 200) {
+        // Send notification - match event name with your NotificationContext
+        sendNotification('verification_photo_submitted', {
+          requesterId: params.requesterId,
+          travelerId: user?.id,
+          requestDetails: {
+            goodsName: params.goodsName || 'this product',
+            requestId: params.idRequest,
+            orderId: params.idOrder,
+            processId: params.idProcess
+          }
+        });
+        
         Alert.alert("Success", "Photo uploaded successfully.");
-        setIsVerified(true); // Mark as verified
+        setIsVerified(true);
       } else {
         Alert.alert("Error", "Failed to upload photo. Please try again.");
       }
