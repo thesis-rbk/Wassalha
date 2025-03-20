@@ -44,7 +44,7 @@ export const Colors = {
       ios: '#000000',
       android: '#121212',
     }),
-    primary: '#008098',
+    primary: '#007BFF',
     secondary: Platform.select({
       ios: '#1C1C1E',
       android: '#1E1E1E',
