@@ -4,7 +4,7 @@ import { Chat } from "./Chat";
 export interface Message {
   id: number | string;
   chat: Chat;
-  chatId: number;
+  chatId: string ;
   receiverId: number;
   senderId: number;
   sender: User;
