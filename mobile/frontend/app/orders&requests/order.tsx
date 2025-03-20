@@ -615,7 +615,7 @@ export default function OrderPage() {
   };
 
   const handleNotificationPress = () => {
-    router.push("/notifications");
+    router.push("./notifications");
   };
   
   const handleProfilePress = () => {

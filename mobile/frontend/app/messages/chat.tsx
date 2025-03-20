@@ -179,13 +179,13 @@ export default function ChatScreen() {
     try {
       if (socket && socket.connected) {
         console.log('Sending message via socket:', {
-          chatId: parseInt(chatId),
+          chatId: parseInt(chatId.toString()),
           content: newMessage,
           type: 'text'
         });
         
         socket.emit('send_message', {
-          chatId: parseInt(chatId),
+          chatId: parseInt(chatId.toString()),
           content: newMessage,
           type: 'text'
         });
@@ -292,14 +292,14 @@ export default function ChatScreen() {
       // Step 2: Now create a message with this media
       if (socket && socket.connected) {
         console.log('Sending media message via socket:', {
-          chatId: parseInt(chatId),
+          chatId: parseInt(chatId.toString()),
           content: `Sent a file: ${document.name || 'document'}`,
           type: 'document',
           mediaId: parseInt(result.mediaId)
         });
         
         socket.emit('send_message', {
-          chatId: parseInt(chatId),
+          chatId: parseInt(chatId.toString()),
           content: `Sent a file: ${document.name || 'document'}`,
           type: 'document',
           mediaId: parseInt(result.mediaId)
@@ -375,9 +375,9 @@ export default function ChatScreen() {
           >
             {/* File icon based on type */}
             <View style={styles.fileIconContainer}>
-              {item.media.type === 'IMAGE' ? (
+              {item.media?.type === 'IMAGE' ? (
                 <ImageIcon size={24} color={isMyMessage ? "#ffffff" : "#3b82f6"} />
-              ) : item.media.type === 'DOCUMENT' ? (
+              ) : item.media?.type === 'DOCUMENT' ? (
                 <FileText size={24} color={isMyMessage ? "#ffffff" : "#3b82f6"} />
               ) : (
                 <File size={24} color={isMyMessage ? "#ffffff" : "#3b82f6"} />
@@ -393,15 +393,15 @@ export default function ChatScreen() {
                 ]}
                 numberOfLines={1}
               >
-                {item.media.filename || 'File attachment'}
+                {item.media?.filename || 'File attachment'}
               </ThemedText>
               
               <View style={styles.fileMetaRow}>
                 {/* Extension badge if available */}
-                {item.media.extension && (
+                {item.media?.extension && (
                   <View style={styles.extensionBadge}>
                     <Text style={styles.extensionText}>
-                      {item.media.extension}
+                      {item.media?.extension}
                     </Text>
                   </View>
                 )}

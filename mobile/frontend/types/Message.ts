@@ -1,5 +1,6 @@
 import { User } from "./User";
 import { Chat } from "./Chat";
+import { Media } from "./Media";
 
 export interface Message {
   id: number | string;
@@ -11,6 +12,7 @@ export interface Message {
   type: string;
   content?: string;
   mediaId?: number;
+  media?:Media;
   isRead: boolean;
   text?: string;
   time: string;
