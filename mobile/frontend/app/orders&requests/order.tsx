@@ -27,6 +27,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
 const CARD_SPACING = 12;
+import { TabBar } from "@/components/navigation/TabBar";
+import { TopNavigation } from "@/components/navigation/TopNavigation";
 
 // Custom hook to ensure we have user data
 const useReliableAuth = () => {
@@ -102,6 +104,7 @@ export default function OrderPage() {
   const [requests, setRequests] = useState<Request[]>([]);
   const { user, loading: authLoading } = useReliableAuth();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState("Order");
 
   // Animation value for the "Make Offer" button
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -606,8 +609,27 @@ export default function OrderPage() {
     );
   };
 
+  // Add this function to handle tab press
+  const handleTabPress = (tabName: string) => {
+    setActiveTab(tabName);
+  };
+
+  const handleNotificationPress = () => {
+    router.push("/notifications");
+  };
+  
+  const handleProfilePress = () => {
+    router.push("/profile");
+  };
+
   return (
     <ThemedView style={styles.container}>
+      <TopNavigation 
+        title="Orders & Requests" 
+        onNotificationPress={handleNotificationPress}
+        onProfilePress={handleProfilePress}
+      />
+      
       <SegmentedControl
         values={["Requests", "Orders"]}
         selectedIndex={view === "requests" ? 0 : 1}
@@ -651,6 +673,9 @@ export default function OrderPage() {
           onRefresh={fetchRequests}
         />
       )}
+      
+      {/* Add TabBar at the bottom of the screen */}
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   );
 }

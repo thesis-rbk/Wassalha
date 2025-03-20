@@ -235,7 +235,29 @@ enum Role {
   SUPER_ADMIN
 }
 
+// Add TicketStatus enum with the other enums
+enum TicketStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
 // ------------------ MODELS ------------------ //
+
+// ========== TRAVELER ==========
+
+model Traveler {
+  id         Int     @id @default(autoincrement())
+  userId     Int     @unique
+  idCard     String
+  bankCard   String
+  isVerified Boolean @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
 
 // ========== USER ==========
 model User {
@@ -248,6 +270,9 @@ model User {
   hasCompletedOnboarding Boolean @default(false)
   role                   Role    @default(USER)
   serviceProviderId      String?
+
+  // Relation to Traveler
+  traveler               Traveler?
 
   requests         Request[]
   notifications    Notification[]
@@ -262,6 +287,9 @@ model User {
   // Subscriptions / Sponsorships
   subscriptions Subscription[] @relation("UserSubscriptions")
   sponsorships  Sponsorship[]  @relation("UserSponsorships")
+
+  // New relation for user as recipient
+  sponsorshipsReceived Sponsorship[] @relation("SponsorshipRecipients")
 
   // Reputation
   reputation Reputation?
@@ -280,8 +308,11 @@ model User {
 
   sentNotifications     Notification[] @relation("SentNotifications")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Add this line
+  tickets    Ticket[]
 }
 
 // ========== PROFILE ==========
@@ -294,7 +325,7 @@ model Profile {
   bio         String?
   country     Country? // Optional field for country
   phoneNumber String?
-
+  
   // Profile image stored as Media
   imageId Int?   @unique
   image   Media? @relation("ProfileImage", fields: [imageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -326,12 +357,12 @@ model ReviewSponsor {
 
 // ========== SERVICE PROVIDER ==========
 model ServiceProvider {
-  id         Int                 @id @default(autoincrement())
-  userId     Int                 @unique
-  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  type       ServiceProviderType @default(PENDING_SPONSOR)
-  isVerified Boolean             @default(false)
-  badge      String?
+  id          Int     @id @default(autoincrement())
+  userId      Int     @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  type        ServiceProviderType @default(PENDING_SPONSOR)
+  isVerified  Boolean @default(false)
+  badge       String?
 
   // Verification Fields
   idCard               String? // Optional: Government ID
@@ -345,32 +376,6 @@ model ServiceProvider {
 
   // Sponsorships relation
   sponsorships Sponsorship[] @relation("ServiceProviderSponsors")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model SponsorCheckout {
-  id             Int             @id @default(autoincrement())
-  buyerId        Int // Buyer ID
-  cardNumber     String // Card number
-  cardExpiryMm   String // Expiry month (MM)
-  cardExpiryYyyy String // Expiry year (YYYY)
-  cardCvc        String // CVC code
-  cardholderName String // Name of cardholder
-  postalCode     String // Postal code of the cardholder's address
-  amount         Float // Payment amount
-  qrCode         String? // Optional: QR code for payment
-  paymentUrl     String? // Optional: Payment URL
-  currency       PaymentCurrency // Currency of the payment (using the enum)
-  status         PaymentState // Payment status
-  paymentMethod  PaymentMethod // Payment method (relating to the enum)
-
-  transactionId String? // Transaction ID (nullable)
-
-  // Relation Fields
-  sponsorShipId Int
-  sponsorship   Sponsorship @relation(fields: [sponsorShipId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -571,6 +576,10 @@ model Message {
   isRead  Boolean @default(false)
 
   time DateTime @default(now()) // Add the time field, defaulting to the current timestamp
+
+  // Add new ticket relation
+  ticketId   Int?
+  ticket     Ticket?    @relation("TicketMessages", fields: [ticketId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 // ========== MEDIA ==========
@@ -635,14 +644,15 @@ model Sponsorship {
   isActive    Boolean             @default(true)
 
   // New fields from your schema
-  sponsorId Int
-  sponsor   ServiceProvider @relation("ServiceProviderSponsors", fields: [sponsorId], references: [id])
-  product   String
-  amount    Float
-  status    String          @default("pending")
+  sponsorId   Int
+  sponsor     ServiceProvider @relation("ServiceProviderSponsors", fields: [sponsorId], references: [id])
+  recipientId Int
+  recipient   User?           @relation("SponsorshipRecipients", fields: [recipientId], references: [id])
+  product     String
+  amount      Float
+  status      String          @default("pending")
 
-  users            User[]            @relation("UserSponsorships")
-  sponsorCheckouts SponsorCheckout[] @relation
+  users User[] @relation("UserSponsorships")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -768,6 +778,20 @@ model PickupSuggestion {
   qrCode             String?
   coordinates        String?
   contactPhoneNumber String?
-  scheduledTime      DateTime?
-  createdAt          DateTime   @default(now())
+  scheduledTime DateTime?
+  createdAt     DateTime @default(now())
+}
+
+// Add Ticket model before the existing models
+model Ticket {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String       @db.Text
+  userId      Int
+  status      TicketStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  messages    Message[]    @relation("TicketMessages")
 }
