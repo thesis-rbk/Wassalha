@@ -9,7 +9,7 @@ import {
   getSocket,
   connectSocket,
   cleanupSockets,
-} from "@/services/socketService";
+} from "@/services/SocketService";
 import { sendSocketNotification } from "@/services/notificationService";
 import {
   NotificationType,
