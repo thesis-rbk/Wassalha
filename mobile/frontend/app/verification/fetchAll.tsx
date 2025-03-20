@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Animated,
+    PlatformColor,
 } from "react-native";
 import Icon from 'react-native-vector-icons/Feather'; // Add this for icons
 import axiosInstance from "@/config";
@@ -17,6 +18,7 @@ import NavigationProp from "@/types/navigation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams, useRouter } from "expo-router";
 import { SponsorshipCard } from "../../components/sponsorCards";
+import { platform } from "os";
 
 const SponsorshipsScreen: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState<string>("");
@@ -83,13 +85,12 @@ const SponsorshipsScreen: React.FC = () => {
         }
     };
 
-    // Fetch sponsorships from the API
     const fetchSponsorships = async () => {
         setLoading(true);
         try {
-            const response = await axiosInstance.get("api/search", {
+            const response = await axiosInstance.get("/api/search", {
                 params: {
-                    nameContains: searchQuery,
+                    searchTerm: searchQuery || "", // Use single searchTerm for both platform and description
                 },
             });
             const sorted = response.data.sort(
@@ -99,6 +100,7 @@ const SponsorshipsScreen: React.FC = () => {
             setSponsorships(sorted);
         } catch (error) {
             console.error("Error fetching sponsorships:", error);
+            setSponsorships([]);
         } finally {
             setLoading(false);
         }
@@ -137,10 +139,13 @@ const SponsorshipsScreen: React.FC = () => {
     // Render the sponsorship card using SponsorshipCard component
     const renderItem = ({ item }: { item: Sponsorship }) => (
         <SponsorshipCard
+            id={item.id} // Pass the ID to the SponsorshipCard component
             platform={item.platform}
             price={`$${item.price.toFixed(2)}`}
+            description={item.description ?? ""}
             isActive={item.isActive}
             onPress={() => navigation.navigate("verification/CreateSponsorPost", { id: item.id })}
+            onBuyPress={() => console.log("Buy button pressed")}
         />
     );
 

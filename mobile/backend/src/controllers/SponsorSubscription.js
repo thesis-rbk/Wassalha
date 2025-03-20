@@ -101,102 +101,35 @@ const sponsor = {
         }
     },
     search: async (req, res) => {
-        const {
-            nameContains,
-            descriptionContains,
-            platformContains,
-            productContains,
-            statusContains,
-            minPrice,
-            maxPrice,
-            minDuration,
-            maxDuration,
-            minAmount,
-            maxAmount,
-            sponsorNameContains,
-        } = req.query;
+        const { searchTerm } = req.query;
 
         try {
-            console.log("helloooo query", req.query);
+            console.log("Search query parameters:", req.query);
 
-            // If no filters provided, return all sponsorships
-            if (!nameContains && !descriptionContains && !platformContains && !productContains &&
-                !statusContains && !minPrice && !maxPrice && !minDuration && !maxDuration &&
-                !minAmount && !maxAmount && !sponsorNameContains) {
-                const allSponsorships = await prisma.sponsorship.findMany({
-                    include: {
-                        category: true,
-                        sponsor: { include: { user: true } },
-                        users: true,
-                    }
-                });
-                return res.status(200).json(allSponsorships);
+            const whereConditions = {
+                isActive: true,
+            };
+            if (searchTerm) {
+                const search = searchTerm.toString();
+                const searchUpper = search.toUpperCase();
+
+                const availablePlatforms = [
+                    'FACEBOOK', 'INSTAGRAM', 'YOUTUBE', 'TWITTER', 'TIKTOK', 'OTHER',
+                ];
+
+                const matchingPlatforms = availablePlatforms.filter(platform =>
+                    platform.includes(searchUpper)
+                );
+
+                whereConditions.OR = [
+                    { description: { contains: search } },
+                    ...(matchingPlatforms.length > 0 ? [{ platform: { in: matchingPlatforms } }] : []),
+                ];
             }
-
-            // Filtered search
-            const filteredSponsorships = await prisma.sponsorship.findMany({
-                where: {
-                    OR: [
-                        nameContains && {
-                            name: {
-                                contains: nameContains,
-                            }
-                        },
-                        descriptionContains && {
-                            description: {
-                                contains: descriptionContains,
-                            }
-                        },
-                        platformContains && {
-                            platform: {
-                                contains: platformContains,
-                            }
-                        },
-                        productContains && {
-                            product: {
-                                contains: productContains,
-                            }
-                        },
-                        statusContains && {
-                            status: {
-                                contains: statusContains,
-                            }
-                        },
-                        sponsorNameContains && {
-                            sponsor: {
-                                user: {
-                                    name: {
-                                        contains: sponsorNameContains,
-                                    }
-                                }
-                            }
-                        },
-                    ].filter(Boolean),
-                    AND: [
-                        minPrice && {
-                            price: { gte: Number(minPrice) }
-                        },
-                        maxPrice && {
-                            price: { lte: Number(maxPrice) }
-                        },
-                        minDuration && {
-                            duration: { gte: Number(minDuration) }
-                        },
-                        maxDuration && {
-                            duration: { lte: Number(maxDuration) }
-                        },
-                        minAmount && {
-                            amount: { gte: Number(minAmount) }
-                        },
-                        maxAmount && {
-                            amount: { lte: Number(maxAmount) }
-                        }
-                    ].filter(Boolean)
-                },
+            const sponsorships = await prisma.sponsorship.findMany({
+                where: whereConditions,
                 include: {
-                    category: {
-                        select: { id: true, name: true }
-                    },
+                    category: { select: { id: true, name: true } },
                     sponsor: {
                         select: {
                             id: true,
@@ -204,23 +137,21 @@ const sponsor = {
                             type: true,
                             isVerified: true,
                             badge: true,
-                            user: {
-                                select: { id: true, name: true, email: true }
-                            }
-                        }
+                            user: { select: { id: true, name: true, email: true } },
+                        },
                     },
-                    users: {
-                        select: { id: true, name: true }
-                    }
-                }
+                    users: { select: { id: true, name: true } },
+                    reviews: true,
+                },
+                orderBy: { createdAt: 'desc' },
             });
-
-            return res.status(200).send(filteredSponsorships);
+            return res.status(200).json(sponsorships);
         } catch (err) {
-            console.log("errrrrrrrrrrrr", err);
-            return res.status(400).send({ message: 'Something went wrong' });
+            console.log("Error in sponsorship search:", err);
+            return res.status(400).send({ message: "Something went wrong", error: err.message });
         }
-    },
+    }
+    ,
     getAllCategories: async (req, res) => {
         try {
             const categories = await prisma.category.findMany();

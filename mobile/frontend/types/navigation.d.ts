@@ -19,6 +19,7 @@ type RootStackParamList = {
     "home": undefined;
 
     'sponsorshipTrack/initializationBuyer': { id: number };
+    "verification/SponsorshipDetails": { id: number };
 
 };
 

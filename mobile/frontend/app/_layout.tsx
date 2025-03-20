@@ -201,6 +201,10 @@ export default function RootLayout() {
                       options={{ title: "Fetch Sub" }}
                     />
                     <Stack.Screen
+                      name="verification/SponsorshipDetails"
+                      options={{ title: "verif details" }}
+                    />
+                    <Stack.Screen
                       name="verification/CreateSponsorPost"
                       options={{ title: "Create Sponsor Post" }}
                     />
@@ -248,7 +252,7 @@ export default function RootLayout() {
                       options={{ title: "Pickup" }}
                     />
                   </Stack>
-                  
+
                 )}
               </StripeProvider>
             </SponsorshipProcessProvider>

@@ -1,27 +1,128 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Text, Image } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import { useColorScheme } from "react-native";
-import { ChevronRight } from "lucide-react-native";
-import platformImages from "../types/Sponsorship"; // Platform-to-image mapping
 import { Image as ExpoImage } from "expo-image";
+import { useNavigation } from "@react-navigation/native";
+import platformImages from "../types/Sponsorship";
+import NavigationProp from "@/types/navigation";
 // Define the props interface for TypeScript
 interface SponsorshipCardProps {
-    platform: string; // e.g., "YOUTUBE", "TWITTER"
+    id: number; // Add the ID prop
+    platform: string;
     price: string;
+    description: string;
     isActive: boolean;
-    onPress: () => void; // Callback for when the card is clicked
+    onPress: () => void;
+    onBuyPress: () => void;
 }
 
+// Constants for theme colors
+const COLORS = {
+    light: {
+        background: "#FFFFFF",
+        shadow: "#4A4A4A",
+        shadowOpacity: 0.2,
+        platformText: "#1A1A1A",
+        secondaryText: "#666666",
+        interactive: "#007BFF",
+        activeBadge: "#34C759",
+        inactiveBadge: "#FF3B30",
+    },
+    dark: {
+        background: "#1C2526",
+        shadow: "#000",
+        shadowOpacity: 0.4,
+        platformText: "#E0E0E0",
+        secondaryText: "#A0A0A0",
+        interactive: "#66B2FF",
+        activeBadge: "#34C759",
+        inactiveBadge: "#FF3B30",
+    },
+};
+
+// Constants for description truncation
+const DESCRIPTION_MAX_LENGTH = 20;
+
+// Component to render the platform image
+const PlatformImage: React.FC<{ platform: string }> = ({ platform }) => {
+    const platformImage = platformImages[platform as keyof typeof platformImages] || platformImages["OTHER"];
+
+    return (
+        <View style={styles.imageContainer}>
+            {platformImage ? (
+                <ExpoImage
+                    source={platformImage}
+                    style={styles.platformImage}
+                    resizeMode="contain"
+                    accessibilityLabel={`${platform} logo`}
+                />
+            ) : (
+                <View style={[styles.platformImage, styles.fallbackImage]} />
+            )}
+        </View>
+    );
+};
+
+// Component to render the description with "See More" link
+const DescriptionWithSeeMore: React.FC<{
+    description: string;
+    onPress: () => void;
+    textColor: string;
+    linkColor: string;
+}> = ({ description, onPress, textColor, linkColor }) => {
+    const truncatedDescription =
+        description.length > DESCRIPTION_MAX_LENGTH
+            ? `${description.substring(0, DESCRIPTION_MAX_LENGTH)}...`
+            : description;
+
+    return (
+        <View style={styles.descriptionContainer}>
+            <Text style={[styles.description, { color: textColor }]}>
+                {truncatedDescription}
+            </Text>
+            {description.length > DESCRIPTION_MAX_LENGTH && (
+                <TouchableOpacity onPress={onPress}>
+                    <Text style={[styles.seeMore, { color: linkColor }]}>See More</Text>
+                </TouchableOpacity>
+            )}
+        </View>
+    );
+};
+
+// Component to render the action buttons and status
+const ActionButtons: React.FC<{
+    isActive: boolean;
+    onBuyPress: () => void;
+    activeColor: string;
+    inactiveColor: string;
+    buttonColor: string;
+}> = ({ isActive, onBuyPress, activeColor, inactiveColor, buttonColor }) => (
+    <View style={styles.actionContainer}>
+        <TouchableOpacity
+            onPress={onBuyPress}
+            style={[styles.buyButton, { backgroundColor: buttonColor }]}
+        >
+            <Text style={styles.buyButtonText}>Buy Now</Text>
+        </TouchableOpacity>
+    </View>
+);
+
 export const SponsorshipCard: React.FC<SponsorshipCardProps> = ({
+    id, // Destructure the ID prop
     platform,
     price,
+    description,
     isActive,
     onPress,
+    onBuyPress,
 }) => {
     const colorScheme = useColorScheme() ?? "light";
+    const theme = COLORS[colorScheme];
+    const navigation = useNavigation<NavigationProp>();
 
-    // Fetch the platform-specific image dynamically
-    const platformImage = platformImages[platform as keyof typeof platformImages] || platformImages["OTHER"];
+    const handleSeeMore = () => {
+        navigation.navigate("verification/SponsorshipDetails", { id });
+    };
 
     return (
         <TouchableOpacity
@@ -29,62 +130,49 @@ export const SponsorshipCard: React.FC<SponsorshipCardProps> = ({
             style={[
                 styles.card,
                 {
-                    backgroundColor: colorScheme === "dark" ? "#1C2526" : "#FFFFFF",
-                    shadowColor: colorScheme === "dark" ? "#000" : "#4A4A4A",
-                    shadowOpacity: colorScheme === "dark" ? 0.4 : 0.2,
+                    backgroundColor: theme.background,
+                    shadowColor: theme.shadow,
+                    shadowOpacity: theme.shadowOpacity,
                 },
             ]}
             accessibilityRole="button"
             accessibilityLabel={`${platform} sponsorship card`}
         >
-            {/* Platform Image */}
-            <View style={styles.imageContainer}>
-                {platformImage ? (
-                    <ExpoImage
-                        source={platformImage}
-                        style={styles.platformImage}
-                        resizeMode="contain"
-                        accessibilityLabel={`${platform} logo`}
-                    />
-                ) : (
-                    <View style={[styles.platformImage, styles.fallbackImage]} />
-                )}
-            </View>
+            <PlatformImage platform={platform} />
 
-            {/* Content */}
             <View style={styles.contentContainer}>
-                <Text
-                    style={[
-                        styles.platform,
-                        { color: colorScheme === "dark" ? "#E0E0E0" : "#1A1A1A" },
-                    ]}
-                >
-                    {platform}
-                </Text>
-                <Text
-                    style={[
-                        styles.price,
-                        { color: colorScheme === "dark" ? "#A0A0A0" : "#666666" },
-                    ]}
-                >
+                <View style={styles.headerContainer}>
+                    <Text style={[styles.platform, { color: theme.platformText }]}>
+                        {platform}
+                    </Text>
+                    <View
+                        style={[
+                            styles.statusBadge,
+                            { backgroundColor: isActive ? theme.activeBadge : theme.inactiveBadge },
+                        ]}
+                    >
+                        <Text style={styles.statusText}>
+                            {isActive ? "Active" : "Inactive"}
+                        </Text>
+                    </View>
+                </View>
+                <Text style={[styles.price, { color: theme.secondaryText }]}>
                     Price: {price}
                 </Text>
-                <View
-                    style={[
-                        styles.statusBadge,
-                        { backgroundColor: isActive ? "#34C759" : "#FF3B30" },
-                    ]}
-                >
-                    <Text style={styles.statusText}>
-                        {isActive ? "Active" : "Inactive"}
-                    </Text>
-                </View>
+                <DescriptionWithSeeMore
+                    description={description}
+                    onPress={handleSeeMore} // Use the handleSeeMore function
+                    textColor={theme.secondaryText}
+                    linkColor={theme.interactive}
+                />
+                <ActionButtons
+                    isActive={isActive}
+                    onBuyPress={onBuyPress}
+                    activeColor={theme.activeBadge}
+                    inactiveColor={theme.inactiveBadge}
+                    buttonColor={theme.interactive}
+                />
             </View>
-
-            <ChevronRight
-                color={colorScheme === "dark" ? "#66B2FF" : "#007BFF"}
-                size={24}
-            />
         </TouchableOpacity>
     );
 };
@@ -117,25 +205,57 @@ const styles = StyleSheet.create({
     contentContainer: {
         flex: 1,
     },
+    headerContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 4,
+    },
     platform: {
         fontSize: 18,
         fontWeight: "700",
-        marginBottom: 4,
     },
     price: {
         fontSize: 16,
         fontWeight: "500",
         marginBottom: 8,
     },
+    descriptionContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 8,
+    },
+    description: {
+        fontSize: 14,
+        fontWeight: "400",
+    },
+    seeMore: {
+        fontSize: 14,
+        fontWeight: "600",
+        marginLeft: 4,
+    },
+    actionContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
     statusBadge: {
         paddingVertical: 4,
         paddingHorizontal: 8,
         borderRadius: 12,
-        alignSelf: "flex-start",
     },
     statusText: {
         color: "#FFFFFF",
         fontSize: 12,
+        fontWeight: "600",
+    },
+    buyButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+    },
+    buyButtonText: {
+        color: "#FFFFFF",
+        fontSize: 14,
         fontWeight: "600",
     },
 });
