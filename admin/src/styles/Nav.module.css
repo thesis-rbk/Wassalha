@@ -29,6 +29,34 @@
   transition: all 0.3s ease;
 }
 
+/* Add very transparent nav style */
+.veryTransparentNav {
+  background-color: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(5px);
+  box-shadow: none;
+}
+
+.darkMode .veryTransparentNav {
+  background-color: rgba(26, 26, 26, 0.3);
+  backdrop-filter: blur(5px);
+  box-shadow: none;
+}
+
+.navSpacer {
+  width: 230px; /* Same width as sidebar */
+}
+
+/* Add transparent nav style */
+.transparentNav {
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+.darkMode .transparentNav {
+  background-color: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(10px);
+}
+
 /* Dark mode styles */
 .darkMode .nav {
   background-color: var(--dark-background);
@@ -193,15 +221,17 @@
 
 .sidebar {
   position: fixed;
-  top: 60px;
+  top: 0; /* Changed from 60px to 0 to position on top of nav */
   left: 0;
   width: 230px;
-  height: calc(100vh - 60px);
+  height: 100vh; /* Changed from calc(100vh - 60px) to 100vh */
   background-color: white;
-  z-index: 1000;
+  z-index: 1002; /* Increased z-index to be above nav */
   transition: all 0.3s ease;
   overflow-x: hidden;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  margin-top: 0;
+  padding-top: 60px; /* Add padding to account for nav height */
 }
 
 .collapsed {
@@ -293,7 +323,7 @@
 
 .mainContent {
   margin-left: 10px;
-  margin-top: 40px;
+  margin-top: 35px; /* Keep this to position below the nav */
   padding: 20px;
   transition: all 0.3s ease;
   min-height: calc(100vh - 60px);

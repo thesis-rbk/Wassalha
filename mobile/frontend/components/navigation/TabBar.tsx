@@ -39,10 +39,12 @@ export function TabBar({
       route: "../orders&requests/order" as Route,
     },
     {
-      name: "",
-      icon: (<View style={styles.plusIconContainer}>
-        <Plus size={24} color="white" />
-      </View>),
+      name: "Create",
+      icon: (
+        <View style={styles.plusIconContainer}>
+          <Plus size={24} color="white" />
+        </View>
+      ),
       route: "/productDetails/create-order" as Route,
     },
     {
@@ -61,7 +63,7 @@ export function TabBar({
       onTabPress(tab.name); // Call the parent callback
       router.push(tab.route);
     } catch (err) {
-      console.error("errrrrr from tab", err);
+      console.error("Error navigating from tab:", err);
     }
   };
   return (
