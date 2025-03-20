@@ -8,7 +8,7 @@ const activeSockets: Record<string, Socket> = {};
 /**
  * Get or create a socket instance for a specific namespace
  */
-export const getSocket = async (namespace: string): Promise<Socket | null> => {
+export const getSocket = async (namespace: string, options?: Record<string, any>): Promise<Socket | null> => {
   try {
     // If we already have a socket instance for this namespace, return it
     if (activeSockets[namespace] && activeSockets[namespace].connected) {
@@ -27,7 +27,7 @@ export const getSocket = async (namespace: string): Promise<Socket | null> => {
 
     // Create socket with authentication
     const socket = io(`${SOCKET_URL}/${namespace}`, {
-      auth: { token },
+      auth: { token, ...options },
       transports: ['websocket']
     });
 

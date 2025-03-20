@@ -127,8 +127,10 @@ enum NotificationType {
   ACCEPTED
   REJECTED
   ORDER_CREATED
+  PAYMENT_INITIATED
   PAYMENT_SUCCESS
   PAYMENT_FAILED
+  PAYMENT_REFUNDED
   PICKUP_SCHEDULE
   DELIVERY_COMPLETED
   SYSTEM_ALERT
@@ -259,17 +261,15 @@ model Traveler {
 
 // ========== USER ==========
 model User {
-  id                     Int       @id @default(autoincrement())
+  id                     Int     @id @default(autoincrement())
   name                   String
-  email                  String    @unique
+  email                  String  @unique
   phoneNumber            String?
   googleId               String?
   password               String?
-  hasCompletedOnboarding Boolean   @default(false)
-  role                   Role      @default(USER)
+  hasCompletedOnboarding Boolean @default(false)
+  role                   Role    @default(USER)
   serviceProviderId      String?
-  resetToken             String?
-  resetTokenExpiry       DateTime?
 
   // Relation to Traveler
   traveler Traveler?
@@ -305,6 +305,8 @@ model User {
 
   // New relation for PickupSuggestion
   pickupSuggestions PickupSuggestion[]
+
+  sentNotifications Notification[] @relation("SentNotifications")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -555,6 +557,11 @@ model Notification {
 
   pickupId Int?
   pickup   Pickup? @relation(fields: [pickupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  sender User? @relation("SentNotifications", fields: [senderId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ========== REVIEW ==========
