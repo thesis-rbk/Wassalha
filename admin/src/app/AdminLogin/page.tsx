@@ -6,6 +6,13 @@ import { Moon, Sun, Eye, EyeOff } from "lucide-react";
 import styles from "../../styles/AdminLogin.module.css"; 
 import api from "../../lib/api";
 
+declare global {
+  interface Window {
+    handleGoogleAuth?: (response: any) => Promise<void>;
+    google?: any;
+  }
+}
+
 const AdminLogin = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -62,6 +69,51 @@ const AdminLogin = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      // This function will be triggered when Google auth is complete
+      window.handleGoogleAuth = async (response: any) => {
+        try {
+          const { credential } = response;
+          
+          // Using the admin-specific endpoint to verify admin access
+          const apiResponse = await api.post('/api/users/admin/google-login', { 
+            idToken: credential 
+          });
+          
+          if (apiResponse.data.user?.id) {
+            // Save user data from successful response
+            localStorage.setItem("adminToken", apiResponse.data.token);
+            localStorage.setItem("userData", JSON.stringify(apiResponse.data.user));
+            
+            // Navigate to dashboard
+            router.push("/AdminDashboard");
+          } else {
+            setError("Failed to authenticate with Google");
+          }
+        } catch (error: any) {
+          console.error("Google login error:", error);
+          if (error.response?.status === 403) {
+            setError("Access denied. Admin privileges required.");
+          } else {
+            setError("Failed to authenticate with Google");
+          }
+        }
+      };
+      
+      // Initialize Google Sign-In
+      if (window.google && window.google.accounts) {
+        // Display the One Tap UI
+        window.google.accounts.id.prompt();
+      } else {
+        setError("Google Sign-In is not available. Please try again later.");
+      }
+    } catch (error) {
+      console.error("Error initializing Google login:", error);
+      setError("Failed to initialize Google login");
+    }
+  };
+
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
   };
@@ -69,6 +121,61 @@ const AdminLogin = () => {
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+
+  // Load Google Sign-In SDK on component mount
+  React.useEffect(() => {
+    // Use the environment variable, but fallback to a hardcoded value for testing
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "975660785693-s3g88pg1b060b0uhh5h6ebti08v9m8gk.apps.googleusercontent.com";
+    
+    // Log to check if the client ID is loaded properly
+    console.log("Google Client ID being used:", googleClientId);
+    
+    // Don't proceed if no client ID is available
+    if (!googleClientId) {
+      console.error("Google Client ID is not defined in environment variables");
+      return;
+    }
+    
+    // Add Google Sign-In script
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      // Initialize Google Sign-In
+      // @ts-ignore - Google API injects this globally
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: (response: any) => {
+          // @ts-ignore
+          if (window.handleGoogleAuth) {
+            // @ts-ignore
+            window.handleGoogleAuth(response);
+          }
+        },
+      });
+      
+      // Optionally render a button (though we're using our custom button)
+      // @ts-ignore
+      window.google.accounts.id.renderButton(
+        document.getElementById("googleButton"),
+        { theme: "outline", size: "large", width: "100%" }
+      );
+    };
+    
+    document.body.appendChild(script);
+
+    return () => {
+      // Clean up the script when component unmounts
+      try {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      } catch (error) {
+        console.error("Error removing script:", error);
+      }
+    };
+  }, []);
 
   return (
     <div className={`${styles.container} ${styles.adminLoginContainer} ${isDarkMode ? styles.dark : ""}`}>
@@ -109,6 +216,24 @@ const AdminLogin = () => {
           {error && <p className={styles.error}>{error}</p>}
           <button className={styles.button} type="submit">
             Log In
+          </button>
+          
+          <div className={styles.divider}>
+            <span>or</span>
+          </div>
+          
+          <button 
+            id="googleButton"
+            type="button"
+            className={styles.googleButton} 
+            onClick={handleGoogleLogin}
+          >
+            <img 
+              src="https://developers.google.com/identity/images/g-logo.png" 
+              alt="Google logo" 
+              className={styles.googleIcon} 
+            />
+            Login with Google
           </button>
           
           <div className={styles.forgotPasswordContainer}>

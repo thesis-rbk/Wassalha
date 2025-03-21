@@ -35,7 +35,8 @@ const router = express.Router();
 router.post("/register",upload.single('image'), signup);
 router.post("/login", loginUser);
 router.post("/admin/login", loginAdmin);
-router.post("/google-login", googleLogin); // New Google login endpoint
+router.post("/google-login", googleLogin); // Regular Google login endpoint
+router.post("/admin/google-login", googleLogin); // Admin Google login (uses same function with path detection)
 router.post("/reset-password/request", requestPasswordReset);
 router.post("/reset-password", resetPassword);
 // New route for updating referral source

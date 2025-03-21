@@ -252,13 +252,32 @@ const googleLogin = async (req, res) => {
     const email = payload["email"];
     const name = payload["name"];
 
+    // Find user by email or Google ID
     let user = await prisma.user.findFirst({
       where: {
         OR: [{ googleId }, { email }],
       },
+      include: {
+        profile: {
+          include: {
+            image: true
+          }
+        }
+      }
     });
 
+    // If no user exists, create one as a regular user
     if (!user) {
+      // Check if request is for admin login
+      const isAdminLoginRequest = req.path && req.path.includes('/admin/');
+      
+      if (isAdminLoginRequest) {
+        return res.status(403).json({ 
+          error: "No admin account found with this Google account. Please contact system administrator to create an admin account." 
+        });
+      }
+      
+      // For regular login, create a new user
       user = await prisma.user.create({
         data: {
           name,
@@ -267,25 +286,66 @@ const googleLogin = async (req, res) => {
         },
       });
     } else if (!user.googleId) {
+      // If user exists but doesn't have Google ID, update it
       user = await prisma.user.update({
         where: { id: user.id },
         data: { googleId },
+        include: {
+          profile: {
+            include: {
+              image: true
+            }
+          }
+        }
       });
     }
 
+    // For admin login requests, check if user is an admin
+    const isAdminLoginRequest = req.path && req.path.includes('/admin/');
+    if (isAdminLoginRequest && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: "Access denied. Admin privileges required." });
+    }
+
+    // Generate token with appropriate role information
     const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
+      { 
+        id: user.id, 
+        email: user.email,
+        role: user.role 
+      },
+      process.env.JWT_SECRET || "secretkey",
       {
         expiresIn: "1h",
       }
     );
 
-    res.status(200).json({
-      message: "Google login successful",
-      token,
-      user: { id: user.id, name: user.name, email: user.email },
-    });
+    // Response structure varies slightly for admin vs regular login
+    if (isAdminLoginRequest) {
+      res.status(200).json({
+        message: "Admin Google login successful",
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          profile: user.profile ? {
+            image: user.profile.image
+          } : null
+        },
+      });
+    } else {
+      res.status(200).json({
+        message: "Google login successful",
+        token,
+        user: { 
+          id: user.id, 
+          name: user.name, 
+          email: user.email,
+          role: user.role
+        },
+      });
+    }
   } catch (error) {
     console.error("Google login error:", error);
     res.status(401).json({ error: "Invalid Google token" });

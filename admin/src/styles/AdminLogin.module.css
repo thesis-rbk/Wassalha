@@ -211,3 +211,83 @@
     width: 100%;
   }
   
+  .divider {
+    width: 100%;
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
+  }
+  
+  .divider::before, .divider::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 45%;
+    height: 1px;
+    background-color: #ddd;
+  }
+  
+  .divider::before {
+    left: 0;
+  }
+  
+  .divider::after {
+    right: 0;
+  }
+  
+  .divider span {
+    display: inline-block;
+    background-color: var(--color-white);
+    padding: 0 10px;
+    position: relative;
+    z-index: 1;
+    color: #777;
+    font-size: 14px;
+  }
+  
+  .darkMode .divider span {
+    background-color: #333;
+    color: #aaa;
+  }
+  
+  .darkMode .divider::before, .darkMode .divider::after {
+    background-color: #555;
+  }
+  
+  .googleButton {
+    padding: 12px;
+    background-color: #fff;
+    color: #444;
+    border: 1px solid #ddd;
+    border-radius: var(--radius-small);
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
+    font-size: 16px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  .googleButton:hover {
+    background-color: #f8f8f8;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  .darkMode .googleButton {
+    background-color: #444;
+    color: #fff;
+    border-color: #555;
+  }
+  
+  .darkMode .googleButton:hover {
+    background-color: #555;
+  }
+  
+  .googleIcon {
+    width: 18px;
+    height: 18px;
+  }
+  
