@@ -1,10 +1,11 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation"; 
-
+import Link from "next/link";
 import { Moon, Sun, Eye, EyeOff } from "lucide-react";
 import styles from "../../styles/AdminLogin.module.css"; 
 import api from "../../lib/api";
+
 const AdminLogin = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -109,6 +110,12 @@ const AdminLogin = () => {
           <button className={styles.button} type="submit">
             Log In
           </button>
+          
+          <div className={styles.forgotPasswordContainer}>
+            <Link href="/AdminLogin/ForgotPassword" className={styles.forgotPasswordLink}>
+              Forgot Password?
+            </Link>
+          </div>
         </form>
       </div>
     </div>

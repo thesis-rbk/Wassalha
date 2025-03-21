@@ -22,6 +22,8 @@ const {
   submitQuestionnaire,
   verifyUserProfile,
   getUserDemographics,
+  requestAdminPasswordReset,
+  resetAdminPassword,
 } = require("../controllers/user.controller");
 const upload = require('../middleware/multerMiddleware');
 const { getMessages } = require("../controllers/message.controller");
@@ -74,5 +76,9 @@ router.put("/:id/ban", authenticateAdmin, banUser); // Ban/Unban a user
 router.put("/:id/unban", authenticateAdmin, unbanUser); // Unban a user
 router.delete("/:id", authenticateAdmin, deleteUser); // Only admins can delete users
 router.put("/:id/verify-profile", authenticateAdmin, verifyUserProfile);
+
+// Add the admin password reset routes
+router.post("/admin/reset-password/request", requestAdminPasswordReset);
+router.post("/admin/reset-password", resetAdminPassword);
 
 module.exports = router;

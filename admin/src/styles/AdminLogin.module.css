@@ -40,11 +40,16 @@
   
   .moonIcon {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 20px;
+    right: 20px;
     cursor: pointer;
     color: var(--color-primary);
     transition: color 0.3s ease;
+    z-index: 2;
+  }
+  
+  .darkMode .moonIcon {
+    color: var(--color-secondary);
   }
   
   .formContainer {
@@ -52,7 +57,6 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
-   
     margin-top: 20px;
   }
   
@@ -65,25 +69,29 @@
   
   .inputWrapper {
     position: relative;
+    width: 100%;
   }
   
   .input {
     margin: 10px 0;
-    padding: 10px;
-    width: 380px;
+    padding: 12px 15px;
+    width: 100%;
     border: 1px solid var(--color-primary);
     border-radius: var(--radius-small);
     transition: border-color 0.3s ease;
+    font-size: 16px;
+    box-sizing: border-box;
   }
   
   .input:focus {
     border-color: var(--color-secondary);
     outline: none;
+    box-shadow: 0 0 0 2px rgba(1, 138, 190, 0.2);
   }
   
   .eyeIcon {
     position: absolute;
-    right: 10px;
+    right: 15px;
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
@@ -91,8 +99,8 @@
   }
   
   .button {
-    padding: 10px;
-    margin-top: 10px;
+    padding: 12px;
+    margin-top: 20px;
     background-color: var(--color-primary);
     color: white;
     border: none;
@@ -100,6 +108,8 @@
     cursor: pointer;
     transition: background-color 0.3s ease;
     width: 100%;
+    font-size: 16px;
+    font-weight: 600;
   }
   
   .button:hover {
@@ -107,7 +117,97 @@
   }
   
   .error {
-    color: red;
+    color: #e53935;
     font-size: 14px;
+    margin-top: 10px;
+    text-align: left;
+    width: 100%;
+  }
+  
+  /* Forgot password link styling */
+  .forgotPasswordContainer {
+    width: 100%;
+    text-align: right;
+    margin-top: 15px;
+  }
+  
+  .forgotPasswordLink {
+    color: #3b82f6;
+    font-size: 14px;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  
+  .forgotPasswordLink:hover {
+    color: #2563eb;
+    text-decoration: underline;
+  }
+  
+  /* Dark mode adjustments */
+  .darkMode .forgotPasswordLink {
+    color: #60a5fa;
+  }
+  
+  .darkMode .forgotPasswordLink:hover {
+    color: #93c5fd;
+  }
+  
+  /* Header container for ForgotPassword page */
+  .headerContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+  
+  .backButton {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    cursor: pointer;
+    color: var(--color-primary);
+    transition: color 0.3s ease;
+    z-index: 2;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .backButton:hover {
+    color: var(--color-secondary);
+    background-color: rgba(1, 138, 190, 0.1);
+  }
+  
+  .darkMode .backButton {
+    color: #d1d5db;
+  }
+  
+  .darkMode .backButton:hover {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .instructions {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #4b5563;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  .darkMode .instructions {
+    color: #d1d5db;
+  }
+  
+  .success {
+    color: #10b981;
+    text-align: center;
+    margin: 10px 0;
+    font-size: 14px;
+    width: 100%;
   }
   
