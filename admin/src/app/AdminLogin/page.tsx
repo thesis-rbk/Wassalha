@@ -5,13 +5,8 @@ import Link from "next/link";
 import { Moon, Sun, Eye, EyeOff } from "lucide-react";
 import styles from "../../styles/AdminLogin.module.css"; 
 import api from "../../lib/api";
-
-declare global {
-  interface Window {
-    handleGoogleAuth?: (response: any) => Promise<void>;
-    google?: any;
-  }
-}
+// Import the types
+import '@/types/global';
 
 const AdminLogin = () => {
   const router = useRouter();
