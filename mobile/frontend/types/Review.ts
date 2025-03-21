@@ -15,3 +15,10 @@ export interface Review {
     reviewType: 'USER_REVIEW' | 'EXPERIENCE_REVIEW' | 'DELIVERYMAN_REVIEW' | 'PICKUPPOINT_REVIEW';
     status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'EDITED';
 }
+export interface ReviewComponentProps {
+    onReviewSubmitted?: () => void; // Optional callback when review is submitted
+}
+export interface StarProps {
+    filled: boolean;
+    onPress: () => void;
+}

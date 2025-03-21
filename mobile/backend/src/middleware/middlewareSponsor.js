@@ -14,11 +14,12 @@ const uerSPONSOR = async (req, res, next) => {
             where: { userId: decoded.id },
         });
         if (!user) {
-            return res.status(401).json({ error: 'User not found' });
+            req.user = false;
+            next()
+        } else {
+            req.user = user;
+            next();
         }
-        console.log("user", user);
-        req.user = user;
-        next();
     } catch (error) {
         console.error('Authentication error:', error);
         return res.status(401).json({
