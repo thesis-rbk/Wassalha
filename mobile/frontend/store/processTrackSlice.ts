@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Chat } from "@/types/Chat";
 import { Message } from "@/types/Message";
 import { ChatState } from "@/types/ChatState";
+import { parse } from "path";
 
 // Initial state
 const initialState: ChatState = {
@@ -66,16 +67,16 @@ const processTrackSlice = createSlice({
       const chatId = message.chatId || message.chat.id;
 
       // Initialize messages array if it doesn't exist
-      if (!state.messages[chatId]) {
-        state.messages[chatId] = [];
+      if (!state.messages[parseInt(chatId.toString())]) {
+        state.messages[parseInt(chatId.toString())] = [];
       }
 
       // Check if message already exists to avoid duplicates
-      const messageExists = state.messages[chatId].some(
+      const messageExists = state.messages[parseInt(chatId.toString())].some(
         (m) => m.id === message.id
       );
       if (!messageExists) {
-        state.messages[chatId].unshift(message); // Add to beginning (newer messages first)
+        state.messages[parseInt(chatId.toString())].unshift(message); // Add to beginning (newer messages first)
       }
 
       // Update chat list with latest message
