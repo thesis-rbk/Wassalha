@@ -31,7 +31,7 @@ export default function Travel() {
         goodsId: 3,
       });
 
-      await navigateToChat(requesterId, providerId, goodsId, router, {
+      await navigateToChat(requesterId, providerId, goodsId, {
         orderId: 1, // Using a default order ID
         goodsName: "Test Item",
       });
@@ -40,7 +40,7 @@ export default function Travel() {
       Alert.alert(
         "Chat Error",
         "Failed to open chat. Error: " +
-          (error instanceof Error ? error.message : String(error))
+        (error instanceof Error ? error.message : String(error))
       );
     }
   };

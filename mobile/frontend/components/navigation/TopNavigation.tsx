@@ -7,6 +7,7 @@ import {
   Dimensions,
   TextInput,
   ScrollView,
+  Text
 } from 'react-native';
 import {
   Bell,
@@ -35,11 +36,9 @@ import { RootState } from '@/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logout } from '../../store/authSlice';
 import { useNotification } from '@/context/NotificationContext';
-// Define valid app routes
 import axiosInstance from '@/config';
 
 // Updated SideMenu interface
-
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const MENU_WIDTH = SCREEN_WIDTH * 0.8;
 
@@ -53,12 +52,11 @@ export function TopNavigation({
   const [menuAnimation] = useState(new Animated.Value(-MENU_WIDTH));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [tokeny, setToken] = useState<string | null>(null);
-  const [isSponsor, setIsSponsor] = useState<boolean>(false)
+  const [isSponsor, setIsSponsor] = useState<boolean>(false);
   const router = useRouter();
   const { user, token } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
   const { unreadCount } = useNotification();
-  console.log("User:", user);
 
   const handleLogout = async () => {
     try {
@@ -81,11 +79,13 @@ export function TopNavigation({
       console.error('Logout error:', error);
     }
   };
+
   const tokenVerif = async () => {
     const tokenys = await AsyncStorage.getItem('jwtToken');
     console.log("token:", tokenys);
     setToken(tokenys);
   };
+
   const toggleMenu = () => {
     const toValue = isMenuOpen ? -MENU_WIDTH : 0;
     Animated.timing(menuAnimation, {
@@ -96,14 +96,12 @@ export function TopNavigation({
     setIsMenuOpen(!isMenuOpen);
   };
 
-
-  console.log("issss sponsor", isSponsor)
   const check = async () => {
     tokenVerif()
     try {
       const response = await axiosInstance.get('/api/checkSponsor', {
         headers: {
-          'Authorization': `Bearer ${tokeny}`, // Correct way to pass the token in the header
+          'Authorization': `Bearer ${tokeny}`,
           'Accept': 'application/json',
         },
       });
@@ -113,33 +111,39 @@ export function TopNavigation({
       console.log("Error in check function:", err);
     }
   };
+
   const menuItems: SideMenu[] = [
-    { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/screens/NotificationsScreen' },
-    { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
-    { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips', route: '/test/Travel' },
-    { icon: <Home size={24} color={Colors[colorScheme].text} />, label: 'Home', route: 'home' },
-    { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request', route: '/productDetails/create-order' },
+    { icon: <Bell size={24} color="black" />, label: 'Notifications', route: '/screens/NotificationsScreen' },
+    { icon: <ShoppingBag size={24} color="black" />, label: 'Orders', route: '/test/order' },
+    { icon: <Plane size={24} color="black" />, label: 'Trips', route: '/test/Travel' },
+    { icon: <Home size={24} color="black" />, label: 'Home', route: 'home' },
+    { icon: <PenSquare size={24} color="black" />, label: 'Make a Request', route: '/productDetails/create-order' },
     {
-      icon: isSponsor ? <DollarSign size={24} color={Colors[colorScheme].text} /> : <Users size={24} color={Colors[colorScheme].text} />,
+      icon: isSponsor ? <DollarSign size={24} color="black" /> : <Users size={24} color="black" />,
       label: isSponsor ? 'Create Subscription' : 'Sponsorship',
       route: isSponsor ? 'verification/CreateSponsorPost' : 'screens/SponsorshipScreen' as any
     },
-    { 
-      icon: <PenSquare size={24} color={Colors[colorScheme].text} />,  
-      label: 'Make a report', 
+    {
+      icon: <PenSquare size={24} color={Colors[colorScheme].text} />,
+      label: 'Make a report',
       route: '/reporting-system/create-ticket'
     },
-    { 
-      icon: <PenSquare size={24} color={Colors[colorScheme].text} />,  
-      label: 'Become a traveler', 
+    {
+      icon: <PenSquare size={24} color={Colors[colorScheme].text} />,
+      label: 'Become a traveler',
       route: '/traveler/becomeTraveler'
     },
     { icon: <Users size={24} color={Colors[colorScheme].text} />, label: 'Sponsorship', route: '/test/sponsorShip' },
     { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out', onPress: handleLogout },
+    { icon: <LogOut size={24} color="black" />, label: 'Log Out', onPress: handleLogout },
   ];
+
   useEffect(() => {
-    check() // Check if user is a sponsor
+    if (tokeny) {
+      check(); // Check if user is a sponsor whenever the token is updated
+    }
   }, [tokeny]);
+
   const handleRoutes = (item: SideMenu) => {
     try {
       if (item.onPress) {
@@ -154,19 +158,14 @@ export function TopNavigation({
 
   return (
     <>
-      <View
-        style={[
-          styles.container,
-          { backgroundColor: "white" },
-        ]}
-      >
+      <View style={[styles.container, { backgroundColor: "#007BFF" }]}>
         <TouchableOpacity onPress={toggleMenu}>
-          <Menu color="black" size={24} />
+          <Menu color="white" size={24} />
         </TouchableOpacity>
-       
-      
-       
-        <TouchableOpacity 
+
+
+
+        <TouchableOpacity
           onPress={() => {
             try {
               console.log('Attempting to navigate to NotificationsScreen');
@@ -177,12 +176,12 @@ export function TopNavigation({
           }}
         >
           <View style={styles.notificationContainer}>
-            <Bell color="black" size={24} />
+            <Bell color="white" size={24} />
             {unreadCount > 0 && (
               <View style={styles.badge}>
-                <ThemedText style={styles.badgeText}>
+                <Text style={styles.badgeText}>
                   {unreadCount > 99 ? '99+' : unreadCount}
-                </ThemedText>
+                </Text>
               </View>
             )}
           </View>
@@ -228,8 +227,29 @@ export function TopNavigation({
               </TouchableOpacity>
             </View>
           </View>
+          <View style={styles.profileSection}>
+            <View style={styles.profileImage}>
+              <Text style={styles.profileInitial}>
+                {user?.name?.charAt(0) || 'U'}
+              </Text>
+            </View>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>
+                {user?.name || 'User'}
+              </Text>
+              <TouchableOpacity
+                style={styles.viewProfile}
+                onPress={() => router.push('/profile')}
+              >
+                <Text style={styles.viewProfileText}>
+                  View and edit profile
+                </Text>
+                <ChevronRight size={16} color={Colors[colorScheme].text} />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-          <ScrollView 
+          <ScrollView
             style={styles.menuItemsContainer}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.menuItemsContent}
@@ -245,6 +265,18 @@ export function TopNavigation({
               </TouchableOpacity>
             ))}
           </ScrollView>
+          <View style={styles.menuItem}>
+            {menuItems.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.menuItem}
+                onPress={() => handleRoutes(item)}
+              >
+                {item.icon}
+                <Text style={styles.menuItemText}>{item.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           <TouchableOpacity style={styles.darkModeToggle} onPress={toggleTheme}>
             {colorScheme === 'dark' ? (
@@ -257,12 +289,23 @@ export function TopNavigation({
             </ThemedText>
           </TouchableOpacity>
         </View>
+        <TouchableOpacity style={styles.darkModeToggle} onPress={toggleTheme}>
+          {colorScheme === 'dark' ? (
+            <Sun size={24} color={Colors[colorScheme].text} />
+          ) : (
+            <Moon size={24} color={Colors[colorScheme].text} />
+          )}
+          <Text style={styles.darkModeText}>
+            {colorScheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          </Text>
+        </TouchableOpacity>
       </Animated.View>
     </>
   );
 }
 
 // Updated styles
+// Styles remain the same, except the navbar background color and icon color
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
@@ -274,10 +317,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#E5E5E5",
     zIndex: 1,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
   },
   overlay: {
     position: "absolute",
