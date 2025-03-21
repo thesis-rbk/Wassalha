@@ -10,15 +10,13 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-
-
 const { width } = Dimensions.get('window');
 
 export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimationProps) {
   // Animation values
   const welcomeTranslateX = useSharedValue(-width);
   const toTranslateX = useSharedValue(width);
-  
+
   // Individual letter opacities for "Wassalha"
   const letterOpacities = [
     useSharedValue(0), // W
@@ -30,7 +28,7 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
     useSharedValue(0), // h
     useSharedValue(0), // a
   ];
-  
+
   const letterScales = [
     useSharedValue(0.5), // W
     useSharedValue(0.5), // a
@@ -71,7 +69,7 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
 
   useEffect(() => {
     // Start the animation sequence
-    
+
     // 1. Animate "Welcome" from left to center
     welcomeTranslateX.value = withTiming(0, {
       duration: 800,
@@ -90,10 +88,10 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
     // 3. Animate each letter of "Wassalha" with a staggered delay
     const letterBaseDelay = 1400; // Start after "Welcome to" animations
     const letterStaggerDelay = 150; // Delay between each letter
-    
+
     letterOpacities.forEach((opacity, index) => {
       const delay = letterBaseDelay + (index * letterStaggerDelay);
-      
+
       // Animate opacity
       opacity.value = withDelay(
         delay,
@@ -102,7 +100,7 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
           easing: Easing.bezier(0.42, 0, 0.58, 1),
         })
       );
-      
+
       // Animate scale with a slight bounce effect
       letterScales[index].value = withDelay(
         delay,
@@ -140,8 +138,8 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
       </Animated.Text>
       <View style={styles.wassalhaContainer}>
         {wassalhaLetters.map((letter, index) => (
-          <Animated.Text 
-            key={index} 
+          <Animated.Text
+            key={index}
             style={[styles.wassalhaLetter, letterAnimatedStyles[index]]}
           >
             {letter}
@@ -157,18 +155,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#008098',
+    backgroundColor: '#007BFF',
   },
   welcomeText: {
     color: 'white',
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 36,
+    fontWeight: '700', // You can increase weight for more emphasis
     marginBottom: 10,
+    fontFamily: 'Roboto-Bold', // You can change to a better font
+    letterSpacing: 1, // Adds space between letters
+    textShadowColor: 'rgba(0, 0, 0, 0.2)', // Adds subtle shadow
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   toText: {
     color: 'white',
-    fontSize: 24,
+    fontSize: 28,
     marginBottom: 10,
+    fontFamily: 'Roboto-Regular',
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   wassalhaContainer: {
     flexDirection: 'row',
@@ -177,7 +185,12 @@ const styles = StyleSheet.create({
   },
   wassalhaLetter: {
     color: 'white',
-    fontSize: 48,
-    fontWeight: 'bold',
+    fontSize: 56,
+    fontWeight: '700', // Make it bold for better emphasis
+    fontFamily: 'Pacifico', // Or another fancy font
+    letterSpacing: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
 });
