@@ -356,6 +356,7 @@ const googleLogin = async (req, res) => {
 
 const requestPasswordReset = async (req, res) => {
   const { email } = req.body;
+  const isAdminRequest = req.path && req.path.includes('/admin/');
 
   try {
     if (!email) {
@@ -372,9 +373,14 @@ const requestPasswordReset = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "No user found with this email" });
     }
+    
+    // For admin requests, verify user is an admin
+    if (isAdminRequest && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: "Access denied. This feature is only for admin users." });
+    }
 
     const resetToken = generateRandomCode();
-    const resetTokenExpiry = new Date(Date.now() + 3600000);
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
 
     await prisma.user.update({
       where: { email },
@@ -384,18 +390,34 @@ const requestPasswordReset = async (req, res) => {
       },
     });
 
+    const subject = isAdminRequest ? "Admin Password Reset Code" : "Password Reset Code";
+    const htmlContent = isAdminRequest ? 
+      `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333; text-align: center;">Admin Password Reset</h2>
+          <p>Hello,</p>
+          <p>You requested a password reset for your admin account. Please use the following code to reset your password:</p>
+          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; letter-spacing: 5px;">
+            ${resetToken}
+          </div>
+          <p>This code will expire in 1 hour.</p>
+          <p>If you didn't request this password reset, please ignore this email or contact support.</p>
+          <p style="margin-top: 30px; color: #777; font-size: 12px;">This is an automated message, please do not reply.</p>
+        </div>
+      ` : 
+      `<p>Your password reset code is: <strong>${resetToken}</strong>. This code expires in 1 hour.</p>`;
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Password Reset Code",
+      subject: subject,
       text: `Your password reset code is: ${resetToken}. This code expires in 1 hour.`,
-      html: `<p>Your password reset code is: <strong>${resetToken}</strong>. This code expires in 1 hour.</p>`,
+      html: htmlContent,
     };
 
     await transporter.sendMail(mailOptions);
     res.status(200).json({ message: "Password reset code sent to your email" });
   } catch (error) {
-    throw error
     console.error("Request password reset error:", error);
     res.status(500).json({ error: "Something went wrong" });
   } finally {
@@ -405,6 +427,7 @@ const requestPasswordReset = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   const { email, code, newPassword } = req.body;
+  const isAdminRequest = req.path && req.path.includes('/admin/');
 
   try {
     if (!email || !code || !newPassword) {
@@ -435,6 +458,11 @@ const resetPassword = async (req, res) => {
 
     if (!user || user.resetToken !== code || !user.resetTokenExpiry) {
       return res.status(400).json({ error: "Invalid or expired code" });
+    }
+
+    // For admin requests, verify user is an admin
+    if (isAdminRequest && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: "Access denied. This feature is only for admin users." });
     }
 
     if (new Date() > user.resetTokenExpiry) {
@@ -1343,136 +1371,6 @@ const getUserDemographics = async (req, res) => {
   }
 };
 
-// Admin password reset request
-const requestAdminPasswordReset = async (req, res) => {
-  const { email } = req.body;
-
-  try {
-    if (!email) {
-      return res.status(400).json({ error: "Email is required" });
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: "Invalid email format" });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-    if (!user) {
-      return res.status(404).json({ error: "No user found with this email" });
-    }
-    
-    // Check if the user is an admin or super admin
-    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
-      return res.status(403).json({ error: "Access denied. This feature is only for admin users." });
-    }
-
-    const resetToken = generateRandomCode();
-    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
-
-    await prisma.user.update({
-      where: { email },
-      data: {
-        resetToken,
-        resetTokenExpiry,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Admin Password Reset Code",
-      text: `Your admin password reset code is: ${resetToken}. This code expires in 1 hour.`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333; text-align: center;">Admin Password Reset</h2>
-          <p>Hello,</p>
-          <p>You requested a password reset for your admin account. Please use the following code to reset your password:</p>
-          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; letter-spacing: 5px;">
-            ${resetToken}
-          </div>
-          <p>This code will expire in 1 hour.</p>
-          <p>If you didn't request this password reset, please ignore this email or contact support.</p>
-          <p style="margin-top: 30px; color: #777; font-size: 12px;">This is an automated message, please do not reply.</p>
-        </div>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
-    res.status(200).json({ message: "Password reset code sent to your email" });
-  } catch (error) {
-    console.error("Request admin password reset error:", error);
-    res.status(500).json({ error: "Something went wrong" });
-  } finally {
-    await prisma.$disconnect();
-  }
-};
-
-// Admin password reset
-const resetAdminPassword = async (req, res) => {
-  const { email, code, newPassword } = req.body;
-
-  try {
-    if (!email || !code || !newPassword) {
-      return res
-        .status(400)
-        .json({ error: "Email, code, and new password are required" });
-    }
-
-    if (newPassword.length < 8) {
-      return res
-        .status(400)
-        .json({ error: "Password must be at least 8 characters long" });
-    }
-    if (!/[A-Z]/.test(newPassword)) {
-      return res
-        .status(400)
-        .json({ error: "Password must contain at least one uppercase letter" });
-    }
-    if (!/\d/.test(newPassword)) {
-      return res
-        .status(400)
-        .json({ error: "Password must contain at least one number" });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user || user.resetToken !== code || !user.resetTokenExpiry) {
-      return res.status(400).json({ error: "Invalid or expired code" });
-    }
-
-    // Check if the user is an admin or super admin
-    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
-      return res.status(403).json({ error: "Access denied. This feature is only for admin users." });
-    }
-
-    if (new Date() > user.resetTokenExpiry) {
-      return res.status(400).json({ error: "Reset code has expired" });
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-
-    await prisma.user.update({
-      where: { email },
-      data: {
-        password: hashedPassword,
-        resetToken: null,
-        resetTokenExpiry: null,
-      },
-    });
-
-    res.status(200).json({ message: "Password reset successfully" });
-  } catch (error) {
-    console.error("Reset admin password error:", error);
-    res.status(500).json({ error: "Something went wrong" });
-  } finally {
-    await prisma.$disconnect();
-  }
-};
-
 module.exports = {
   signup,
   loginUser,
@@ -1480,8 +1378,6 @@ module.exports = {
   googleLogin,
   requestPasswordReset,
   resetPassword,
-  requestAdminPasswordReset,
-  resetAdminPassword,
   updateReferralSource,
   updatePreferredCategories,
   completeOnboarding,

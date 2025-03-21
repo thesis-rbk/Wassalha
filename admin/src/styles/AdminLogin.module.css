@@ -291,3 +291,41 @@
     height: 18px;
   }
   
+  /* Add these styles for the resend verification code button */
+  .resendContainer {
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .resendButton {
+    background: none;
+    border: none;
+    color: #3182ce;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  .resendButton:hover:not(.disabled) {
+    text-decoration: underline;
+    background-color: rgba(49, 130, 206, 0.1);
+  }
+  
+  .resendButton.disabled {
+    color: #a0aec0;
+    cursor: not-allowed;
+  }
+  
+  .dark .resendButton {
+    color: #63b3ed;
+  }
+  
+  .dark .resendButton.disabled {
+    color: #718096;
+  }
+  

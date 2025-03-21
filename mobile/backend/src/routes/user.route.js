@@ -22,8 +22,6 @@ const {
   submitQuestionnaire,
   verifyUserProfile,
   getUserDemographics,
-  requestAdminPasswordReset,
-  resetAdminPassword,
 } = require("../controllers/user.controller");
 const upload = require('../middleware/multerMiddleware');
 const { getMessages } = require("../controllers/message.controller");
@@ -39,6 +37,9 @@ router.post("/google-login", googleLogin); // Regular Google login endpoint
 router.post("/admin/google-login", googleLogin); // Admin Google login (uses same function with path detection)
 router.post("/reset-password/request", requestPasswordReset);
 router.post("/reset-password", resetPassword);
+// Add admin password reset routes using the same functions
+router.post("/admin/reset-password/request", requestPasswordReset);
+router.post("/admin/reset-password", resetPassword);
 // New route for updating referral source
 router.post("/update-referral-source", updateReferralSource);
 router.post("/update-preferred-categories", updatePreferredCategories);
@@ -77,9 +78,5 @@ router.put("/:id/ban", authenticateAdmin, banUser); // Ban/Unban a user
 router.put("/:id/unban", authenticateAdmin, unbanUser); // Unban a user
 router.delete("/:id", authenticateAdmin, deleteUser); // Only admins can delete users
 router.put("/:id/verify-profile", authenticateAdmin, verifyUserProfile);
-
-// Add the admin password reset routes
-router.post("/admin/reset-password/request", requestAdminPasswordReset);
-router.post("/admin/reset-password", resetAdminPassword);
 
 module.exports = router;

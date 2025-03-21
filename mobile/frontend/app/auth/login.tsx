@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, Image, Platform } from "react-native";
+import { View, StyleSheet, ScrollView, Image, Platform, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { InputField } from "@/components/InputField";
@@ -140,10 +140,17 @@ export default function Login() {
     }
   };
 
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors.light.background,
+    },
+    keyboardAvoidingView: {
+      flex: 1,
     },
     scrollContent: {
       flexGrow: 1,
@@ -205,100 +212,112 @@ export default function Login() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Logo or Header Image */}
-        <Image
-          source={require("../../assets/images/globe.png")} // Use your logo
-          style={styles.logo}
-          resizeMode="contain"
-        />
-
-        {/* Welcome Text */}
-        <ThemedText style={styles.welcomeText}>Welcome Back!</ThemedText>
-        <ThemedText style={styles.subText}>Sign in to continue</ThemedText>
-
-        {/* Email Input */}
-        <InputField
-          label="Email"
-          placeholder="Enter your email"
-          value={email}
-          onChangeText={(text) => {
-            setEmail(text);
-            setEmailError(null); // Clear error on change
-          }}
-          error={emailError || undefined}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        {/* Password Input */}
-        <InputFieldPassword
-          label="Password"
-          placeholder="Enter your password"
-          value={password}
-          onChangeText={(text) => {
-            setPassword(text);
-            setPasswordError(null);
-          }}
-          error={passwordError || undefined}
-          secureTextEntry
-        />
-
-        {/* Add this error message display */}
-        {error && (
-          <ThemedText style={styles.errorText}>
-            Wrong email or password
-          </ThemedText>
-        )}
-
-        {/* Forgot Password Link */}
-        <ThemedText
-          style={styles.forgotPasswordText}
-          onPress={() => router.push("/auth/ResetPassword")}
-        >
-          Forgot Password?
-        </ThemedText>
-
-        {/* Login Button */}
-        <BaseButton
-          variant="primary"
-          size="login"
-          style={styles.loginButton}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? "Logging In..." : "Log In"}
-        </BaseButton>
-
-        {/* Sign Up Link */}
-        <ThemedText style={styles.signUpText}>
-          Don't have an account?{" "}
-          <ThemedText
-            style={styles.signUpLink}
-            onPress={() => router.push("/auth/signup")}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoidingView}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      >
+        <TouchableWithoutFeedback onPress={dismissKeyboard}>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            Sign Up
-          </ThemedText>
-        </ThemedText>
+            {/* Logo or Header Image */}
+            <Image
+              source={require("../../assets/images/globe.png")} // Use your logo
+              style={styles.logo}
+              resizeMode="contain"
+            />
 
-        {/* Google Login Button */}
-        <BaseButton
-          variant="secondary"
-          size="login"
-          style={styles.googleButton}
-          onPress={() => promptAsync({ showInRecents: true })}
-          disabled={!request || loading}
-        >
-          <FontAwesome5
-            name="google"
-            size={20}
-            color={Colors[colorScheme as "light" | "dark"].text}
-          />
-          <ThemedText style={styles.googleButtonText}>
-            Continue with Google
-          </ThemedText>
-        </BaseButton>
-      </ScrollView>
+            {/* Welcome Text */}
+            <ThemedText style={styles.welcomeText}>Welcome Back!</ThemedText>
+            <ThemedText style={styles.subText}>Sign in to continue</ThemedText>
+
+            {/* Email Input */}
+            <InputField
+              label="Email"
+              placeholder="Enter your email"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                setEmailError(null); // Clear error on change
+              }}
+              error={emailError || undefined}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            {/* Password Input */}
+            <InputFieldPassword
+              label="Password"
+              placeholder="Enter your password"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                setPasswordError(null);
+              }}
+              error={passwordError || undefined}
+              secureTextEntry
+            />
+
+            {/* Add this error message display */}
+            {error && (
+              <ThemedText style={styles.errorText}>
+                Wrong email or password
+              </ThemedText>
+            )}
+
+            {/* Forgot Password Link */}
+            <ThemedText
+              style={styles.forgotPasswordText}
+              onPress={() => router.push("/auth/ResetPassword")}
+            >
+              Forgot Password?
+            </ThemedText>
+
+            {/* Login Button */}
+            <BaseButton
+              variant="primary"
+              size="login"
+              style={styles.loginButton}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? "Logging In..." : "Log In"}
+            </BaseButton>
+
+            {/* Sign Up Link */}
+            <ThemedText style={styles.signUpText}>
+              Don't have an account?{" "}
+              <ThemedText
+                style={styles.signUpLink}
+                onPress={() => router.push("/auth/signup")}
+              >
+                Sign Up
+              </ThemedText>
+            </ThemedText>
+
+            {/* Google Login Button */}
+            <BaseButton
+              variant="secondary"
+              size="login"
+              style={styles.googleButton}
+              onPress={() => promptAsync({ showInRecents: true })}
+              disabled={!request || loading}
+            >
+              <FontAwesome5
+                name="google"
+                size={20}
+                color={Colors[colorScheme as "light" | "dark"].text}
+              />
+              <ThemedText style={styles.googleButtonText}>
+                Continue with Google
+              </ThemedText>
+            </BaseButton>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }

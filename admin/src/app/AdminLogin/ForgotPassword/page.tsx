@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Moon, Sun, ArrowLeft } from "lucide-react";
 import styles from "../../../styles/AdminLogin.module.css";
@@ -17,10 +17,26 @@ const ForgotPassword = () => {
   const [success, setSuccess] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [currentStep, setCurrentStep] = useState<ForgotPasswordStep>(ForgotPasswordStep.REQUEST_CODE);
+  const [resendDisabled, setResendDisabled] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
   };
+
+  // Countdown timer effect for resend button
+  useEffect(() => {
+    if (countdown <= 0) {
+      setResendDisabled(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown(countdown - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   const handleRequestCode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,12 +44,31 @@ const ForgotPassword = () => {
     setSuccess("");
 
     try {
-      const response = await api.post('/api/users/reset-password/request', { email });
+      const response = await api.post('/api/users/admin/reset-password/request', { email });
       setSuccess("Reset code sent! Please check your email.");
       setCurrentStep(ForgotPasswordStep.VERIFY_CODE);
+      // Start countdown for resend
+      setResendDisabled(true);
+      setCountdown(30);
     } catch (error: any) {
       console.error("Error requesting reset code:", error);
       setError(error.response?.data?.error || "Failed to send reset code. Please try again.");
+    }
+  };
+
+  const handleResendCode = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await api.post('/api/users/admin/reset-password/request', { email });
+      setSuccess("Reset code resent! Please check your email.");
+      setResendDisabled(true);
+      setCountdown(30);
+    } catch (error: any) {
+      console.error("Error resending reset code:", error);
+      setError(error.response?.data?.error || "Failed to resend reset code. Please try again.");
     }
   };
 
@@ -83,7 +118,7 @@ const ForgotPassword = () => {
     }
 
     try {
-      const response = await api.post('/api/users/reset-password', {
+      const response = await api.post('/api/users/admin/reset-password', {
         email,
         code,
         newPassword
@@ -155,6 +190,20 @@ const ForgotPassword = () => {
 
             {error && <p className={styles.error}>{error}</p>}
             {success && <p className={styles.success}>{success}</p>}
+            
+            <div className={styles.resendContainer}>
+              <button 
+                className={`${styles.resendButton} ${resendDisabled ? styles.disabled : ''}`}
+                onClick={handleResendCode}
+                disabled={resendDisabled}
+                type="button"
+              >
+                {resendDisabled 
+                  ? `Resend code in ${countdown}s` 
+                  : "Didn't receive a code? Resend"}
+              </button>
+            </div>
+
             <button className={styles.button} type="submit">
               Verify Code
             </button>
