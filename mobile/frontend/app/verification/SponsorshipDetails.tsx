@@ -10,11 +10,7 @@ import axiosInstance from "@/config"
 import platformImages from "../../types/Sponsorship"
 import { Ionicons } from "@expo/vector-icons"
 import { TabBar } from "@/components/navigation/TabBar";
-type RouteParams = {
-    SponsorshipDetails: {
-        id: number
-    }
-}
+import { RouteParams } from "@/types/Sponsorship";
 
 const SponsorshipDetails: React.FC = () => {
     const [activeTab, setActiveTab] = useState("Home");

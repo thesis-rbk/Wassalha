@@ -73,6 +73,11 @@ export interface Profile {
     name: string;
     // Add other profile fields as needed
 }
+export type RouteParams = {
+    SponsorshipDetails: {
+        id: number
+    }
+}
 const platformImages = {
     YOUTUBE: { uri: "https://cdn.iconscout.com/icon/free/png-256/free-youtube-104-432560.png" },
     TWITTER: { uri: "https://abs.twimg.com/favicons/twitter.2.ico" },
