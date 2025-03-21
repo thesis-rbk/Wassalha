@@ -170,8 +170,8 @@ async function seed() {
     Array.from({ length: 5 }).map(() => {
       const sponsor = faker.helpers.arrayElement(serviceProviders);
       const category = faker.helpers.arrayElement(categories);
-      const creator = faker.helpers.arrayElement(users); // For User relation (sponsorshipsCreated)
-      const recipients = faker.helpers.arrayElements(users, { min: 1, max: 3 }); // For recipients relation
+      const creator = faker.helpers.arrayElement(users);
+      const recipients = faker.helpers.arrayElements(users, { min: 1, max: 3 });
 
       return prisma.sponsorship.create({
         data: {
@@ -183,12 +183,13 @@ async function seed() {
           sponsor: { connect: { id: sponsor.id } },
           amount: faker.number.float({ min: 100, max: 1000 }),
           status: faker.helpers.arrayElement(["pending", "active", "completed"]),
-          User: { connect: { id: creator.id } }, // Connect to sponsorshipsCreated (named User in schema)
-          recipients: { connect: recipients.map((r) => ({ id: r.id })) }, // Connect to recipients
+          User: { connect: { id: creator.id } },
+          recipients: { connect: recipients.map((r) => ({ id: r.id })) },
         },
       });
     })
   );
+
   // Create SponsorCheckouts
   const sponsorCheckouts = await Promise.all(
     sponsorships.map((sponsorship) =>
@@ -231,7 +232,7 @@ async function seed() {
           serviceProvider: { connect: { id: serviceProvider.id } },
           comment: faker.lorem.sentence(),
         },
-      })
+      });
     })
   );
 
@@ -330,6 +331,18 @@ async function seed() {
     )
   );
 
+  // Update Requests with Pickups
+  await Promise.all(
+    requests.map((request, index) =>
+      prisma.request.update({
+        where: { id: request.id },
+        data: {
+          pickup: { connect: { id: pickups[index].id } },
+        },
+      })
+    )
+  );
+
   // Create Pickup Suggestions
   const pickupSuggestions = await Promise.all(
     Array.from({ length: 5 }).map(() =>
@@ -350,13 +363,16 @@ async function seed() {
     )
   );
 
-  // Create Notifications
+  // Create Notifications (Fixed)
   const notifications = await Promise.all(
-    Array.from({ length: 20 }).map(() =>
-      prisma.notification.create({
+    Array.from({ length: 20 }).map(() => {
+      const user = faker.helpers.arrayElement(users);
+      const sender = faker.helpers.maybe(() => faker.helpers.arrayElement(users.filter(u => u.id !== user.id)), { probability: 0.5 });
+
+      return prisma.notification.create({
         data: {
-          user: { connect: { id: faker.helpers.arrayElement(users).id } },
-          senderId: faker.helpers.maybe(() => faker.helpers.arrayElement(users).id, { probability: 0.5 }),
+          user: { connect: { id: user.id } },
+          sender: sender ? { connect: { id: sender.id } } : undefined, // Use sender relation instead of senderId
           type: faker.helpers.enumValue(NotificationType),
           title: faker.lorem.sentence(5),
           message: faker.lorem.paragraph(1),
@@ -365,8 +381,8 @@ async function seed() {
           order: faker.datatype.boolean() ? { connect: { id: faker.helpers.arrayElement(orders).id } } : undefined,
           pickup: faker.datatype.boolean() ? { connect: { id: faker.helpers.arrayElement(pickups).id } } : undefined,
         },
-      })
-    )
+      });
+    })
   );
 
   // Create Reviews
@@ -385,7 +401,7 @@ async function seed() {
           reviewType: faker.helpers.enumValue(ReviewType),
           status: faker.helpers.enumValue(ReviewStatus),
         },
-      })
+      });
     })
   );
 
@@ -409,15 +425,17 @@ async function seed() {
 
   // Create Chats
   const chats = await Promise.all(
-    Array.from({ length: 5 }).map(() =>
-      prisma.chat.create({
+    Array.from({ length: 5 }).map(() => {
+      const requester = faker.helpers.arrayElement(users);
+      const provider = faker.helpers.arrayElement(users.filter(u => u.id !== requester.id));
+      return prisma.chat.create({
         data: {
-          requester: { connect: { id: faker.helpers.arrayElement(users).id } },
-          provider: { connect: { id: faker.helpers.arrayElement(users).id } },
+          requester: { connect: { id: requester.id } },
+          provider: { connect: { id: provider.id } },
           goods: { connect: { id: faker.helpers.arrayElement(goods).id } },
         },
-      })
-    )
+      });
+    })
   );
 
   // Create Tickets
@@ -455,9 +473,9 @@ async function seed() {
           time: faker.date.recent(),
           ticket: ticket ? { connect: { id: ticket.id } } : undefined,
         },
-      })
-    }
-    ));
+      });
+    })
+  );
 
   // Create Goods Processes
   const goodsProcesses = await Promise.all(

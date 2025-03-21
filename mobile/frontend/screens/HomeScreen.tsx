@@ -123,7 +123,7 @@ export default function HomeScreen() {
     },
     {
       title: "Pickup",
-      icon: <MapPin size={40} color="white" />,
+      icon: <MapPin size={40} color="#007BFF" />,
       route: "../pickup/PickupDashboard" as const,
     },
     {

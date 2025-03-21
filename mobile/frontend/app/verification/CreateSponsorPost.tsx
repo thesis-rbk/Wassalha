@@ -125,7 +125,6 @@ const CreateRequestForm: React.FC = () => {
     const handleTabPress = (tab: string) => {
         setActiveTab(tab);
         if (tab === "create") {
-            // Already on the create screen, do nothing
             return;
         }
         navigate.navigate(tab as any);
