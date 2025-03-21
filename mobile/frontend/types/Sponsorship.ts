@@ -13,7 +13,7 @@ export interface Sponsorship {
     product: string;
     amount: number;
     status: string;
-    users: UserS[];
+    users: UserSponsor[];
     sponsorCheckouts: SponsorCheckout[];
     reviews: ReviewSponsor[];
     createdAt: string;
@@ -23,7 +23,7 @@ export interface Sponsorship {
 export interface ServiceProvider {
     id: number;
     userId: number;
-    user: UserS;
+    user: UserSponsor;
     type: string;
     isVerified: boolean;
     badge?: string;
@@ -40,7 +40,7 @@ export interface ServiceProvider {
     updatedAt: string;
 }
 
-export interface UserS {
+export interface UserSponsor {
     id: number;
     name: string;
 }
@@ -55,8 +55,8 @@ export interface ReviewSponsor {
     reviewed_user_id: number;
     sponsorshipRating?: number;
     serviceProviderRating?: number;
-    reviewer: Profile;
-    reviewed_user: Profile;
+    reviewer: ProfileSponsor;
+    reviewed_user: ProfileSponsor;
     sponsorshipId?: number;
     sponsorship?: Sponsorship;
     serviceProviderId?: number;
@@ -66,7 +66,7 @@ export interface ReviewSponsor {
     updatedAt: string;
 }
 
-export interface Profile {
+export interface ProfileSponsor {
     id: number;
     name: string;
     // Add other profile fields as needed
