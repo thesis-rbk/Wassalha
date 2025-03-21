@@ -235,6 +235,16 @@ enum Role {
   SUPER_ADMIN
 }
 
+
+enum TicketCategory {
+  REQUEST_ISSUE
+  OFFER_ISSUE
+  PAYMENT_ISSUE
+  PICKUP_ISSUE
+  DELIVERY_ISSUE
+  TRAVELER_NON_COMPLIANCE
+  OTHER
+}
 // Add TicketStatus enum with the other enums
 enum TicketStatus {
   PENDING
@@ -311,8 +321,11 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  // Add this line
-  tickets    Ticket[]
+  // Existing relation to Ticket
+  tickets       Ticket[]
+
+  // New relation to TicketMessage
+  ticketMessagesSent TicketMessage[] @relation("TicketMessagesSent")
 }
 
 // ========== PROFILE ==========
@@ -576,15 +589,11 @@ model Message {
   isRead  Boolean @default(false)
 
   time DateTime @default(now()) // Add the time field, defaulting to the current timestamp
-
-  // Add new ticket relation
-  ticketId   Int?
-  ticket     Ticket?    @relation("TicketMessages", fields: [ticketId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 // ========== MEDIA ==========
 model Media {
-  id       Int       @id @default(autoincrement())
+  id       Int            @id @default(autoincrement())
   url      String
   type     MediaType
   mimeType String?
@@ -596,10 +605,11 @@ model Media {
   height    Int?
   duration  Int?
 
-  messages Message[]
-  profile  Profile?  @relation("ProfileImage")
-  goods    Goods[]   @relation("GoodsImage")
-  orders   Order[]   @relation("VerificationImage")
+  messages         Message[]       // Existing relation to chat messages
+  profile          Profile?        @relation("ProfileImage")
+  goods            Goods[]         @relation("GoodsImage")
+  orders           Order[]         @relation("VerificationImage")
+  ticketMessages   TicketMessage[] @relation("TicketMessageMedia") // New relation for ticket messages
 }
 
 // ========== CATEGORY ==========
@@ -784,14 +794,29 @@ model PickupSuggestion {
 
 // Add Ticket model before the existing models
 model Ticket {
-  id          Int          @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   title       String
-  description String       @db.Text
+  description String         @db.Text
   userId      Int
-  status      TicketStatus @default(PENDING)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  status      TicketStatus   @default(PENDING)
+  category    TicketCategory // Added to match frontend
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  messages    Message[]    @relation("TicketMessages")
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  messages    TicketMessage[] @relation("TicketMessages") // Changed to new table
+}
+
+model TicketMessage {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int
+  ticket    Ticket   @relation("TicketMessages", fields: [ticketId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  senderId  Int
+  sender    User     @relation("TicketMessagesSent", fields: [senderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  content   String   @db.Text
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Adjusted media support: One-to-many relation
+  media     Media[]  @relation("TicketMessageMedia")
 }

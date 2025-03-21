@@ -15,8 +15,9 @@ import { ThemedText } from '@/components/ThemedText';
 import { TextInput } from 'react-native';
 import axiosInstance from '@/config';
 import { Colors } from '@/constants/Colors';
-import { Send, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { Send, AlertCircle, ChevronDown, ChevronUp, Upload } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as DocumentPicker from 'expo-document-picker';
 
 export default function ReportIssuePage() {
   const router = useRouter();
@@ -26,47 +27,48 @@ export default function ReportIssuePage() {
   const [category, setCategory] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
+  const [file, setFile] = useState<DocumentPicker.DocumentPickerResult | null>(null); // State for file
 
-  const qaList = [
+  const qaList: { question: string; answer: string }[] = [
     {
       question: "What should I do if a traveler hasn’t responded to my request?",
-      answer: "Ensure your request details are clear and appealing. If no response within 48 hours, cancel and create a new request from your dashboard."
+      answer: "Ensure your request details are clear and appealing. If no response within 48 hours, cancel and create a new request from your dashboard.",
     },
     {
       question: "How do I confirm a traveler’s offer?",
-      answer: "Go to 'Requests,' select your request, review offers, and click 'Accept' on the preferred one. You’ll be notified once confirmed."
+      answer: "Go to 'Requests,' select your request, review offers, and click 'Accept' on the preferred one. You’ll be notified once confirmed.",
     },
     {
       question: "What if the traveler doesn’t send a photo of the purchased good?",
-      answer: "Contact them via chat. If no response in 24 hours, submit a ticket under 'Traveler Non-Compliance.'"
+      answer: "Contact them via chat. If no response in 24 hours, submit a ticket under 'Traveler Non-Compliance.'",
     },
     {
       question: "Why is my payment still on hold?",
-      answer: "Payments are held until delivery is confirmed. Confirm receipt in the app. If still held, submit a ticket under 'Payment Issues.'"
+      answer: "Payments are held until delivery is confirmed. Confirm receipt in the app. If still held, submit a ticket under 'Payment Issues.'",
     },
     {
       question: "What if the good I received is damaged or incorrect?",
-      answer: "Inspect during pickup and reject if faulty. Submit a ticket under 'Delivery Issues' with photos."
+      answer: "Inspect during pickup and reject if faulty. Submit a ticket under 'Delivery Issues' with photos.",
     },
     {
       question: "How do I suggest a pickup method?",
-      answer: "After payment, go to 'Order Details,' select 'Suggest Pickup,' and choose a method. The traveler must confirm."
+      answer: "After payment, go to 'Order Details,' select 'Suggest Pickup,' and choose a method. The traveler must confirm.",
     },
     {
       question: "The traveler didn’t show up for an in-person pickup. What do I do?",
-      answer: "Contact them via chat. If unresolved, submit a ticket under 'Pickup Issues,' though liability may remain with you."
+      answer: "Contact them via chat. If unresolved, submit a ticket under 'Pickup Issues,' though liability may remain with you.",
     },
     {
       question: "How do I confirm delivery and release payment?",
-      answer: "Go to 'Order Details,' click 'Confirm Delivery' after verifying the good. Payment releases within 24 hours."
+      answer: "Go to 'Order Details,' click 'Confirm Delivery' after verifying the good. Payment releases within 24 hours.",
     },
     {
       question: "What if I don’t see my issue listed here?",
-      answer: "Submit a support ticket below with detailed information, and we’ll assist you promptly."
+      answer: "Submit a support ticket below with detailed information, and we’ll assist you promptly.",
     },
   ];
 
-  const categories = [
+  const categories: string[] = [
     'Request Issue',
     'Offer Issue',
     'Payment Issue',
@@ -75,6 +77,21 @@ export default function ReportIssuePage() {
     'Traveler Non-Compliance',
     'Other',
   ];
+
+  const handlePickFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*', 
+        copyToCacheDirectory: true,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setFile(result);
+      }
+    } catch (error) {
+      console.error('Error picking file:', error);
+      Alert.alert('Error', 'Failed to pick file. Please try again.');
+    }
+  };
 
   const handleSubmitTicket = async () => {
     if (!title.trim() || !description.trim() || !category) {
@@ -85,12 +102,40 @@ export default function ReportIssuePage() {
     try {
       setIsLoading(true);
       const token = await AsyncStorage.getItem('jwtToken');
+      let mediaIds: number[] = [];
+
+      // Upload file if selected
+      if (file && !file.canceled && file.assets && file.assets.length > 0) {
+        const formData = new FormData();
+        const asset = file.assets[0];
+        formData.append('file', {
+          uri: asset.uri,
+          name: asset.name || 'file',
+          type: asset.mimeType || 'application/octet-stream',
+        } as any);
+
+        const uploadResponse = await axiosInstance.post('/api/media/upload', formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        if (uploadResponse.data.success) {
+          mediaIds = [uploadResponse.data.data.id]; // Assuming response contains media ID
+        } else {
+          throw new Error('Failed to upload file');
+        }
+      }
+
+      // Submit ticket with mediaIds
       const response = await axiosInstance.post(
-        '/api/tickets',
+        '/api/tickets/create',
         {
           title,
           description,
-          category: category.toUpperCase().replace(/ /g, '_'), // Match TicketCategory enum
+          category: category.toUpperCase().replace(/ /g, '_'),
+          mediaIds, // Include mediaIds in the request
         },
         {
           headers: {
@@ -108,6 +153,7 @@ export default function ReportIssuePage() {
       setTitle('');
       setDescription('');
       setCategory('');
+      setFile(null); // Clear file after submission
       setShowForm(false);
     } catch (error) {
       console.error('Error creating ticket:', error);
@@ -129,6 +175,12 @@ export default function ReportIssuePage() {
           <View style={styles.headerContainer}>
             <AlertCircle size={24} color={Colors.light.primary} style={styles.icon} />
             <ThemedText style={styles.headerText}>Report an Issue</ThemedText>
+            <TouchableOpacity
+              style={styles.myTicketsButton}
+              onPress={() => router.push('/reporting-system/MyTicketsPage')}
+            >
+              <ThemedText style={styles.myTicketsText}>My Tickets</ThemedText>
+            </TouchableOpacity>
           </View>
           <ThemedText style={styles.description}>
             Check our common questions below. If your issue persists, submit a ticket.
@@ -137,10 +189,7 @@ export default function ReportIssuePage() {
           {/* Q&A Section */}
           {qaList.map((qa, index) => (
             <View key={index} style={styles.qaContainer}>
-              <TouchableOpacity
-                style={styles.questionRow}
-                onPress={() => toggleQuestion(index)}
-              >
+              <TouchableOpacity style={styles.questionRow} onPress={() => toggleQuestion(index)}>
                 <ThemedText style={styles.questionText}>{qa.question}</ThemedText>
                 {expandedQuestion === index ? (
                   <ChevronUp size={20} color={Colors.light.primary} />
@@ -156,10 +205,7 @@ export default function ReportIssuePage() {
 
           {/* Ticket Form Toggle */}
           {!showForm && (
-            <TouchableOpacity
-              style={styles.showFormButton}
-              onPress={() => setShowForm(true)}
-            >
+            <TouchableOpacity style={styles.showFormButton} onPress={() => setShowForm(true)}>
               <ThemedText style={styles.showFormText}>Still Need Help? Submit a Ticket</ThemedText>
             </TouchableOpacity>
           )}
@@ -175,17 +221,11 @@ export default function ReportIssuePage() {
                   {categories.map((cat) => (
                     <TouchableOpacity
                       key={cat}
-                      style={[
-                        styles.categoryButton,
-                        category === cat && styles.categoryButtonSelected,
-                      ]}
+                      style={[styles.categoryButton, category === cat && styles.categoryButtonSelected]}
                       onPress={() => setCategory(cat)}
                     >
                       <ThemedText
-                        style={[
-                          styles.categoryText,
-                          category === cat && styles.categoryTextSelected,
-                        ]}
+                        style={[styles.categoryText, category === cat && styles.categoryTextSelected]}
                       >
                         {cat}
                       </ThemedText>
@@ -217,6 +257,16 @@ export default function ReportIssuePage() {
                   value={description}
                   onChangeText={setDescription}
                 />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <ThemedText style={styles.label}>Upload File (Optional)</ThemedText>
+                <TouchableOpacity style={styles.uploadButton} onPress={handlePickFile}>
+                  <Upload size={20} color={Colors.light.primary} style={styles.uploadIcon} />
+                  <ThemedText style={styles.uploadText}>
+                    {file && !file.canceled && file.assets ? file.assets[0].name : 'Choose a file'}
+                  </ThemedText>
+                </TouchableOpacity>
               </View>
 
               <TouchableOpacity
@@ -254,6 +304,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 8,
   },
   icon: {
@@ -328,7 +379,7 @@ const styles = StyleSheet.create({
   },
   textArea: {
     height: 150,
-    textAlignVertical: 'top',
+    textAlignVertical: 'top' as const,
   },
   categoryContainer: {
     flexDirection: 'row',
@@ -355,6 +406,22 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
+  uploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  uploadIcon: {
+    marginRight: 8,
+  },
+  uploadText: {
+    fontSize: 16,
+    color: Colors.light.primary,
+  },
   submitButton: {
     backgroundColor: Colors.light.primary,
     borderRadius: 8,
@@ -373,5 +440,16 @@ const styles = StyleSheet.create({
   },
   submitIcon: {
     marginRight: 8,
+  },
+  myTicketsButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: Colors.light.primary + '20',
+    borderRadius: 8,
+  },
+  myTicketsText: {
+    fontSize: 16,
+    color: Colors.light.primary,
+    fontWeight: '600',
   },
 });

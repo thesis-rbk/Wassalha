@@ -11,5 +11,7 @@ export interface Ticket {
       name: string;
       email: string;
     };
+    senderId: number;
+    category: string;
     messages?: Message[];
   }

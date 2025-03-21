@@ -5,7 +5,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true  // Add this to handle CORS with credentials
+  withCredentials: true  
 });
 
 api.interceptors.request.use((config) => {
