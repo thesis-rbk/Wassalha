@@ -18,3 +18,7 @@ export interface Review {
 export interface ReviewComponentProps {
     onReviewSubmitted?: () => void; // Optional callback when review is submitted
 }
+export interface StarProps {
+    filled: boolean;
+    onPress: () => void;
+}

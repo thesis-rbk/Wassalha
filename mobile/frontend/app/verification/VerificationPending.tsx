@@ -12,7 +12,6 @@ const VerificationPending = () => {
   const goHome = () => {
     router.push("/home");
   };
-
   return (
     <ThemedView style={styles.container}>
       <View style={styles.content}>

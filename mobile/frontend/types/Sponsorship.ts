@@ -13,7 +13,7 @@ export interface Sponsorship {
     product: string;
     amount: number;
     status: string;
-    users: User[];
+    users: UserS[];
     sponsorCheckouts: SponsorCheckout[];
     reviews: ReviewSponsor[];
     createdAt: string;
@@ -23,7 +23,7 @@ export interface Sponsorship {
 export interface ServiceProvider {
     id: number;
     userId: number;
-    user: User;
+    user: UserS;
     type: string;
     isVerified: boolean;
     badge?: string;
@@ -40,15 +40,13 @@ export interface ServiceProvider {
     updatedAt: string;
 }
 
-export interface User {
+export interface UserS {
     id: number;
     name: string;
-    // Add other user fields as needed
 }
 
 export interface SponsorCheckout {
     id: number;
-    // Add other fields as needed
 }
 
 export interface ReviewSponsor {
@@ -88,4 +86,23 @@ const platformImages = {
 } as const;
 
 export default platformImages;
+export interface SponsorshipDetailsModalProps {
+    visible: boolean;
+    onClose: () => void;
+    platform: string;
+    price: string;
+    description: string;
+    duration: number;
+    isActive: boolean;
+    reviews: { rating: number; comment: string }[]; // Adjust based on your ReviewSponsor model
+}
 
+export interface SponsorshipCardProps {
+    id: number // Add the ID prop
+    platform: string
+    price: string
+    description: string
+    isActive: boolean
+    onPress: () => void
+    onBuyPress: () => void
+}

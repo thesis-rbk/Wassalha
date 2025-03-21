@@ -1,10 +1,8 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { StarProps } from '@/types';
+// import START
 
-interface StarProps {
-    filled: boolean;
-    onPress: () => void;
-}
 
 const Star: React.FC<StarProps> = ({ filled, onPress }) => {
     return (

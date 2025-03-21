@@ -21,7 +21,6 @@ export interface User {
     phoneNumber?: string;
     googleId?: string;
     password?: string;
-
     profile?: Profile;
     requests?: Request[];
     notifications?: Notification[];

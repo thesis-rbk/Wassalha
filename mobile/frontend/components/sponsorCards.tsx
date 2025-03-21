@@ -1,45 +1,10 @@
-import type React from "react"
 import { View, StyleSheet, TouchableOpacity, Text } from "react-native"
 import { useColorScheme } from "react-native"
 import { Image as ExpoImage } from "expo-image"
 import { useNavigation } from "@react-navigation/native"
-import platformImages from "../types/Sponsorship"
+import platformImages, { SponsorshipCardProps } from "../types/Sponsorship"
 import type NavigationProp from "@/types/navigation"
-// Define the props interface for TypeScript
-interface SponsorshipCardProps {
-    id: number // Add the ID prop
-    platform: string
-    price: string
-    description: string
-    isActive: boolean
-    onPress: () => void
-    onBuyPress: () => void
-}
-
-// Constants for theme colors
-const COLORS = {
-    light: {
-        background: "#FFFFFF",
-        shadow: "#4A4A4A",
-        shadowOpacity: 0.2,
-        platformText: "#1A1A1A",
-        secondaryText: "#666666",
-        interactive: "#007BFF",
-        activeBadge: "#34C759",
-        inactiveBadge: "#FF3B30",
-    },
-    dark: {
-        background: "#1C2526",
-        shadow: "#000",
-        shadowOpacity: 0.4,
-        platformText: "#E0E0E0",
-        secondaryText: "#A0A0A0",
-        interactive: "#66B2FF",
-        activeBadge: "#34C759",
-        inactiveBadge: "#FF3B30",
-    },
-}
-
+import { COLORS } from "../constants/theme"
 // Constants for description truncation
 const DESCRIPTION_MAX_LENGTH = 20
 
