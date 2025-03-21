@@ -9,10 +9,12 @@ import {
   ActivityIndicator,
 } from "react-native";
 import axiosInstance from "@/config";
+import { ThemedView } from "@/components/ThemedView"; // Adjust the import path as needed
 import { Message, User, Profile } from "../../types";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-
+import { TopNavigation } from "@/components/navigation/TopNavigation";
+import { TabBar } from "@/components/navigation/TabBar";
 export default function MessagesScreen() {
   const { user } = useSelector((state: RootState) => state.auth);
   const [conversations, setConversations] = useState<
@@ -62,7 +64,7 @@ export default function MessagesScreen() {
           if (
             !existingConversation ||
             new Date(message.time) >
-              new Date(existingConversation.lastMessage.time)
+            new Date(existingConversation.lastMessage.time)
           ) {
             const unreadCount =
               !message.isRead && message.senderId !== currentUserId
@@ -166,11 +168,11 @@ export default function MessagesScreen() {
   const handleNotificationPress = () => {
     router.push("/notifications");
   };
-  
+
   const handleProfilePress = () => {
     router.push("/profile");
   };
-  
+
   const handleTabPress = (tabName: string) => {
     setActiveTab(tabName);
   };
@@ -193,12 +195,12 @@ export default function MessagesScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <TopNavigation 
-        title="Messages" 
+      <TopNavigation
+        title="Messages"
         onNotificationPress={handleNotificationPress}
         onProfilePress={handleProfilePress}
       />
-      
+
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.user.id.toString()}
@@ -211,7 +213,7 @@ export default function MessagesScreen() {
           </View>
         }
       />
-      
+
       <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   );

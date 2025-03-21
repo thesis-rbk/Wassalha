@@ -14,6 +14,7 @@ export interface TravelerProfile {
   imageId: string | null;
   gender: string
   image: { url: string }
+  name: string
 }
 
 export interface Traveler {

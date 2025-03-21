@@ -52,37 +52,37 @@ export default function ChatScreen() {
   // Socket initialization - following the pattern from NotificationContext
   useEffect(() => {
     let mounted = true;
-    
+
     const initializeSocket = async () => {
       if (!user?.id) {
         console.log('👤 No user logged in, skipping chat socket setup');
         return;
       }
-      
+
       try {
         console.log('🔄 Setting up chat socket for user:', user.id);
-        
+
         // Get socket instance but with explicit userId in the query
         const chatSocket = await getSocket('chat', { userId: user.id });
-        
+
         if (mounted && chatSocket) {
           setSocket(chatSocket);
-          
+
           // Make sure socket.io knows our user ID
           chatSocket.auth = { userId: user.id };
-          
+
           // Join chat room
           if (chatSocket.connected) {
             console.log(`Joining chat room: chat_${chatId} as user ${user.id}`);
             chatSocket.emit('join_chat', chatId);
           }
-          
+
           // Re-join chat room on reconnect
           chatSocket.on('connect', () => {
             console.log(`Socket reconnected, joining chat room: chat_${chatId}`);
             chatSocket.emit('join_chat', chatId);
           });
-          
+
           // Setup listeners
           chatSocket.on('receive_message', (newMessage) => {
             console.log('Received new message:', newMessage);
@@ -94,7 +94,7 @@ export default function ChatScreen() {
               return prevMessages;
             });
           });
-          
+
           chatSocket.on('error', (error) => {
             console.error('❌ Socket error:', error);
           });
@@ -103,9 +103,9 @@ export default function ChatScreen() {
         console.error('❌ Error initializing chat socket:', error);
       }
     };
-    
+
     initializeSocket();
-    
+
     // Cleanup
     return () => {
       mounted = false;
@@ -115,7 +115,7 @@ export default function ChatScreen() {
       }
     };
   }, [user?.id, chatId]);
-  
+
   // Fetch messages from API
   const fetchMessages = useCallback(async () => {
     if (!chatId) return;
@@ -145,7 +145,7 @@ export default function ChatScreen() {
       setLoading(false);
     }
   }, [chatId]);
-  
+
   // Load messages when component mounts
   useEffect(() => {
     fetchMessages();
@@ -183,7 +183,7 @@ export default function ChatScreen() {
           content: newMessage,
           type: 'text'
         });
-        
+
         socket.emit('send_message', {
           chatId: parseInt(chatId.toString()),
           content: newMessage,
@@ -207,26 +207,26 @@ export default function ChatScreen() {
   const handleDocumentPick = async () => {
     try {
       console.log('Opening document picker...');
-      
+
       // Launch document picker
       const result = await DocumentPicker.getDocumentAsync({
         copyToCacheDirectory: true,
         type: '*/*',
       });
-      
+
       console.log('Document picker result:', result);
-      
+
       if (result.canceled) {
         console.log('Document picking was cancelled');
         return;
       }
-      
+
       const document = result.assets[0];
       console.log('Selected document:', document);
-      
+
       // Upload the document
       await uploadDocument(document);
-      
+
     } catch (error) {
       console.error('Error picking document:', error);
       Alert.alert(
@@ -235,7 +235,7 @@ export default function ChatScreen() {
       );
     }
   };
-  
+
   /**
    * Upload a document to the chat and create a message
    */
@@ -244,33 +244,33 @@ export default function ChatScreen() {
       Alert.alert('Error', 'Invalid document');
       return;
     }
-    
+
     setIsUploading(true);
-    
+
     try {
       console.log('Preparing to upload document...');
-      
+
       // Get the auth token
       const token = await AsyncStorage.getItem('jwtToken');
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      
+
       // Create FormData for multipart upload
       const formData = new FormData();
-      
+
       // Append the file
       formData.append('file', {
         uri: document.uri,
         type: document.mimeType || 'application/octet-stream',
         name: document.name || 'document'
       } as any);
-      
+
       console.log('Uploading document:', {
         name: document.name,
         type: document.mimeType
       });
-      
+
       // Upload the file
       const response = await axiosInstance.post(
         `/api/chats/${chatId}/upload`,
@@ -281,10 +281,10 @@ export default function ChatScreen() {
           },
         }
       );
-      
+
       // Access your data from response.data instead of response.json()
       const data = response.data;
-      
+
       // Step 2: Now create a message with this media
       if (socket && socket.connected) {
         console.log('Sending media message via socket:', {
@@ -293,14 +293,14 @@ export default function ChatScreen() {
           type: 'document',
           mediaId: parseInt(data.mediaId)
         });
-        
+
         socket.emit('send_message', {
           chatId: parseInt(chatId.toString()),
           content: `Sent a file: ${document.name || 'document'}`,
           type: 'document',
           mediaId: parseInt(data.mediaId)
         });
-        
+
         // Wait a bit and refresh messages
         setTimeout(() => {
           fetchMessages();
@@ -321,11 +321,11 @@ export default function ChatScreen() {
             },
           }
         );
-        
+
         // Refresh messages to show the new one
         fetchMessages();
       }
-      
+
     } catch (error) {
       console.error('Error uploading document:', error);
       Alert.alert(
@@ -340,10 +340,10 @@ export default function ChatScreen() {
   // Render messages with file support
   const renderMessage = ({ item }: { item: Message }) => {
     const isMyMessage = item.senderId?.toString() === userId;
-    
+
     // Determine if this message contains a file
     const hasFile = item.type === 'document' || item.type === 'image' || item.media;
-    
+
     return (
       <View
         style={[
@@ -362,10 +362,10 @@ export default function ChatScreen() {
             {item.content}
           </ThemedText>
         )}
-        
+
         {/* For file attachments */}
         {hasFile && item.media && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.fileContainer}
             onPress={() => handleFileOpen(item.media)}
           >
@@ -379,19 +379,19 @@ export default function ChatScreen() {
                 <File size={24} color={isMyMessage ? "#ffffff" : "#3b82f6"} />
               )}
             </View>
-            
+
             {/* File details */}
             <View style={styles.fileDetails}>
-              <ThemedText 
+              <ThemedText
                 style={[
-                  styles.fileName, 
+                  styles.fileName,
                   isMyMessage ? styles.myMessageText : styles.theirMessageText
                 ]}
                 numberOfLines={1}
               >
                 {item.media?.filename || 'File attachment'}
               </ThemedText>
-              
+
               <View style={styles.fileMetaRow}>
                 {/* Extension badge if available */}
                 {item.media?.extension && (
@@ -401,17 +401,17 @@ export default function ChatScreen() {
                     </Text>
                   </View>
                 )}
-                
+
                 {/* Show download icon */}
-                <Download 
-                  size={14} 
-                  color={isMyMessage ? "rgba(255,255,255,0.7)" : "#64748b"} 
+                <Download
+                  size={14}
+                  color={isMyMessage ? "rgba(255,255,255,0.7)" : "#64748b"}
                 />
               </View>
             </View>
           </TouchableOpacity>
         )}
-        
+
         {/* Timestamp */}
         <ThemedText style={[
           styles.messageTime,
@@ -433,17 +433,17 @@ export default function ChatScreen() {
         Alert.alert('Error', 'File URL not available');
         return;
       }
-      
+
       // Construct the full URL
-      const fileUrl = media.url.startsWith('http') 
-        ? media.url 
+      const fileUrl = media.url.startsWith('http')
+        ? media.url
         : `${BACKEND_URL}${media.url}`;
-      
+
       console.log('Opening file:', fileUrl);
-      
+
       // Check if the URL can be opened
       const canOpen = await Linking.canOpenURL(fileUrl);
-      
+
       if (canOpen) {
         await Linking.openURL(fileUrl);
       } else {
@@ -452,8 +452,8 @@ export default function ChatScreen() {
           'Your device cannot open this type of file.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { 
-              text: 'Copy URL', 
+            {
+              text: 'Copy URL',
               onPress: () => {
                 // Implement clipboard copy here if needed
                 Alert.alert('URL Copied', 'File URL copied to clipboard');
@@ -539,12 +539,12 @@ export default function ChatScreen() {
               onPress={handleDocumentPick}
               disabled={isUploading}
             >
-              <Paperclip 
-                size={22} 
-                color={isUploading ? "#a0aec0" : "#3b82f6"} 
+              <Paperclip
+                size={22}
+                color={isUploading ? "#a0aec0" : "#3b82f6"}
               />
             </TouchableOpacity>
-            
+
             <TextInput
               style={[styles.input, isUploading && styles.disabledInput]}
               value={newMessage}
@@ -554,7 +554,7 @@ export default function ChatScreen() {
               multiline
               editable={!isUploading}
             />
-            
+
             <TouchableOpacity
               style={[
                 styles.sendButton,

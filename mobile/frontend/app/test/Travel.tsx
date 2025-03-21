@@ -40,7 +40,7 @@ export default function Travel() {
       Alert.alert(
         "Chat Error",
         "Failed to open chat. Error: " +
-          (error instanceof Error ? error.message : String(error))
+        (error instanceof Error ? error.message : String(error))
       );
     }
   };

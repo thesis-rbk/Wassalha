@@ -1,73 +1,123 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
-import { UserCardProps } from '@/types/UserCardProps';
+import React from "react";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
+import { UserCardProps } from "@/types/UserCardProps";
 
-const UserCard: React.FC<UserCardProps> = ({ name, score, gender, img }) => {
+const UserCard: React.FC<UserCardProps & { isVerified?: boolean }> = ({
+    name,
+    score,
+    gender,
+    img,
+    isVerified,
+}) => {
     const calculateStars = (score: number) => {
-        const stars = Math.round((score / 1.15) / 100 * 5); // Convert score to a 5-star scale
-        return '★'.repeat(stars) + '☆'.repeat(5 - stars);
+        const stars = Math.round((score / 1.15) / 100 * 5);
+        return "★".repeat(stars) + "☆".repeat(5 - stars);
     };
 
     return (
         <View style={styles.cardContainer}>
+            {/* Verification Icon with Tooltip */}
+            {isVerified && (
+                <View style={styles.verificationContainer}>
+                    <Icon name="checkmark-circle" size={22} color="#4CAF50" />
+                    <Text style={styles.verificationText}>Verified</Text>
+                </View>
+            )}
+
+            {/* Profile Image */}
             <View style={styles.imageContainer}>
                 <Image source={{ uri: img }} style={styles.profileImage} />
             </View>
-            <Text style={styles.nameText}>{name}</Text>
-            <Text style={styles.starText}>{calculateStars(score)}</Text>
-            <Text style={styles.genderText}>Gender: {gender}</Text>
+
+            {/* Text Content */}
+            <View style={styles.textContainer}>
+                <Text style={styles.nameText} numberOfLines={1} ellipsizeMode="tail">
+                    {name}
+                </Text>
+                <Text style={styles.roleText}>
+                    {score >= 500 ? "Sponsor" : "Traveler"}
+                </Text>
+                <View style={styles.starContainer}>
+                    <Text style={styles.starText}>{calculateStars(score)}</Text>
+                </View>
+                <Text style={styles.genderText}>Gender: {gender}</Text>
+            </View>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     cardContainer: {
-        width: 150,
-        height: 220, // Increased height
-        padding: 10,
-        margin: 10,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-        shadowColor: '#008098',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
+        flexDirection: "row",
+        width: 280,
+        height: 140,
+        padding: 12,
+        borderRadius: 12,
+        backgroundColor: "#fff",
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
         elevation: 5,
-        justifyContent: 'center',
+        overflow: "hidden",
     },
     imageContainer: {
         width: 80,
         height: 80,
         borderRadius: 40,
-        overflow: 'hidden',
-        marginBottom: 10,
+        overflow: "hidden",
+        marginRight: 16,
         borderWidth: 2,
-        borderColor: '#008098',
+        borderColor: "#007BFF",
     },
     profileImage: {
-        width: '100%',
-        height: '100%',
+        width: "100%",
+        height: "100%",
+    },
+    textContainer: {
+        flex: 1,
+        justifyContent: "center",
     },
     nameText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        color: '#008098',
+        fontSize: 18,
+        fontWeight: "bold",
+        color: "#333",
+        marginBottom: 4,
+    },
+    roleText: {
+        fontSize: 12, // Same size as genderText
+        color: "#666", // Same color as genderText
+        marginBottom: 4,
+    },
+    starContainer: {
+        backgroundColor: "#F5F5F5",
+        borderRadius: 4,
+        paddingHorizontal: 4,
+        paddingVertical: 2,
+        alignSelf: "flex-start",
+        marginBottom: 4,
     },
     starText: {
-        color: '#FFD700', // Gold color for stars
+        color: "#FFD700",
         fontSize: 14,
-        textAlign: 'center',
-        marginBottom: 5,
     },
     genderText: {
-        fontSize: 14,
-        color: '#666',
-        textAlign: 'center',
-        marginBottom: 5,
+        fontSize: 12,
+        color: "#666",
+    },
+    verificationContainer: {
+        position: "absolute",
+        top: 10,
+        right: 10,
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    verificationText: {
+        fontSize: 10,
+        color: "#4CAF50",
+        marginLeft: 4,
     },
 });
 
