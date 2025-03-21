@@ -21,6 +21,7 @@ const {
   verifyCreditCard,
   submitQuestionnaire,
   verifyUserProfile,
+  getUserDemographics,
 } = require("../controllers/user.controller");
 const upload = require('../middleware/multerMiddleware');
 const { getMessages } = require("../controllers/message.controller");
@@ -66,6 +67,7 @@ router.post(
 
 // User CRUD routes
 router.get("/", getUsers); // Get all users
+router.get("/demographics", authenticateAdmin, getUserDemographics); // Get user demographics
 router.get("/:id", getUserById); // Get a single user
 router.put("/:id", updateUser); // Update user
 router.put("/:id/ban", authenticateAdmin, banUser); // Ban/Unban a user

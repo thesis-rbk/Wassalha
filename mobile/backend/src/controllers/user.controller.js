@@ -1248,6 +1248,41 @@ const verifyUserProfile = async (req, res) => {
   }
 };
 
+// Get user demographics (for the world map)
+const getUserDemographics = async (req, res) => {
+  try {
+    // Get user demographics by country
+    const demographicsByCountry = await prisma.profile.groupBy({
+      by: ['country'],
+      _count: {
+        country: true
+      },
+      orderBy: {
+        _count: {
+          country: 'desc'
+        }
+      }
+    });
+
+    // Format the data
+    const demographicData = demographicsByCountry.map(item => ({
+      country: item.country,
+      count: item._count.country
+    }));
+
+    return res.status(200).json({ 
+      success: true, 
+      data: demographicData 
+    });
+  } catch (error) {
+    console.error('Error fetching user demographics:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to retrieve user demographic data' 
+    });
+  }
+};
+
 module.exports = {
   signup,
   loginUser,
@@ -1269,5 +1304,6 @@ module.exports = {
   verifySelfie,
   verifyCreditCard,
   submitQuestionnaire,
-  verifyUserProfile
+  verifyUserProfile,
+  getUserDemographics
 };

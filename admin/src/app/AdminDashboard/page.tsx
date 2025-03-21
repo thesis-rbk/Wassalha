@@ -57,17 +57,45 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ordersResponse, requestsResponse, promoPostsResponse] = await Promise.all([
+        // Use Promise.allSettled for more robust error handling
+        const fetchedData = await Promise.allSettled([
           api.get('/api/orders'),
           api.get('/api/requests'),
           api.get('/api/promo-posts')
         ]);
-
-        setOrderData(ordersResponse.data.data);
-        setRequestData(requestsResponse.data.data);
-        setPromoPostData(promoPostsResponse.data.data);
+        
+        // Process results, using empty arrays if any request failed
+        const [ordersResponse, requestsResponse, promoPostsResponse] = fetchedData;
+        
+        // Set orders data
+        if (ordersResponse.status === 'fulfilled' && ordersResponse.value.data?.data) {
+          setOrderData(ordersResponse.value.data.data);
+        } else {
+          console.warn('Orders API request failed, using empty array');
+          setOrderData([]);
+        }
+        
+        // Set requests data
+        if (requestsResponse.status === 'fulfilled' && requestsResponse.value.data?.data) {
+          setRequestData(requestsResponse.value.data.data);
+        } else {
+          console.warn('Requests API request failed, using empty array');
+          setRequestData([]);
+        }
+        
+        // Set promo posts data
+        if (promoPostsResponse.status === 'fulfilled' && promoPostsResponse.value.data?.data) {
+          setPromoPostData(promoPostsResponse.value.data.data);
+        } else {
+          console.warn('Promo posts API request failed, using empty array');
+          setPromoPostData([]);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
+        // Set default empty arrays if the entire operation fails
+        setOrderData([]);
+        setRequestData([]);
+        setPromoPostData([]);
       }
     };
 
@@ -77,17 +105,45 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchCounts = async () => {
       try {
-        const [usersResponse, serviceProvidersResponse, travelersResponse] = await Promise.all([
+        // Try to fetch all user data with proper error handling
+        const fetchedData = await Promise.allSettled([
           api.get('/api/users'),
           api.get('/api/service-providers'),
           api.get('/api/travelers')
         ]);
-
-        setUsers(usersResponse.data.data);
-        setServiceProviders(serviceProvidersResponse.data.data);
-        setTravelers(travelersResponse.data.data);
+        
+        // Process results, using default values if any request failed
+        const [usersResponse, serviceProvidersResponse, travelersResponse] = fetchedData;
+        
+        // Set users data
+        if (usersResponse.status === 'fulfilled' && usersResponse.value.data?.data) {
+          setUsers(usersResponse.value.data.data);
+        } else {
+          console.warn('Users API request failed, using default data');
+          // Keep existing users data or set default
+          setUsers(users.length ? users : []);
+        }
+        
+        // Set service providers data
+        if (serviceProvidersResponse.status === 'fulfilled' && serviceProvidersResponse.value.data?.data) {
+          setServiceProviders(serviceProvidersResponse.value.data.data);
+        } else {
+          console.warn('Service providers API request failed, using default data');
+          // Keep existing service providers data or set default
+          setServiceProviders(serviceProviders.length ? serviceProviders : []);
+        }
+        
+        // Set travelers data
+        if (travelersResponse.status === 'fulfilled' && travelersResponse.value.data?.data) {
+          setTravelers(travelersResponse.value.data.data);
+        } else {
+          console.warn('Travelers API request failed, using default data');
+          // Keep existing travelers data or set default
+          setTravelers(travelers.length ? travelers : []);
+        }
       } catch (error) {
         console.error('Error fetching counts:', error);
+        // If the entire operation fails, we still have the default values set
       }
     };
 
