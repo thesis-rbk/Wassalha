@@ -208,7 +208,7 @@ export default function Login() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Logo or Header Image */}
         <Image
-          source={require("../pngImage/globe.png")} // Use your logo
+          source={require("../../assets/images/globe.png")} // Use your logo
           style={styles.logo}
           resizeMode="contain"
         />
