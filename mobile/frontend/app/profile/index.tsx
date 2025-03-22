@@ -89,13 +89,13 @@ const ProfilePage = () => {
           const response = await axiosInstance.get(`/api/users/profile/${decoded.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          console.log('Profile response:', response.data.data);
+         // console.log('Profile response:', response.data.data);
           setProfile(response.data.data);
           await AsyncStorage.setItem('firstName', response.data.data.firstName);
           await AsyncStorage.setItem('lastName', response.data.data.lastName);
           await AsyncStorage.setItem('bio', response.data.data.bio);
         } else {
-          console.error("No token found");
+         // console.error("No token found");
         }
       } catch (error) {
         console.error("Error retrieving profile:", error);

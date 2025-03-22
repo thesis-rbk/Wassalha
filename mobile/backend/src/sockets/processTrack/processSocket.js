@@ -92,7 +92,7 @@ const updateProcessStatus = async (req, res) => {
     });
 
     const io = getIO();
-    io.of("/process").to(`process_${processId}`).emit("process_updated", {
+    io.of("/process").to(`process_${processId}`).emit(`process_${processId}_updated`, {
       processId: updatedProcess.id,
       status: updatedProcess.status,
     });

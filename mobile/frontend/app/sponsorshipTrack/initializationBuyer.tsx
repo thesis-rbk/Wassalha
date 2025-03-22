@@ -44,7 +44,7 @@ export default function InitializationBuyer() {
   const { sendNotification } = useNotification();
   const { initiateSponsorshipProcess } = useSponsorshipProcess();
 
-console.log("slmmmmmmmmmmmmmmmm alykom",params);
+//console.log("slmmmmmmmmmmmmmmmm alykom",params);
 
   // Progress steps
   const progressSteps = [
@@ -64,7 +64,7 @@ console.log("slmmmmmmmmmmmmmmmm alykom",params);
           return;
         }
 
-        const token = await AsyncStorage.getItem("jwtToken");
+        const token = await AsyncStorage.getItem("token");
         if (token) {
           const tokenParts = token.split(".");
           if (tokenParts.length === 3) {
@@ -79,7 +79,7 @@ console.log("slmmmmmmmmmmmmmmmm alykom",params);
           }
         }
       } catch (error) {
-        console.error("Error loading user data:", error);
+        console.error("Error loading user dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:", error);
       }
     };
 

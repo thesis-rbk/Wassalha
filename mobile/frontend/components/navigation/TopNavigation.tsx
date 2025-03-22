@@ -99,7 +99,7 @@ export function TopNavigation({
 
   console.log("issss sponsor", isSponsor)
   const check = async () => {
-    tokenVerif()
+    await tokenVerif();
     try {
       const response = await axiosInstance.get('/api/checkSponsor', {
         headers: {

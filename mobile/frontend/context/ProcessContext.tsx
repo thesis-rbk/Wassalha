@@ -300,7 +300,12 @@ export const ProcessProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     // Setup event listeners for general process events
     socket.on('process_initialized', handleProcessInitialized);
-    socket.on('process_updated', handleProcessUpdated);
+    
+    // For each process, listen for its specific update event
+    processes.forEach(process => {
+      socket.on(`process_${process.id}_updated`, handleProcessUpdated);
+    });
+    
     socket.on('payment_initiated', handlePaymentInitiated);
     socket.on('payment_completed', handlePaymentCompleted);
     socket.on('payment_failed', handlePaymentFailed);
@@ -323,7 +328,12 @@ export const ProcessProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return () => {
       console.log('🧹 Removing process event listeners');
       socket.off('process_initialized', handleProcessInitialized);
-      socket.off('process_updated', handleProcessUpdated);
+      
+      // Clean up the specific process update listeners
+      processes.forEach(process => {
+        socket.off(`process_${process.id}_updated`, handleProcessUpdated);
+      });
+      
       socket.off('payment_initiated', handlePaymentInitiated);
       socket.off('payment_completed', handlePaymentCompleted);
       socket.off('payment_failed', handlePaymentFailed);
@@ -331,7 +341,7 @@ export const ProcessProvider: React.FC<{ children: React.ReactNode }> = ({ child
       socket.off('connect');
       socket.off('disconnect');
     };
-  }, [socket, user?.id, dispatch, fetchProcessById]);
+  }, [socket, user?.id, dispatch, fetchProcessById, processes]);
 
   // Set up listeners for specific process rooms
   const joinProcessRoom = useCallback(async (processId: number): Promise<boolean> => {

@@ -6,9 +6,9 @@ const createUploadsDir = () => {
   
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('✅ Uploads directory created at:', uploadsDir);
+    //console.log('✅ Uploads directory created at:', uploadsDir);
   } else {
-    console.log('✅ Uploads directory already exists at:', uploadsDir);
+   // console.log('✅ Uploads directory already exists at:', uploadsDir);
   }
 };
 

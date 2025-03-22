@@ -37,11 +37,11 @@ export default function Login() {
   });
   React.useEffect(() => {
     if (response) {
-      console.log("Response:", JSON.stringify(response, null, 2));
+      //console.log("Response:", JSON.stringify(response, null, 2));
       if (response?.type === "success") {
         console.log("Access Token:", response.authentication?.accessToken);
       } else {
-        console.log("Error details:", response);
+        //console.log("Error details:", response);
       }
     }
   }, [response]);
@@ -56,7 +56,7 @@ export default function Login() {
       const { id_token } = response.params;
       handleGoogleLogin(id_token);
     } else if (response?.type === "error") {
-      console.error("Google login error:", response);
+      //console.error("Google login error:", response);
       alert("An error occurred during Google login. Please try again.");
     }
   }, [response]);
@@ -70,7 +70,7 @@ export default function Login() {
 
     dispatch(loginStart());
     try {
-      console.log("Logging in...", process.env.EXPO_PUBLIC_API_URL);
+      //console.log("Logging in...", process.env.EXPO_PUBLIC_API_URL);
       const res = await axiosInstance.post("/api/users/login", {
         email,
         password,
@@ -104,7 +104,7 @@ export default function Login() {
         setPasswordError(null);
       }
     } catch (error) {
-      console.error("Login error:", error);
+      //console.error("Login error:", error);
       dispatch(loginFailure("Wrong email or password"));
       setEmailError(null);
       setPasswordError(null);
