@@ -1,6 +1,17 @@
 import { Order } from "./Order";
 import { ProcessEvent } from "./ProcessEvent";
 
+export enum ProcessStatusEnum {
+  PREINITIALIZED = "PREINITIALIZED",
+  INITIALIZED = "INITIALIZED",
+  CONFIRMED = "CONFIRMED",
+  PAID = "PAID",
+  IN_TRANSIT = "IN_TRANSIT",
+  PICKUP_MEET = "PICKUP_MEET",
+  FINALIZED = "FINALIZED",
+  CANCELLED = "CANCELLED"
+}
+
 export type ProcessStatus =
   | "PREINITIALIZED"
   | "INITIALIZED"

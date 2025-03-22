@@ -21,7 +21,7 @@ import { MapPin, DollarSign, Package, Activity, ArrowRight } from "lucide-react-
 import { BACKEND_URL } from "@/config";
 import { useRouter } from "expo-router";
 import { decode as atob } from "base-64";
-import { GoodsProcess, ProcessStatus } from "@/types/GoodsProcess";
+import { GoodsProcess, ProcessStatus, ProcessStatusEnum } from "@/types/GoodsProcess";
 import { LinearGradient } from 'expo-linear-gradient';
 import { getSocket } from "@/services/Socketservice";
 import { Socket } from "socket.io-client";
@@ -154,21 +154,21 @@ export default function OrderPage() {
 
   const getProcessStatusColor = (status: ProcessStatus): string => {
     switch (status) {
-      case "PREINITIALIZED":
+      case ProcessStatusEnum.PREINITIALIZED:
         return "#3b82f6"; // blue
-      case "INITIALIZED":
+      case ProcessStatusEnum.INITIALIZED:
         return "#3b82f6"; // blue
-      case "CONFIRMED":
+      case ProcessStatusEnum.CONFIRMED:
         return "#8b5cf6"; // purple
-      case "PAID":
+      case ProcessStatusEnum.PAID:
         return "#10b981"; // green
-      case "IN_TRANSIT":
+      case ProcessStatusEnum.IN_TRANSIT:
         return "#f97316"; // orange
-      case "PICKUP_MEET":
+      case ProcessStatusEnum.PICKUP_MEET:
         return "#eab308"; // yellow
-      case "FINALIZED":
+      case ProcessStatusEnum.FINALIZED:
         return "#14b8a6"; // teal
-      case "CANCELLED":
+      case ProcessStatusEnum.CANCELLED:
         return "#ef4444"; // red
       default:
         return "#6b7280"; // gray
@@ -177,21 +177,21 @@ export default function OrderPage() {
 
   const getProcessStatusText = (status: ProcessStatus): string => {
     switch (status) {
-      case "PREINITIALIZED":
+      case ProcessStatusEnum.PREINITIALIZED:
         return "Pre-Initialized";
-      case "INITIALIZED":
+      case ProcessStatusEnum.INITIALIZED:
         return "Initialized";
-      case "CONFIRMED":
+      case ProcessStatusEnum.CONFIRMED:
         return "Confirmed";
-      case "PAID":
+      case ProcessStatusEnum.PAID:
         return "Paid";
-      case "IN_TRANSIT":
+      case ProcessStatusEnum.IN_TRANSIT:
         return "In Transit";
-      case "PICKUP_MEET":
+      case ProcessStatusEnum.PICKUP_MEET:
         return "Ready for Pickup";
-      case "FINALIZED":
+      case ProcessStatusEnum.FINALIZED:
         return "Completed";
-      case "CANCELLED":
+      case ProcessStatusEnum.CANCELLED:
         return "Cancelled";
       default:
         return status;
@@ -519,42 +519,42 @@ export default function OrderPage() {
     const handleNavigation = () => {
       if (isOwnRequest(parseInt(parameters.requesterId)) && hasOrder) {
         switch (parameters.status) {
-          case "PREINITIALIZED":
+          case ProcessStatusEnum.PREINITIALIZED:
             return router.push({
               pathname: "/processTrack/initializationSO",
               params: parameters,
             });
-          case "INITIALIZED":
+          case ProcessStatusEnum.INITIALIZED:
             return router.push({
               pathname: "/processTrack/verificationSO",
               params: parameters,
             });
-          case "CONFIRMED":
+          case ProcessStatusEnum.CONFIRMED:
             return router.push({
               pathname: "/processTrack/paymentSO",
               params: parameters,
             });
-          case "PAID":
+          case ProcessStatusEnum.PAID:
             return router.push({
               pathname: "/processTrack/pickupSO",
               params: parameters,
             });
-          case "IN_TRANSIT":
+          case ProcessStatusEnum.IN_TRANSIT:
             return router.push({
               pathname: "/home", // TO BE CHANGED
               params: parameters,
             });
-          case "PICKUP_MEET":
+          case ProcessStatusEnum.PICKUP_MEET:
             return router.push({
               pathname: "/home", // TO BE CHANGED
               params: parameters,
             });
-          case "FINALIZED":
+          case ProcessStatusEnum.FINALIZED:
             return router.push({
               pathname: "/home", // TO BE CHANGED
               params: parameters,
             });
-          case "CANCELLED":
+          case ProcessStatusEnum.CANCELLED:
             return router.push({
               pathname: "/home", // TO BE CHANGED
               params: parameters,
@@ -564,42 +564,42 @@ export default function OrderPage() {
         }
       } else if (!isOwnRequest(parseInt(parameters.requesterId)) && hasOrder) {
         switch (parameters.status) {
-          case "PREINITIALIZED":
+          case ProcessStatusEnum.PREINITIALIZED:
             return router.push({
               pathname: "/processTrack/initializationSP",
               params: parameters,
             });
-          case "INITIALIZED":
+          case ProcessStatusEnum.INITIALIZED:
             return router.push({
               pathname: "/processTrack/verificationSP",
               params: parameters,
             });
-          case "CONFIRMED":
+          case ProcessStatusEnum.CONFIRMED:
             return router.push({
               pathname: "/processTrack/paymentSP",
               params: parameters,
             });
-          case "PAID":
+          case ProcessStatusEnum.PAID:
             return router.push({
               pathname: "/processTrack/pickupSP",
               params: parameters,
             });
-          case "IN_TRANSIT":
+          case ProcessStatusEnum.IN_TRANSIT:
             return router.push({
               pathname: "/home", // TO BE CHANGED
               params: parameters,
             });
-          case "PICKUP_MEET":
+          case ProcessStatusEnum.PICKUP_MEET:
             return router.push({
               pathname: "/home", // TO BE CHANGED
               params: parameters,
             });
-          case "FINALIZED":
+          case ProcessStatusEnum.FINALIZED:
             return router.push({
               pathname: "/home", // TO BE CHANGED
               params: parameters,
             });
-          case "CANCELLED":
+          case ProcessStatusEnum.CANCELLED:
             return router.push({
               pathname: "/home", // TO BE CHANGED
               params: parameters,
