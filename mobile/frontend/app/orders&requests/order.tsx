@@ -23,12 +23,17 @@ import { useRouter } from "expo-router";
 import { decode as atob } from "base-64";
 import { GoodsProcess, ProcessStatus } from "@/types/GoodsProcess";
 import { LinearGradient } from 'expo-linear-gradient';
+import { getSocket } from "@/services/Socketservice";
+import { Socket } from "socket.io-client";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/index";
+import { useProcess } from "@/context/ProcessContext";
+import { TabBar } from "@/components/navigation/TabBar";
+import { TopNavigation } from "@/components/navigation/TopNavigation";
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
 const CARD_SPACING = 12;
-import { TabBar } from "@/components/navigation/TabBar";
-import { TopNavigation } from "@/components/navigation/TopNavigation";
 
 // Custom hook to ensure we have user data
 const useReliableAuth = () => {
@@ -105,6 +110,9 @@ export default function OrderPage() {
   const { user, loading: authLoading } = useReliableAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Order");
+  const { socketConnected } = useProcess();
+  const { processes } = useSelector((state: RootState) => state.process);
+  const { fetchProcesses } = useProcess();
 
   // Animation value for the "Make Offer" button
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -228,6 +236,62 @@ export default function OrderPage() {
       fetchRequests();
     }
   }, [user, authLoading]);
+
+  // Initialize socket connection
+  useEffect(() => {
+    let mounted = true;
+    let processSocket: Socket | null = null;
+    
+    const initializeSocket = async () => {
+      if (!user?.id) {
+        console.log('👤 No user logged in, skipping process socket setup');
+        return;
+      }
+      
+      try {
+        console.log('🔄 Setting up process socket for user:', user.id);
+        
+        // Get new socket instance
+        processSocket = await getSocket('process');
+        
+        if (mounted && processSocket) {
+          //setSocket(processSocket);
+          
+          // Set up event listeners
+          processSocket.on('process_initialized', (data) => {
+            console.log('🔄 Process initialized event received:', data);
+            fetchRequests();
+            fetchGoodsProcesses();
+          });
+          
+          processSocket.on('order_created', (data) => {
+            console.log('🛒 Order created event received:', data);
+            fetchRequests();
+          });
+          
+          processSocket.on('request_updated', (data) => {
+            console.log('📝 Request updated event received:', data);
+            fetchRequests();
+          });
+        }
+      } catch (error) {
+        console.error('❌ Error initializing process socket:', error);
+      }
+    };
+    
+    initializeSocket();
+    
+    // Cleanup function
+    return () => {
+      mounted = false;
+      if (processSocket) {
+        console.log('🧹 Cleaning up process socket listeners');
+        processSocket.off('process_initialized');
+        processSocket.off('order_created');
+        processSocket.off('request_updated');
+      }
+    };
+  }, [user?.id]);
 
   // Fetch requests
   const fetchRequests = async () => {
@@ -621,6 +685,27 @@ export default function OrderPage() {
   const handleProfilePress = () => {
     router.push("/profile");
   };
+
+  // Add these lines to get process state from Redux
+  const processState = useSelector((state: RootState) => state.process);
+  
+  // Add a logging effect to track Redux state changes
+  useEffect(() => {
+    console.log('🟣 order.tsx: Process Redux state updated:', {
+      processCount: processState.processes.length,
+      currentProcess: processState.currentProcess?.id,
+      socketConnected: processState.socketConnected
+    });
+  }, [processState]);
+
+  // Near the beginning of your component render (before the return)
+  console.log('🟠 order.tsx rendering with:', {
+    viewMode: view,
+    localGoodsProcessesCount: goodsProcesses.length,
+    reduxProcessesCount: processState.processes.length,
+    socketConnectedFromStore: processState.socketConnected,
+    isLoadingState: isLoading
+  });
 
   return (
     <ThemedView style={styles.container}>

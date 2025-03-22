@@ -28,6 +28,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useNotification } from "@/context/NotificationContext";
+import { getSocket } from "@/services/Socketservice";
+import { Socket } from "socket.io-client";
 
 export default function InitializationSO() {
   const params = useLocalSearchParams();
@@ -41,6 +43,7 @@ export default function InitializationSO() {
   const [processing, setProcessing] = useState(false);
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   // Progress steps
   const progressSteps = [
@@ -49,6 +52,95 @@ export default function InitializationSO() {
     { id: 3, title: "Payment", icon: "payment" },
     { id: 4, title: "Pickup", icon: "pickup" },
   ];
+
+  // Setup socket connection and join process room
+  useEffect(() => {
+    let mounted = true;
+    let processSocket: Socket | null = null;
+    
+    // Only proceed if we have a process ID
+    if (!processId) return;
+    
+    const initializeSocket = async () => {
+      try {
+        console.log(`🔄 Setting up socket for process ${processId}`);
+        
+        // Get socket instance
+        processSocket = await getSocket('process');
+        
+        if (mounted && processSocket) {
+          setSocket(processSocket);
+          
+          // Join the specific process room
+          processSocket.emit('join_process_room', { processId });
+          
+          // Set up event listeners for this specific process
+          const processEvents = [
+            `process_${processId}_verification_submitted`,
+            `process_${processId}_canceled`,
+            `process_${processId}_updated`
+          ];
+          
+          // Handler for verification submission
+          processSocket.on(`process_${processId}_verification_submitted`, (data) => {
+            console.log('📸 Verification photo submitted:', data);
+            Alert.alert(
+              "Photo Submitted",
+              "The traveler has submitted a verification photo. You can review it in the verification step.",
+              [
+                {
+                  text: "View",
+                  onPress: () => router.replace({
+                    pathname: "/processTrack/verificationSO",
+                    params: params,
+                  })
+                }
+              ]
+            );
+          });
+          
+          // Handler for process cancellation
+          processSocket.on(`process_${processId}_canceled`, (data) => {
+            console.log('❌ Process cancelled:', data);
+            Alert.alert(
+              "Process Cancelled",
+              "This process has been cancelled.",
+              [
+                {
+                  text: "OK",
+                  onPress: () => router.replace("/home")
+                }
+              ]
+            );
+          });
+          
+          // Handler for process updates
+          processSocket.on(`process_${processId}_updated`, (data) => {
+            console.log('🔄 Process updated:', data);
+            // Refresh order details
+            fetchOrderDetails();
+          });
+          
+          console.log(`✅ Joined process room: process_${processId}`);
+        }
+      } catch (error) {
+        console.error('❌ Error setting up process socket:', error);
+      }
+    };
+    
+    initializeSocket();
+    
+    // Cleanup function
+    return () => {
+      mounted = false;
+      if (processSocket) {
+        console.log(`🧹 Cleaning up process socket listeners for process ${processId}`);
+        processSocket.off(`process_${processId}_verification_submitted`);
+        processSocket.off(`process_${processId}_canceled`);
+        processSocket.off(`process_${processId}_updated`);
+      }
+    };
+  }, [processId]);
 
   // Load user data
   useEffect(() => {
@@ -116,6 +208,15 @@ export default function InitializationSO() {
           status: "INITIALIZED",
         });
         console.log("Offer status updated successfully");
+        
+        // Emit socket event for status update
+        if (socket && socket.connected) {
+          socket.emit('update_process_status', { 
+            processId, 
+            status: 'INITIALIZED' 
+          });
+          console.log('🔄 Emitted process status update via socket');
+        }
 
         console.log("Current user ID:", user?.id);
         console.log("Request params:", params);
@@ -191,6 +292,12 @@ export default function InitializationSO() {
               );
 
               if (orderResponse.status === 200) {
+                // Emit socket event for process cancellation
+                if (socket && socket.connected) {
+                  socket.emit('cancel_process', { processId });
+                  console.log('❌ Emitted process cancellation via socket');
+                }
+                
                 // Then, update the associated request directly (not using the status endpoint)
                 const requestId = params.idRequest;
                 if (requestId) {

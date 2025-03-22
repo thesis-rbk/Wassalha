@@ -15,6 +15,9 @@ const pickupSocket = require("./pickupSocket/pickupSocket"); // Adjust path if n
 const jwt = require("jsonwebtoken");
 const prisma = require("../../prisma/index");
 
+// Import the process handlers
+const processHandlers = require('./processTrack/processSocket');
+
 // Global socket instance - kept outside function so it can be accessed by getIO()
 let io;
 
@@ -61,6 +64,7 @@ const initializeSocket = (server) => {
   const tracking = io.of("/tracking"); // Tracking channel
   const chat = io.of("/chat"); // Chat channel
   const pickup = io.of("/pickup"); // Pickup channel
+  const process = io.of("/process");
 
   // Handle connections to notification namespace
   notifications
@@ -91,6 +95,13 @@ const initializeSocket = (server) => {
   pickup.on("connection", (socket) => {
     console.log("🚚 Client connected to pickup:", socket.id);
     pickupSocket(pickup); // Pass the pickup namespace to pickupSocket
+  });
+
+  // Handle connections to process namespace
+  process.use(authenticateNotificationSocket)
+  process.on("connection", (socket) => {
+    console.log("🔄 Client connected to process tracking:", socket.id);
+    processHandlers(socket);
   });
 
   return io;

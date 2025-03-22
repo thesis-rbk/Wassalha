@@ -19,6 +19,8 @@ import { useNotification } from '@/context/NotificationContext';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 import Animated from "react-native-reanimated";
+import { getSocket } from "@/services/Socketservice";
+import { Socket } from "socket.io-client";
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
@@ -26,8 +28,10 @@ export default function VerificationScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const orderId = params.idOrder;
+  const processId = params.idProcess;
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -37,18 +41,112 @@ export default function VerificationScreen() {
   ];
 
   useEffect(() => {
-    const fetchOrder = async () => {
+    let mounted = true;
+    let processSocket: Socket | null = null;
+    
+    if (!processId) return;
+    
+    const initializeSocket = async () => {
       try {
-        const response = await axiosInstance.get(`/api/orders/${orderId}`);
-        setOrder(response.data.data);
-        setIsLoading(false);
+        console.log(`🔄 Setting up socket for verification of process ${processId}`);
+        
+        processSocket = await getSocket('process');
+        
+        if (mounted && processSocket) {
+          setSocket(processSocket);
+          
+          processSocket.emit('join_process_room', { processId });
+          
+          processSocket.on(`process_${processId}_updated`, (data) => {
+            console.log('🔄 Process updated:', data);
+            
+            fetchOrder();
+            
+            if (data.status === 'CONFIRMED') {
+              Alert.alert(
+                "Process Confirmed",
+                "The process has been confirmed. Proceeding to payment.",
+                [
+                  {
+                    text: "Continue",
+                    onPress: () => router.replace({
+                      pathname: "/processTrack/paymentSO",
+                      params: params,
+                    })
+                  }
+                ]
+              );
+            }
+          });
+          
+          processSocket.on(`process_${processId}_verification_submitted`, (data) => {
+            console.log('📸 Verification photo submitted:', data);
+            
+            fetchOrder();
+            Alert.alert(
+              "Verification Photo Received",
+              "The traveler has submitted a verification photo. Please review it."
+            );
+          });
+          
+          processSocket.on(`process_${processId}_canceled`, (data) => {
+            console.log('❌ Process cancelled:', data);
+            
+            Alert.alert(
+              "Process Cancelled",
+              "This process has been cancelled.",
+              [
+                {
+                  text: "OK",
+                  onPress: () => router.replace("/home")
+                }
+              ]
+            );
+          });
+          
+          processSocket.on(`process_${processId}_new_photo_requested`, (data) => {
+            console.log('🔄 New photo requested:', data);
+            
+            Alert.alert(
+              "Photo Request",
+              "You've requested a new verification photo from the traveler."
+            );
+          });
+          
+          console.log(`✅ Joined process room for verification: process_${processId}`);
+        }
       } catch (error) {
-        console.error("Error fetching order:", error);
-        Alert.alert("Error", "Failed to fetch order details");
-        setIsLoading(false);
+        console.error('❌ Error setting up process socket for verification:', error);
       }
     };
+    
+    initializeSocket();
+    
+    return () => {
+      mounted = false;
+      if (processSocket) {
+        console.log(`🧹 Cleaning up process socket listeners for verification of process ${processId}`);
+        processSocket.off(`process_${processId}_updated`);
+        processSocket.off(`process_${processId}_verification_submitted`);
+        processSocket.off(`process_${processId}_canceled`);
+        processSocket.off(`process_${processId}_new_photo_requested`);
+      }
+    };
+  }, [processId]);
 
+  const fetchOrder = async () => {
+    try {
+      const response = await axiosInstance.get(`/api/orders/${orderId}`);
+      setOrder(response.data.data);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      Alert.alert("Error", "Failed to fetch order details");
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchOrder();
   }, [orderId]);
 
@@ -116,6 +214,14 @@ export default function VerificationScreen() {
       );
 
       if (response.status === 200) {
+        if (socket && socket.connected) {
+          socket.emit('update_process_status', { 
+            processId, 
+            status: 'CONFIRMED' 
+          });
+          console.log('🔄 Emitted process status update via socket: CONFIRMED');
+        }
+        
         sendNotification('product_confirmed', {
           travelerId: params.travelerId,
           requesterId: user?.id,
@@ -147,6 +253,11 @@ export default function VerificationScreen() {
       );
 
       if (response.status === 200) {
+        if (socket && socket.connected) {
+          socket.emit('request_new_photo', { processId });
+          console.log('📸 Emitted request for new photo via socket');
+        }
+        
         sendNotification('request_new_photo', {
           travelerId: params.travelerId,
           requesterId: user?.id,
@@ -177,6 +288,11 @@ export default function VerificationScreen() {
       const response = await axiosInstance.delete(`/api/process/${orderId}`);
 
       if (response.status === 200) {
+        if (socket && socket.connected) {
+          socket.emit('cancel_process', { processId });
+          console.log('❌ Emitted process cancellation via socket');
+        }
+        
         sendNotification('process_canceled', {
           travelerId: params.travelerId,
           requesterId: user?.id,

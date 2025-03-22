@@ -20,3 +20,4 @@ export interface GoodsProcess {
   updatedAt: Date;
   events: ProcessEvent[];
 }
+

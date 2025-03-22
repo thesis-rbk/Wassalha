@@ -19,6 +19,8 @@ import { BACKEND_URL } from "@/config";
 import { useNotification } from '@/context/NotificationContext';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
+import { getSocket } from "@/services/Socketservice";
+import { Socket } from "socket.io-client";
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
@@ -28,6 +30,8 @@ export default function PaymentScreen() {
   const { confirmPayment, loading } = useConfirmPayment();
   const [userData, setUserData] = useState<any>(null);
   const { sendNotification } = useNotification();
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const processId = params.idProcess;
 
   const totalPrice =
     parseInt(params.quantity.toString()) * parseInt(params.price.toString());
@@ -36,7 +40,71 @@ export default function PaymentScreen() {
 
   console.log(params);
 
-  // Add user data loading effect
+  useEffect(() => {
+    let mounted = true;
+    let paymentSocket: Socket | null = null;
+    
+    if (!processId) return;
+    
+    const initializeSocket = async () => {
+      try {
+        console.log(`🔄 Setting up socket for payment of process ${processId}`);
+        
+        paymentSocket = await getSocket('process');
+        
+        if (mounted && paymentSocket) {
+          setSocket(paymentSocket);
+          
+          paymentSocket.emit('join_process_room', { processId });
+          
+          paymentSocket.on(`process_${processId}_payment_completed`, (data) => {
+            console.log('💰 Payment completed:', data);
+            
+            Alert.alert(
+              "Payment Completed",
+              "Payment has been successfully processed. Proceeding to pickup.",
+              [
+                {
+                  text: "Continue",
+                  onPress: () => router.replace({
+                    pathname: "/pickup/pickup",
+                    params: params,
+                  })
+                }
+              ]
+            );
+          });
+          
+          paymentSocket.on(`process_${processId}_payment_failed`, (data) => {
+            console.log('❌ Payment failed:', data);
+            
+            Alert.alert(
+              "Payment Failed",
+              data.errorMessage || "There was an issue processing your payment. Please try again."
+            );
+            
+            setIsProcessing(false);
+          });
+          
+          console.log(`✅ Joined process room for payment: process_${processId}`);
+        }
+      } catch (error) {
+        console.error('❌ Error setting up process socket for payment:', error);
+      }
+    };
+    
+    initializeSocket();
+    
+    return () => {
+      mounted = false;
+      if (paymentSocket) {
+        console.log(`🧹 Cleaning up process socket listeners for payment of process ${processId}`);
+        paymentSocket.off(`process_${processId}_payment_completed`);
+        paymentSocket.off(`process_${processId}_payment_failed`);
+      }
+    };
+  }, [processId, params]);
+
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -75,6 +143,11 @@ export default function PaymentScreen() {
     try {
       // Send payment initiated notification
       if (userData?.id) {
+        if (socket && socket.connected) {
+          socket.emit('initiate_payment', { processId });
+          console.log('💰 Emitted payment initiation via socket');
+        }
+        
         sendNotification('payment_initiated', {
           travelerId: params.travelerId,
           requesterId: userData.id,
@@ -97,7 +170,7 @@ export default function PaymentScreen() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            amount: totalAmount * 100, // Convert to cents
+            amount: totalAmount * 100,
             currency: "usd",
             orderId: parseInt(params.idOrder.toString()),
             requesterId: userData?.id,
@@ -130,6 +203,15 @@ export default function PaymentScreen() {
 
       if (paymentIntent) {
         // Send payment completed notification
+        if (socket && socket.connected) {
+          socket.emit('complete_payment', { 
+            processId,
+            orderId: params.idOrder,
+            amount: totalAmount
+          });
+          console.log('💰 Emitted payment completion via socket');
+        }
+        
         if (userData?.id) {
           sendNotification('payment_completed', {
             travelerId: params.travelerId,
@@ -153,8 +235,15 @@ export default function PaymentScreen() {
       }
     } catch (error: Error | any) {
       console.error("Payment error:", error);
+       // Send payment failed notification
+      if (socket && socket.connected) {
+        socket.emit('fail_payment', { 
+          processId,
+          errorMessage: error.message || "Payment processing failed"
+        });
+        console.log('❌ Emitted payment failure via socket');
+      }
       
-      // Send payment failed notification
       if (userData?.id) {
         sendNotification('payment_failed', {
           travelerId: params.travelerId,

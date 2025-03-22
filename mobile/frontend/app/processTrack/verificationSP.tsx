@@ -12,11 +12,13 @@ import * as ImagePicker from "expo-image-picker";
 import ProgressBar from "../../components/ProgressBar";
 import { MaterialIcons } from "@expo/vector-icons";
 import axiosInstance from "@/config";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useNotification } from '@/context/NotificationContext';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
+import { getSocket } from "@/services/Socketservice";
+import { Socket } from "socket.io-client";
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
@@ -25,6 +27,8 @@ export default function VerificationScreen() {
   const [isVerified, setIsVerified] = useState(false);
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const processId = params.idProcess;
 
   console.log(params);
 
@@ -35,7 +39,72 @@ export default function VerificationScreen() {
     { id: 4, title: "Pickup", icon: "pickup" },
   ];
 
-  // Open camera to take a photo
+  useEffect(() => {
+    let mounted = true;
+    let processSocket: Socket | null = null;
+    
+    if (!processId) return;
+    
+    const initializeSocket = async () => {
+      try {
+        console.log(`🔄 Setting up socket for verification SP of process ${processId}`);
+        
+        processSocket = await getSocket('process');
+        
+        if (mounted && processSocket) {
+          setSocket(processSocket);
+          
+          processSocket.emit('join_process_room', { processId });
+          
+          processSocket.on(`process_${processId}_verification_approved`, (data) => {
+            console.log('✅ Verification approved:', data);
+            
+            Alert.alert(
+              "Verification Approved",
+              "The requester has approved your verification photo. Proceeding to payment step.",
+              [
+                {
+                  text: "Continue",
+                  onPress: () => router.replace({
+                    pathname: "/processTrack/paymentSP",
+                    params: params,
+                  })
+                }
+              ]
+            );
+          });
+          
+          processSocket.on(`process_${processId}_new_photo_requested`, (data) => {
+            console.log('📸 New photo requested:', data);
+            
+            setImage(null);
+            setIsVerified(false);
+            
+            Alert.alert(
+              "New Photo Requested",
+              "The requester has asked for a new verification photo. Please take another photo of the product."
+            );
+          });
+          
+          console.log(`✅ Joined process room for verification SP: process_${processId}`);
+        }
+      } catch (error) {
+        console.error('❌ Error setting up process socket for verification SP:', error);
+      }
+    };
+    
+    initializeSocket();
+    
+    return () => {
+      mounted = false;
+      if (processSocket) {
+        console.log(`🧹 Cleaning up process socket listeners for verification SP of process ${processId}`);
+        processSocket.off(`process_${processId}_verification_approved`);
+        processSocket.off(`process_${processId}_new_photo_requested`);
+      }
+    };
+  }, [processId, params]);
+
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
@@ -120,7 +189,14 @@ export default function VerificationScreen() {
       );
 
       if (response.status === 200) {
-        // Send notification - match event name with your NotificationContext
+        if (socket && socket.connected) {
+          socket.emit('submit_verification', { 
+            processId,
+            orderId: params.idOrder
+          });
+          console.log('📸 Emitted verification submission via socket');
+        }
+        
         sendNotification('verification_photo_submitted', {
           requesterId: params.requesterId,
           travelerId: user?.id,

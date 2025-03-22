@@ -44,6 +44,8 @@ import { Picker } from "@react-native-picker/picker";
 // import { useRoleDetection } from "@/hooks/useRoleDetection";
 import Card from "@/components/cards/ProcessCard";
 import { useNotification } from "@/context/NotificationContext";
+import { getSocket } from "@/services/Socketservice";
+import { Socket } from "socket.io-client";
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -90,6 +92,7 @@ export default function InitializationSP() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
   const { sendNotification } = useNotification();
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   console.log("kjslkdsldslsd", params);
 
@@ -149,6 +152,91 @@ export default function InitializationSP() {
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  useEffect(() => {
+    let mounted = true;
+    let requestSocket: Socket | null = null;
+    
+    const initializeSocket = async () => {
+      try {
+        console.log("🔄 Setting up socket connections for SP initialization");
+        
+        requestSocket = await getSocket('process');
+        
+        if (mounted && requestSocket) {
+          setSocket(requestSocket);
+          
+          // Get the request ID from params, with fallbacks
+          const requestId = params.idRequest || params.id;
+          const orderId = params.idOrder;
+          
+          if (requestId) {
+            console.log(`✅ Listening for events related to request ${requestId}`);
+            
+            // Listen for process initialized event
+            requestSocket.on('process_initialized', (data) => {
+              console.log('🔔 Process initialized:', data);
+              
+              // Check if this is related to the traveler's offer
+              if (data.travelerId === currentUser?.id && data.requestId === requestId) {
+                Alert.alert(
+                  "Offer Accepted!",
+                  "Your offer has been accepted. You'll now proceed to the verification step.",
+                  [
+                    {
+                      text: "Proceed",
+                      onPress: () => router.replace({
+                        pathname: "/processTrack/verificationSP",
+                        params: {
+                          ...params,
+                          processId: data.processId,
+                        }
+                      })
+                    }
+                  ]
+                );
+              }
+            });
+            
+            // Listen for request updated event
+            requestSocket.on('request_updated', (data) => {
+              console.log('🔄 Request updated:', data);
+              
+              // Refresh request details if it's the current request
+              if (data.requestId === requestId) {
+                fetchRequestDetails();
+              }
+            });
+            
+            // Listen for order created event
+            requestSocket.on('order_created', (data) => {
+              console.log('📦 Order created:', data);
+              
+              // Refresh request details if it's the current request
+              if (data.requestId === requestId) {
+                fetchRequestDetails();
+              }
+            });
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error setting up sockets:', error);
+      }
+    };
+    
+    initializeSocket();
+    
+    // Cleanup
+    return () => {
+      mounted = false;
+      if (requestSocket) {
+        console.log('🧹 Cleaning up socket listeners');
+        requestSocket.off('process_initialized');
+        requestSocket.off('request_updated');
+        requestSocket.off('order_created');
+      }
+    };
+  }, [params.idRequest, params.id, currentUser?.id]);
 
   useEffect(() => {
     fetchRequestDetails();

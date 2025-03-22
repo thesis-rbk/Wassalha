@@ -10,7 +10,8 @@ import {
   Image,
   Switch,
   TouchableOpacity,
-  RefreshControl
+  RefreshControl,
+  Alert
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import axiosInstance from "@/config";
@@ -19,6 +20,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 import { useIsFocused } from "@react-navigation/native";
 import { useNotification } from '@/context/NotificationContext';
+import { getSocket } from "@/services/Socketservice";
+import { Socket } from "socket.io-client";
 
 const PaymentScreen = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -31,6 +34,8 @@ const PaymentScreen = () => {
   const router = useRouter();
   const isFocused = useIsFocused();
   const { sendNotification } = useNotification();
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const processId = params.idProcess;
   
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -38,6 +43,99 @@ const PaymentScreen = () => {
     { id: 3, title: "Payment", icon: "payment" },
     { id: 4, title: "Pickup", icon: "pickup" },
   ];
+
+  // Setup socket connection and listen for payment events
+  useEffect(() => {
+    let mounted = true;
+    let paymentSocket: Socket | null = null;
+    
+    // Only proceed if we have a process ID
+    if (!processId) return;
+    
+    const initializeSocket = async () => {
+      try {
+        console.log(`🔄 Setting up socket for SP payment of process ${processId}`);
+        
+        // Get socket instance
+        paymentSocket = await getSocket('process');
+        
+        if (mounted && paymentSocket) {
+          setSocket(paymentSocket);
+          
+          // Join the specific process room
+          paymentSocket.emit('join_process_room', { processId });
+          
+          // Listen for payment completed event
+          paymentSocket.on(`process_${processId}_payment_completed`, (data) => {
+            console.log('💰 Payment completed:', data);
+            
+            // Refresh process data
+            fetchProcessData();
+            
+            Alert.alert(
+              "Payment Completed",
+              "Payment has been successfully processed. Proceeding to pickup.",
+              [
+                {
+                  text: "Continue",
+                  onPress: () => router.replace({
+                    pathname: "/pickup/pickup",
+                    params: {
+                      ...params,
+                      amount: data.amount
+                    }
+                  })
+                }
+              ]
+            );
+          });
+          
+          // Listen for payment failed event
+          paymentSocket.on(`process_${processId}_payment_failed`, (data) => {
+            console.log('❌ Payment failed:', data);
+            
+            // Refresh process data
+            fetchProcessData();
+            
+            Alert.alert(
+              "Payment Failed",
+              data.errorMessage || "There was an issue processing the payment. The requester may try again."
+            );
+          });
+          
+          // Listen for payment initiated event
+          paymentSocket.on(`process_${processId}_payment_initiated`, (data) => {
+            console.log('🔄 Payment initiated:', data);
+            
+            // Refresh process data
+            fetchProcessData();
+            
+            Alert.alert(
+              "Payment Initiated",
+              "The requester has initiated payment processing."
+            );
+          });
+          
+          console.log(`✅ Joined process room for SP payment: process_${processId}`);
+        }
+      } catch (error) {
+        console.error('❌ Error setting up process socket for SP payment:', error);
+      }
+    };
+    
+    initializeSocket();
+    
+    // Cleanup function
+    return () => {
+      mounted = false;
+      if (paymentSocket) {
+        console.log(`🧹 Cleaning up process socket listeners for SP payment of process ${processId}`);
+        paymentSocket.off(`process_${processId}_payment_completed`);
+        paymentSocket.off(`process_${processId}_payment_failed`);
+        paymentSocket.off(`process_${processId}_payment_initiated`);
+      }
+    };
+  }, [processId, params]);
 
   // Load user data
   useEffect(() => {
@@ -97,6 +195,26 @@ const PaymentScreen = () => {
       if (response.data.data?.orderId) {
         const orderResponse = await axiosInstance.get(`/api/orders/${response.data.data.orderId}`);
         setOrderData(orderResponse.data.data);
+        
+        // If payment is already completed, navigate to pickup
+        if (response.data.data.status === 'PAYMENT_COMPLETED') {
+          Alert.alert(
+            "Payment Already Completed",
+            "The payment has already been processed. Proceeding to pickup.",
+            [
+              {
+                text: "Continue",
+                onPress: () => router.replace({
+                  pathname: "/pickup/pickup",
+                  params: {
+                    ...params,
+                    amount: orderResponse.data.data.totalAmount
+                  }
+                })
+              }
+            ]
+          );
+        }
       }
       
     } catch (error) {
