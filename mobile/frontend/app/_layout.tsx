@@ -15,19 +15,33 @@ import { TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthProvider } from "@/context/AuthContext";
 import { SponsorshipProcessProvider } from "@/context/SponsorshipProcessContext";
+import { OnboardingContainer } from '@/components/onboarding';
+import { OnboardingService } from '@/services/onboardingService';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({});
   const [animationComplete, setAnimationComplete] = useState(false);
   const [loadingComplete, setLoadingComplete] = useState(false);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
+    checkOnboardingStatus();
   }, [fontsLoaded]);
+
+  const checkOnboardingStatus = async () => {
+    const seen = await OnboardingService.hasSeenOnboarding();
+    setHasSeenOnboarding(seen);
+  };
+
+  const handleOnboardingComplete = async () => {
+    await OnboardingService.setOnboardingComplete();
+    setHasSeenOnboarding(true);
+  };
 
   if (!fontsLoaded) {
     return null;
@@ -53,6 +67,14 @@ export default function RootLayout() {
                 ) : !animationComplete ? (
                   <WelcomeAnimation
                     onAnimationComplete={() => setAnimationComplete(true)}
+                  />
+                ) : hasSeenOnboarding === null ? (
+                  <MainLoading 
+                    onLoadingComplete={() => setHasSeenOnboarding(false)} 
+                  />
+                ) : !hasSeenOnboarding ? (
+                  <OnboardingContainer 
+                    onComplete={handleOnboardingComplete} 
                   />
                 ) : (
                   <Stack>
