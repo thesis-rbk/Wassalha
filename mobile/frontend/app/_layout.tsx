@@ -141,7 +141,7 @@ export default function RootLayout() {
                       options={{ title: "Credit Card Verification" }}
                     />
                     <Stack.Screen
-                      name="verification/paymentByKH"
+                      name="verification/PaymentByKH"
                       options={{ title: "payment" }}
                     />
                     <Stack.Screen

@@ -127,7 +127,7 @@ const SponsorshipsScreen: React.FC = () => {
     // Handle "Buy" button press
     const handleBuyPress = (sponsorshipId: number) => {
         navigation.navigate(
-            "verification/CreditCardVerification",
+            "verification/PaymentByKH",
             { id: sponsorshipId }
         );
     };

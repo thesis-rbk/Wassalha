@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const fetch = require("../controllers/fetch")
-const sponsor = require("../controllers/sponsorSubscription")
+const sponsor = require("../controllers/SponsorSubscription.js")
+const { authenticateUser } = require("../middleware/middleware")
 const midd = require("../middleware/middlewareSponsor")
 router.get("/besttarveler", fetch.All)
 router.get("/filter", fetch.searchRequestsTraveler)
@@ -13,10 +14,10 @@ router.get("/allSub", sponsor.allSub)
 router.get("/search", sponsor.search)
 router.get("/allCat", sponsor.getAllCategories)
 router.get("/allNot/:id", sponsor.getAllNotificationById)
-router.post("/payment", sponsor.paymentSponsor)
+router.post("/payment", authenticateUser, sponsor.paymentSponsor)
 router.get("/checkSponsor", midd.uerSPONSOR, sponsor.checkSponsor)
 router.get("/one/:id", sponsor.findOneSponsor)
 router.get("/allRev/:id", sponsor.sponsorShipReview)
 router.post("/payment_Konnect", sponsor.initiatePayment)
-router.post("/createOrder", sponsor.createOrderSponsor)
-module.exports = router
+router.post("/createOrder", authenticateUser, sponsor.createOrderSponsor)
+module.exports = router;

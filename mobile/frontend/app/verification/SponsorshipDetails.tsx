@@ -34,7 +34,7 @@ const SponsorshipDetails: React.FC = () => {
         }
     }
     const buyNow = () => {
-        navigation.navigate('verification/paymentByKH', { id });
+        navigation.navigate('verification/PaymentByKH', { id });
     };
     // Fetch reviews and calculate average rating
     const fetchReviews = async () => {

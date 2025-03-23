@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
 import { useRoute, type RouteProp, useNavigation } from "@react-navigation/native";
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -13,45 +13,32 @@ import { RouteParams } from "@/types/Sponsorship";
 import NavigationProp from "@/types/navigation";
 import type { Sponsorship } from "@/types/Sponsorship";
 
-// Stripe imports
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-
-// Load Stripe with your publishable key
-const stripePromise = loadStripe('your_stripe_publishable_key_here'); // Replace with your Stripe publishable key
-
-// Real icons (replace with actual paths to your icon files)
-const BNAIcon: React.FC = () => (
-    <Image
-        source={{ uri: 'https://e7.pngegg.com/pngimages/351/496/png-clipart-attijariwafa-bank-logo-attijari-bank-tijari-wafa-bank-bank-angle-text.png' }}
-        style={styles.bankIcon}
-    />
-);
-
-const STBIcon: React.FC = () => (
-    <Image
-        source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/BH_BANK.png/800px-BH_BANK.png' }}
-        style={styles.bankIcon}
-    />
-);
-
-// Define types for decoded JWT token
 interface DecodedToken {
     sub?: string;
     id?: string;
+}
+
+enum PaymentCurrency {
+    TND = "TND",
+    EUR = "EUR",
+    USD = "USD",
+}
+
+enum PaymentMethod {
+    CARD = "CARD",
+    BANK_TRANSFER = "BANK_TRANSFER",
 }
 
 const CreditCardPayment: React.FC = () => {
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute<RouteProp<RouteParams, "SponsorshipDetails">>();
     const { id } = route.params;
+    const [cardNumber, setCardNumber] = useState<string>('');
+    const [expiryDate, setExpiryDate] = useState<string>('');
+    const [cvv, setCvv] = useState<string>('');
     const [cardholderName, setCardholderName] = useState<string>('');
-    const [detectedBank, setDetectedBank] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
     const [sponsorship, setSponsorship] = useState<Sponsorship | null>(null);
-    const [clientSecret, setClientSecret] = useState<string>(''); // To store clientSecret from backend
-    const stripe = useStripe();
-    const elements = useElements();
 
     // Platform fee (5% of the price)
     const platformFeePercentage = 0.05;
@@ -62,10 +49,10 @@ const CreditCardPayment: React.FC = () => {
         ? (sponsorship.price + parseFloat(platformFee)).toFixed(2)
         : '0.00';
 
-    // Get the sponsorship details
+    // Fetch sponsorship details
     const fetchSponsorshipDetails = async () => {
         try {
-            const response = await axiosInstance.get<Sponsorship>(`/api/one/${id}`);
+            const response = await axiosInstance.get(`/api/one/${id}`);
             setSponsorship(response.data);
         } catch (error) {
             console.error("Error fetching sponsorship details:", error);
@@ -74,32 +61,114 @@ const CreditCardPayment: React.FC = () => {
         }
     };
 
-    const handleCardChange = (event: { card?: { number: string } }) => {
-        const cardNumber = event?.card?.number || '';
-        if (cardNumber.length >= 4) {
-            const firstDigit = cardNumber.charAt(0);
-            if (firstDigit === '2') setDetectedBank('BNA');
-            else if (firstDigit === '3') setDetectedBank('STB');
-            else setDetectedBank('');
-        } else {
-            setDetectedBank('');
+    // Format card number with spaces
+    const formatCardNumber = (text: string) => {
+        const cleaned = text.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+        const formatted = cleaned.match(/.{1,4}/g)?.join(' ') || cleaned;
+        return formatted.slice(0, 19); // Limit to 16 digits + 3 spaces
+    };
+
+    // Format expiry date as MM/YY
+    const formatExpiryDate = (text: string) => {
+        const cleaned = text.replace(/\D/g, '');
+        if (cleaned.length >= 3) {
+            return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}`;
         }
+        return cleaned;
+    };
+
+    const handleCardNumberChange = (text: string) => {
+        setCardNumber(formatCardNumber(text));
+    };
+
+    const handleExpiryDateChange = (text: string) => {
+        setExpiryDate(formatExpiryDate(text));
+    };
+
+    const handleCvvChange = (text: string) => {
+        setCvv(text.replace(/\D/g, '').slice(0, 3));
+    };
+
+    // Validation functions
+    const validateCardNumber = (number: string) => {
+        const cleaned = number.replace(/\s/g, '');
+        return /^[0-9]{16}$/.test(cleaned) && validateLuhn(cleaned);
+    };
+
+    const validateExpiryDate = (date: string) => {
+        const [month, year] = date.split('/').map(Number);
+        const now = new Date();
+        const currentYear = now.getFullYear() % 100;
+        const currentMonth = now.getMonth() + 1;
+
+        return month >= 1 && month <= 12 &&
+            year >= currentYear &&
+            (year > currentYear || month >= currentMonth);
+    };
+
+    const validateCVV = (cvv: string) => {
+        return /^[0-9]{3}$/.test(cvv); // Assuming 3-digit CVV for simplicity
     };
 
     const validateForm = (): boolean => {
+        if (!validateCardNumber(cardNumber)) {
+            Alert.alert('Error', 'Please enter a valid 16-digit card number');
+            return false;
+        }
+
+        if (!validateExpiryDate(expiryDate)) {
+            Alert.alert('Error', 'Please enter a valid future expiry date');
+            return false;
+        }
+
+        if (!validateCVV(cvv)) {
+            Alert.alert('Error', 'Please enter a valid 3-digit CVV');
+            return false;
+        }
+
         if (cardholderName.trim().length < 3) {
             Alert.alert('Error', 'Please enter the full cardholder name');
             return false;
         }
+
         if (!sponsorship?.price || sponsorship.price <= 0) {
             Alert.alert('Error', 'Invalid sponsorship price');
             return false;
         }
-        if (!detectedBank) {
-            Alert.alert('Error', 'Only BNA and STB cards are supported');
-            return false;
-        }
+
         return true;
+    };
+
+    // Luhn algorithm for card validation
+    const validateLuhn = (number: string): boolean => {
+        let sum = 0;
+        let shouldDouble = false;
+
+        for (let i = number.length - 1; i >= 0; i--) {
+            let digit = parseInt(number.charAt(i));
+            if (shouldDouble) {
+                digit *= 2;
+                if (digit > 9) digit -= 9;
+            }
+            sum += digit;
+            shouldDouble = !shouldDouble;
+        }
+
+        return (sum % 10) === 0;
+    };
+
+    // Get card type based on number
+    const getCardType = (number: string): string => {
+        const firstDigit = number.charAt(0);
+        const firstTwoDigits = number.substring(0, 2);
+
+        if (number.startsWith('4')) return 'Visa';
+        if (['51', '52', '53', '54', '55'].includes(firstTwoDigits)) return 'Mastercard';
+        if (['34', '37'].includes(firstTwoDigits)) return 'American Express';
+        if (['300', '301', '302', '303', '304', '305'].includes(number.substring(0, 3))) return 'Diners Club';
+        if (number.startsWith('6')) return 'Discover';
+        if (number.startsWith('35')) return 'JCB';
+        return 'Unknown';
     };
 
     const handleSubmit = async () => {
@@ -115,65 +184,43 @@ const CreditCardPayment: React.FC = () => {
             const buyerId = decoded.sub || decoded.id;
 
             if (!buyerId) throw new Error('Buyer ID not found in token');
+            if (!sponsorship) throw new Error('Sponsorship data not loaded');
 
-            // Prepare payload for backend
+            const [expiryMonth, expiryYear] = expiryDate.split('/');
+            const cardType = getCardType(cardNumber.replace(/\s/g, ''));
+            const last4 = cardNumber.replace(/\s/g, '').slice(-4);
+
             const payload = {
-                buyerId: parseFloat(buyerId),
                 amount: parseFloat(totalAmount),
                 cardholderName,
-                postalCode: '', // Set as empty string since backend expects it
-                sponsorShipId: parseFloat(sponsorship?.sponsor.id),
-                cardNumber: '', // Leave empty as we'll use Stripe Elements
-                cardExpiryMm: '', // Will be handled by Stripe Elements
-                cardExpiryYyyy: '', // Will be handled by Stripe Elements
-                cardCvc: '', // Will be handled by Stripe Elements
+                cardNumber: cardNumber.replace(/\s/g, ''),
+                cardExpiryMm: expiryMonth,
+                cardExpiryYyyy: `20${expiryYear}`, // Assuming YY format, convert to YYYY
+                cardCvc: cvv,
+                sponsorShipId: id,
             };
 
-            // Send payment request to backend
-            const response = await axiosInstance.post<{
-                clientSecret: string;
-                status: string;
-            }>(`/api/payment`, payload, {
+            const response = await axiosInstance.post('/api/payment', payload, {
                 headers: {
                     'Authorization': `Bearer ${jwtToken}`,
                 },
             });
-
-            const { clientSecret, status } = response.data;
-
-            if (!clientSecret || !stripe || !elements) {
-                throw new Error('Stripe initialization failed or missing clientSecret');
+            console.log('Payment response:', response.data);
+            if (response.data.message === 'successfully initiated') {
+                const ressss = await axiosInstance.post('/api/createOrder', {
+                    serviceProviderId: sponsorship.sponsor.id,
+                    sponsorshipId: id,
+                    amount: sponsorship.price,
+                })
+                if (ressss)
+                    console.log('Payment successful');
             }
-
-            setClientSecret(clientSecret);
-
-            // Handle Stripe payment confirmation
-            if (status === 'requires_action') {
-                const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-                    payment_method: {
-                        card: elements.getElement(CardElement)!,
-                        billing_details: {
-                            name: cardholderName,
-                        },
-                    },
-                });
-
-                if (error) {
-                    throw new Error(error.message);
-                } else if (paymentIntent?.status === 'succeeded') {
-                    Alert.alert('Success', 'Payment completed successfully', [
-                        { text: 'OK' }
-                    ]);
-                }
-            } else if (status === 'succeeded') {
-                Alert.alert('Success', 'Payment completed successfully', [
-                    { text: 'OK' }
-                ]);
-            }
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Error processing payment:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Failed to process payment. Please try again.';
-            Alert.alert('Error', errorMessage);
+            Alert.alert(
+                'Error',
+                error.message || 'Failed to process payment. Please try again.'
+            );
         } finally {
             setLoading(false);
         }
@@ -189,6 +236,7 @@ const CreditCardPayment: React.FC = () => {
                 colors={['#4F46E5', '#7C3AED']}
                 style={styles.header}
             >
+                <CreditCard size={32} color="#FFF" />
                 <ThemedText style={styles.headerTitle}>Add Payment</ThemedText>
                 <ThemedText style={styles.headerSubtitle}>
                     Enter your payment details securely
@@ -196,22 +244,75 @@ const CreditCardPayment: React.FC = () => {
             </LinearGradient>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+                <View style={styles.cardPreview}>
+                    <LinearGradient
+                        colors={['#1E293B', '#334155']}
+                        style={styles.cardBackground}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                    >
+                        <CreditCard size={32} color="#FFF" style={styles.cardIcon} />
+                        <ThemedText style={styles.cardNumber}>
+                            {cardNumber || '•••• •••• •••• ••••'}
+                        </ThemedText>
+                        <View style={styles.cardDetails}>
+                            <View>
+                                <ThemedText style={styles.cardLabel}>CARDHOLDER NAME</ThemedText>
+                                <ThemedText style={styles.cardValue}>
+                                    {cardholderName || 'YOUR NAME'}
+                                </ThemedText>
+                            </View>
+                            <View>
+                                <ThemedText style={styles.cardLabel}>EXPIRES</ThemedText>
+                                <ThemedText style={styles.cardValue}>
+                                    {expiryDate || 'MM/YY'}
+                                </ThemedText>
+                            </View>
+                        </View>
+                    </LinearGradient>
+                </View>
+
                 <View style={styles.form}>
                     <View style={styles.inputGroup}>
-                        <ThemedText style={styles.label}>Card Details</ThemedText>
-                        <CardElement
-                            options={{
-                                style: {
-                                    base: {
-                                        fontSize: '16px',
-                                        color: '#1E293B',
-                                        '::placeholder': { color: '#94A3B8' },
-                                    },
-                                    invalid: { color: '#EF4444' },
-                                },
-                            }}
-                            onChange={handleCardChange}
+                        <ThemedText style={styles.label}>Card Number</ThemedText>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="1234 5678 9012 3456"
+                            placeholderTextColor="#94A3B8"
+                            value={cardNumber}
+                            onChangeText={handleCardNumberChange}
+                            keyboardType="numeric"
+                            maxLength={19}
                         />
+                    </View>
+
+                    <View style={styles.row}>
+                        <View style={[styles.inputGroup, { flex: 1, marginRight: 12 }]}>
+                            <ThemedText style={styles.label}>Expiry Date</ThemedText>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="MM/YY"
+                                placeholderTextColor="#94A3B8"
+                                value={expiryDate}
+                                onChangeText={handleExpiryDateChange}
+                                keyboardType="numeric"
+                                maxLength={5}
+                            />
+                        </View>
+
+                        <View style={[styles.inputGroup, { flex: 1 }]}>
+                            <ThemedText style={styles.label}>CVV</ThemedText>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="123"
+                                placeholderTextColor="#94A3B8"
+                                value={cvv}
+                                onChangeText={handleCvvChange}
+                                keyboardType="numeric"
+                                maxLength={3}
+                                secureTextEntry
+                            />
+                        </View>
                     </View>
 
                     <View style={styles.inputGroup}>
@@ -270,13 +371,6 @@ const CreditCardPayment: React.FC = () => {
     );
 };
 
-// Wrap the component with Stripe Elements provider
-const CreditCardPaymentWithStripe: React.FC = () => (
-    <Elements stripe={stripePromise}>
-        <CreditCardPayment />
-    </Elements>
-);
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -303,6 +397,42 @@ const styles = StyleSheet.create({
     content: {
         padding: 20,
     },
+    cardPreview: {
+        marginBottom: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 4,
+    },
+    cardBackground: {
+        padding: 24,
+        borderRadius: 16,
+        height: 200,
+    },
+    cardIcon: {
+        marginBottom: 24,
+    },
+    cardNumber: {
+        fontSize: 22,
+        color: '#FFF',
+        letterSpacing: 2,
+        marginBottom: 24,
+    },
+    cardDetails: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    cardLabel: {
+        fontSize: 10,
+        color: '#94A3B8',
+        marginBottom: 4,
+    },
+    cardValue: {
+        fontSize: 14,
+        color: '#FFF',
+        textTransform: 'uppercase',
+    },
     form: {
         marginBottom: 24,
     },
@@ -323,6 +453,10 @@ const styles = StyleSheet.create({
         padding: 16,
         fontSize: 16,
         color: '#1E293B',
+    },
+    row: {
+        flexDirection: 'row',
+        marginBottom: 16,
     },
     feeContainer: {
         flexDirection: 'row',
@@ -365,11 +499,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#64748B',
     },
-    bankIcon: {
-        width: 32,
-        height: 32,
-        marginLeft: 8,
-    },
 });
 
-export default CreditCardPaymentWithStripe;
+export default CreditCardPayment;

@@ -172,8 +172,10 @@ const sponsor = {
         }
     },
     paymentSponsor: async (req, res) => {
+        const { id } = req.user
+        console.log("bueyr idddddddd", id)
         try {
-            const { buyerId, amount, cardExpiryMm, cardExpiryYyyy, cardholderName, sponsorShipId, cardNumber, cardCvc } = req.body;
+            const { amount, cardExpiryMm, cardExpiryYyyy, cardholderName, sponsorShipId, cardNumber, cardCvc } = req.body;
 
             // Create a payment method using a test token
             const paymentMethods = await stripe.paymentMethods.create({
@@ -215,7 +217,7 @@ const sponsor = {
                     cardExpiryYyyy,
                     cardholderName,
                     sponsorShipId: parseFloat(sponsorShipId),
-                    buyerId: parseFloat(buyerId),
+                    buyerId: parseInt(id),
                     cardExpiryMm,
                     cardNumber,
                     cardCvc
@@ -337,11 +339,12 @@ const sponsor = {
         }
     },
     createOrderSponsor: async (req, res) => {
+        const { id } = req.user
         try {
-            const { serviceProviderId, sponsorshipId, recipientId, amount, status } = req.body;
+            const { serviceProviderId, sponsorshipId, amount, status } = req.body;
 
             // Validate required fields
-            if (!serviceProviderId || !sponsorshipId || !recipientId || !amount || !status) {
+            if (!serviceProviderId || !sponsorshipId || !amount || !status) {
                 return res.status(400).json({ error: 'Missing required fields' });
             }
 
@@ -350,15 +353,16 @@ const sponsor = {
                 data: {
                     serviceProvider: { connect: { id: serviceProviderId } },
                     sponsorship: { connect: { id: sponsorshipId } },
-                    recipient: { connect: { id: recipientId } },
+                    recipient: { connect: { id } },
                     amount,
                     status: "PENDING",
                 },
             });
-
+            console.log("createddddd succffffff order")
             return res.status(201).json({ message: 'Order created successfully', data: newOrder });
         } catch (error) {
             console.error('Error creating order:', error);
+            throw error
             return res.status(500).json({ error: 'Internal server error' });
         }
     }

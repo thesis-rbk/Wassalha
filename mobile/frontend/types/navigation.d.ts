@@ -20,7 +20,7 @@ type RootStackParamList = {
     'sponsorshipTrack/initializationBuyer': { id: number };
     "verification/SponsorshipDetails": { id: number };
     "verification/CreditCardVerification": { id: number };
-    "verification/paymentByKH": { id: number };
+    "verification/PaymentByKH": { id: number };
 };
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
