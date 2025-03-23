@@ -29,6 +29,8 @@ import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useNotification } from "@/context/NotificationContext";
 import { io } from "socket.io-client";
+import { useDispatch } from "react-redux";
+import { acceptOffer } from "@/store/processTrackSlice";
 
 export default function InitializationSO() {
   const params = useLocalSearchParams();
@@ -76,6 +78,23 @@ export default function InitializationSO() {
       newSocket.disconnect();
     };
   }, []);
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("offerAccepted", (data: any) => {
+        const { orderId, travelerId } = data;
+        dispatch(acceptOffer({ orderId, travelerId }));
+      });
+    }
+
+    return () => {
+      if (socket) {
+        socket.off("offerAccepted");
+      }
+    };
+  }, [socket, dispatch]);
 
   // Load user data
   useEffect(() => {
@@ -243,7 +262,7 @@ export default function InitializationSO() {
           onPress: async () => {
             try {
               setProcessing(true);
-              
+
               // First, update the order status to CANCELLED
               const orderResponse = await axiosInstance.patch(
                 `/api/orders/${order.id}/status`,
@@ -257,16 +276,13 @@ export default function InitializationSO() {
                 // Then, update the associated request directly (not using the status endpoint)
                 const requestId = params.idRequest;
                 if (requestId) {
-                  await axiosInstance.put(
-                    `/api/requests/${requestId}`,
-                    {
-                      status: "PENDING"
-                    }
-                  );
+                  await axiosInstance.put(`/api/requests/${requestId}`, {
+                    status: "PENDING",
+                  });
                 }
 
                 // Send notification about cancellation
-                sendNotification('order_cancelled', {
+                sendNotification("order_cancelled", {
                   travelerId: params.travelerId,
                   requestDetails: {
                     requesterId: user?.id,
