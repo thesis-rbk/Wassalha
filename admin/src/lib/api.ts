@@ -9,7 +9,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true  // Add this to handle CORS with credentials
+  withCredentials: true  
 });
 
 // Use try-catch with typeof window check for SSR compatibility

@@ -3,11 +3,8 @@ import { format } from 'date-fns';
 import styles from '@/styles/Table.module.css';
 import api from '@/lib/api';
 import { X, Send, Trash2 } from 'lucide-react';
-import { Ticket } from '@/types/Ticket';
-import { Message } from '@/types/Message';
 import { TicketDetailsProps } from '@/types/TicketDetailsProps';
-  
-
+import { Ticket } from '@/types/Ticket'; // Adjust the import based on your file structure
 
 
 const getStatusBadgeClass = (status: string) => {
@@ -25,12 +22,12 @@ const getStatusBadgeClass = (status: string) => {
   }
 };
 
-const TicketDetails: React.FC<TicketDetailsProps> = ({ 
-  ticket, 
-  onClose, 
-  visible, 
-  onStatusUpdate, 
-  onDelete 
+const TicketDetails: React.FC<TicketDetailsProps> = ({
+  ticket,
+  onClose,
+  visible,
+  onStatusUpdate,
+  onDelete,
 }) => {
   const [messageContent, setMessageContent] = useState('');
   const [sending, setSending] = useState(false);
@@ -38,11 +35,9 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    // Check if dark mode is enabled
     const isDark = document.documentElement.classList.contains('dark-mode');
     setIsDarkMode(isDark);
 
-    // Listen for theme changes
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.attributeName === 'class') {
@@ -54,12 +49,8 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
 
     observer.observe(document.documentElement, { attributes: true });
 
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, []);
-
-  if (!visible || !ticket) return null;
 
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this ticket?')) {
@@ -75,23 +66,20 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
 
   const handleSendMessage = async () => {
     if (!messageContent.trim()) return;
-    
+
     try {
       setSending(true);
       setError('');
-      
-      const response = await api.post(`/api/tickets/${ticket.id}/messages/admin`, { 
-        content: messageContent 
+
+      const response = await api.post(`/api/tickets/${ticket.id}/messages/admin`, {
+        content: messageContent,
       });
-      
+
       if (response.data.success) {
-        // Clear the input after successful send
         setMessageContent('');
-        // Refresh the ticket to show the new message
-        const ticketResponse = await api.get(`/api/tickets/${ticket.id}`);
-        if (ticketResponse.data.success) {
-          // Update the ticket with the new message
-          ticket.messages = ticketResponse.data.data.messages;
+        const updatedTicketResponse = await api.get(`/api/tickets/get/${ticket.id}`);
+        if (updatedTicketResponse.data.success) {
+          ticket.messages = updatedTicketResponse.data.data.messages; // Update messages in prop
         }
       } else {
         setError('Failed to send message: ' + response.data.message);
@@ -104,12 +92,14 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
     }
   };
 
+  if (!visible || !ticket) return null;
+
   return (
     <div className={styles.modalOverlay}>
       <div className={`${styles.modal} ${isDarkMode ? styles.darkMode : ''}`}>
         <div className={`${styles.modalHeader} ${isDarkMode ? styles.darkMode : ''}`}>
           <h2>Ticket Details</h2>
-          <button 
+          <button
             className={`${styles.closeModalButton} ${isDarkMode ? styles.darkMode : ''}`}
             onClick={onClose}
             aria-label="Close"
@@ -122,7 +112,12 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
             <h3>User Information</h3>
             <div className={`${styles.infoCard} ${isDarkMode ? styles.darkMode : ''}`}>
               <p><strong>Name:</strong> {ticket.user.name}</p>
-              <p><strong>Email:</strong> <a href={`mailto:${ticket.user.email}`} className={styles.emailLink}>{ticket.user.email}</a></p>
+              <p>
+                <strong>Email:</strong>{' '}
+                <a href={`mailto:${ticket.user.email}`} className={styles.emailLink}>
+                  {ticket.user.email}
+                </a>
+              </p>
             </div>
           </div>
           <div className={styles.modalSection}>
@@ -135,12 +130,14 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
                 </div>
                 <div>
                   <p>
-                    <strong>Status:</strong> 
+                    <strong>Status:</strong>{' '}
                     <span className={`${styles.badge} ${getStatusBadgeClass(ticket.status)}`}>
                       {ticket.status.replace('_', ' ')}
                     </span>
                   </p>
-                  <p><strong>Created:</strong> {format(new Date(ticket.createdAt), 'MMM dd, yyyy')}</p>
+                  <p>
+                    <strong>Created:</strong> {format(new Date(ticket.createdAt), 'MMM dd, yyyy')}
+                  </p>
                 </div>
               </div>
             </div>
@@ -151,44 +148,41 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
               {ticket.description}
             </div>
           </div>
-          
-          {/* Messages Section */}
+
           <div className={styles.modalSection}>
-            <h3>Messages</h3>
-            <div className={`${styles.messagesContainer} ${isDarkMode ? styles.darkMode : ''}`}>
+            <h3>Comments</h3>
+            <div className={`${styles.commentsContainer} ${isDarkMode ? styles.darkMode : ''}`}>
               {ticket.messages && ticket.messages.length > 0 ? (
-                ticket.messages.map((message) => (
-                  <div 
-                    key={message.id} 
-                    className={`${styles.messageItem} ${message.sender.role === 'ADMIN' ? styles.adminMessage : styles.userMessage} ${isDarkMode ? styles.darkMode : ''}`}
+                ticket.messages.map((message:any) => (
+                  <div
+                    key={message.id}
+                    className={`${styles.commentItem} ${isDarkMode ? styles.darkMode : ''}`}
                   >
-                    <div className={styles.messageSender}>
-                      <strong>{message.sender.name}</strong>
-                      <span className={styles.messageTime}>
-                        {message.createdAt ? format(new Date(message.createdAt), 'MMM dd, yyyy HH:mm') : 'Unknown date'}
+                    <div className={styles.commentSender}>
+                      <strong>{message.isAdmin ? 'Admin' : message.sender.name}</strong>
+                      <span className={styles.commentTime}> : 
+                        {message.createdAt
+                          ? format(new Date(message.createdAt), 'MMM dd, yyyy HH:mm')
+                          : 'Unknown date'}
                       </span>
                     </div>
-                    <div className={styles.messageContent}>
-                      {message.content}
-                    </div>
+                    <div className={styles.commentContent}>{message.content}</div>
                   </div>
                 ))
               ) : (
-                <div className={`${styles.noMessages} ${isDarkMode ? styles.darkMode : ''}`}>
-                  No messages yet.
+                <div className={`${styles.noComments} ${isDarkMode ? styles.darkMode : ''}`}>
+                  No comments yet.
                 </div>
               )}
             </div>
           </div>
-          
-          {/* Add space for the fixed footer */}
+
           <div className={styles.modalFooterSpacer}></div>
         </div>
-        
-        {/* Fixed footer with actions */}
+
         <div className={`${styles.modalFooterFixed} ${isDarkMode ? styles.darkMode : ''}`}>
           <div className={styles.modalFooterRow}>
-          <button
+            <button
               className={`${styles.deleteModalButton} ${isDarkMode ? styles.darkMode : ''}`}
               onClick={handleDelete}
             >
@@ -196,7 +190,9 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
               Delete
             </button>
             <div className={styles.statusUpdateContainer}>
-              <label htmlFor="statusSelect" className={styles.statusLabel}>Status:</label>
+              <label htmlFor="statusSelect" className={styles.statusLabel}>
+                Status:
+              </label>
               <select
                 id="statusSelect"
                 value={ticket.status}
@@ -209,17 +205,17 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
                 <option value="CLOSED">Closed</option>
               </select>
             </div>
-            
+
             <div className={styles.messageInputContainer}>
               <input
                 type="text"
                 value={messageContent}
                 onChange={(e) => setMessageContent(e.target.value)}
-                placeholder="Type a message to the user..."
+                placeholder="Add a comment..."
                 className={`${styles.messageInput} ${isDarkMode ? styles.darkMode : ''}`}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
               />
-              <button 
+              <button
                 className={`${styles.sendMessageButton} ${isDarkMode ? styles.darkMode : ''}`}
                 onClick={handleSendMessage}
                 disabled={sending || !messageContent.trim()}
@@ -234,8 +230,6 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
                 )}
               </button>
             </div>
-            
-            
           </div>
         </div>
       </div>
