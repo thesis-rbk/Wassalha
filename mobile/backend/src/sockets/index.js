@@ -16,7 +16,7 @@ const jwt = require("jsonwebtoken");
 const prisma = require("../../prisma/index");
 
 // Import the process handlers
-const processHandlers = require('./processTrack/processSocket');
+const processSocketModule = require('./processTrack/processSocket');
 
 // Global socket instance - kept outside function so it can be accessed by getIO()
 let io;
@@ -58,6 +58,9 @@ const initializeSocket = (server) => {
 
   // Pass the io instance to chatSocket
   setIO(io);
+
+  // Set the IO instance for processSocket
+  processSocketModule.setProcessIO(io);
 
   // Create separate channels (namespaces) for different features
   const notifications = io.of("/notifications"); // Notification channel
@@ -101,7 +104,7 @@ const initializeSocket = (server) => {
   process.use(authenticateNotificationSocket)
   process.on("connection", (socket) => {
     console.log("🔄 Client connected to process tracking:", socket.id);
-    processHandlers(socket);
+    processSocketModule.processSocketHandlers(socket);
   });
 
   return io;

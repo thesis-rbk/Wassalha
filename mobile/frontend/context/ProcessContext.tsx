@@ -14,7 +14,8 @@ import {
   paymentInitiated,
   paymentCompleted,
   paymentFailed,
-  setSocketConnected
+  setSocketConnected,
+  requestCreated
 } from '@/store/processSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Socket } from 'socket.io-client';
@@ -298,6 +299,14 @@ export const ProcessProvider: React.FC<{ children: React.ReactNode }> = ({ child
       console.log('✅ Joined process room:', data);
     };
 
+    // Add this new handler for request creation
+    const handleRequestCreated = (data: {requestId: number, requestData: any}) => {
+      console.log('🆕 ProcessContext: request_created event received', data);
+      // Dispatch the Redux action to update the store
+      dispatch(requestCreated(data));
+      // Optionally, you could fetch additional data here if needed
+    };
+
     // Setup event listeners for general process events
     socket.on('process_initialized', handleProcessInitialized);
     
@@ -310,6 +319,9 @@ export const ProcessProvider: React.FC<{ children: React.ReactNode }> = ({ child
     socket.on('payment_completed', handlePaymentCompleted);
     socket.on('payment_failed', handlePaymentFailed);
     socket.on('joined', handleJoined);
+    
+    // Add this new one
+    socket.on('request_created', handleRequestCreated);
     
     // Rejoin room when socket reconnects
     socket.on('connect', () => {
@@ -338,6 +350,7 @@ export const ProcessProvider: React.FC<{ children: React.ReactNode }> = ({ child
       socket.off('payment_completed', handlePaymentCompleted);
       socket.off('payment_failed', handlePaymentFailed);
       socket.off('joined', handleJoined);
+      socket.off('request_created', handleRequestCreated);
       socket.off('connect');
       socket.off('disconnect');
     };
@@ -352,7 +365,9 @@ export const ProcessProvider: React.FC<{ children: React.ReactNode }> = ({ child
     
     try {
       console.log(`🔄 Joining process room for process ${processId}`);
-      socket.emit('join_process_room', { processId });
+      
+      // FIXED: Changed to match backend expectations and match processService.ts
+      socket.emit('join', processId);
       
       // Set up process-specific event listeners
       const processRoomEvents = [

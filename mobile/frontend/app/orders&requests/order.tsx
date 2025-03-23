@@ -25,11 +25,13 @@ import { GoodsProcess, ProcessStatus, ProcessStatusEnum } from "@/types/GoodsPro
 import { LinearGradient } from 'expo-linear-gradient';
 import { getSocket } from "@/services/Socketservice";
 import { Socket } from "socket.io-client";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/index";
 import { useProcess } from "@/context/ProcessContext";
 import { TabBar } from "@/components/navigation/TabBar";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
+import { store } from "@/store"; // Make sure the path is correct
+import { requestCreated } from '@/store/processSlice';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
@@ -103,6 +105,8 @@ const useReliableAuth = () => {
 };
 
 export default function OrderPage() {
+  console.log('🔍 Order page render - Redux processes:', useSelector((state: RootState) => state.process.processes.length));
+  
   const [isLoading, setIsLoading] = useState(false);
   const [view, setView] = useState<"orders" | "requests">("orders");
   const [goodsProcesses, setGoodsProcesses] = useState<GoodsProcess[]>([]);
@@ -110,9 +114,10 @@ export default function OrderPage() {
   const { user, loading: authLoading } = useReliableAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Order");
-  const { socketConnected } = useProcess();
+  const { socketConnected, joinProcessRoom, fetchProcesses } = useProcess();
+  const dispatch = useDispatch();
   const { processes } = useSelector((state: RootState) => state.process);
-  const { fetchProcesses } = useProcess();
+  const reduxRequests = useSelector((state: RootState) => state.process.requests || []);
 
   // Animation value for the "Make Offer" button
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -228,93 +233,103 @@ export default function OrderPage() {
     }
   };
 
-  // Fetch requests when component mounts or user changes
+  // Get processes from Redux state
+  const processState = useSelector((state: RootState) => state.process);
+  
+  // Sync Redux processes to local state whenever Redux state changes
+  useEffect(() => {
+    console.log(`📋 Syncing ${processState.processes.length} processes from Redux to local state`);
+    setGoodsProcesses(processState.processes);
+  }, [processState.processes]);
+
+  // Fetch requests and processes when component mounts or user changes
   useEffect(() => {
     if (!authLoading) {
       console.log("User loaded, fetching orders...", user);
-      fetchGoodsProcesses();
+      
+      // Use the context function instead of local function
+      fetchProcesses();
       fetchRequests();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, fetchProcesses]);
 
-  // Initialize socket connection
+  // FIXED: Use the socket from ProcessContext rather than creating a new one
   useEffect(() => {
-    let mounted = true;
-    let processSocket: Socket | null = null;
+    // Get notification when processes are loaded or changed
+    if (processes.length > 0) {
+      console.log(`📋 Processes loaded: ${processes.length} active processes`);
+    }
+  }, [processes]);
+
+  // FIXED: Socket event listener setup - use ProcessContext socket
+  useEffect(() => {
+    // Only proceed if socket is connected
+    if (!socketConnected || !user?.id) {
+      return;
+    }
     
-    const initializeSocket = async () => {
-      if (!user?.id) {
-        console.log('👤 No user logged in, skipping process socket setup');
-        return;
-      }
+    console.log('🔌 Process socket is connected, component can rely on socket events');
+    
+    // Join process rooms for all current processes
+    const joinAllProcessRooms = async () => {
+      console.log(`🔄 Joining rooms for ${processes.length} processes`);
       
-      try {
-        console.log('🔄 Setting up process socket for user:', user.id);
-        
-        // Get new socket instance
-        processSocket = await getSocket('process');
-        
-        if (mounted && processSocket) {
-          //setSocket(processSocket);
-          
-          // Set up event listeners
-          processSocket.on('process_initialized', (data) => {
-            console.log('🔄 Process initialized event received:', data);
-            fetchRequests();
-            fetchGoodsProcesses();
-          });
-          
-          processSocket.on('order_created', (data) => {
-            console.log('🛒 Order created event received:', data);
-            fetchRequests();
-          });
-          
-          processSocket.on('request_updated', (data) => {
-            console.log('📝 Request updated event received:', data);
-            fetchRequests();
-          });
+      // Join each process room to receive updates
+      for (const process of processes) {
+        try {
+          console.log(`🔄 Joining room for process ID: ${process.id}`);
+          await joinProcessRoom(process.id);
+        } catch (error) {
+          console.error(`❌ Error joining process room ${process.id}:`, error);
         }
-      } catch (error) {
-        console.error('❌ Error initializing process socket:', error);
       }
     };
     
-    initializeSocket();
-    
-    // Cleanup function
-    return () => {
-      mounted = false;
-      if (processSocket) {
-        console.log('🧹 Cleaning up process socket listeners');
-        processSocket.off('process_initialized');
-        processSocket.off('order_created');
-        processSocket.off('request_updated');
-      }
-    };
-  }, [user?.id]);
+    joinAllProcessRooms();
+  }, [socketConnected, user?.id, processes, joinProcessRoom]);
+
+  // Modify fetchGoodsProcesses to use fetchProcesses from context
+  const fetchGoodsProcesses = async () => {
+    try {
+      setIsLoading(true);
+      // Use the fetchProcesses from context to update Redux state
+      await fetchProcesses();
+      // Local state will be updated by the useEffect that watches processState.processes
+    } catch (error: any) {
+      console.error("Error details:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Fetch requests
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
-      const response = await axiosInstance.get("/api/requests");
-      
-      // Filter the requests to only show those that are in "PENDING" status
-      // AND either don't have an associated order OR have a cancelled order
-      const filteredRequests = (response.data.data || []).filter((request: Request) => {
-        // Check if the request is in PENDING status
-        const isPending = request.status === "PENDING";
+      // First check if we already have requests in Redux
+      if (reduxRequests.length > 0) {
+        setRequests(reduxRequests);
+      } else {
+        // Fall back to API fetch if needed
+        const response = await axiosInstance.get("/api/requests");
         
-        // Check if the request has no order or a cancelled order
-        const hasNoActiveOrder = !request.order || request.order.orderStatus === "CANCELLED";
+        // Filter the requests to only show those that are in "PENDING" status
+        // AND either don't have an associated order OR have a cancelled order
+        const filteredRequests = (response.data.data || []).filter((request: Request) => {
+          // Check if the request is in PENDING status
+          const isPending = request.status === "PENDING";
+          
+          // Check if the request has no order or a cancelled order
+          const hasNoActiveOrder = !request.order || request.order.orderStatus === "CANCELLED";
+          
+          // Only include requests that meet both conditions
+          return isPending && hasNoActiveOrder;
+        });
         
-        // Only include requests that meet both conditions
-        return isPending && hasNoActiveOrder;
-      });
-      
-      console.log(`Filtered from ${response.data.data?.length || 0} to ${filteredRequests.length} requests`);
-      
-      setRequests(filteredRequests);
+        console.log(`Filtered from ${response.data.data?.length || 0} to ${filteredRequests.length} requests`);
+        
+        setRequests(filteredRequests);
+      }
     } catch (error) {
       console.error("Error fetching requests:", error);
       setRequests([]);
@@ -323,23 +338,18 @@ export default function OrderPage() {
     }
   };
 
-  const fetchGoodsProcesses = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axiosInstance.get("/api/process");
-      console.log("Current user ID:", user?.id);
-      // Set goodsProcesses to an empty array if no data is returned
-      setGoodsProcesses(response.data.data || []);
-    } catch (error: any) {
-      console.error("Error details:", error);
-      // Optionally set to empty array on error too, depending on your needs
-      setGoodsProcesses([]);
-    } finally {
-      setIsLoading(false);
+  // Or add an effect to sync Redux requests to local state
+  useEffect(() => {
+    // If we have requests in Redux, use those
+    if (reduxRequests.length > 0) {
+      console.log(`📋 Syncing ${reduxRequests.length} requests from Redux to local state`);
+      setRequests(reduxRequests);
     }
-  };
+  }, [reduxRequests]);
 
   const renderRequestItem = ({ item }: { item: Request }) => {
+    console.log(`🔍 Rendering request item ID: ${item.id}, Redux requests count: ${reduxRequests.length}`);
+    
     const parameters = {
       id: item?.id?.toString(),
       goodsName: item.goods?.name || "Unknown",
@@ -517,6 +527,9 @@ export default function OrderPage() {
     const processStatus = hasOrder && item.status ? item.status : undefined;
 
     const handleNavigation = () => {
+      // ADDED: Join the process room when navigating to a process screen
+      joinProcessRoom(item.id);
+      
       if (isOwnRequest(parseInt(parameters.requesterId)) && hasOrder) {
         switch (parameters.status) {
           case ProcessStatusEnum.PREINITIALIZED:
@@ -686,9 +699,6 @@ export default function OrderPage() {
     router.push("/profile");
   };
 
-  // Add these lines to get process state from Redux
-  const processState = useSelector((state: RootState) => state.process);
-  
   // Add a logging effect to track Redux state changes
   useEffect(() => {
     console.log('🟣 order.tsx: Process Redux state updated:', {

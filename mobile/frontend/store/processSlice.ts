@@ -12,6 +12,7 @@ enum ProcessStatuss {
 const initialState: ProcessState = {
   processes: [],
   currentProcess: null,
+  requests: [],
   loading: false,
   error: null,
   socketConnected: false
@@ -139,7 +140,24 @@ const processSlice = createSlice({
     
     paymentFailed: (state, action: PayloadAction<{processId: number, errorMessage?: string}>) => {
       console.log('Payment failed for process:', action.payload);
-    }
+    },
+    
+    // Add this new reducer to handle request creation events
+    requestCreated: (state, action: PayloadAction<{requestId: number, requestData: any}>) => {
+      console.log('🔵 processSlice: requestCreated reducer called with request ID', action.payload.requestId);
+      
+      // Only add if there's actual request data
+      if (action.payload.requestData) {
+        // Check if we already have this request to avoid duplicates
+        const exists = state.requests.some(req => req.id === action.payload.requestId);
+        
+        if (!exists) {
+          // Add new request to the beginning of the array
+          state.requests.unshift(action.payload.requestData);
+          console.log('✅ Added new request to state:', action.payload.requestId);
+        }
+      }
+    },
   }
 });
 
@@ -159,7 +177,8 @@ export const {
   processCancelled,
   paymentInitiated,
   paymentCompleted,
-  paymentFailed
+  paymentFailed,
+  requestCreated
 } = processSlice.actions;
 
 export default processSlice.reducer;

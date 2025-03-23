@@ -6,6 +6,9 @@ import { ProcessStatus } from "@/types/GoodsProcess";
  */
 export const joinProcessRoom = async (processId: number): Promise<boolean> => {
   try {
+    console.log(`🔍 JOIN PROCESS ROOM CALLED WITH ID ${processId}`);
+    console.log('CALL STACK:', new Error().stack);
+    
     const socket = await getSocket("process");
     
     if (!socket || !socket.connected) {
@@ -14,7 +17,9 @@ export const joinProcessRoom = async (processId: number): Promise<boolean> => {
     }
     
     console.log(`🔄 Joining process room for process ${processId}`);
-    socket.emit("join_process_room", { processId });
+    
+    socket.emit("join", processId);
+    
     return true;
   } catch (error) {
     console.error("❌ Error joining process room:", error);

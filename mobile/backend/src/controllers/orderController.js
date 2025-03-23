@@ -1,4 +1,5 @@
 const prisma = require("../../prisma/index");
+const { orderCreated } = require('../sockets/processTrack/processSocket');
 
 // Get all orders with their process info
 const getAllOrders = async (req, res) => {
@@ -137,6 +138,19 @@ const createOrder = async (req, res) => {
         traveler: true,
       },
     });
+
+    // Emit socket event for real-time updates
+    try {
+      console.log(`🔄 Emitting order_created event for requestId: ${requestId}, orderId: ${order.id}`);
+      await orderCreated({ 
+        requestId: parseInt(requestId), 
+        orderId: order.id 
+      });
+      console.log('✅ order_created event emitted successfully');
+    } catch (socketError) {
+      console.error('❌ Failed to emit order_created event:', socketError);
+      // Don't fail the request if socket emission fails
+    }
 
     res.status(201).json({ success: true, data: order });
   } catch (error) {

@@ -1,5 +1,6 @@
 const prisma = require('../../prisma/index');
 const { authenticateUser } = require('../middleware/middleware');
+const { requestCreated } = require('../sockets/processTrack/processSocket');
 
 class RequestController {
     // Create Request
@@ -24,17 +25,65 @@ class RequestController {
                     status: 'PENDING'
                 },
                 include: {
-                    user: true,
-                    goods: true,
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            profile: {
+                                select: {
+                                    image: true,
+                                    isVerified: true
+                                }
+                            },
+                            reputation: {
+                                select: {
+                                    score: true,
+                                    totalRatings: true,
+                                    level: true
+                                }
+                            }
+                        }
+                    },
+                    goods: {
+                        include: {
+                            image: true,
+                            category: true
+                        }
+                    }
                 },
             });
+            
             console.log('✅ Request created successfully:', request.id);
+
+            // Emit socket event for real-time updates
+            try {
+                // Transform the request object to include full image URL
+                const transformedRequest = {
+                    ...request,
+                    goods: {
+                        ...request.goods,
+                        goodsUrl: request.goods.image ? `/api/uploads/${request.goods.image.filename}` : null
+                    }
+                };
+                
+                console.log('🔄 Emitting request_created event for requestId:', request.id);
+                await requestCreated({
+                    requestId: request.id,
+                    requestData: transformedRequest
+                });
+                console.log('✅ Socket event request_created emitted successfully');
+            } catch (socketError) {
+                console.error('❌ Error emitting socket event:', socketError);
+                // Continue with the response even if socket emission fails
+            }
 
             res.status(201).json({
                 success: true,
                 data: request,
             });
         } catch (error) {
+            console.error('❌ Error creating request:', error);
             res.status(400).json({
                 success: false,
                 error: error.message,
