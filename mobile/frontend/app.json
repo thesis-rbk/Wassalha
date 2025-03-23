@@ -10,13 +10,11 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "infoPlist": {
-        "NSCameraUsageDescription": "This app needs camera access to scan QR codes.",
       "bundleIdentifier": "com.yourcompany.yourapp",
       "infoPlist": {
+        "NSCameraUsageDescription": "This app needs camera access to scan QR codes.",
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show your position on the map.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location to show your position on the map even when the app is in the background."
-      }
       }
     },
     "platforms": [
@@ -28,13 +26,14 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff",
-        "permissions": [
-          "CAMERA"
-        ]
+        "backgroundColor": "#ffffff"
       },
       "package": "com.yourcompany.yourapp",
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
     },
     "extra": {
       "GOOGLE_MAPS_KEY": "your-google-maps-key"
@@ -56,14 +55,18 @@
         }
       ],
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow this app to use the camera to scan QR codes."
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "The app needs access to your photos to upload images.",
           "cameraPermission": "The app needs access to your camera to take photos."
         }
-      ],
-      "expo-barcode-scanner",
-      "react-native-vision-camera"
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -14,7 +14,6 @@ if (!fs.existsSync(uploadDir)) {
     console.log("Upload directory already exists:", uploadDir); // Log if directory exists
 }
 
-// Set up storage for Multer
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         console.log(`Uploading file: ${file.originalname} to ${uploadDir}`); // Log the file being uploaded

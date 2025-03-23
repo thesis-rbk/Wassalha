@@ -1,3 +1,4 @@
+// PickupTraveler.tsx
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -27,6 +28,7 @@ import {
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { usePickupActions } from "../../hooks/usePickupActions";
 import { QRCodeModal } from "../pickup/QRCodeModal";
+import { QRCodeScanner } from "../pickup/QRCodeScanner"; // Import the new component
 import io, { Socket } from "socket.io-client";
 import { navigateToChat } from "@/services/chatService";
 
@@ -47,8 +49,7 @@ export default function PickupTraveler() {
   const [selectedPickupId, setSelectedPickupId] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [showScanner, setShowScanner] = useState(false);
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [showScanner, setShowScanner] = useState(false); // Only controls visibility now
 
   const { handleAccept, showStoredQRCode, showQRCode, setShowQRCode, qrCodeData, handleCancel } = usePickupActions(
     pickups,
@@ -121,7 +122,6 @@ export default function PickupTraveler() {
 
   useEffect(() => {
     fetchPickups();
-    requestCameraPermission();
   }, []);
 
   const openChat = async () => {
@@ -153,10 +153,6 @@ export default function PickupTraveler() {
           (error instanceof Error ? error.message : String(error))
       );
     }
-  };
-
-  const requestCameraPermission = async () => {
-    setHasPermission(true); // Placeholder until BarCodeScanner is implemented
   };
 
   const fetchPickups = async (): Promise<void> => {
@@ -257,40 +253,6 @@ export default function PickupTraveler() {
       Alert.alert("Error", "Failed to fetch suggestions. Please try again.");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleScan = async ({ type, data }: { type: string; data: string }) => {
-    try {
-      const scannedData = JSON.parse(data);
-      const pickup = pickups.find((p) => p.id === scannedData.pickupNumber);
-      if (!pickup || pickup.orderId !== scannedData.orderNumber) {
-        Alert.alert("Error", "Invalid QR code for this pickup.");
-        setShowScanner(false);
-        return;
-      }
-
-      if (pickup.status === "COMPLETED") {
-        Alert.alert("Info", "This pickup is already completed.");
-        setShowScanner(false);
-        return;
-      }
-
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) throw new Error("No authentication token found");
-
-      await axiosInstance.put(
-        "/api/pickup/status",
-        { pickupId: pickup.id, newStatus: "COMPLETED" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      Alert.alert("Success", "Pickup completed successfully!");
-      setShowScanner(false);
-    } catch (error) {
-      console.error("Error processing QR scan:", error);
-      Alert.alert("Error", "Failed to complete pickup. Please try again.");
-      setShowScanner(false);
     }
   };
 
@@ -401,7 +363,7 @@ export default function PickupTraveler() {
                 variant="primary"
                 size="small"
                 style={styles.actionButton}
-                onPress={() => setShowScanner(true)}
+                onPress={() => setShowScanner(true)} // Simply open the scanner
               >
                 <MapPin size={14} color="#fff" />
                 <Text style={styles.buttonText}>Scan QR</Text>
@@ -617,14 +579,12 @@ export default function PickupTraveler() {
         </View>
       </Modal>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
+      <QRCodeScanner
         visible={showScanner}
-        onRequestClose={() => setShowScanner(false)}
-      >
-        {/* Scanner modal content remains commented out */}
-      </Modal>
+        onClose={() => setShowScanner(false)}
+        pickups={pickups}
+        setPickups={setPickups}
+      />
 
       <TouchableOpacity style={styles.messageBubble} onPress={openChat}>
         <MessageCircle size={24} color="#ffffff" />
