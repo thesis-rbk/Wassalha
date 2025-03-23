@@ -282,7 +282,7 @@ const Dashboard = () => {
 
     fetchCounts();
   }, []);
-  
+
   // Calculate total users and active users whenever the individual counts change
   useEffect(() => {
     // Calculate total users
@@ -472,11 +472,11 @@ const Dashboard = () => {
 
   // Transactions data
   const transactions = [
-    { name: 'Evergrow', amount: '+$145' },
-    { name: 'StartUp', amount: '+$90' },
-    { name: 'Meadows', amount: '+$75' },
-    { name: 'HealthCare', amount: '+$68' },
-    { name: 'WithFirm', amount: '+$55' }
+    { name: 'order', amount: '+$145' },
+    { name: 'order2', amount: '+$90' },
+    { name: 'order3', amount: '+$75' },
+    { name: 'order4', amount: '+$68' }
+  
   ];
 
   // // Support tickets data
@@ -544,49 +544,74 @@ const Dashboard = () => {
         </div>
 
         {/* Charts Section */}
-        <div className={styles.chartsContainer}>
-          {/* Trend Chart */}
+        <div className={styles.chartsContainer} style={{ gridTemplateColumns: "2fr 1fr 1fr" }}>
+          {/* Trend Chart - Give more space to this */}
           <div className={styles.chartCard}>
             <h3>Posts Overview</h3>
             <Bar data={barData} options={chartOptions} />
           </div>
 
-          {/* User Chart */}
-          <div className={styles.chartCard}>
+          {/* User Chart - Make it smaller and ensure pie chart is visible */}
+          <div className={styles.chartCard} style={{ height: '250px' }}>
             <h3>User Distribution</h3>
+            <div style={{ height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Pie data={userChartData} options={{
               ...chartOptions,
-              maintainAspectRatio: false
+                maintainAspectRatio: true,
+                responsive: true
             }} />
+            </div>
           </div>
 
-          {/* Transactions - with fixed height and no scrollbar */}
-          <div className={styles.chartCard}>
+          {/* Transactions - with fixed height and proper button positioning */}
+          <div className={styles.chartCard} style={{ position: 'relative' }}>
             <h3>Transactions</h3>
-            <div className={styles.transactionsListNoScroll}>
+            <div style={{ marginTop: '10px', marginBottom: '50px' }}>
               {transactions.map((transaction, index) => (
                 <div key={index} className={styles.transactionItem}>
                   <span>{transaction.name}</span>
                   <span className={styles.amount}>{transaction.amount}</span>
                 </div>
               ))}
-              <button className={styles.viewAllButton}>View all transactions</button>
             </div>
+            <button 
+              className={styles.viewAllButton}
+              style={{ 
+                position: 'absolute', 
+                bottom: '15px', 
+                left: '15px', 
+                right: '15px', 
+                width: 'calc(100% - 30px)'
+              }}
+            >
+              View all transactions
+            </button>
           </div>
         </div>
 
-        {/* Bottom Section - now with just tickets and map */}
-        <div className={styles.bottomContainer}>
-          {/* Support Tickets */}
-          <div className={styles.ticketsCard}>
+        {/* Bottom Section - with equal heights for tickets and map */}
+        <div className={styles.bottomContainer} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+          {/* Support Tickets - with height matching map */}
+          <div className={styles.ticketsCard} style={{ 
+            position: 'relative', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: '100%', 
+            minHeight: '470px',
+            maxHeight: '470px' 
+          }}>
             <h3>Support Tickets</h3>
-            <div className={styles.ticketsList}>
+            <div className={styles.ticketsList} style={{ 
+              overflowY: 'auto', 
+              flex: 1, 
+              marginBottom: '50px' 
+            }}>
               {ticketData.length > 0 ? (
                 ticketData.slice(0, 4).map((ticket, index) => (
-                  <div key={index} className={styles.ticketItem}>
+                <div key={index} className={styles.ticketItem}>
                     <span>{ticket.user?.email || 'No email'}</span>
                     <span>{ticket.title || 'No title'}</span>
-                  </div>
+                </div>
                 ))
               ) : (
                 <div className={styles.noData}>No tickets available</div>
@@ -595,15 +620,30 @@ const Dashboard = () => {
             <button 
               className={styles.viewAllButton}
               onClick={() => router.push('/ListOfTickets')}
+              style={{ 
+                position: 'absolute', 
+                bottom: '15px', 
+                left: '15px', 
+                right: '15px', 
+                width: 'calc(100% - 30px)'
+              }}
             >
               View all tickets
             </button>
           </div>
 
           {/* Customer Demographics Map */}
-          <div className={styles.mapCard}>
+          <div className={styles.mapCard} style={{ 
+            height: '100%',
+            minHeight: '470px',
+            maxHeight: '470px',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
             <h3>Customer Demographic</h3>
+            <div style={{ flex: 1, position: 'relative' }}>
             <WorldMap />
+            </div>
           </div>
         </div>
       </div>
