@@ -110,10 +110,10 @@ export default function PaymentScreen() {
         throw new Error("Failed to create payment intent");
       }
 
-      const { clientSecret, error } = await response.json();
+      const { clientSecret, error: paymentIntentError } = await response.json();
 
-      if (error) {
-        throw new Error(error);
+      if (paymentIntentError) {
+        throw new Error(paymentIntentError);
       }
 
       // Step 2: Confirm the payment
@@ -128,29 +128,31 @@ export default function PaymentScreen() {
         throw new Error(confirmError.message);
       }
 
-      if (paymentIntent) {
-        // Send payment completed notification
-        if (userData?.id) {
-          sendNotification('payment_completed', {
-            travelerId: params.travelerId,
-            requesterId: userData.id,
-            requestDetails: {
-              goodsName: params.goodsName || 'your ordered item',
-              requestId: params.idRequest,
-              orderId: params.idOrder,
-              processId: params.idProcess,
-              amount: totalAmount.toFixed(2)
-            }
-          });
-        }
-
-        Alert.alert("Success", "Payment successful!");
-        console.log("Payment successful:", paymentIntent);
-        router.replace({
-          pathname: "/pickup/pickup",
-          params: params,
+      if (!paymentIntent) {
+        throw new Error("Payment failed: No payment intent returned");
+      }
+      
+      // Payment successful - send notification and navigate
+      if (userData?.id) {
+        sendNotification('payment_completed', {
+          travelerId: params.travelerId,
+          requesterId: userData.id,
+          requestDetails: {
+            goodsName: params.goodsName || 'your ordered item',
+            requestId: params.idRequest,
+            orderId: params.idOrder,
+            processId: params.idProcess,
+            amount: totalAmount.toFixed(2)
+          }
         });
       }
+
+      Alert.alert("Success", "Payment successful!");
+      console.log("Payment successful:", paymentIntent);
+      router.replace({
+        pathname: "/pickup/pickup",
+        params: params,
+      });
     } catch (error: Error | any) {
       console.error("Payment error:", error);
       
