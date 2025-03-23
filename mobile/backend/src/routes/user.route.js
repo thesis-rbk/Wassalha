@@ -21,6 +21,7 @@ const {
   verifyCreditCard,
   submitQuestionnaire,
   verifyUserProfile,
+  getUserDemographics,
 } = require("../controllers/user.controller");
 const upload = require('../middleware/multerMiddleware');
 const { getMessages } = require("../controllers/message.controller");
@@ -32,9 +33,13 @@ const router = express.Router();
 router.post("/register",upload.single('image'), signup);
 router.post("/login", loginUser);
 router.post("/admin/login", loginAdmin);
-router.post("/google-login", googleLogin); // New Google login endpoint
+router.post("/google-login", googleLogin); // Regular Google login endpoint
+router.post("/admin/google-login", googleLogin); // Admin Google login (uses same function with path detection)
 router.post("/reset-password/request", requestPasswordReset);
 router.post("/reset-password", resetPassword);
+// Add admin password reset routes using the same functions
+router.post("/admin/reset-password/request", requestPasswordReset);
+router.post("/admin/reset-password", resetPassword);
 // New route for updating referral source
 router.post("/update-referral-source", updateReferralSource);
 router.post("/update-preferred-categories", updatePreferredCategories);
@@ -66,6 +71,7 @@ router.post(
 
 // User CRUD routes
 router.get("/", getUsers); // Get all users
+router.get("/demographics", authenticateAdmin, getUserDemographics); // Get user demographics
 router.get("/:id", getUserById); // Get a single user
 router.put("/:id", updateUser); // Update user
 router.put("/:id/ban", authenticateAdmin, banUser); // Ban/Unban a user

@@ -40,11 +40,16 @@
   
   .moonIcon {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 20px;
+    right: 20px;
     cursor: pointer;
     color: var(--color-primary);
     transition: color 0.3s ease;
+    z-index: 2;
+  }
+  
+  .darkMode .moonIcon {
+    color: var(--color-secondary);
   }
   
   .formContainer {
@@ -52,7 +57,6 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
-   
     margin-top: 20px;
   }
   
@@ -65,25 +69,29 @@
   
   .inputWrapper {
     position: relative;
+    width: 100%;
   }
   
   .input {
     margin: 10px 0;
-    padding: 10px;
-    width: 380px;
+    padding: 12px 15px;
+    width: 100%;
     border: 1px solid var(--color-primary);
     border-radius: var(--radius-small);
     transition: border-color 0.3s ease;
+    font-size: 16px;
+    box-sizing: border-box;
   }
   
   .input:focus {
     border-color: var(--color-secondary);
     outline: none;
+    box-shadow: 0 0 0 2px rgba(1, 138, 190, 0.2);
   }
   
   .eyeIcon {
     position: absolute;
-    right: 10px;
+    right: 15px;
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
@@ -91,8 +99,8 @@
   }
   
   .button {
-    padding: 10px;
-    margin-top: 10px;
+    padding: 12px;
+    margin-top: 20px;
     background-color: var(--color-primary);
     color: white;
     border: none;
@@ -100,6 +108,8 @@
     cursor: pointer;
     transition: background-color 0.3s ease;
     width: 100%;
+    font-size: 16px;
+    font-weight: 600;
   }
   
   .button:hover {
@@ -107,7 +117,232 @@
   }
   
   .error {
-    color: red;
+    color: #e53935;
     font-size: 14px;
+    margin-top: 10px;
+    text-align: left;
+    width: 100%;
+  }
+  
+  .statusMessage {
+    color: #f59e0b;
+    font-size: 14px;
+    margin-top: 10px;
+    text-align: left;
+    width: 100%;
+    background-color: rgba(245, 158, 11, 0.1);
+    padding: 8px;
+    border-radius: 4px;
+    border-left: 3px solid #f59e0b;
+  }
+  
+  .darkMode .statusMessage {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+  }
+  
+  /* Forgot password link styling */
+  .forgotPasswordContainer {
+    width: 100%;
+    text-align: right;
+    margin-top: 15px;
+  }
+  
+  .forgotPasswordLink {
+    color: #3b82f6;
+    font-size: 14px;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  
+  .forgotPasswordLink:hover {
+    color: #2563eb;
+    text-decoration: underline;
+  }
+  
+  /* Dark mode adjustments */
+  .darkMode .forgotPasswordLink {
+    color: #60a5fa;
+  }
+  
+  .darkMode .forgotPasswordLink:hover {
+    color: #93c5fd;
+  }
+  
+  /* Header container for ForgotPassword page */
+  .headerContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+  
+  .backButton {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    cursor: pointer;
+    color: var(--color-primary);
+    transition: color 0.3s ease;
+    z-index: 2;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .backButton:hover {
+    color: var(--color-secondary);
+    background-color: rgba(1, 138, 190, 0.1);
+  }
+  
+  .darkMode .backButton {
+    color: #d1d5db;
+  }
+  
+  .darkMode .backButton:hover {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .instructions {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #4b5563;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  .darkMode .instructions {
+    color: #d1d5db;
+  }
+  
+  .success {
+    color: #10b981;
+    text-align: center;
+    margin: 10px 0;
+    font-size: 14px;
+    width: 100%;
+  }
+  
+  .divider {
+    width: 100%;
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
+  }
+  
+  .divider::before, .divider::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 45%;
+    height: 1px;
+    background-color: #ddd;
+  }
+  
+  .divider::before {
+    left: 0;
+  }
+  
+  .divider::after {
+    right: 0;
+  }
+  
+  .divider span {
+    display: inline-block;
+    background-color: var(--color-white);
+    padding: 0 10px;
+    position: relative;
+    z-index: 1;
+    color: #777;
+    font-size: 14px;
+  }
+  
+  .darkMode .divider span {
+    background-color: #333;
+    color: #aaa;
+  }
+  
+  .darkMode .divider::before, .darkMode .divider::after {
+    background-color: #555;
+  }
+  
+  .googleButton {
+    padding: 12px;
+    background-color: #fff;
+    color: #444;
+    border: 1px solid #ddd;
+    border-radius: var(--radius-small);
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
+    font-size: 16px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  .googleButton:hover {
+    background-color: #f8f8f8;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  .darkMode .googleButton {
+    background-color: #444;
+    color: #fff;
+    border-color: #555;
+  }
+  
+  .darkMode .googleButton:hover {
+    background-color: #555;
+  }
+  
+  .googleIcon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* Add these styles for the resend verification code button */
+  .resendContainer {
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .resendButton {
+    background: none;
+    border: none;
+    color: #3182ce;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  .resendButton:hover:not(.disabled) {
+    text-decoration: underline;
+    background-color: rgba(49, 130, 206, 0.1);
+  }
+  
+  .resendButton.disabled {
+    color: #a0aec0;
+    cursor: not-allowed;
+  }
+  
+  .dark .resendButton {
+    color: #63b3ed;
+  }
+  
+  .dark .resendButton.disabled {
+    color: #718096;
   }
   

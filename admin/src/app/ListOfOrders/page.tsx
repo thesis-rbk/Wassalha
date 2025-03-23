@@ -225,11 +225,31 @@ export default function ListOfOrders() {
                     {order.traveler.profile.firstName} {order.traveler.profile.lastName}
                   </td>
                   <td className={tableStyles.td}>
-                    <img 
-                      src={order.traveler.profile.image?.url || "/default-profile.png"}
-                      alt="Traveler"
-                      className={tableStyles.userImage}
-                    />
+                    {order.traveler.profile.image?.url ? (
+                      <img 
+                        src={order.traveler.profile.image.url}
+                        alt="Traveler"
+                        className={tableStyles.userImage}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "50%",
+                          backgroundColor: '#e0e0e0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1.2rem',
+                          color: '#666'
+                        }}
+                      >
+                        {order.traveler.profile.firstName?.[0]?.toUpperCase() || 
+                         (order.traveler.profile.firstName?.length === 0 && order.traveler.profile.lastName?.[0]?.toUpperCase()) || 
+                         'T'}
+                      </div>
+                    )}
                   </td>
                   <td className={tableStyles.td}>{order.request.goodsLocation}</td>
                   <td className={tableStyles.td}>{order.request.goodsDestination}</td>

@@ -843,3 +843,176 @@ select.input {
     padding: 20px;
     margin-bottom: 20px; /* Reduced margin since buttons are not fixed anymore */
 }
+
+/* Success and error popup styles */
+.popup {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.successPopup, .errorPopup {
+    padding: 15px 25px;
+    border-radius: 5px;
+    font-weight: 500;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.successPopup {
+    background-color: var(--color-success);
+    color: white;
+}
+
+.errorPopup {
+    background-color: var(--color-danger);
+    color: white;
+}
+
+/* Styles for the update popup */
+.updatePopupOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.updatePopup {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
+    padding: 0;
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out;
+}
+
+.updatePopupContent {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.updatePopupIcon {
+    width: 60px;
+    height: 60px;
+    background-color: var(--color-success);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    margin-bottom: 15px;
+}
+
+.updatePopup h3 {
+    font-size: 20px;
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.updatePopup p {
+    margin: 0 0 25px 0;
+    color: #666;
+}
+
+.updatePopupButton {
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 30px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.updatePopupButton:hover {
+    background-color: #006d82;
+}
+
+/* Dark mode styles for update popup */
+:global(.dark-mode) .updatePopup {
+    background-color: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark-mode) .updatePopup h3 {
+    color: var(--color-text);
+}
+
+:global(.dark-mode) .updatePopup p {
+    color: var(--color-text);
+}
+
+:global(.dark-mode) .updatePopupIcon {
+    background-color: var(--color-success);
+}
+
+:global(.dark-mode) .updatePopupButton {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+:global(.dark-mode) .updatePopupButton:hover {
+    background-color: #006d82;
+    box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+:global(.dark-mode) .updatePopupOverlay {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Dark mode input field fixes */
+:global(.dark-mode) .input,
+:global(.dark-mode) .textarea,
+:global(.dark-mode) select.input {
+    background-color: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border);
+}
+
+:global(.dark-mode) .input:focus,
+:global(.dark-mode) .textarea:focus,
+:global(.dark-mode) select.input:focus {
+    background-color: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-primary);
+    outline: none;
+    box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+/* Fix autocomplete background in dark mode */
+:global(.dark-mode) .input:-webkit-autofill,
+:global(.dark-mode) .input:-webkit-autofill:hover, 
+:global(.dark-mode) .input:-webkit-autofill:focus,
+:global(.dark-mode) .input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--color-card-bg) inset !important;
+    -webkit-text-fill-color: var(--color-text) !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
