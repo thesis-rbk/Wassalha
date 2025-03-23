@@ -16,7 +16,7 @@ import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { router, useLocalSearchParams } from "expo-router";
 import { BACKEND_URL } from "@/config";
-import { useNotification } from '@/context/NotificationContext';
+import { useNotification } from "@/context/NotificationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 
@@ -75,15 +75,15 @@ export default function PaymentScreen() {
     try {
       // Send payment initiated notification
       if (userData?.id) {
-        sendNotification('payment_initiated', {
+        sendNotification("payment_initiated", {
           travelerId: params.travelerId,
           requesterId: userData.id,
           requestDetails: {
-            goodsName: params.goodsName || 'your ordered item',
+            goodsName: params.goodsName || "your ordered item",
             requestId: params.idRequest,
             orderId: params.idOrder,
-            processId: params.idProcess
-          }
+            processId: params.idProcess,
+          },
         });
       }
 
@@ -131,16 +131,16 @@ export default function PaymentScreen() {
       if (paymentIntent) {
         // Send payment completed notification
         if (userData?.id) {
-          sendNotification('payment_completed', {
+          sendNotification("payment_completed", {
             travelerId: params.travelerId,
             requesterId: userData.id,
             requestDetails: {
-              goodsName: params.goodsName || 'your ordered item',
+              goodsName: params.goodsName || "your ordered item",
               requestId: params.idRequest,
               orderId: params.idOrder,
               processId: params.idProcess,
-              amount: totalAmount.toFixed(2)
-            }
+              amount: totalAmount.toFixed(2),
+            },
           });
         }
 
@@ -153,22 +153,22 @@ export default function PaymentScreen() {
       }
     } catch (error: Error | any) {
       console.error("Payment error:", error);
-      
+
       // Send payment failed notification
       if (userData?.id) {
-        sendNotification('payment_failed', {
+        sendNotification("payment_failed", {
           travelerId: params.travelerId,
           requesterId: userData.id,
           requestDetails: {
-            goodsName: params.goodsName || 'your ordered item',
+            goodsName: params.goodsName || "your ordered item",
             requestId: params.idRequest,
             orderId: params.idOrder,
             processId: params.idProcess,
-            errorMessage: error.message || "Payment processing failed"
-          }
+            errorMessage: error.message || "Payment processing failed",
+          },
         });
       }
-      
+
       Alert.alert("Error", error.message || "Something went wrong");
     } finally {
       setIsProcessing(false);

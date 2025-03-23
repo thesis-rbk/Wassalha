@@ -18,13 +18,21 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-import { Send, ArrowLeft, Paperclip, FileText, Download, Image as ImageIcon, File } from "lucide-react-native";
+import {
+  Send,
+  ArrowLeft,
+  Paperclip,
+  FileText,
+  Download,
+  Image as ImageIcon,
+  File,
+} from "lucide-react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { sendMessage as apiSendMessage } from "@/services/chatService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BACKEND_URL } from "@/config";
-import { getSocket, connectSocket } from "@/services/SocketService";
+import { getSocket, connectSocket } from "../../services/SocketService";
 import { Socket } from "socket.io-client";
 import * as DocumentPicker from "expo-document-picker";
 
@@ -55,15 +63,15 @@ export default function ChatScreen() {
 
     const initializeSocket = async () => {
       if (!user?.id) {
-        console.log('👤 No user logged in, skipping chat socket setup');
+        console.log("👤 No user logged in, skipping chat socket setup");
         return;
       }
 
       try {
-        console.log('🔄 Setting up chat socket for user:', user.id);
+        console.log("🔄 Setting up chat socket for user:", user.id);
 
         // Get socket instance but with explicit userId in the query
-        const chatSocket = await getSocket('chat', { userId: user.id });
+        const chatSocket = await getSocket("chat", { userId: user.id });
 
         if (mounted && chatSocket) {
           setSocket(chatSocket);
@@ -74,20 +82,24 @@ export default function ChatScreen() {
           // Join chat room
           if (chatSocket.connected) {
             console.log(`Joining chat room: chat_${chatId} as user ${user.id}`);
-            chatSocket.emit('join_chat', chatId);
+            chatSocket.emit("join_chat", chatId);
           }
 
           // Re-join chat room on reconnect
-          chatSocket.on('connect', () => {
-            console.log(`Socket reconnected, joining chat room: chat_${chatId}`);
-            chatSocket.emit('join_chat', chatId);
+          chatSocket.on("connect", () => {
+            console.log(
+              `Socket reconnected, joining chat room: chat_${chatId}`
+            );
+            chatSocket.emit("join_chat", chatId);
           });
 
           // Setup listeners
-          chatSocket.on('receive_message', (newMessage) => {
-            console.log('Received new message:', newMessage);
-            setMessages(prevMessages => {
-              const exists = prevMessages.some(msg => msg.id === newMessage.id);
+          chatSocket.on("receive_message", (newMessage) => {
+            console.log("Received new message:", newMessage);
+            setMessages((prevMessages) => {
+              const exists = prevMessages.some(
+                (msg) => msg.id === newMessage.id
+              );
               if (!exists) {
                 return [newMessage, ...prevMessages];
               }
@@ -95,12 +107,12 @@ export default function ChatScreen() {
             });
           });
 
-          chatSocket.on('error', (error) => {
-            console.error('❌ Socket error:', error);
+          chatSocket.on("error", (error) => {
+            console.error("❌ Socket error:", error);
           });
         }
       } catch (error) {
-        console.error('❌ Error initializing chat socket:', error);
+        console.error("❌ Error initializing chat socket:", error);
       }
     };
 
@@ -178,26 +190,26 @@ export default function ChatScreen() {
     // Send via socket
     try {
       if (socket && socket.connected) {
-        console.log('Sending message via socket:', {
+        console.log("Sending message via socket:", {
           chatId: parseInt(chatId.toString()),
           content: newMessage,
-          type: 'text'
+          type: "text",
         });
 
-        socket.emit('send_message', {
+        socket.emit("send_message", {
           chatId: parseInt(chatId.toString()),
           content: newMessage,
-          type: 'text'
+          type: "text",
         });
       } else {
         // Fallback to REST API
-        console.log('Socket not available, using REST API');
+        console.log("Socket not available, using REST API");
         await apiSendMessage(chatId, newMessage);
         fetchMessages();
       }
     } catch (error) {
       console.error("Error sending message:", error);
-      Alert.alert('Error', 'Failed to send message. Please try again.');
+      Alert.alert("Error", "Failed to send message. Please try again.");
     }
   };
 
@@ -206,32 +218,31 @@ export default function ChatScreen() {
    */
   const handleDocumentPick = async () => {
     try {
-      console.log('Opening document picker...');
+      console.log("Opening document picker...");
 
       // Launch document picker
       const result = await DocumentPicker.getDocumentAsync({
         copyToCacheDirectory: true,
-        type: '*/*',
+        type: "*/*",
       });
 
-      console.log('Document picker result:', result);
+      console.log("Document picker result:", result);
 
       if (result.canceled) {
-        console.log('Document picking was cancelled');
+        console.log("Document picking was cancelled");
         return;
       }
 
       const document = result.assets[0];
-      console.log('Selected document:', document);
+      console.log("Selected document:", document);
 
       // Upload the document
       await uploadDocument(document);
-
     } catch (error) {
-      console.error('Error picking document:', error);
+      console.error("Error picking document:", error);
       Alert.alert(
-        'Document Error',
-        'There was a problem selecting the document. Please try again.'
+        "Document Error",
+        "There was a problem selecting the document. Please try again."
       );
     }
   };
@@ -241,34 +252,34 @@ export default function ChatScreen() {
    */
   const uploadDocument = async (document: any) => {
     if (!document || !document.uri) {
-      Alert.alert('Error', 'Invalid document');
+      Alert.alert("Error", "Invalid document");
       return;
     }
 
     setIsUploading(true);
 
     try {
-      console.log('Preparing to upload document...');
+      console.log("Preparing to upload document...");
 
       // Get the auth token
-      const token = await AsyncStorage.getItem('jwtToken');
+      const token = await AsyncStorage.getItem("jwtToken");
       if (!token) {
-        throw new Error('Authentication token not found');
+        throw new Error("Authentication token not found");
       }
 
       // Create FormData for multipart upload
       const formData = new FormData();
 
       // Append the file
-      formData.append('file', {
+      formData.append("file", {
         uri: document.uri,
-        type: document.mimeType || 'application/octet-stream',
-        name: document.name || 'document'
+        type: document.mimeType || "application/octet-stream",
+        name: document.name || "document",
       } as any);
 
-      console.log('Uploading document:', {
+      console.log("Uploading document:", {
         name: document.name,
-        type: document.mimeType
+        type: document.mimeType,
       });
 
       // Upload the file
@@ -277,7 +288,7 @@ export default function ChatScreen() {
         formData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -287,18 +298,18 @@ export default function ChatScreen() {
 
       // Step 2: Now create a message with this media
       if (socket && socket.connected) {
-        console.log('Sending media message via socket:', {
+        console.log("Sending media message via socket:", {
           chatId: parseInt(chatId.toString()),
-          content: `Sent a file: ${document.name || 'document'}`,
-          type: 'document',
-          mediaId: parseInt(data.mediaId)
+          content: `Sent a file: ${document.name || "document"}`,
+          type: "document",
+          mediaId: parseInt(data.mediaId),
         });
 
-        socket.emit('send_message', {
+        socket.emit("send_message", {
           chatId: parseInt(chatId.toString()),
-          content: `Sent a file: ${document.name || 'document'}`,
-          type: 'document',
-          mediaId: parseInt(data.mediaId)
+          content: `Sent a file: ${document.name || "document"}`,
+          type: "document",
+          mediaId: parseInt(data.mediaId),
         });
 
         // Wait a bit and refresh messages
@@ -307,13 +318,13 @@ export default function ChatScreen() {
         }, 1000);
       } else {
         // If socket is not available, create message with REST API
-        console.log('Socket not available, creating message with REST API');
+        console.log("Socket not available, creating message with REST API");
         await axiosInstance.post(
           `/api/chats/${chatId}/messages`,
           {
-            content: `Sent a file: ${document.name || 'document'}`,
-            type: 'document',
-            mediaId: parseInt(data.mediaId)
+            content: `Sent a file: ${document.name || "document"}`,
+            type: "document",
+            mediaId: parseInt(data.mediaId),
           },
           {
             headers: {
@@ -325,12 +336,11 @@ export default function ChatScreen() {
         // Refresh messages to show the new one
         fetchMessages();
       }
-
     } catch (error) {
-      console.error('Error uploading document:', error);
+      console.error("Error uploading document:", error);
       Alert.alert(
-        'Upload Failed',
-        'Could not upload the document. Please try again later.'
+        "Upload Failed",
+        "Could not upload the document. Please try again later."
       );
     } finally {
       setIsUploading(false);
@@ -342,7 +352,8 @@ export default function ChatScreen() {
     const isMyMessage = item.senderId?.toString() === userId;
 
     // Determine if this message contains a file
-    const hasFile = item.type === 'document' || item.type === 'image' || item.media;
+    const hasFile =
+      item.type === "document" || item.type === "image" || item.media;
 
     return (
       <View
@@ -371,10 +382,16 @@ export default function ChatScreen() {
           >
             {/* File icon based on type */}
             <View style={styles.fileIconContainer}>
-              {item.media?.type === 'IMAGE' ? (
-                <ImageIcon size={24} color={isMyMessage ? "#ffffff" : "#3b82f6"} />
-              ) : item.media?.type === 'DOCUMENT' ? (
-                <FileText size={24} color={isMyMessage ? "#ffffff" : "#3b82f6"} />
+              {item.media?.type === "IMAGE" ? (
+                <ImageIcon
+                  size={24}
+                  color={isMyMessage ? "#ffffff" : "#3b82f6"}
+                />
+              ) : item.media?.type === "DOCUMENT" ? (
+                <FileText
+                  size={24}
+                  color={isMyMessage ? "#ffffff" : "#3b82f6"}
+                />
               ) : (
                 <File size={24} color={isMyMessage ? "#ffffff" : "#3b82f6"} />
               )}
@@ -385,11 +402,11 @@ export default function ChatScreen() {
               <ThemedText
                 style={[
                   styles.fileName,
-                  isMyMessage ? styles.myMessageText : styles.theirMessageText
+                  isMyMessage ? styles.myMessageText : styles.theirMessageText,
                 ]}
                 numberOfLines={1}
               >
-                {item.media?.filename || 'File attachment'}
+                {item.media?.filename || "File attachment"}
               </ThemedText>
 
               <View style={styles.fileMetaRow}>
@@ -413,10 +430,12 @@ export default function ChatScreen() {
         )}
 
         {/* Timestamp */}
-        <ThemedText style={[
-          styles.messageTime,
-          isMyMessage ? styles.myMessageTime : styles.theirMessageTime
-        ]}>
+        <ThemedText
+          style={[
+            styles.messageTime,
+            isMyMessage ? styles.myMessageTime : styles.theirMessageTime,
+          ]}
+        >
           {new Date(item.time).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -430,16 +449,16 @@ export default function ChatScreen() {
   const handleFileOpen = async (media: any) => {
     try {
       if (!media || !media.url) {
-        Alert.alert('Error', 'File URL not available');
+        Alert.alert("Error", "File URL not available");
         return;
       }
 
       // Construct the full URL
-      const fileUrl = media.url.startsWith('http')
+      const fileUrl = media.url.startsWith("http")
         ? media.url
         : `${BACKEND_URL}${media.url}`;
 
-      console.log('Opening file:', fileUrl);
+      console.log("Opening file:", fileUrl);
 
       // Check if the URL can be opened
       const canOpen = await Linking.canOpenURL(fileUrl);
@@ -448,23 +467,23 @@ export default function ChatScreen() {
         await Linking.openURL(fileUrl);
       } else {
         Alert.alert(
-          'Cannot Open File',
-          'Your device cannot open this type of file.',
+          "Cannot Open File",
+          "Your device cannot open this type of file.",
           [
-            { text: 'Cancel', style: 'cancel' },
+            { text: "Cancel", style: "cancel" },
             {
-              text: 'Copy URL',
+              text: "Copy URL",
               onPress: () => {
                 // Implement clipboard copy here if needed
-                Alert.alert('URL Copied', 'File URL copied to clipboard');
-              }
-            }
+                Alert.alert("URL Copied", "File URL copied to clipboard");
+              },
+            },
           ]
         );
       }
     } catch (error) {
-      console.error('Error opening file:', error);
-      Alert.alert('Error', 'Could not open the file');
+      console.error("Error opening file:", error);
+      Alert.alert("Error", "Could not open the file");
     }
   };
 
@@ -558,7 +577,7 @@ export default function ChatScreen() {
             <TouchableOpacity
               style={[
                 styles.sendButton,
-                (isUploading || !newMessage.trim()) && styles.disabledButton
+                (isUploading || !newMessage.trim()) && styles.disabledButton,
               ]}
               onPress={handleSend}
               disabled={isUploading || !newMessage.trim()}
@@ -700,8 +719,8 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 8,
   },
   disabledButton: {
@@ -711,10 +730,10 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   fileContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: 4,
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: "rgba(0,0,0,0.05)",
     borderRadius: 8,
     padding: 10,
   },
@@ -722,26 +741,26 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.1)",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   fileDetails: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   fileName: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: 4,
   },
   fileMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   extensionBadge: {
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: "rgba(0,0,0,0.1)",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -749,13 +768,13 @@ const styles = StyleSheet.create({
   },
   extensionText: {
     fontSize: 10,
-    color: '#64748b',
-    textTransform: 'uppercase',
+    color: "#64748b",
+    textTransform: "uppercase",
   },
   myMessageTime: {
-    color: 'rgba(255,255,255,0.7)',
+    color: "rgba(255,255,255,0.7)",
   },
   theirMessageTime: {
-    color: '#64748b',
+    color: "#64748b",
   },
 });
