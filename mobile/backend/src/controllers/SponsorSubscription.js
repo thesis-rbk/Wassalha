@@ -351,9 +351,9 @@ const sponsor = {
             // Create the order
             const newOrder = await prisma.orderSponsor.create({
                 data: {
-                    serviceProvider: { connect: { id: serviceProviderId } },
-                    sponsorship: { connect: { id: sponsorshipId } },
-                    recipient: { connect: { id } },
+                    serviceProviderId,
+                    sponsorshipId,
+                    recipientId: id,
                     amount,
                     status: "PENDING",
                 },
@@ -363,7 +363,6 @@ const sponsor = {
         } catch (error) {
             console.error('Error creating order:', error);
             throw error
-            return res.status(500).json({ error: 'Internal server error' });
         }
     }
 }

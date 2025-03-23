@@ -211,9 +211,12 @@ const CreditCardPayment: React.FC = () => {
                     serviceProviderId: sponsorship.sponsor.id,
                     sponsorshipId: id,
                     amount: sponsorship.price,
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`,
+                    }
                 })
-                if (ressss)
-                    console.log('Payment successful');
+
             }
         } catch (error: any) {
             console.error('Error processing payment:', error);
