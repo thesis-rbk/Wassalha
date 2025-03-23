@@ -2,7 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import styles from '../styles/WorldMap.module.css';
-
+import { CountryData } from '../types/CountryData';
+import LeafletMapProps from '../types/LeafletMapProps';
 // Fix for Leaflet marker icons in Next.js
 const fixLeafletIcons = () => {
   // Fix leaflet's default icon paths
@@ -55,15 +56,9 @@ const countryCoordinates: { [key: string]: [number, number] } = {
   'Australia': [-25.3, 133.8]
 };
 
-interface CountryData {
-  country: string;
-  count: number;
-}
 
-interface LeafletMapProps {
-  countryData: CountryData[];
-  isDarkMode: boolean;
-}
+
+
 
 const LeafletMap: React.FC<LeafletMapProps> = ({ countryData, isDarkMode }) => {
   const mapRef = useRef<L.Map | null>(null);

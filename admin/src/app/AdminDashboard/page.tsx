@@ -560,31 +560,22 @@ const Dashboard = () => {
             }} />
           </div>
 
-          {/* Posts Distribution Chart */}
+          {/* Transactions - with fixed height and no scrollbar */}
           <div className={styles.chartCard}>
-            <h3>Posts Distribution</h3>
-            <Pie data={postsChartData} options={{
-              ...chartOptions,
-              maintainAspectRatio: false,
-              plugins: {
-                ...chartOptions.plugins,
-                tooltip: {
-                  callbacks: {
-                    label: function(context: any) {
-                      const label = context.label || '';
-                      const value = context.raw || 0;
-                      const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-                      const percentage = Math.round((value / total) * 100);
-                      return `${label}: ${value} (${percentage}%)`;
-                    }
-                  }
-                }
-              }
-            }} />
+            <h3>Transactions</h3>
+            <div className={styles.transactionsListNoScroll}>
+              {transactions.map((transaction, index) => (
+                <div key={index} className={styles.transactionItem}>
+                  <span>{transaction.name}</span>
+                  <span className={styles.amount}>{transaction.amount}</span>
+                </div>
+              ))}
+              <button className={styles.viewAllButton}>View all transactions</button>
+            </div>
           </div>
         </div>
 
-        {/* Bottom Section */}
+        {/* Bottom Section - now with just tickets and map */}
         <div className={styles.bottomContainer}>
           {/* Support Tickets */}
           <div className={styles.ticketsCard}>
@@ -607,20 +598,6 @@ const Dashboard = () => {
             >
               View all tickets
             </button>
-          </div>
-          
-          {/* Transactions */}
-          <div className={styles.transactionsCard}>
-            <h3>Transactions</h3>
-            <div className={styles.transactionsList}>
-              {transactions.map((transaction, index) => (
-                <div key={index} className={styles.transactionItem}>
-                  <span>{transaction.name}</span>
-                  <span className={styles.amount}>{transaction.amount}</span>
-                </div>
-              ))}
-              <button className={styles.viewAllButton}>View all transactions</button>
-            </div>
           </div>
 
           {/* Customer Demographics Map */}
