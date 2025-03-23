@@ -224,6 +224,10 @@ export default function Nav() {
           <Users size={20} />
           <span className={styles.itemText}>List of Service Providers</span>
         </Link>
+        <Link href="/ListOfTravelers" className={styles.sidebarItem}>
+          <Users size={20} />
+          <span className={styles.itemText}>List of Travelers</span>
+        </Link>
         <Link href="/ListOfCategories" className={styles.sidebarItem}>
           <Tag size={20} />
           <span className={styles.itemText}>List of Categories</span>

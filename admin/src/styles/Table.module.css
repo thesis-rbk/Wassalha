@@ -1865,3 +1865,50 @@
   background: linear-gradient(to left, var(--dark-card-bg, #1F2937), transparent);
 }
 
+/* Add notification styles */
+.notification {
+  padding: 12px 20px;
+  margin: 10px 0;
+  border-radius: 4px;
+  font-weight: 500;
+  animation: fadeIn 0.3s, fadeOut 0.5s 2.5s;
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.notificationSuccess {
+  background-color: #e7f9ed;
+  color: #00a650;
+  border-left: 4px solid #00a650;
+}
+
+.notificationError {
+  background-color: #ffe8e6;
+  color: #e74c3c;
+  border-left: 4px solid #e74c3c;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-20px); }
+}
+
+/* Dark mode support for notifications */
+.darkMode .notification.notificationSuccess {
+  background-color: rgba(0, 166, 80, 0.2);
+  color: #4eff9f;
+}
+
+.darkMode .notification.notificationError {
+  background-color: rgba(231, 76, 60, 0.2);
+  color: #ff6b6b;
+}
+
