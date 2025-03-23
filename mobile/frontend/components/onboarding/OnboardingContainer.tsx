@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { OnboardingScreen } from './OnboardingScreen';
 import { useRouter } from 'expo-router';
+import { OnboardingContainerProps } from '@/types/OnboardingContainerProps';
 const onboardingData = [
   {
     image: require('../../assets/onboarding/global-delivery.png'),
@@ -19,9 +20,7 @@ const onboardingData = [
   },
 ];
 
-interface OnboardingContainerProps {
-  onComplete: () => void;
-}
+
 
 export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) => {
   const [currentStep, setCurrentStep] = useState(1);
