@@ -181,10 +181,8 @@ async function seed() {
           platform: faker.helpers.enumValue(SponsorshipPlatform),
           category: { connect: { id: category.id } },
           sponsor: { connect: { id: sponsor.id } },
-          amount: faker.number.float({ min: 100, max: 1000 }),
           status: faker.helpers.arrayElement(["pending", "active", "completed"]),
           User: { connect: { id: creator.id } },
-          recipients: { connect: recipients.map((r) => ({ id: r.id })) },
         },
       });
     })
@@ -202,7 +200,7 @@ async function seed() {
           cardCvc: faker.finance.creditCardCVV(),
           cardholderName: faker.person.fullName(),
           postalCode: faker.location.zipCode(),
-          amount: sponsorship.amount,
+          amount: sponsorship.price,
           qrCode: faker.datatype.boolean() ? faker.string.alphanumeric(10) : undefined,
           paymentUrl: faker.datatype.boolean() ? faker.internet.url() : undefined,
           currency: faker.helpers.enumValue(PaymentCurrency),

@@ -11,11 +11,11 @@ import platformImages from "../../types/Sponsorship"
 import { Ionicons } from "@expo/vector-icons"
 import { TabBar } from "@/components/navigation/TabBar";
 import { RouteParams } from "@/types/Sponsorship";
-
+import NavigationProp from "@/types/navigation";
 const SponsorshipDetails: React.FC = () => {
     const [activeTab, setActiveTab] = useState("Home");
     const route = useRoute<RouteProp<RouteParams, "SponsorshipDetails">>()
-    const navigation = useNavigation()
+    const navigation = useNavigation<NavigationProp>();
     const { id } = route.params
     const [sponsorship, setSponsorship] = useState<Sponsorship | null>(null)
     const [loading, setLoading] = useState(true)
@@ -33,7 +33,9 @@ const SponsorshipDetails: React.FC = () => {
             setLoading(false)
         }
     }
-
+    const buyNow = () => {
+        navigation.navigate('verification/paymentByKH', { id });
+    };
     // Fetch reviews and calculate average rating
     const fetchReviews = async () => {
         try {
@@ -146,7 +148,7 @@ const SponsorshipDetails: React.FC = () => {
                             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                                 <Text style={styles.backButtonText}>Back</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.buyButton}>
+                            <TouchableOpacity style={styles.buyButton} onPress={buyNow}>
                                 <Text style={styles.buyButtonText}>Buy Now</Text>
                             </TouchableOpacity>
                         </View>

@@ -17,10 +17,10 @@ type RootStackParamList = {
     'verification/sponsorPayment': { id: number };
     "verification/reviewSponsor";
     "home": undefined;
-
     'sponsorshipTrack/initializationBuyer': { id: number };
     "verification/SponsorshipDetails": { id: number };
-
+    "verification/CreditCardVerification": { id: number };
+    "verification/paymentByKH": { id: number };
 };
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;

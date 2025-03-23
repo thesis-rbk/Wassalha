@@ -137,8 +137,12 @@ export default function RootLayout() {
                       options={{ title: "Take Selfie" }}
                     />
                     <Stack.Screen
-                      name="verification/creditCardVerification"
+                      name="verification/CreditCardVerification"
                       options={{ title: "Credit Card Verification" }}
+                    />
+                    <Stack.Screen
+                      name="verification/paymentByKH"
+                      options={{ title: "payment" }}
                     />
                     <Stack.Screen
                       name="orders&requests/order"
@@ -211,7 +215,7 @@ export default function RootLayout() {
                       name="reporting-system/create-ticket"
                       options={{ title: "Create Report" }}
                     />
-                      <Stack.Screen
+                    <Stack.Screen
                       name="goodPost/goodpostpage"
                       options={{ title: "Traveler Posts" }}
                     />

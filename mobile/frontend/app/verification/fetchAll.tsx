@@ -126,10 +126,10 @@ const SponsorshipsScreen: React.FC = () => {
 
     // Handle "Buy" button press
     const handleBuyPress = (sponsorshipId: number) => {
-        router.push({
-            pathname: "/sponsorshipTrack/initializationBuyer",
-            params: { id: sponsorshipId },
-        });
+        navigation.navigate(
+            "verification/CreditCardVerification",
+            { id: sponsorshipId }
+        );
     };
 
     // Handle "Add Sponsorship" button press
