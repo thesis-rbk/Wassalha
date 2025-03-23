@@ -252,13 +252,32 @@ const googleLogin = async (req, res) => {
     const email = payload["email"];
     const name = payload["name"];
 
+    // Find user by email or Google ID
     let user = await prisma.user.findFirst({
       where: {
         OR: [{ googleId }, { email }],
       },
+      include: {
+        profile: {
+          include: {
+            image: true
+          }
+        }
+      }
     });
 
+    // If no user exists, create one as a regular user
     if (!user) {
+      // Check if request is for admin login
+      const isAdminLoginRequest = req.path && req.path.includes('/admin/');
+      
+      if (isAdminLoginRequest) {
+        return res.status(403).json({ 
+          error: "No admin account found with this Google account. Please contact system administrator to create an admin account." 
+        });
+      }
+      
+      // For regular login, create a new user
       user = await prisma.user.create({
         data: {
           name,
@@ -267,25 +286,66 @@ const googleLogin = async (req, res) => {
         },
       });
     } else if (!user.googleId) {
+      // If user exists but doesn't have Google ID, update it
       user = await prisma.user.update({
         where: { id: user.id },
         data: { googleId },
+        include: {
+          profile: {
+            include: {
+              image: true
+            }
+          }
+        }
       });
     }
 
+    // For admin login requests, check if user is an admin
+    const isAdminLoginRequest = req.path && req.path.includes('/admin/');
+    if (isAdminLoginRequest && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: "Access denied. Admin privileges required." });
+    }
+
+    // Generate token with appropriate role information
     const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
+      { 
+        id: user.id, 
+        email: user.email,
+        role: user.role 
+      },
+      process.env.JWT_SECRET || "secretkey",
       {
         expiresIn: "1h",
       }
     );
 
-    res.status(200).json({
-      message: "Google login successful",
-      token,
-      user: { id: user.id, name: user.name, email: user.email },
-    });
+    // Response structure varies slightly for admin vs regular login
+    if (isAdminLoginRequest) {
+      res.status(200).json({
+        message: "Admin Google login successful",
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          profile: user.profile ? {
+            image: user.profile.image
+          } : null
+        },
+      });
+    } else {
+      res.status(200).json({
+        message: "Google login successful",
+        token,
+        user: { 
+          id: user.id, 
+          name: user.name, 
+          email: user.email,
+          role: user.role
+        },
+      });
+    }
   } catch (error) {
     console.error("Google login error:", error);
     res.status(401).json({ error: "Invalid Google token" });
@@ -296,6 +356,7 @@ const googleLogin = async (req, res) => {
 
 const requestPasswordReset = async (req, res) => {
   const { email } = req.body;
+  const isAdminRequest = req.path && req.path.includes('/admin/');
 
   try {
     if (!email) {
@@ -312,9 +373,14 @@ const requestPasswordReset = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "No user found with this email" });
     }
+    
+    // For admin requests, verify user is an admin
+    if (isAdminRequest && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: "Access denied. This feature is only for admin users." });
+    }
 
     const resetToken = generateRandomCode();
-    const resetTokenExpiry = new Date(Date.now() + 3600000);
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
 
     await prisma.user.update({
       where: { email },
@@ -324,18 +390,34 @@ const requestPasswordReset = async (req, res) => {
       },
     });
 
+    const subject = isAdminRequest ? "Admin Password Reset Code" : "Password Reset Code";
+    const htmlContent = isAdminRequest ? 
+      `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333; text-align: center;">Admin Password Reset</h2>
+          <p>Hello,</p>
+          <p>You requested a password reset for your admin account. Please use the following code to reset your password:</p>
+          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; letter-spacing: 5px;">
+            ${resetToken}
+          </div>
+          <p>This code will expire in 1 hour.</p>
+          <p>If you didn't request this password reset, please ignore this email or contact support.</p>
+          <p style="margin-top: 30px; color: #777; font-size: 12px;">This is an automated message, please do not reply.</p>
+        </div>
+      ` : 
+      `<p>Your password reset code is: <strong>${resetToken}</strong>. This code expires in 1 hour.</p>`;
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Password Reset Code",
+      subject: subject,
       text: `Your password reset code is: ${resetToken}. This code expires in 1 hour.`,
-      html: `<p>Your password reset code is: <strong>${resetToken}</strong>. This code expires in 1 hour.</p>`,
+      html: htmlContent,
     };
 
     await transporter.sendMail(mailOptions);
     res.status(200).json({ message: "Password reset code sent to your email" });
   } catch (error) {
-    throw error
     console.error("Request password reset error:", error);
     res.status(500).json({ error: "Something went wrong" });
   } finally {
@@ -345,6 +427,7 @@ const requestPasswordReset = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   const { email, code, newPassword } = req.body;
+  const isAdminRequest = req.path && req.path.includes('/admin/');
 
   try {
     if (!email || !code || !newPassword) {
@@ -375,6 +458,11 @@ const resetPassword = async (req, res) => {
 
     if (!user || user.resetToken !== code || !user.resetTokenExpiry) {
       return res.status(400).json({ error: "Invalid or expired code" });
+    }
+
+    // For admin requests, verify user is an admin
+    if (isAdminRequest && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: "Access denied. This feature is only for admin users." });
     }
 
     if (new Date() > user.resetTokenExpiry) {
@@ -1248,6 +1336,41 @@ const verifyUserProfile = async (req, res) => {
   }
 };
 
+// Get user demographics (for the world map)
+const getUserDemographics = async (req, res) => {
+  try {
+    // Get user demographics by country
+    const demographicsByCountry = await prisma.profile.groupBy({
+      by: ['country'],
+      _count: {
+        country: true
+      },
+      orderBy: {
+        _count: {
+          country: 'desc'
+        }
+      }
+    });
+
+    // Format the data
+    const demographicData = demographicsByCountry.map(item => ({
+      country: item.country,
+      count: item._count.country
+    }));
+
+    return res.status(200).json({ 
+      success: true, 
+      data: demographicData 
+    });
+  } catch (error) {
+    console.error('Error fetching user demographics:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to retrieve user demographic data' 
+    });
+  }
+};
+
 module.exports = {
   signup,
   loginUser,
@@ -1269,5 +1392,6 @@ module.exports = {
   verifySelfie,
   verifyCreditCard,
   submitQuestionnaire,
-  verifyUserProfile
+  verifyUserProfile,
+  getUserDemographics
 };

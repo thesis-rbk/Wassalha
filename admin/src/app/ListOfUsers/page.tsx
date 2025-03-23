@@ -18,6 +18,7 @@ export default function ListOfUsers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -25,36 +26,38 @@ export default function ListOfUsers() {
         const token = localStorage.getItem('adminToken');
         
         if (!token) {
+          console.log('No admin token found, redirecting to login');
           router.push('/AdminLogin');
           return;
         }
 
-        const response = await api.get('/api/users?role=USER', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        try {
+          // Let the API interceptor handle adding the token
+          const response = await api.get('/api/users?role=USER');
 
-        if (response.status !== 200) {
-          if (response.status === 401) {
-            localStorage.removeItem('adminToken');
-            localStorage.removeItem('userData');
-            router.push('/AdminLogin');
-            return;
+          if (response.status !== 200) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
-          throw new Error(`HTTP error! status: ${response.status}`);
+
+          const data = response.data;
+          console.log("Fetched users:", data);
+          setUsers(data.data);
+          
+          // Apply initial sorting (newest first)
+          const sortedUsers = [...data.data].sort((a, b) => b.id - a.id);
+          setDisplayedUsers(sortedUsers.slice(0, 5));
+          setIsShowingAll(data.data.length <= 5);
+        } catch (error: any) {
+          console.error("Error fetching users:", error);
+          if (error.response?.status === 401) {
+            // Let the API interceptor handle the redirect
+            console.log('Authentication error. The API interceptor will handle redirection.');
+          } else {
+            setError("Failed to fetch users. Please try again later.");
+          }
         }
-
-        const data = response.data;
-        console.log("Fetched users:", data);
-        setUsers(data.data);
-        
-        // Apply initial sorting (newest first)
-        const sortedUsers = [...data.data].sort((a, b) => b.id - a.id);
-        setDisplayedUsers(sortedUsers.slice(0, 5));
-        setIsShowingAll(data.data.length <= 5);
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error in fetchUsers:", error);
         setError("Failed to fetch users. Please try again later.");
       }
     };
@@ -192,12 +195,20 @@ export default function ListOfUsers() {
             } 
           } : user
         ));
-        alert('User profile verified successfully');
+        showNotification('User profile verified successfully', 'success');
       }
     } catch (error) {
       console.error("Error verifying user profile:", error);
-      alert('Failed to verify user profile');
+      showNotification('Failed to verify user profile', 'error');
     }
+  };
+
+  // Function to show notification
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => {
+      setNotification({ show: false, message: '', type: '' });
+    }, 3000);
   };
 
   return (
@@ -231,6 +242,13 @@ export default function ListOfUsers() {
           </div>
 
           {error && <p className={tableStyles.error}>{error}</p>}
+          
+          {/* Custom Notification */}
+          {notification.show && (
+            <div className={`${tableStyles.notification} ${notification.type === 'success' ? tableStyles.notificationSuccess : tableStyles.notificationError}`}>
+              {notification.message}
+            </div>
+          )}
           
           <div className={`${tableStyles.tableWrapper} ${isDarkMode ? tableStyles.darkMode : ''}`}>
             <table className={`${tableStyles.table} ${isDarkMode ? tableStyles.darkMode : ''}`}>

@@ -26,20 +26,37 @@ export default function HomeScreen() {
 
   const travelersScrollRef = useRef<ScrollView>(null);
   const sponsorsScrollRef = useRef<ScrollView>(null);
-  const scrollAnimationRef = useRef<number | null>(null);
-  const userInteractionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollAnimationRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Track user interaction with scrolling
+  const [userScrolling, setUserScrolling] = useState(false);
+  
+  // Track current scroll positions
+  const [scrollPositions, setScrollPositions] = useState({
+    travelers: 0,
+    sponsors: 0
+  });
 
-  const [contentWidth, setContentWidth] = useState(0);
-  const [containerWidth, setContainerWidth] = useState(0);
-  const [travelerScrollX, setTravelerScrollX] = useState(0);
-  const [sponsorScrollX, setSponsorScrollX] = useState(0);
+  // Store content dimensions
+  const [contentWidths, setContentWidths] = useState({
+    travelers: 0,
+    sponsors: 0
+  });
+  const [containerWidths, setContainerWidths] = useState({
+    travelers: 0,
+    sponsors: 0
+  });
 
   useEffect(() => {
     handleBestTraveler();
-    startAutoScroll();
+    
+    // Only start auto-scrolling if we have data
+    if (travelers.length > 0 && sponsors.length > 0) {
+      startAutoScroll();
+    }
 
     return () => stopAutoScroll();
-  }, [travelers, sponsors]);
+  }, [travelers.length, sponsors.length]);
 
   const handleBestTraveler = async () => {
     try {
@@ -52,62 +69,86 @@ export default function HomeScreen() {
   };
 
   const startAutoScroll = () => {
-    stopAutoScroll();
+    // Don't start auto-scroll if user is actively scrolling
+    if (userScrolling) return;
+    
+    stopAutoScroll(); // Clear any existing interval
 
-    const scrollStep = () => {
-      [
-        { ref: travelersScrollRef, position: travelerScrollX, setPosition: setTravelerScrollX },
-        { ref: sponsorsScrollRef, position: sponsorScrollX, setPosition: setSponsorScrollX }
-      ].forEach(({ ref, position, setPosition }) => {
-        if (ref.current && contentWidth > containerWidth) {
-          const scrollDistance = 2; // Adjusted scroll speed for smoother effect
-          const newPosition = position + scrollDistance;
-
-          ref.current.scrollTo({
-            x: newPosition,
-            animated: false,
-          });
-
-          // Reset when reaching half the content width (due to concatenation)
-          if (newPosition >= contentWidth / 2) {
-            ref.current.scrollTo({ x: 0, animated: false });
-            setPosition(0);
-          } else {
-            setPosition(newPosition);
-          }
+    scrollAnimationRef.current = setInterval(() => {
+      if (!userScrolling && travelersScrollRef.current && travelers.length > 0) {
+        const maxScrollX = Math.max(0, contentWidths.travelers - containerWidths.travelers);
+        const newX = scrollPositions.travelers + 1;
+        
+        // Only scroll if we haven't reached the end
+        if (newX < maxScrollX) {
+          travelersScrollRef.current.scrollTo({ x: newX, animated: false });
+          setScrollPositions(prev => ({...prev, travelers: newX}));
+        } else {
+          // Stop scrolling when reaching the end
+          stopAutoScroll();
         }
-      });
-
-      scrollAnimationRef.current = requestAnimationFrame(scrollStep);
-    };
-
-    scrollAnimationRef.current = requestAnimationFrame(scrollStep);
+      }
+      
+      if (!userScrolling && sponsorsScrollRef.current && sponsors.length > 0) {
+        const maxScrollX = Math.max(0, contentWidths.sponsors - containerWidths.sponsors);
+        const newX = scrollPositions.sponsors + 1;
+        
+        // Only scroll if we haven't reached the end
+        if (newX < maxScrollX) {
+          sponsorsScrollRef.current.scrollTo({ x: newX, animated: false });
+          setScrollPositions(prev => ({...prev, sponsors: newX}));
+        } else {
+          // Stop scrolling when reaching the end
+          stopAutoScroll();
+        }
+      }
+    }, 50); // Adjust this value for scroll speed (smaller = faster)
   };
 
   const stopAutoScroll = () => {
     if (scrollAnimationRef.current) {
-      cancelAnimationFrame(scrollAnimationRef.current);
+      clearInterval(scrollAnimationRef.current);
       scrollAnimationRef.current = null;
     }
   };
 
-  const handleUserInteraction = () => {
+  const handleUserScrollBegin = () => {
+    setUserScrolling(true);
     stopAutoScroll();
-    if (userInteractionTimeoutRef.current) {
-      clearTimeout(userInteractionTimeoutRef.current);
-    }
-    userInteractionTimeoutRef.current = setTimeout(() => {
-      startAutoScroll();
-    }, 2000); // Resume auto-scroll after 2 seconds of inactivity
   };
 
-  const onContainerLayout = (event: LayoutChangeEvent) => {
+  const handleUserScrollEnd = () => {
+    setUserScrolling(false);
+    // Don't restart auto-scroll after user interaction
+  };
+
+  // Track scroll position changes
+  const handleTravelersScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { x } = event.nativeEvent.contentOffset;
+    setScrollPositions(prev => ({...prev, travelers: x}));
+  };
+
+  const handleSponsorsScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { x } = event.nativeEvent.contentOffset;
+    setScrollPositions(prev => ({...prev, sponsors: x}));
+  };
+
+  const onTravelersLayout = (event: LayoutChangeEvent) => {
     const { width } = event.nativeEvent.layout;
-    setContainerWidth(width);
+    setContainerWidths(prev => ({ ...prev, travelers: width }));
   };
 
-  const onContentSizeChange = (contentWidth: number) => {
-    setContentWidth(contentWidth);
+  const onSponsorsLayout = (event: LayoutChangeEvent) => {
+    const { width } = event.nativeEvent.layout;
+    setContainerWidths(prev => ({ ...prev, sponsors: width }));
+  };
+
+  const onTravelersContentSizeChange = (width: number) => {
+    setContentWidths(prev => ({ ...prev, travelers: width }));
+  };
+
+  const onSponsorsContentSizeChange = (width: number) => {
+    setContentWidths(prev => ({ ...prev, sponsors: width }));
   };
 
   const services = [
@@ -177,20 +218,21 @@ export default function HomeScreen() {
           <View style={styles.separator}>
             <ThemedText style={styles.separatorText}>Best Travelers</ThemedText>
           </View>
-          <View style={styles.travelersSection}>
+          <View style={styles.travelersSection} onLayout={onTravelersLayout}>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               ref={travelersScrollRef}
-              onLayout={onContainerLayout}
-              onContentSizeChange={onContentSizeChange}
-              onScrollBeginDrag={handleUserInteraction}
-              onScrollEndDrag={handleUserInteraction}
+              onContentSizeChange={onTravelersContentSizeChange}
+              onScrollBeginDrag={handleUserScrollBegin}
+              onScrollEndDrag={handleUserScrollEnd}
+              onScroll={handleTravelersScroll}
+              scrollEventThrottle={16}
             >
               <View style={styles.listContainer}>
-                {travelers.concat(travelers).map((traveler, index) => (
+                {travelers.map((traveler, index) => (
                   <UserCard
-                    key={index}
+                    key={`traveler-${index}`}
                     name={traveler.user.profile.name || "Traveler"}
                     score={traveler.score}
                     gender={traveler.user.profile.gender}
@@ -211,20 +253,21 @@ export default function HomeScreen() {
           <View style={styles.separator}>
             <ThemedText style={styles.separatorText}>Best Sponsors</ThemedText>
           </View>
-          <View style={styles.sponsorsSection}>
+          <View style={styles.sponsorsSection} onLayout={onSponsorsLayout}>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               ref={sponsorsScrollRef}
-              onLayout={onContainerLayout}
-              onContentSizeChange={onContentSizeChange}
-              onScrollBeginDrag={handleUserInteraction}
-              onScrollEndDrag={handleUserInteraction}
+              onContentSizeChange={onSponsorsContentSizeChange}
+              onScrollBeginDrag={handleUserScrollBegin}
+              onScrollEndDrag={handleUserScrollEnd}
+              onScroll={handleSponsorsScroll}
+              scrollEventThrottle={16}
             >
               <View style={styles.listContainer}>
-                {sponsors.concat(sponsors).map((sponsor, index) => (
+                {sponsors.map((sponsor, index) => (
                   <UserCard
-                    key={index}
+                    key={`sponsor-${index}`}
                     name={sponsor.user.profile.name || "Sponsor"}
                     score={sponsor.score}
                     gender={sponsor.user.profile.gender}

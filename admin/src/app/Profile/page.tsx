@@ -23,6 +23,12 @@ const Profile: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [mounted, setMounted] = useState<boolean>(false);
+    const [showPasswordForm, setShowPasswordForm] = useState<boolean>(false);
+    const [currentPassword, setCurrentPassword] = useState<string>('');
+    const [newPassword, setNewPassword] = useState<string>('');
+    const [confirmPassword, setConfirmPassword] = useState<string>('');
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+    const [isPasswordMode, setIsPasswordMode] = useState<boolean>(false);
     const [updatedProfile, setUpdatedProfile] = useState<PartialUserProfile>({
         profile: {
             firstName: '',
@@ -41,6 +47,10 @@ const Profile: React.FC = () => {
     const [popupType, setPopupType] = useState<'success' | 'error'>('success');
     const [popupMessage, setPopupMessage] = useState<string>('');
     const [showPopup, setShowPopup] = useState<boolean>(false);
+    const [showUpdatePopup, setShowUpdatePopup] = useState<boolean>(false);
+    const [updatePopupMessage, setUpdatePopupMessage] = useState<string>('');
+    const [updatePopupType, setUpdatePopupType] = useState<'success' | 'error'>('success');
+    const [updatePopupAction, setUpdatePopupAction] = useState<string | null>(null);
 
     // Handle mounting to prevent hydration mismatch
     useEffect(() => {
@@ -63,16 +73,13 @@ const Profile: React.FC = () => {
                 try {
                     const token = localStorage.getItem('adminToken');
                     if (!token) {
+                        console.log('No admin token found, redirecting to login');
                         window.location.href = '/AdminLogin';
                         return;
                     }
 
-                    const response = await api.get(`/api/users/${id}`, {
-                        headers: {
-                                'Authorization': `Bearer ${token}`
-                            }
-                        }
-                    );
+                    // Let the API interceptor handle adding the token
+                    const response = await api.get(`/api/users/${id}`);
 
                     if (response.data) {
                         setUserProfile(response.data);
@@ -155,12 +162,24 @@ const Profile: React.FC = () => {
                     isVerified: prev.profile?.isVerified || false
                 }
             } : null);
-            alert(data.message || "User status updated successfully");
+            
+            // Show popup instead of alert
+            setPopupType('success');
+            setPopupMessage(data.message || "User status updated successfully");
+            setShowPopup(true);
+            setTimeout(() => setShowPopup(false), 3000);
         } catch (err) {
             if (axios.isAxiosError(err)) {
-                alert(err.response?.data?.error || "Failed to update user status");
+                // Show error popup instead of alert
+                setPopupType('error');
+                setPopupMessage(err.response?.data?.error || "Failed to update user status");
+                setShowPopup(true);
+                setTimeout(() => setShowPopup(false), 3000);
             } else {
-                alert("Failed to update ban status");
+                setPopupType('error');
+                setPopupMessage("Failed to update ban status");
+                setShowPopup(true);
+                setTimeout(() => setShowPopup(false), 3000);
             }
             console.error(err);
         }
@@ -180,6 +199,7 @@ const Profile: React.FC = () => {
                     isVerified: false
                 }
             });
+            setIsPasswordMode(false);
         }
         setIsEditing(!isEditing);
     };
@@ -188,7 +208,7 @@ const Profile: React.FC = () => {
         const { name, value } = e.target;
 
         setUpdatedProfile((prev) => {
-            if (["firstName", "lastName", "country", "gender"].includes(name)) {
+            if (["firstName", "lastName", "country", "gender", "phoneNumber"].includes(name)) {
                 return {
                     ...prev,
                     profile: {
@@ -211,7 +231,11 @@ const Profile: React.FC = () => {
 
     const handleUpdateUser = async () => {
         if (!userProfile?.id) {
-            alert("No user selected for update");
+            // Replace alert with popup
+            setPopupType('error');
+            setPopupMessage("No user selected for update");
+            setShowPopup(true);
+            setTimeout(() => setShowPopup(false), 3000);
             return;
         }
 
@@ -279,7 +303,11 @@ const Profile: React.FC = () => {
             if (axios.isAxiosError(err)) {
                 errorMessage = err.response?.data?.error || err.message;
             }
-            alert(errorMessage);
+            // Replace alert with popup
+            setPopupType('error');
+            setPopupMessage(errorMessage);
+            setShowPopup(true);
+            setTimeout(() => setShowPopup(false), 3000);
             console.error("Error updating profile:", err);
         }
     };
@@ -308,13 +336,31 @@ const Profile: React.FC = () => {
             setIsEditing(false);
             setSelectedImage(null);
             setPreviewUrl(null);
-            alert("User profile updated successfully!");
+            
+            // Show update success popup instead of alert
+            setUpdatePopupType('success');
+            setUpdatePopupMessage("User profile updated successfully!");
+            setShowUpdatePopup(true);
+        }
+    };
+
+    // Function to close the update popup
+    const handleCloseUpdatePopup = () => {
+        setShowUpdatePopup(false);
+        
+        // If there's a navigation action, execute it
+        if (updatePopupAction === 'navigate-to-users') {
+            window.location.href = '/ListOfUsers';
         }
     };
 
     const handleDeleteAccount = async () => {
         if (!userProfile?.id) {
-            alert("No user selected for deletion");
+            // Replace alert with popup
+            setPopupType('error');
+            setPopupMessage("No user selected for deletion");
+            setShowPopup(true);
+            setTimeout(() => setShowPopup(false), 3000);
             return;
         }
 
@@ -344,13 +390,11 @@ const Profile: React.FC = () => {
             );
 
             if (response.data.success) {
-                setPopupType('success');
-                setPopupMessage("User account deleted successfully");
-                setShowPopup(true);
-                setTimeout(() => {
-                    setShowPopup(false);
-                    window.location.href = '/ListOfUsers';
-                }, 2000);
+                // Show popup with redirect action
+                setUpdatePopupType('success');
+                setUpdatePopupMessage("User account deleted successfully");
+                setUpdatePopupAction('navigate-to-users');
+                setShowUpdatePopup(true);
             } else {
                 throw new Error(response.data.error || "Failed to delete user account");
             }
@@ -361,15 +405,13 @@ const Profile: React.FC = () => {
                 const errorMessage = err.response?.data?.error || 
                                    err.response?.data?.message || 
                                    "Failed to delete user account";
-                setPopupType('error');
-                setPopupMessage(`Error: ${errorMessage}`);
-                setShowPopup(true);
-                setTimeout(() => setShowPopup(false), 3000);
+                setUpdatePopupType('error');
+                setUpdatePopupMessage(`Error: ${errorMessage}`);
+                setShowUpdatePopup(true);
             } else {
-                setPopupType('error');
-                setPopupMessage("An unexpected error occurred while deleting the account");
-                setShowPopup(true);
-                setTimeout(() => setShowPopup(false), 3000);
+                setUpdatePopupType('error');
+                setUpdatePopupMessage("An unexpected error occurred while deleting the account");
+                setShowUpdatePopup(true);
             }
         }
     };
@@ -441,6 +483,95 @@ const Profile: React.FC = () => {
 
     // In your page.tsx file, add a condition to check if the profile is for an admin
     const isAdminProfile = userProfile?.role === "ADMIN";
+
+    // Add change password handler
+    const handleChangePassword = async () => {
+        // Reset error
+        setPasswordError(null);
+        
+        // Validate passwords
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            setPasswordError("All password fields are required");
+            return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            setPasswordError("New passwords don't match");
+            return;
+        }
+        
+        if (newPassword.length < 6) {
+            setPasswordError("New password must be at least 6 characters");
+            return;
+        }
+        
+        try {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                window.location.href = '/AdminLogin';
+                return;
+            }
+            
+            const response = await api.put(
+                '/api/users/change-password',
+                {
+                    currentPassword,
+                    newPassword
+                },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            
+            if (response.data.success) {
+                // Clear form
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
+                setIsPasswordMode(false);
+                setIsEditing(false);
+                
+                // Show success message
+                setUpdatePopupType('success');
+                setUpdatePopupMessage("Password changed successfully");
+                setShowUpdatePopup(true);
+            }
+        } catch (err) {
+            console.error("Error changing password:", err);
+            
+            if (axios.isAxiosError(err)) {
+                setPasswordError(err.response?.data?.error || "Failed to change password");
+            } else {
+                setPasswordError("An unexpected error occurred");
+            }
+        }
+    };
+
+    // Add function to handle change password button click
+    const handleChangePasswordClick = () => {
+        setIsEditing(true);
+        setIsPasswordMode(true);
+        // Reset password fields
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setPasswordError(null);
+    };
+
+    // Handle cancel for password form specifically
+    const handleCancelPassword = () => {
+        setIsEditing(false);
+        setIsPasswordMode(false);
+        setShowPasswordForm(false);
+        // Reset password fields
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setPasswordError(null);
+    };
 
     if (loading) {
         return (
@@ -533,7 +664,7 @@ const Profile: React.FC = () => {
                             </div>
                             <div className={styles.label}>ID: {userProfile?.id}</div>
                             
-                            {isEditing ? (
+                            {isEditing && !isPasswordMode ? (
                                 <>
                                     <div className={styles.label}>Name:</div>
                                     <input
@@ -544,16 +675,12 @@ const Profile: React.FC = () => {
                                         className={styles.input}
                                     />
                                     <div className={styles.label}>Role:</div>
-                                    <select
-                                        name="role"
-                                        value={updatedProfile.role || userProfile?.role || ""}
-                                        onChange={handleInputChange}
+                                    <input
+                                        type="text"
+                                        value={userProfile?.role || ""}
                                         className={styles.input}
-                                        disabled={!canEditRole()}
-                                    >
-                                        <option value="USER">User</option>
-                                        <option value="ADMIN">Admin</option>
-                                    </select>
+                                        disabled={true}
+                                    />
                                 </>
                             ) : (
                                 <>
@@ -572,7 +699,7 @@ const Profile: React.FC = () => {
 
                             <div className={styles.bioContainer}>
                                 <div className={styles.label}>Bio:</div>
-                                {isEditing ? (
+                                {isEditing && !isPasswordMode ? (
                                     <textarea
                                         name="bio"
                                         value={updatedProfile.profile?.bio || ''}
@@ -595,100 +722,200 @@ const Profile: React.FC = () => {
                         </div>
                         <div className={styles.rightsection}>
                             {isEditing ? (
-                                <>
-                                    <form onSubmit={(e) => e.preventDefault()}>
-                                        <div className={styles.formContent}>
-                                            <div className={styles.formGroup}>
-                                                <label className={styles.label}>First Name:</label>
-                                                <input
-                                                    type="text"
-                                                    name="firstName"
-                                                    value={updatedProfile?.profile?.firstName || ''}
-                                                    onChange={handleInputChange}
-                                                    className={styles.input}
-                                                />
+                                isPasswordMode ? (
+                                    <>
+                                        <form onSubmit={(e) => e.preventDefault()}>
+                                            <div className={styles.formContent}>
+                                                <h3 style={{ marginBottom: '20px', textAlign: 'center' }}>Change Password</h3>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.label}>Current Password:</label>
+                                                    <input
+                                                        type="password"
+                                                        value={currentPassword}
+                                                        onChange={(e) => setCurrentPassword(e.target.value)}
+                                                        className={styles.input}
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.label}>New Password:</label>
+                                                    <input
+                                                        type="password"
+                                                        value={newPassword}
+                                                        onChange={(e) => setNewPassword(e.target.value)}
+                                                        className={styles.input}
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.label}>Confirm Password:</label>
+                                                    <input
+                                                        type="password"
+                                                        value={confirmPassword}
+                                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                                        className={styles.input}
+                                                    />
+                                                </div>
+                                                {passwordError && (
+                                                    <div className={styles.errorText} style={{ color: 'red', marginBottom: '10px' }}>
+                                                        {passwordError}
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className={styles.formGroup}>
-                                                <label className={styles.label}>Last Name:</label>
-                                                <input
-                                                    type="text"
-                                                    name="lastName"
-                                                    value={updatedProfile?.profile?.lastName || ''}
-                                                    onChange={handleInputChange}
-                                                    className={styles.input}
-                                                />
-                                            </div>
-                                            <div className={styles.formGroup}>
-                                                <label className={styles.label}>Email:</label>
-                                                <input
-                                                    type="email"
-                                                    name="email"
-                                                    value={updatedProfile?.email || ''}
-                                                    onChange={handleInputChange}
-                                                    className={styles.input}
-                                                />
-                                            </div>
-                                            <div className={styles.formGroup}>
-                                                <label className={styles.label}>Phone Number:</label>
-                                                <input
-                                                    type="text"
-                                                    name="phoneNumber"
-                                                    value={updatedProfile?.profile?.phoneNumber || ''}
-                                                    onChange={handleInputChange}
-                                                    className={styles.input}
-                                                />
-                                            </div>
-                                            <div className={styles.formGroup}>
-                                                <label className={styles.label}>Country:</label>
-                                                <input
-                                                    type="text"
-                                                    name="country"
-                                                    value={updatedProfile?.profile?.country || ''}
-                                                    onChange={handleInputChange}
-                                                    className={styles.input}
-                                                />
-                                            </div>
-                                            <div className={styles.formGroup}>
-                                                <label className={styles.label}>Gender:</label>
-                                                <select
-                                                    name="gender"
-                                                    value={updatedProfile?.profile?.gender || ''}
-                                                    onChange={handleInputChange}
-                                                    className={styles.input}
+                                        </form>
+                                        <div className={styles.buttonContainer}>
+                                            <div className={styles.buttonRow}>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleChangePassword}
+                                                    className={`${styles.button} ${styles.buttonsubmit}`}
                                                 >
-                                                    <option value="">Select Gender</option>
-                                                    <option value="MALE">Male</option>
-                                                    <option value="FEMALE">Female</option>
-                                                </select>
+                                                    Change Password
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCancelPassword}
+                                                    className={`${styles.button} ${styles.buttoncancel}`}
+                                                >
+                                                    Cancel
+                                                </button>
                                             </div>
                                         </div>
-                                    </form>
-                                    {/* Fixed position button container */}
-                                    <div className={styles.buttonContainer}>
-                                        <div className={styles.buttonRow}>
-                                            <button
-                                                type="button"
-                                                onClick={handleUpdateUser}
-                                                className={`${styles.button} ${styles.buttonsubmit}`}
-                                            >
-                                                Save Changes
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={handleEditToggle}
-                                                className={`${styles.button} ${styles.buttoncancel}`}
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                onClick={handleDeleteAccount}
-                                                className={`${styles.button} ${styles.buttonDelete}`}
-                                            >
-                                                Delete Account
-                                            </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <form onSubmit={(e) => e.preventDefault()}>
+                                            <div className={styles.formContent}>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.label}>First Name:</label>
+                                                    <input
+                                                        type="text"
+                                                        name="firstName"
+                                                        value={updatedProfile?.profile?.firstName || ''}
+                                                        onChange={handleInputChange}
+                                                        className={styles.input}
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.label}>Last Name:</label>
+                                                    <input
+                                                        type="text"
+                                                        name="lastName"
+                                                        value={updatedProfile?.profile?.lastName || ''}
+                                                        onChange={handleInputChange}
+                                                        className={styles.input}
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.label}>Email:</label>
+                                                    <input
+                                                        type="email"
+                                                        name="email"
+                                                        value={updatedProfile?.email || ''}
+                                                        onChange={handleInputChange}
+                                                        className={styles.input}
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.label}>Phone Number:</label>
+                                                    <input
+                                                        type="text"
+                                                        name="phoneNumber"
+                                                        value={updatedProfile?.profile?.phoneNumber || ''}
+                                                        onChange={handleInputChange}
+                                                        className={styles.input}
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.label}>Country:</label>
+                                                    <select
+                                                        name="country"
+                                                        value={updatedProfile?.profile?.country || ''}
+                                                        onChange={handleInputChange}
+                                                        className={styles.input}
+                                                    >
+                                                        <option value="">Select Country</option>
+                                                        <option value="USA">USA</option>
+                                                        <option value="CANADA">Canada</option>
+                                                        <option value="UK">UK</option>
+                                                        <option value="AUSTRALIA">Australia</option>
+                                                        <option value="GERMANY">Germany</option>
+                                                        <option value="FRANCE">France</option>
+                                                        <option value="INDIA">India</option>
+                                                        <option value="JAPAN">Japan</option>
+                                                        <option value="TUNISIA">Tunisia</option>
+                                                        <option value="MOROCCO">Morocco</option>
+                                                        <option value="ALGERIA">Algeria</option>
+                                                        <option value="TURKEY">Turkey</option>
+                                                        <option value="SPAIN">Spain</option>
+                                                        <option value="ITALY">Italy</option>
+                                                        <option value="PORTUGAL">Portugal</option>
+                                                        <option value="NETHERLANDS">Netherlands</option>
+                                                        <option value="BELGIUM">Belgium</option>
+                                                        <option value="SWEDEN">Sweden</option>
+                                                        <option value="NORWAY">Norway</option>
+                                                        <option value="DENMARK">Denmark</option>
+                                                        <option value="FINLAND">Finland</option>
+                                                        <option value="ICELAND">Iceland</option>
+                                                        <option value="AUSTRIA">Austria</option>
+                                                        <option value="SWITZERLAND">Switzerland</option>
+                                                        <option value="BELARUS">Belarus</option>
+                                                        <option value="RUSSIA">Russia</option>
+                                                        <option value="CHINA">China</option>
+                                                        <option value="BRAZIL">Brazil</option>
+                                                        <option value="ARGENTINA">Argentina</option>
+                                                        <option value="CHILE">Chile</option>
+                                                        <option value="MEXICO">Mexico</option>
+                                                        <option value="COLOMBIA">Colombia</option>
+                                                        <option value="PERU">Peru</option>
+                                                        <option value="VENEZUELA">Venezuela</option>
+                                                        <option value="ECUADOR">Ecuador</option>
+                                                        <option value="PARAGUAY">Paraguay</option>
+                                                        <option value="URUGUAY">Uruguay</option>
+                                                        <option value="BOLIVIA">Bolivia</option>
+                                                        <option value="OTHER">Other</option>
+                                                    </select>
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.label}>Gender:</label>
+                                                    <select
+                                                        name="gender"
+                                                        value={updatedProfile?.profile?.gender || ''}
+                                                        onChange={handleInputChange}
+                                                        className={styles.input}
+                                                    >
+                                                        <option value="">Select Gender</option>
+                                                        <option value="MALE">Male</option>
+                                                        <option value="FEMALE">Female</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </form>
+                                        {/* Fixed position button container */}
+                                        <div className={styles.buttonContainer}>
+                                            <div className={styles.buttonRow}>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleUpdateUser}
+                                                    className={`${styles.button} ${styles.buttonsubmit}`}
+                                                >
+                                                    Save Changes
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleEditToggle}
+                                                    className={`${styles.button} ${styles.buttoncancel}`}
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    onClick={handleDeleteAccount}
+                                                    className={`${styles.button} ${styles.buttonDelete}`}
+                                                >
+                                                    Delete Account
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                </>
+                                    </>
+                                )
                             ) : (
                                 <>
                                     <div className={styles.infoRow}>
@@ -732,6 +959,16 @@ const Profile: React.FC = () => {
                                                 </button>
                                             )}
                                             
+                                            {/* Add Change Password button - only for admin's own profile */}
+                                            {userProfile?.id === JSON.parse(localStorage.getItem('userData') || '{}').id && (
+                                                <button
+                                                    onClick={handleChangePasswordClick}
+                                                    className={`${styles.buttonedit} ${styles.fullWidth}`}
+                                                >
+                                                    Change Password
+                                                </button>
+                                            )}
+                                            
                                             {canBanProfile() && (
                                                 <button
                                                     onClick={handleBanUnban}
@@ -757,6 +994,8 @@ const Profile: React.FC = () => {
                     </div>
                 </div>
             </div>
+            
+            {/* Quick notification popup */}
             {showPopup && (
                 <div className={styles.popup}>
                     {popupType === 'success' ? (
@@ -764,6 +1003,32 @@ const Profile: React.FC = () => {
                     ) : (
                         <div className={styles.errorPopup}>{popupMessage}</div>
                     )}
+                </div>
+            )}
+            
+            {/* Update confirmation popup with OK button */}
+            {showUpdatePopup && (
+                <div className={styles.updatePopupOverlay}>
+                    <div className={styles.updatePopup}>
+                        <div className={styles.updatePopupContent}>
+                            <div className={styles.updatePopupIcon} style={{
+                                backgroundColor: updatePopupType === 'success' ? 'var(--color-success)' : 'var(--color-danger)'
+                            }}>
+                                {updatePopupType === 'success' ? '✓' : '✕'}
+                            </div>
+                            <h3>{updatePopupType === 'success' ? 'Success!' : 'Error'}</h3>
+                            <p>{updatePopupMessage}</p>
+                            <button 
+                                className={styles.updatePopupButton}
+                                onClick={handleCloseUpdatePopup}
+                                style={{
+                                    backgroundColor: updatePopupType === 'success' ? 'var(--color-primary)' : 'var(--color-danger)'
+                                }}
+                            >
+                                OK
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

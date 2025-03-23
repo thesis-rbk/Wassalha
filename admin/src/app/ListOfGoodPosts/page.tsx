@@ -18,14 +18,23 @@ const ListOfGoodsPosts: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [currentCount, setCurrentCount] = useState(5);
   const [isShowingAll, setIsShowingAll] = useState(false);
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+
+  // Function to show notification
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => {
+      setNotification({ show: false, message: '', type: '' });
+    }, 3000);
+  };
 
   const filterAndSortPosts = (posts: GoodsPost[]) => {
     return posts
       .filter((post) => {
         const searchMatch = searchTerm.toLowerCase() === '' || 
           post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          post.traveler.profile.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          post.traveler.profile.lastName.toLowerCase().includes(searchTerm.toLowerCase());
+          (post.traveler?.profile?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+          (post.traveler?.profile?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
 
         const categoryMatch = categoryFilter === "ALL" || post.category?.name === categoryFilter;
         const locationMatch = locationFilter === "ALL" || post.airportLocation === locationFilter;
@@ -55,6 +64,7 @@ const ListOfGoodsPosts: React.FC = () => {
       setGoodsPosts(response.data.data);
     } catch (error) {
       console.error('Error fetching goods posts:', error);
+      showNotification('Failed to fetch goods posts', 'error');
     }
   };
 
@@ -78,10 +88,10 @@ const ListOfGoodsPosts: React.FC = () => {
       await api.delete(`/api/goods-posts/${postToDelete}`);
       setGoodsPosts(goodsPosts.filter(post => post.id !== postToDelete));
       setShowConfirmation(false);
-      // alert('Goods post deleted successfully');
+      showNotification('Goods post deleted successfully', 'success');
     } catch (error) {
       console.error("Error deleting goods post:", error);
-      alert('Failed to delete goods post');
+      showNotification('Failed to delete goods post', 'error');
     }
   };
 
@@ -144,6 +154,13 @@ const ListOfGoodsPosts: React.FC = () => {
             </div>
           </div>
 
+          {/* Custom Notification */}
+          {notification.show && (
+            <div className={`${tableStyles.notification} ${notification.type === 'success' ? tableStyles.notificationSuccess : tableStyles.notificationError}`}>
+              {notification.message}
+            </div>
+          )}
+
           {showConfirmation && (
             <div className={tableStyles.confirmationDialog}>
               <p>Are you sure you want to delete this goods post?</p>
@@ -177,7 +194,11 @@ const ListOfGoodsPosts: React.FC = () => {
                   <td className={tableStyles.td}>{post.availableKg}</td>
                   <td className={tableStyles.td}>{post.phoneNumber}</td>
                   <td className={tableStyles.td}>{post.airportLocation}</td>
-                  <td className={tableStyles.td}>{`${post.traveler.profile.firstName} ${post.traveler.profile.lastName}`}</td>
+                  <td className={tableStyles.td}>
+                    {post.traveler?.profile ? 
+                      `${post.traveler.profile.firstName || 'Unknown'} ${post.traveler.profile.lastName || ''}` : 
+                      'Unknown Traveler'}
+                  </td>
                   <td className={tableStyles.td}>{post.category?.name || 'N/A'}</td>
                   <td className={tableStyles.td}>
                     <button 

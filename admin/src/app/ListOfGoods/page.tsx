@@ -19,6 +19,15 @@ const ListOfGoods: React.FC = () => {
   const [verificationFilter, setVerificationFilter] = useState("ALL");
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [categories, setCategories] = useState<{name: string}[]>([]);
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+
+  // Function to show notification
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => {
+      setNotification({ show: false, message: '', type: '' });
+    }, 3000);
+  };
 
   const filterAndSortGoods = (goods: Good[]) => {
     return goods
@@ -48,6 +57,7 @@ const ListOfGoods: React.FC = () => {
         setIsShowingAll(filtered.length <= currentCount);
       } catch (error) {
         console.error('Error fetching goods:', error);
+        showNotification('Failed to fetch goods', 'error');
       }
     };
 
@@ -62,6 +72,7 @@ const ListOfGoods: React.FC = () => {
         setCategories(data);
       } catch (error) {
         console.error('Error fetching categories:', error);
+        showNotification('Failed to fetch categories', 'error');
       }
     };
 
@@ -89,9 +100,10 @@ const ListOfGoods: React.FC = () => {
       setIsShowingAll(filtered.length <= currentCount);
 
       setShowConfirmation(false);
+      showNotification('Good deleted successfully', 'success');
     } catch (error) {
       console.error("Error deleting good:", error);
-      alert('Failed to delete good');
+      showNotification('Failed to delete good', 'error');
     }
   };
 
@@ -119,11 +131,11 @@ const ListOfGoods: React.FC = () => {
         setDisplayedGoods(displayedGoods.map(good => 
           good.id === goodId ? { ...good, isVerified: true } : good
         ));
-        alert('Good verified successfully');
+        showNotification('Good verified successfully', 'success');
       }
     } catch (error) {
       console.error("Error verifying good:", error);
-      alert('Failed to verify good');
+      showNotification('Failed to verify good', 'error');
     }
   };
 
@@ -133,6 +145,14 @@ const ListOfGoods: React.FC = () => {
       <div className={navStyles.mainContent}>
         <div className={tableStyles.container}>
           <h1>List of Goods</h1>
+
+          {/* Custom Notification */}
+          {notification.show && (
+            <div className={`${tableStyles.notification} ${notification.type === 'success' ? tableStyles.notificationSuccess : tableStyles.notificationError}`}>
+              {notification.message}
+            </div>
+          )}
+          
           {showConfirmation && (
             <div className={tableStyles.confirmationDialog}>
               <p>Are you sure you want to delete this good?</p>

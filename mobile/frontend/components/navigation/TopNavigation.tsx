@@ -113,13 +113,13 @@ export function TopNavigation({
   };
 
   const menuItems: SideMenu[] = [
-    { icon: <Bell size={24} color="black" />, label: 'Notifications', route: '/screens/NotificationsScreen' },
-    { icon: <ShoppingBag size={24} color="black" />, label: 'Orders', route: '/test/order' },
-    { icon: <Plane size={24} color="black" />, label: 'Trips', route: '/test/Travel' },
-    { icon: <Home size={24} color="black" />, label: 'Home', route: 'home' },
-    { icon: <PenSquare size={24} color="black" />, label: 'Make a Request', route: '/productDetails/create-order' },
+    { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/screens/NotificationsScreen' },
+    { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
+    { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips', route: '/test/Travel' },
+    { icon: <Home size={24} color={Colors[colorScheme].text} />, label: 'Home', route: 'home' },
+    { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request', route: '/productDetails/create-order' },
     {
-      icon: isSponsor ? <DollarSign size={24} color="black" /> : <Users size={24} color="black" />,
+      icon: isSponsor ? <DollarSign size={24} color={Colors[colorScheme].text} /> : <Users size={24} color={Colors[colorScheme].text} />,
       label: isSponsor ? 'Create Subscription' : 'Sponsorship',
       route: isSponsor ? 'verification/CreateSponsorPost' : 'screens/SponsorshipScreen' as any
     },
@@ -135,7 +135,6 @@ export function TopNavigation({
     },
     { icon: <Users size={24} color={Colors[colorScheme].text} />, label: 'Sponsorship', route: '/test/sponsorShip' },
     { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out', onPress: handleLogout },
-    { icon: <LogOut size={24} color="black" />, label: 'Log Out', onPress: handleLogout },
   ];
 
   useEffect(() => {
@@ -162,8 +161,6 @@ export function TopNavigation({
         <TouchableOpacity onPress={toggleMenu}>
           <Menu color="white" size={24} />
         </TouchableOpacity>
-
-
 
         <TouchableOpacity
           onPress={() => {
@@ -227,27 +224,6 @@ export function TopNavigation({
               </TouchableOpacity>
             </View>
           </View>
-          <View style={styles.profileSection}>
-            <View style={styles.profileImage}>
-              <Text style={styles.profileInitial}>
-                {user?.name?.charAt(0) || 'U'}
-              </Text>
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>
-                {user?.name || 'User'}
-              </Text>
-              <TouchableOpacity
-                style={styles.viewProfile}
-                onPress={() => router.push('/profile')}
-              >
-                <Text style={styles.viewProfileText}>
-                  View and edit profile
-                </Text>
-                <ChevronRight size={16} color={Colors[colorScheme].text} />
-              </TouchableOpacity>
-            </View>
-          </View>
 
           <ScrollView
             style={styles.menuItemsContainer}
@@ -265,18 +241,6 @@ export function TopNavigation({
               </TouchableOpacity>
             ))}
           </ScrollView>
-          <View style={styles.menuItem}>
-            {menuItems.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.menuItem}
-                onPress={() => handleRoutes(item)}
-              >
-                {item.icon}
-                <Text style={styles.menuItemText}>{item.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
 
           <TouchableOpacity style={styles.darkModeToggle} onPress={toggleTheme}>
             {colorScheme === 'dark' ? (
@@ -289,23 +253,12 @@ export function TopNavigation({
             </ThemedText>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.darkModeToggle} onPress={toggleTheme}>
-          {colorScheme === 'dark' ? (
-            <Sun size={24} color={Colors[colorScheme].text} />
-          ) : (
-            <Moon size={24} color={Colors[colorScheme].text} />
-          )}
-          <Text style={styles.darkModeText}>
-            {colorScheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-          </Text>
-        </TouchableOpacity>
       </Animated.View>
     </>
   );
 }
 
 // Updated styles
-// Styles remain the same, except the navbar background color and icon color
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",

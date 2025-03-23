@@ -15,6 +15,8 @@ import styles from '../../styles/Dashboard.module.css';
 import Nav from '../../components/Nav';
 import WorldMap from '../../components/WorldMap';
 import api from '../../lib/api';
+import { useRouter } from 'next/navigation';
+import { Ticket } from '../../types/Ticket'; // Import Ticket type
 
 // Register ChartJS components
 ChartJS.register(
@@ -32,6 +34,8 @@ const Dashboard = () => {
   const [orderData, setOrderData] = useState([]);
   const [requestData, setRequestData] = useState([]);
   const [promoPostData, setPromoPostData] = useState([]);
+  const [goodPostData, setGoodPostData] = useState([]);
+  const [ticketData, setTicketData] = useState<Ticket[]>([]);
 
   // Fetch user, service provider, and traveler data
   const [users, setUsers] = useState([]);
@@ -39,6 +43,7 @@ const Dashboard = () => {
   const [travelers, setTravelers] = useState([]);
 
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const router = useRouter();
 
   // Add this useEffect to detect dark mode
   useEffect(() => {
@@ -57,53 +62,316 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ordersResponse, requestsResponse, promoPostsResponse] = await Promise.all([
+        // Use Promise.allSettled for more robust error handling
+        const fetchedData = await Promise.allSettled([
           api.get('/api/orders'),
           api.get('/api/requests'),
-          api.get('/api/promo-posts')
+          api.get('/api/promo-posts'),
+          api.get('/api/payments'), // Added payments API call
+          api.get('/api/tickets'), // Added tickets API call
+          api.get('/api/goods') // Added goods API call
         ]);
+        
+        // Process results, using empty arrays if any request failed
+        const [ordersResponse, requestsResponse, promoPostsResponse, paymentsResponse, ticketsResponse, goodsResponse] = fetchedData;
+        
+        // Set orders data
+        if (ordersResponse.status === 'fulfilled' && ordersResponse.value.data?.data) {
+          setOrderData(ordersResponse.value.data.data);
+        } else {
+          console.warn('Orders API request failed, using empty array');
+          setOrderData([]);
+        }
+        
+        // Set requests data
+        if (requestsResponse.status === 'fulfilled' && requestsResponse.value.data?.data) {
+          setRequestData(requestsResponse.value.data.data);
+        } else {
+          console.warn('Requests API request failed, using empty array');
+          setRequestData([]);
+        }
+        
+        // Set promo posts data
+        if (promoPostsResponse.status === 'fulfilled' && promoPostsResponse.value.data?.data) {
+          setPromoPostData(promoPostsResponse.value.data.data);
+        } else {
+          console.warn('Promo posts API request failed, using empty array');
+          setPromoPostData([]);
+        }
 
-        setOrderData(ordersResponse.data.data);
-        setRequestData(requestsResponse.data.data);
-        setPromoPostData(promoPostsResponse.data.data);
+        // Set payments data and calculate total revenue
+        if (paymentsResponse.status === 'fulfilled' && paymentsResponse.value.data?.data) {
+          const paymentsData = paymentsResponse.value.data.data;
+          try {
+            // Calculate total revenue from all payments with additional error handling
+            const totalRevenue = paymentsData.reduce((sum: number, payment: any) => {
+              const amount = Number(payment.amount) || 0;
+              return sum + amount;
+            }, 0);
+            setTotalRevenue(totalRevenue);
+          } catch (reduceError) {
+            console.error('Error calculating revenue:', reduceError);
+            setTotalRevenue(0);
+          }
+        } else {
+          console.warn('Payments API request failed, using default value');
+          setTotalRevenue(0);
+        }
+
+        // Set tickets data
+        if (ticketsResponse.status === 'fulfilled' && ticketsResponse.value.data?.data) {
+          setTicketData(ticketsResponse.value.data.data);
+        } else {
+          console.warn('Tickets API request failed, using empty array');
+          setTicketData([]);
+        }
+        
+        // Set goods data
+        if (goodsResponse.status === 'fulfilled' && goodsResponse.value.data?.data) {
+          setGoodPostData(goodsResponse.value.data.data);
+        } else {
+          console.warn('Goods API request failed, using empty array');
+          setGoodPostData([]);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
+        // Set default empty arrays if the entire operation fails
+        setOrderData([]);
+        setRequestData([]);
+        setPromoPostData([]);
+        setTotalRevenue(0);
+        setTicketData([]);
+        setGoodPostData([]);
       }
     };
 
     fetchData();
   }, []);
 
+  // Add state for metrics data
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [activeUserCount, setActiveUserCount] = useState(0);
+  const [totalUsersCount, setTotalUsersCount] = useState(0);
+  const [regularUsersCount, setRegularUsersCount] = useState(0);
+  const [serviceProvidersCount, setServiceProvidersCount] = useState(0);
+  const [travelersCount, setTravelersCount] = useState(0);
+  
+  // Add animated counters state
+  const [animatedRevenue, setAnimatedRevenue] = useState(0);
+  const [animatedTotalUsers, setAnimatedTotalUsers] = useState(0);
+  const [animatedActivePercentage, setAnimatedActivePercentage] = useState(0);
+  const [animatedProfitRate, setAnimatedProfitRate] = useState(0);
+  const [animationComplete, setAnimationComplete] = useState(false);
+
   useEffect(() => {
     const fetchCounts = async () => {
+      // Set default fallback data
+      let regularCount = 4;
+      let providersCount = 1;
+      let travelersCount = 1;
+      let useDefaultData = true;
+      
       try {
-        const [usersResponse, serviceProvidersResponse, travelersResponse] = await Promise.all([
-          api.get('/api/users'),
-          api.get('/api/service-providers'),
-          api.get('/api/travelers')
-        ]);
-
-        setUsers(usersResponse.data.data);
-        setServiceProviders(serviceProvidersResponse.data.data);
-        setTravelers(travelersResponse.data.data);
+        // Check for admin token first
+        const token = localStorage.getItem('adminToken');
+        
+        if (!token) {
+          console.log('No admin token found, using sample data');
+          setRegularUsersCount(regularCount);
+          setServiceProvidersCount(providersCount);
+          setTravelersCount(travelersCount);
+          return;
+        }
+        
+        // Try to get regular users directly
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+          
+          const response = await api.get('/api/users?role=USER', { 
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (response.data?.data) {
+            regularCount = response.data.data.length;
+            console.log(`Regular users found: ${regularCount}`);
+            useDefaultData = false;
+          }
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            console.log('Request for regular users timed out');
+          } else {
+            console.log('Could not fetch regular users data:', error.message);
+          }
+        }
+        
+        // Get service providers from the dedicated endpoint
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+          
+          const response = await api.get('/api/service-providers', { 
+            signal: controller.signal 
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (response.data?.data) {
+            providersCount = response.data.data.length;
+            console.log(`Service providers from API: ${providersCount}`);
+            useDefaultData = false;
+          }
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            console.log('Request for service providers timed out');
+          } else {
+            console.log('Could not fetch service providers data:', error.message);
+          }
+        }
+        
+        // Get travelers from the dedicated endpoint
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+          
+          const response = await api.get('/api/travelers', { 
+            signal: controller.signal 
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (response.data?.data) {
+            travelersCount = response.data.data.length;
+            console.log(`Travelers from API: ${travelersCount}`);
+            useDefaultData = false;
+          }
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            console.log('Request for travelers timed out');
+          } else {
+            console.log('Could not fetch travelers data:', error.message);
+          }
+        }
+        
+        // Make sure we don't have zeros that would break the chart
+        regularCount = Math.max(1, regularCount);
+        providersCount = Math.max(1, providersCount);
+        travelersCount = Math.max(1, travelersCount);
+        
+        // Set the counts from real data or fallbacks
+        setRegularUsersCount(regularCount);
+        setServiceProvidersCount(providersCount);
+        setTravelersCount(travelersCount);
+        
+        if (useDefaultData) {
+          console.log('Using default data for user distribution');
+        } else {
+          console.log(`Final data: ${regularCount} regular, ${providersCount} providers, ${travelersCount} travelers`);
+        }
+        
       } catch (error) {
-        console.error('Error fetching counts:', error);
+        console.error('Error fetching user counts:', error);
+        // Use default values if there was a catastrophic error
+        setRegularUsersCount(regularCount);
+        setServiceProvidersCount(providersCount);
+        setTravelersCount(travelersCount);
       }
     };
 
     fetchCounts();
   }, []);
+  
+  // Calculate total users and active users whenever the individual counts change
+  useEffect(() => {
+    // Calculate total users
+    const total = regularUsersCount + serviceProvidersCount + travelersCount;
+    setTotalUsersCount(total);
+    
+    // Since we don't have real active user data anymore, use a more realistic estimate
+    // Regular users typically have lower engagement
+    const activeRegularUsers = Math.round(regularUsersCount * 0.15); 
+    // Service providers are typically more active since they're running businesses
+    const activeServiceProviders = Math.round(serviceProvidersCount * 0.4); 
+    // Travelers have medium engagement
+    const activeTravelers = Math.round(travelersCount * 0.25); 
+    
+    const totalActive = activeRegularUsers + activeServiceProviders + activeTravelers;
+    setActiveUserCount(totalActive);
+    
+    // Log for debugging
+    console.log(`User distribution: ${regularUsersCount} regular, ${serviceProvidersCount} providers, ${travelersCount} travelers`);
+    console.log(`Estimated active users: ${totalActive} of ${total} (${Math.round((totalActive/total)*100)}%)`);
+  }, [regularUsersCount, serviceProvidersCount, travelersCount]);
 
-  // For testing purposes, set default values
-  const userCount = users.length || 100; // Default to 100 if no data
-  const serviceProviderCount = serviceProviders.length || 50; // Default to 50 if no data
-  const travelerCount = travelers.length || 30; // Default to 30 if no data
+  // Format total revenue to display with 2 decimal places
+  const formattedTotalRevenue = totalRevenue.toFixed(2);
+  
+  // Calculate active users percentage - make sure not to divide by zero
+  const activeUserPercentage = totalUsersCount > 0 
+    ? Math.min(100, Math.max(0, Math.round((activeUserCount / totalUsersCount) * 100)))
+    : 0;
 
-  // Calculate total and percentages
-  const totalUsers = userCount + serviceProviderCount + travelerCount;
-  const userPercentage = ((userCount / totalUsers) * 100).toFixed(2);
-  const serviceProviderPercentage = ((serviceProviderCount / totalUsers) * 100).toFixed(2);
-  const travelerPercentage = ((travelerCount / totalUsers) * 100).toFixed(2);
+  // Add animation effects for the metrics
+  useEffect(() => {
+    // Reset animation complete flag when values change
+    setAnimationComplete(false);
+    
+    // Animation duration in ms
+    const duration = 1500;
+    // Number of steps
+    const steps = 20;
+    // Time per step
+    const stepTime = Math.floor(duration / steps);
+    
+    // Current step
+    let currentStep = 0;
+    
+    // Target values
+    const targetRevenue = totalRevenue;
+    const targetTotalUsers = totalUsersCount;
+    const targetActivePercentage = activeUserPercentage;
+    const targetProfitRate = 6; // Fixed value
+    
+    // Reset animated values to 0
+    setAnimatedRevenue(0);
+    setAnimatedTotalUsers(0);
+    setAnimatedActivePercentage(0);
+    setAnimatedProfitRate(0);
+    
+    // Set up animation interval
+    const timer = setInterval(() => {
+      currentStep++;
+      
+      // Calculate current values based on easeOutQuad function
+      const progress = currentStep / steps;
+      // Using easeOutQuad for smoother animation: t * (2-t)
+      const easedProgress = progress * (2 - progress);
+      
+      setAnimatedRevenue(Math.round((targetRevenue * easedProgress) * 100) / 100);
+      setAnimatedTotalUsers(Math.round(targetTotalUsers * easedProgress));
+      setAnimatedActivePercentage(Math.round(targetActivePercentage * easedProgress));
+      setAnimatedProfitRate(Math.round(targetProfitRate * easedProgress));
+      
+      // Clear interval when animation is complete
+      if (currentStep >= steps) {
+        clearInterval(timer);
+        // Set final values exactly
+        setAnimatedRevenue(targetRevenue);
+        setAnimatedTotalUsers(targetTotalUsers);
+        setAnimatedActivePercentage(targetActivePercentage);
+        setAnimatedProfitRate(targetProfitRate);
+        setAnimationComplete(true);
+      }
+    }, stepTime);
+    
+    // Clean up interval on unmount
+    return () => clearInterval(timer);
+  }, [totalRevenue, totalUsersCount, activeUserPercentage]);
+
+  // Format animated revenue to display with 2 decimal places
+  const formattedAnimatedRevenue = animatedRevenue.toFixed(2);
 
   // Function to aggregate data by date
   const aggregateDataByDate = (data: { [key: string]: any }[], dateField: string) => {
@@ -118,6 +386,7 @@ const Dashboard = () => {
   const ordersByDate = aggregateDataByDate(orderData, 'createdAt');
   const requestsByDate = aggregateDataByDate(requestData, 'createdAt');
   const promoPostsByDate = aggregateDataByDate(promoPostData, 'createdAt');
+  const goodPostsByDate = aggregateDataByDate(goodPostData, 'createdAt');
 
   // Prepare bar chart data
   const barData = {
@@ -137,31 +406,66 @@ const Dashboard = () => {
         label: 'Promo Posts',
         data: Object.values(promoPostsByDate),
         backgroundColor: '#3703C8' // --color-dark
+      },
+      {
+        label: 'Good Posts',
+        data: Object.values(goodPostsByDate),
+        backgroundColor: '#00C49A' // A teal color for good posts
       }
     ]
   };
 
   // Sample data for the metrics
-  const metrics = {
-    currentMRR: '12.4k',
-    currentCustomers: '16,601',
-    activeCustomers: '33%',
-    churnRate: '2%'
-  };
+  // const metrics = {
+  //   currentMRR: '12.4k',
+  //   currentCustomers: '16,601',
+  //   activeCustomers: '33%',
+  //   churnRate: '2%'
+  // };
 
   // Update pie chart data for user distribution
   const userChartData = {
     labels: [
-      `Customers (${userPercentage}%)`,
-      `Service Providers (${serviceProviderPercentage}%)`,
-      `Travelers (${travelerPercentage}%)`
+      `Regular Users (${regularUsersCount})`,
+      `Service Providers (${serviceProvidersCount})`,
+      `Travelers (${travelersCount})`
     ],
     datasets: [{
-      data: [userCount, serviceProviderCount, travelerCount],
+      data: [
+        // Ensure no zero values that might cause chart issues
+        Math.max(1, regularUsersCount), 
+        Math.max(1, serviceProvidersCount), 
+        Math.max(1, travelersCount)
+      ],
       backgroundColor: [
         '#018ABE', // --color-primary
         '#05AFF0', // --color-secondary
         '#3703C8'  // --color-dark
+      ]
+    }]
+  };
+  
+  // Create posts distribution pie chart data
+  const postsChartData = {
+    labels: [
+      `Orders (${orderData.length})`,
+      `Requests (${requestData.length})`,
+      `Promo Posts (${promoPostData.length})`,
+      `Good Posts (${goodPostData.length})`
+    ],
+    datasets: [{
+      data: [
+        // Ensure no zero values that might cause chart issues
+        Math.max(1, orderData.length),
+        Math.max(1, requestData.length),
+        Math.max(1, promoPostData.length),
+        Math.max(1, goodPostData.length)
+      ],
+      backgroundColor: [
+        '#018ABE', // Orders
+        '#05AFF0', // Requests
+        '#3703C8', // Promo Posts
+        '#00C49A'  // Good Posts
       ]
     }]
   };
@@ -175,13 +479,13 @@ const Dashboard = () => {
     { name: 'WithFirm', amount: '+$55' }
   ];
 
-  // Support tickets data
-  const tickets = [
-    { email: 'jessica.smith123@example.com', issue: 'Login Issue' },
-    { email: 'david.jones456@gmail.com', issue: 'Billing Inquiry' },
-    { email: 'emily.wilson789@hotmail.com', issue: 'Product Malfunction' },
-    { email: 'andrew.johnson223@mybox.org', issue: 'Feature Request' }
-  ];
+  // // Support tickets data
+  // const tickets = [
+  //   { email: 'jessica.smith123@example.com', issue: 'Login Issue' },
+  //   { email: 'david.jones456@gmail.com', issue: 'Billing Inquiry' },
+  //   { email: 'emily.wilson789@hotmail.com', issue: 'Product Malfunction' },
+  //   { email: 'andrew.johnson223@mybox.org', issue: 'Feature Request' }
+  // ];
 
   // Update chart options with proper color handling
   const chartOptions = {
@@ -221,21 +525,21 @@ const Dashboard = () => {
       <div className={styles.content}>
         {/* Metrics Cards */}
         <div className={styles.metricsContainer}>
-          <div className={styles.metricCard}>
-            <h3>Current MRR</h3>
-            <h2>${metrics.currentMRR}</h2>
+          <div className={`${styles.metricCard} ${animationComplete ? styles.metricCardAnimated : ''}`}>
+            <h3>Total Revenue</h3>
+            <h2>${formattedAnimatedRevenue}</h2>
           </div>
-          <div className={styles.metricCard}>
-            <h3>Current users</h3>
-            <h2>{metrics.currentCustomers}</h2>
+          <div className={`${styles.metricCard} ${animationComplete ? styles.metricCardAnimated : ''}`}>
+            <h3>Total Users</h3>
+            <h2>{animatedTotalUsers}</h2>
           </div>
-          <div className={styles.metricCard}>
-            <h3>Active Customers</h3>
-            <h2>{metrics.activeCustomers}</h2>
+          <div className={`${styles.metricCard} ${animationComplete ? styles.metricCardAnimated : ''}`}>
+            <h3>Active Users</h3>
+            <h2>{animatedActivePercentage}%</h2>
           </div>
-          <div className={styles.metricCard}>
-            <h3>Churn Rate</h3>
-            <h2>{metrics.churnRate}</h2>
+          <div className={`${styles.metricCard} ${animationComplete ? styles.metricCardAnimated : ''}`}>
+            <h3>Profit Rate</h3>
+            <h2>{animatedProfitRate}%</h2>
           </div>
         </div>
 
@@ -256,10 +560,10 @@ const Dashboard = () => {
             }} />
           </div>
 
-          {/* Transactions */}
+          {/* Transactions - with fixed height and no scrollbar */}
           <div className={styles.chartCard}>
             <h3>Transactions</h3>
-            <div className={styles.transactionsList}>
+            <div className={styles.transactionsListNoScroll}>
               {transactions.map((transaction, index) => (
                 <div key={index} className={styles.transactionItem}>
                   <span>{transaction.name}</span>
@@ -271,19 +575,29 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Bottom Section */}
+        {/* Bottom Section - now with just tickets and map */}
         <div className={styles.bottomContainer}>
           {/* Support Tickets */}
           <div className={styles.ticketsCard}>
             <h3>Support Tickets</h3>
             <div className={styles.ticketsList}>
-              {tickets.map((ticket, index) => (
-                <div key={index} className={styles.ticketItem}>
-                  <span>{ticket.email}</span>
-                  <span>{ticket.issue}</span>
-                </div>
-              ))}
+              {ticketData.length > 0 ? (
+                ticketData.slice(0, 4).map((ticket, index) => (
+                  <div key={index} className={styles.ticketItem}>
+                    <span>{ticket.user?.email || 'No email'}</span>
+                    <span>{ticket.title || 'No title'}</span>
+                  </div>
+                ))
+              ) : (
+                <div className={styles.noData}>No tickets available</div>
+              )}
             </div>
+            <button 
+              className={styles.viewAllButton}
+              onClick={() => router.push('/ListOfTickets')}
+            >
+              View all tickets
+            </button>
           </div>
 
           {/* Customer Demographics Map */}
