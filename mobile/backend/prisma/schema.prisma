@@ -653,7 +653,8 @@ model Media {
   profile          Profile?        @relation("ProfileImage")
   goods            Goods[]         @relation("GoodsImage")
   orders           Order[]         @relation("VerificationImage")
-  ticketMessages   TicketMessage[] @relation("TicketMessageMedia") // New relation for ticket messages
+  ticketMessages   TicketMessage[] @relation("TicketMessageMedia") // Existing relation for ticket messages
+  tickets          Ticket[]        @relation("TicketMedia")         // New relation for ticket media
 }
 
 // ========== CATEGORY ==========
@@ -850,6 +851,7 @@ model Ticket {
 
   user        User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   messages    TicketMessage[] @relation("TicketMessages") // Changed to new table
+  media       Media[]        @relation("TicketMedia") // New direct relation to Media
 }
 
 model TicketMessage {

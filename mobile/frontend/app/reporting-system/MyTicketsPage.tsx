@@ -6,13 +6,7 @@ import { ThemedText } from '@/components/ThemedText';
 import axiosInstance from '@/config';
 import { Colors } from '@/constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-type Ticket = {
-  id: number;
-  title: string;
-  category: string;
-  status: string;
-};
+import { Ticket } from '@/types/Ticket';
 
 export default function MyTicketsPage() {
   const router = useRouter();

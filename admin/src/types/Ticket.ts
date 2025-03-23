@@ -14,4 +14,11 @@ export interface Ticket {
     senderId: number;
     category: string;
     messages?: Message[];
+    media?: {
+      id: number;
+      url: string;
+      type: string;
+      mimeType: string;
+    }[];
+
   }

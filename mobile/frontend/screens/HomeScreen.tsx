@@ -35,7 +35,7 @@ export default function HomeScreen() {
   const [sponsorScrollX, setSponsorScrollX] = useState(0);
 
   useEffect(() => {
-    handleBestTraveler();
+    // handleBestTraveler();
     startAutoScroll();
 
     return () => stopAutoScroll();

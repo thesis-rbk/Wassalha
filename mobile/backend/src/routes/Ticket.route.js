@@ -11,6 +11,7 @@ const {
     getTicketMessagesByTicketId,
     getTicketsByUserId
 } = require('../controllers/Ticket.Controllers');
+const upload = require('../middleware/multerMiddleware');
 
 router.post('/create', authenticateUser, createTicket);
 router.get('/', authenticateAdmin, getTickets);

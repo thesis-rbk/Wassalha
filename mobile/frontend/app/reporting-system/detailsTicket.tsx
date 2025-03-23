@@ -15,24 +15,8 @@ import axiosInstance from '@/config';
 import { Colors } from '@/constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Send } from 'lucide-react-native';
-
-type Ticket = {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  status: string;
-  createdAt: string;
-};
-
-type TicketMessage = {
-  id: number;
-  content: string;
-  sender: { id: number; name: string; email: string };
-  isAdmin: boolean;
-  createdAt: string;
-  media: { id: number; url: string; type: string; mimeType: string }[];
-};
+import {Ticket} from '@/types/Ticket';
+import {TicketMessage} from '@/types/TicketMessage';
 
 export default function TicketDetailsPage() {
   const router = useRouter();

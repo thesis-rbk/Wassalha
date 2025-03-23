@@ -12,13 +12,8 @@ import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { XCircle } from "lucide-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axiosInstance from "../../config";
+import { QRCodeScannerProps } from "@/types/QRCodeScannerProps";
 
-interface QRCodeScannerProps {
-  visible: boolean;
-  onClose: () => void;
-  pickups: any[]; // Replace 'any' with your Pickup type
-  setPickups: React.Dispatch<React.SetStateAction<any[]>>;
-}
 
 export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   visible,

@@ -4,27 +4,8 @@ import styles from '@/styles/Table.module.css';
 import api from '@/lib/api';
 import { X, Send, Trash2 } from 'lucide-react';
 import { TicketDetailsProps } from '@/types/TicketDetailsProps';
+import { Ticket } from '@/types/Ticket'; // Adjust the import based on your file structure
 
-// Define types matching your backend data
-type Ticket = {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  status: string;
-  createdAt: string;
-  user: { id: number; name: string; email: string };
-  messages: Message[];
-};
-
-type Message = {
-  id: number;
-  content: string;
-  sender: { id: number; name: string; email: string; role?: string };
-  isAdmin: boolean;
-  createdAt: string;
-  media: { id: number; url: string; type: string; mimeType: string }[];
-};
 
 const getStatusBadgeClass = (status: string) => {
   switch (status) {
@@ -172,7 +153,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
             <h3>Comments</h3>
             <div className={`${styles.commentsContainer} ${isDarkMode ? styles.darkMode : ''}`}>
               {ticket.messages && ticket.messages.length > 0 ? (
-                ticket.messages.map((message) => (
+                ticket.messages.map((message:any) => (
                   <div
                     key={message.id}
                     className={`${styles.commentItem} ${isDarkMode ? styles.darkMode : ''}`}
