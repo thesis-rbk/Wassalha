@@ -1,23 +1,35 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation"; 
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation"; 
 import Link from "next/link";
 import { Moon, Sun, Eye, EyeOff } from "lucide-react";
 import styles from "../../styles/AdminLogin.module.css"; 
-import api from "../../lib/api";
+import api, { refreshTokenTimestamp } from "../../lib/api";
 // Import the types
 import '@/types/global';
 
 const AdminLogin = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(false); 
-  const [showPassword, setShowPassword] = useState(false); 
+  const [showPassword, setShowPassword] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+
+  useEffect(() => {
+    // Check if user was redirected due to session expiration
+    const expired = searchParams.get('expired');
+    if (expired === 'true') {
+      setStatusMessage("Your session has expired. Please login again.");
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setStatusMessage("");
     
     try {
       const response = await api.post(
@@ -48,6 +60,9 @@ const AdminLogin = () => {
 
       localStorage.setItem("adminToken", response.data.token);
       localStorage.setItem("userData", JSON.stringify(userData));
+      
+      // Update token timestamp to mark it as fresh
+      refreshTokenTimestamp();
 
       // Verify the data was stored correctly
       const storedData = localStorage.getItem("userData");
@@ -80,6 +95,9 @@ const AdminLogin = () => {
             // Save user data from successful response
             localStorage.setItem("adminToken", apiResponse.data.token);
             localStorage.setItem("userData", JSON.stringify(apiResponse.data.user));
+            
+            // Update token timestamp to mark it as fresh
+            refreshTokenTimestamp();
             
             // Navigate to dashboard
             router.push("/AdminDashboard");
@@ -209,6 +227,7 @@ const AdminLogin = () => {
           </div>
 
           {error && <p className={styles.error}>{error}</p>}
+          {statusMessage && <p className={styles.statusMessage}>{statusMessage}</p>}
           <button className={styles.button} type="submit">
             Log In
           </button>

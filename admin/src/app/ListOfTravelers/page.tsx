@@ -29,28 +29,35 @@ export default function ListOfTravelers() {
 
             const adminToken = localStorage.getItem('adminToken');
             if (!adminToken) {
+                console.log('No admin token found, redirecting to login');
                 router.push('/AdminLogin');
                 return;
             }
 
-            const response = await api.get('/api/travelers');
-            console.log('API Response:', response.data);
-            
-            if (response.data.success) {
-                const sortedTravelers = [...response.data.data].sort((a, b) => b.id - a.id);
-                setTravelers(sortedTravelers);
-                setDisplayedTravelers(sortedTravelers.slice(0, currentCount));
-                setIsShowingAll(sortedTravelers.length <= currentCount);
-            } else {
-                throw new Error(response.data.message || 'Failed to fetch travelers');
+            try {
+                const response = await api.get('/api/travelers');
+                console.log('API Response:', response.data);
+                
+                if (response.data.success) {
+                    const sortedTravelers = [...response.data.data].sort((a, b) => b.id - a.id);
+                    setTravelers(sortedTravelers);
+                    setDisplayedTravelers(sortedTravelers.slice(0, currentCount));
+                    setIsShowingAll(sortedTravelers.length <= currentCount);
+                } else {
+                    throw new Error(response.data.message || 'Failed to fetch travelers');
+                }
+            } catch (error: any) {
+                console.error('Error fetching travelers:', error);
+                if (error.response?.status === 401) {
+                    // Let the API interceptor handle the redirect
+                    console.log('Authentication error. The API interceptor will handle redirection.');
+                } else {
+                    setError(error.message || 'Failed to fetch travelers');
+                }
             }
         } catch (error: any) {
-            console.error('Error fetching travelers:', error);
-            if (error.response?.status === 401) {
-                router.push('/AdminLogin');
-            } else {
-                setError(error.message || 'Failed to fetch travelers');
-            }
+            console.error('Error in fetchTravelers:', error);
+            setError(error.message || 'Failed to fetch travelers');
         } finally {
             setIsLoading(false);
         }

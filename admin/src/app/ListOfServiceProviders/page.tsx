@@ -31,28 +31,36 @@ export default function ListOfServiceProviders() {
 
             const adminToken = localStorage.getItem('adminToken');
             if (!adminToken) {
+                console.log('No admin token found, redirecting to login');
                 router.push('/AdminLogin');
                 return;
             }
 
-            const response = await api.get('/api/service-providers');
-            console.log('API Response:', response.data);
-            
-            if (response.data.success) {
-                const sortedProviders = [...response.data.data].sort((a, b) => b.id - a.id);
-                setProviders(sortedProviders);
-                setDisplayedProviders(sortedProviders.slice(0, currentCount));
-                setIsShowingAll(sortedProviders.length <= currentCount);
-            } else {
-                throw new Error(response.data.message || 'Failed to fetch providers');
+            try {
+                // Ensure token is attached to request - let the API interceptor handle this
+                const response = await api.get('/api/service-providers');
+                console.log('API Response:', response.data);
+                
+                if (response.data.success) {
+                    const sortedProviders = [...response.data.data].sort((a, b) => b.id - a.id);
+                    setProviders(sortedProviders);
+                    setDisplayedProviders(sortedProviders.slice(0, currentCount));
+                    setIsShowingAll(sortedProviders.length <= currentCount);
+                } else {
+                    throw new Error(response.data.message || 'Failed to fetch providers');
+                }
+            } catch (error: any) {
+                console.error('Error fetching providers:', error);
+                if (error.response?.status === 401) {
+                    // Let the API interceptor handle the redirect
+                    console.log('Authentication error. The API interceptor will handle redirection.');
+                } else {
+                    setError(error.message || 'Failed to fetch providers');
+                }
             }
         } catch (error: any) {
-            console.error('Error fetching providers:', error);
-            if (error.response?.status === 401) {
-                router.push('/AdminLogin');
-            } else {
-                setError(error.message || 'Failed to fetch providers');
-            }
+            console.error('Error in fetchProviders:', error);
+            setError(error.message || 'Failed to fetch providers');
         } finally {
             setIsLoading(false);
         }
@@ -148,10 +156,12 @@ export default function ListOfServiceProviders() {
         try {
             const token = localStorage.getItem('adminToken');
             if (!token) {
+                console.log('No admin token found, redirecting to login');
                 router.push('/AdminLogin');
                 return;
             }
 
+            // API interceptor will handle the token
             const response = await api.put(`/api/service-providers/verify/${userId}`);
             
             if (response.data.success) {
@@ -186,7 +196,12 @@ export default function ListOfServiceProviders() {
             }
         } catch (error: any) {
             console.error('Error verifying provider:', error);
-            setError(error.response?.data?.message || error.message || 'Failed to verify service provider');
+            if (error.response?.status === 401) {
+                // Let the API interceptor handle the redirect
+                console.log('Authentication error. The API interceptor will handle redirection.');
+            } else {
+                setError(error.response?.data?.message || error.message || 'Failed to verify service provider');
+            }
         }
     };
 

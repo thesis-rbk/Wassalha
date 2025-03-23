@@ -21,6 +21,15 @@ const PickupList: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [availablePickupTypes, setAvailablePickupTypes] = useState<string[]>([]);
+    const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+
+    // Function to show notification
+    const showNotification = (message: string, type: 'success' | 'error') => {
+        setNotification({ show: true, message, type });
+        setTimeout(() => {
+            setNotification({ show: false, message: '', type: '' });
+        }, 3000);
+    };
 
     const filterAndSortPickups = (pickups: Pickup[]) => {
         return pickups
@@ -44,7 +53,7 @@ const PickupList: React.FC = () => {
     useEffect(() => {
         const fetchPickups = async () => {
             try {
-                const response = await api.get('/api/pickups');
+                const response = await api.get('/api/pickup');
                 if (response.status === 200) {
                     const pickupsData = response.data.data;
                     // Extract unique pickup types
@@ -57,14 +66,18 @@ const PickupList: React.FC = () => {
                     setIsShowingAll(filtered.length <= 5);
                 } else {
                     setError("Failed to fetch pickups");
+                    showNotification("Failed to fetch pickups", "error");
                 }
             } catch (err) {
                 if (axios.isAxiosError(err) && err.response) {
                     setError(err.response.data.message || "An error occurred");
+                    showNotification(err.response.data.message || "An error occurred", "error");
                 } else if (err instanceof Error) {
                     setError(err.message);
+                    showNotification(err.message, "error");
                 } else {
                     setError("An unknown error occurred");
+                    showNotification("An unknown error occurred", "error");
                 }
             } finally {
                 setLoading(false);
@@ -72,7 +85,7 @@ const PickupList: React.FC = () => {
         };
 
         fetchPickups();
-    }, [searchTerm, statusFilter, pickupTypeFilter, sortOrder]);
+    }, []);
 
     const handleDelete = (pickupId: number) => {
         setPickupToDelete(pickupId);
@@ -83,7 +96,7 @@ const PickupList: React.FC = () => {
         if (!pickupToDelete) return;
 
         try {
-            await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/pickups/${pickupToDelete}`);
+            await api.delete(`/api/pickup/${pickupToDelete}`);
             
             // Update the pickups state
             const updatedPickups = pickups.filter(pickup => pickup.id !== pickupToDelete);
@@ -95,9 +108,10 @@ const PickupList: React.FC = () => {
             setIsShowingAll(filtered.length <= currentCount);
 
             setShowConfirmation(false);
+            showNotification("Pickup deleted successfully", "success");
         } catch (error) {
             console.error("Error deleting pickup:", error);
-            alert('Failed to delete pickup');
+            showNotification("Failed to delete pickup", "error");
         }
     };
 
@@ -124,6 +138,14 @@ const PickupList: React.FC = () => {
             <div className={navStyles.mainContent}>
                 <div className={tableStyles.container}>
                     <h1>All Pickups</h1>
+                    
+                    {/* Custom Notification */}
+                    {notification.show && (
+                        <div className={`${tableStyles.notification} ${notification.type === 'success' ? tableStyles.notificationSuccess : tableStyles.notificationError}`}>
+                            {notification.message}
+                        </div>
+                    )}
+                    
                     {showConfirmation && (
                         <div className={tableStyles.confirmationDialog}>
                             <p>Are you sure you want to delete this pickup?</p>

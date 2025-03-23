@@ -26,6 +26,12 @@
   border-radius: var(--radius-medium);
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   border: 1px solid var(--color-border);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.metricCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .metricCard h3 {
@@ -39,6 +45,9 @@
   color: var(--color-text);
   font-size: 1.2rem;
   font-weight: 600;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
 }
 
 .chartsContainer {
@@ -65,11 +74,11 @@
 
 .bottomContainer {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr 1fr 2fr;
   gap: 15px;
 }
 
-.ticketsCard, .mapCard {
+.ticketsCard, .mapCard, .transactionsCard {
   background: var(--color-card-bg);
   padding: 15px;
   border-radius: var(--radius-medium);
@@ -108,4 +117,20 @@
 
 .viewAllButton:hover {
   background: var(--color-secondary);
+}
+
+@keyframes highlight {
+  0% {
+    background-color: var(--color-card-bg);
+  }
+  50% {
+    background-color: rgba(1, 138, 190, 0.2);
+  }
+  100% {
+    background-color: var(--color-card-bg);
+  }
+}
+
+.metricCardAnimated {
+  animation: highlight 1s ease-out;
 }

@@ -124,6 +124,23 @@
     width: 100%;
   }
   
+  .statusMessage {
+    color: #f59e0b;
+    font-size: 14px;
+    margin-top: 10px;
+    text-align: left;
+    width: 100%;
+    background-color: rgba(245, 158, 11, 0.1);
+    padding: 8px;
+    border-radius: 4px;
+    border-left: 3px solid #f59e0b;
+  }
+  
+  .darkMode .statusMessage {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+  }
+  
   /* Forgot password link styling */
   .forgotPasswordContainer {
     width: 100%;
