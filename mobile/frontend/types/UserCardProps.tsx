@@ -3,4 +3,5 @@ export interface UserCardProps {
     score: number;
     gender: string;
     img: string;
+    role: string;
 }

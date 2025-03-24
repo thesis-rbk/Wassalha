@@ -242,7 +242,6 @@ async function seed() {
             cardExpiryYyyy: faker.date.future().getFullYear().toString(),
             cardCvc: faker.finance.creditCardCVV(),
             cardholderName: faker.person.fullName(),
-            postalCode: faker.location.zipCode(),
             amount: sponsorship.price,
             qrCode: faker.datatype.boolean() ? faker.string.alphanumeric(10) : undefined,
             paymentUrl: faker.datatype.boolean() ? faker.internet.url() : undefined,

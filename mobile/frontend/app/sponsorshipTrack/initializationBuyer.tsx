@@ -36,10 +36,9 @@ import NavigationProp from "@/types/navigation";
 export default function InitializationBuyer() {
   const route = useRoute<RouteProp<RouteParams, "SponsorshipDetails">>()
   const navigation = useNavigation<NavigationProp>();
-  const { id } = route.params
   const params = useLocalSearchParams();
   const sponsorshipId = params.sponsorshipId;
-  const processId = params.processId;
+  const processId = params.id;
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
   const [sponsorship, setSponsorship] = useState<any>(null);
@@ -49,7 +48,6 @@ export default function InitializationBuyer() {
   const { sendNotification } = useNotification();
   const { initiateSponsorshipProcess } = useSponsorshipProcess();
 
-  console.log("slmmmmmmmmmmmmmmmm alykom", params);
 
   // Progress steps
   const progressSteps = [
@@ -60,7 +58,7 @@ export default function InitializationBuyer() {
   ];
   const fetchSponsorshipDetails = async () => {
     try {
-      const response = await axiosInstance.get(`/api/one/${id}`)
+      const response = await axiosInstance.get(`/api/one/${processId}`)
       setSponsorship(response.data)
     } catch (error) {
       console.error("Error fetching sponsorship details:", error)
@@ -68,6 +66,7 @@ export default function InitializationBuyer() {
       setLoading(false)
     }
   }
+  console.log("resssssssssss", sponsorship)
   // Load user data
   useEffect(() => {
     const loadUserData = async () => {
@@ -134,7 +133,7 @@ export default function InitializationBuyer() {
               text: "Continue",
               onPress: () => {
                 router.replace({
-                  pathname: "/sponsorshipTrack/paymentBuyer",
+                  pathname: "/sponsorshipTrack/verificationBuyer",
                   params: {
                     ...params,
                     processId: result.data.id,

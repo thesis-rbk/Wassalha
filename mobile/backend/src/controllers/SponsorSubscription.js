@@ -6,11 +6,10 @@ const sponsor = {
         const sponsorId = req.user?.id;
 
         try {
-            const { name, description, price, duration, platform, categoryId, product, amount } = req.body;
+            const { description, price, duration, platform, categoryId, amount } = req.body;
 
             const sponsorships = await prisma.sponsorship.create({
                 data: {
-                    name,
                     description,
                     price,
                     duration,
@@ -21,7 +20,6 @@ const sponsor = {
                     sponsor: {
                         connect: { id: parseInt(sponsorId) } // Changed from string to integer
                     },
-                    product: product || "",
                     amount,
                     status: "pending",
                 },

@@ -4,6 +4,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { UserCardProps } from "@/types/UserCardProps";
 
 const UserCard: React.FC<UserCardProps & { isVerified?: boolean }> = ({
+    role,
     name,
     score,
     gender,
@@ -36,7 +37,7 @@ const UserCard: React.FC<UserCardProps & { isVerified?: boolean }> = ({
                     {name}
                 </Text>
                 <Text style={styles.roleText}>
-                    {score >= 500 ? "Sponsor" : "Traveler"}
+                    {role}
                 </Text>
                 <View style={styles.starContainer}>
                     <Text style={styles.starText}>{calculateStars(score)}</Text>
