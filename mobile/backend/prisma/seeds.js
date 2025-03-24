@@ -1,8 +1,6 @@
-// Add this section at the top of your file, before requiring PrismaClient
 const fs = require('fs');
 const path = require('path');
 
-// Check if .env file exists in the project root, create one if not
 const envPath = path.join(__dirname, '../.env');
 if (!fs.existsSync(envPath)) {
   console.log('Creating .env file with DATABASE_URL...');
@@ -11,14 +9,12 @@ if (!fs.existsSync(envPath)) {
     'DATABASE_URL="mysql://root:root@localhost:3306/your_database_name"'
   );
   console.log('.env file created. Please edit it with your actual database credentials.');
-  process.exit(1); // Exit to let the user update the credentials
+  process.exit(1);
 }
 
-// Use CommonJS to avoid ES module issues
 const { PrismaClient } = require("@prisma/client");
 const { faker } = require("@faker-js/faker");
 
-// Import enums from Prisma
 const {
   Country,
   Gender,
@@ -43,6 +39,7 @@ const {
   ProcessStatus,
   Role,
   TicketStatus,
+  TicketCategory, // Added new enum
 } = require("@prisma/client");
 
 const prisma = new PrismaClient({
@@ -53,12 +50,12 @@ async function seed() {
   try {
     console.log('Cleaning existing data...');
     
-    // Safe delete - wrap each deletion in try/catch
     const tables = [
       'reputationTransaction',
       'reputation',
       'processEvent',
       'goodsProcess',
+      'ticketMessage', // Added new table
       'message',
       'chat',
       'reviewSponsor',
@@ -84,7 +81,6 @@ async function seed() {
       'user'
     ];
 
-    // Safely delete from each table, ignoring if table doesn't exist
     for (const table of tables) {
       try {
         console.log(`Deleting from ${table}...`);
@@ -116,9 +112,8 @@ async function seed() {
         })
       )
     );
-    console.log('Created users');
 
-    // Create Media first (as many other entities depend on it)
+    // Create Media
     const media = await Promise.all(
       Array.from({ length: 20 }).map(() =>
         prisma.media.create({
@@ -136,7 +131,6 @@ async function seed() {
         })
       )
     );
-    console.log('Created media');
 
     // Create Categories
     const categories = await Promise.all(
@@ -150,7 +144,6 @@ async function seed() {
         })
       )
     );
-    console.log('Created categories');
 
     // Create Travelers
     const travelers = await Promise.all(
@@ -178,6 +171,7 @@ async function seed() {
             country: faker.helpers.enumValue(Country),
             phoneNumber: faker.phone.number(),
             gender: faker.helpers.enumValue(Gender),
+            image: faker.datatype.boolean() ? { connect: { id: faker.helpers.arrayElement(media).id } } : undefined,
             isAnonymous: faker.datatype.boolean(),
             isBanned: faker.datatype.boolean(),
             isVerified: faker.datatype.boolean(),
@@ -406,7 +400,7 @@ async function seed() {
       )
     );
 
-    // Create Notifications (Fixed)
+    // Create Notifications
     const notifications = await Promise.all(
       Array.from({ length: 20 }).map(() => {
         const user = faker.helpers.arrayElement(users);
@@ -415,7 +409,7 @@ async function seed() {
         return prisma.notification.create({
           data: {
             user: { connect: { id: user.id } },
-            sender: sender ? { connect: { id: sender.id } } : undefined, // Use sender relation instead of senderId
+            sender: sender ? { connect: { id: sender.id } } : undefined,
             type: faker.helpers.enumValue(NotificationType),
             title: faker.lorem.sentence(5),
             message: faker.lorem.paragraph(1),
@@ -490,6 +484,10 @@ async function seed() {
             description: faker.lorem.paragraph(1),
             user: { connect: { id: faker.helpers.arrayElement(users).id } },
             status: faker.helpers.enumValue(TicketStatus),
+            category: faker.helpers.enumValue(TicketCategory),
+            media: faker.datatype.boolean() ? {
+              connect: [{ id: faker.helpers.arrayElement(media).id }]
+            } : undefined,
           },
         })
       )
@@ -499,7 +497,6 @@ async function seed() {
     const messages = await Promise.all(
       Array.from({ length: 20 }).map(() => {
         const chat = faker.helpers.arrayElement(chats);
-        const ticket = faker.datatype.boolean() ? faker.helpers.arrayElement(tickets) : undefined;
         const isRequester = faker.datatype.boolean();
         const senderId = isRequester ? chat.requesterId : chat.providerId;
         const receiverId = isRequester ? chat.providerId : chat.requesterId;
@@ -514,7 +511,24 @@ async function seed() {
             media: faker.datatype.boolean() ? { connect: { id: faker.helpers.arrayElement(media).id } } : undefined,
             isRead: faker.datatype.boolean(),
             time: faker.date.recent(),
-            ticket: ticket ? { connect: { id: ticket.id } } : undefined,
+          },
+        });
+      })
+    );
+
+    // Create Ticket Messages
+    const ticketMessages = await Promise.all(
+      Array.from({ length: 10 }).map(() => {
+        const ticket = faker.helpers.arrayElement(tickets);
+        return prisma.ticketMessage.create({
+          data: {
+            ticket: { connect: { id: ticket.id } },
+            sender: { connect: { id: ticket.userId } },
+            content: faker.lorem.paragraph(1),
+            isAdmin: faker.datatype.boolean(),
+            media: faker.datatype.boolean() ? {
+              connect: [{ id: faker.helpers.arrayElement(media).id }]
+            } : undefined,
           },
         });
       })

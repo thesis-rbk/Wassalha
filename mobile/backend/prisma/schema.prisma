@@ -280,7 +280,8 @@ model User {
   hasCompletedOnboarding Boolean @default(false)
   role                   Role    @default(USER)
   serviceProviderId      String?
-
+  resetToken                 String?
+  resetTokenExpiry       DateTime?
   // Relation to Traveler
   traveler Traveler?
 
