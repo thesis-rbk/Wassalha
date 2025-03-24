@@ -24,7 +24,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { sendMessage as apiSendMessage } from "@/services/chatService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BACKEND_URL } from "@/config";
-import { getSocket, connectSocket } from "@/services/SocketService";
+import { getSocket, connectSocket } from "@/services/socketService";
 import { Socket } from "socket.io-client";
 import * as DocumentPicker from "expo-document-picker";
 

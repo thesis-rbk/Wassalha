@@ -1,4 +1,4 @@
-import { getSocket } from "./SocketService";
+import { getSocket } from "./socketService";
 
 /**
  * Send a notification via socket
