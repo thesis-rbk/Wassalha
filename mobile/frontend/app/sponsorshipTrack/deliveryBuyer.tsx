@@ -26,12 +26,9 @@ import {
   ThumbsUp,
   ThumbsDown,
 } from "lucide-react-native";
+import { DeliveryData } from '@/types';
 
-interface DeliveryData {
-  verificationImage?: string;
-  status: string;
-  // add other fields as needed
-}
+
 
 export default function DeliveryBuyer() {
   const params = useLocalSearchParams();

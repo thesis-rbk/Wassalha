@@ -25,3 +25,4 @@ export * from './Role';
 export * from './Traveler';
 export * from './VerificationStatusProps';
 export * from "./PaymentParams"
+export * from "./DeliveryData"

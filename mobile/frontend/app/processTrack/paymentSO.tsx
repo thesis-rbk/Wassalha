@@ -16,7 +16,7 @@ import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { router, useLocalSearchParams } from "expo-router";
 import { BACKEND_URL } from "@/config";
-import { useNotification } from '@/context/NotificationContext';
+import { useNotification } from "@/context/NotificationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 
@@ -75,15 +75,15 @@ export default function PaymentScreen() {
     try {
       // Send payment initiated notification
       if (userData?.id) {
-        sendNotification('payment_initiated', {
+        sendNotification("payment_initiated", {
           travelerId: params.travelerId,
           requesterId: userData.id,
           requestDetails: {
-            goodsName: params.goodsName || 'your ordered item',
+            goodsName: params.goodsName || "your ordered item",
             requestId: params.idRequest,
             orderId: params.idOrder,
-            processId: params.idProcess
-          }
+            processId: params.idProcess,
+          },
         });
       }
 
@@ -110,10 +110,10 @@ export default function PaymentScreen() {
         throw new Error("Failed to create payment intent");
       }
 
-      const { clientSecret, error: paymentIntentError } = await response.json();
+      const { clientSecret, error } = await response.json();
 
-      if (paymentIntentError) {
-        throw new Error(paymentIntentError);
+      if (error) {
+        throw new Error(error);
       }
 
       // Step 2: Confirm the payment
@@ -128,49 +128,47 @@ export default function PaymentScreen() {
         throw new Error(confirmError.message);
       }
 
-      if (!paymentIntent) {
-        throw new Error("Payment failed: No payment intent returned");
+      if (paymentIntent) {
+        // Send payment completed notification
+        if (userData?.id) {
+          sendNotification("payment_completed", {
+            travelerId: params.travelerId,
+            requesterId: userData.id,
+            requestDetails: {
+              goodsName: params.goodsName || "your ordered item",
+              requestId: params.idRequest,
+              orderId: params.idOrder,
+              processId: params.idProcess,
+              amount: totalAmount.toFixed(2),
+            },
+          });
+        }
+
+        Alert.alert("Success", "Payment successful!");
+        console.log("Payment successful:", paymentIntent);
+        router.replace({
+          pathname: "/pickup/pickup",
+          params: params,
+        });
       }
-      
-      // Payment successful - send notification and navigate
+    } catch (error: Error | any) {
+      console.error("Payment error:", error);
+
+      // Send payment failed notification
       if (userData?.id) {
-        sendNotification('payment_completed', {
+        sendNotification("payment_failed", {
           travelerId: params.travelerId,
           requesterId: userData.id,
           requestDetails: {
-            goodsName: params.goodsName || 'your ordered item',
+            goodsName: params.goodsName || "your ordered item",
             requestId: params.idRequest,
             orderId: params.idOrder,
             processId: params.idProcess,
-            amount: totalAmount.toFixed(2)
-          }
+            errorMessage: error.message || "Payment processing failed",
+          },
         });
       }
 
-      Alert.alert("Success", "Payment successful!");
-      console.log("Payment successful:", paymentIntent);
-      router.replace({
-        pathname: "/pickup/pickup",
-        params: params,
-      });
-    } catch (error: Error | any) {
-      console.error("Payment error:", error);
-      
-      // Send payment failed notification
-      if (userData?.id) {
-        sendNotification('payment_failed', {
-          travelerId: params.travelerId,
-          requesterId: userData.id,
-          requestDetails: {
-            goodsName: params.goodsName || 'your ordered item',
-            requestId: params.idRequest,
-            orderId: params.idOrder,
-            processId: params.idProcess,
-            errorMessage: error.message || "Payment processing failed"
-          }
-        });
-      }
-      
       Alert.alert("Error", error.message || "Something went wrong");
     } finally {
       setIsProcessing(false);

@@ -14,8 +14,7 @@ import NavigationProp from "@/types/navigation";
 import type { Sponsorship, DecodedToken } from "@/types/Sponsorship";
 import { useLocalSearchParams } from 'expo-router';
 import { useRouter } from 'expo-router';
-import { PaymentParams } from "@/types"
-
+import { PaymentParams } from '@/types';
 // Add type for valid return paths
 
 

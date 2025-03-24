@@ -26,6 +26,7 @@ import {
 } from "lucide-react-native";
 import { useRoute, type RouteProp, useNavigation } from "@react-navigation/native"
 import { RouteParams } from "@/types/Sponsorship";
+import NavigationProp from "@/types/navigation";
 export default function VerificationBuyer() {
   const params = useLocalSearchParams();
   const orderId = params.orderId;
