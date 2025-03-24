@@ -12,6 +12,11 @@ import { jwtDecode } from 'jwt-decode';
 import { RouteParams } from "@/types/Sponsorship";
 import NavigationProp from "@/types/navigation";
 import type { Sponsorship, DecodedToken } from "@/types/Sponsorship";
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { PaymentParams } from '@/types';
+// Add type for valid return paths
+
 
 const CreditCardPayment: React.FC = () => {
     const navigation = useNavigation<NavigationProp>();
@@ -23,6 +28,13 @@ const CreditCardPayment: React.FC = () => {
     const [cardholderName, setCardholderName] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
     const [sponsorship, setSponsorship] = useState<Sponsorship | null>(null);
+    const router = useRouter();
+    const params = useLocalSearchParams<PaymentParams>();
+    const orderId = params.orderId as string;
+    const price = typeof params.price === 'string' ? parseFloat(params.price) : 0;
+    const type = params.type as string; // 'sponsorship' or 'regular'
+    const returnPath = params.returnPath as string;
+    const sponsorshipId = params.sponsorshipId as string;
 
     // Platform fee (5% of the price)
     const platformFeePercentage = 0.05;
@@ -36,10 +48,21 @@ const CreditCardPayment: React.FC = () => {
     // Fetch sponsorship details
     const fetchSponsorshipDetails = async () => {
         try {
-            const response = await axiosInstance.get(`/api/one/${id}`);
-            setSponsorship(response.data);
-        } catch (error) {
+            setLoading(true);
+            // Use the correct endpoint
+            const response = await axiosInstance.get(`/api/one/${sponsorshipId}`);
+            
+            if (response?.data) {
+                setSponsorship(response.data);
+            } else {
+                throw new Error("Invalid sponsorship data");
+            }
+        } catch (error: any) {
             console.error("Error fetching sponsorship details:", error);
+            Alert.alert(
+                "Error", 
+                "Failed to load sponsorship details. Please try again."
+            );
         } finally {
             setLoading(false);
         }
@@ -155,67 +178,54 @@ const CreditCardPayment: React.FC = () => {
         return 'Unknown';
     };
 
-    const handleSubmit = async () => {
-        if (!validateForm()) return;
-
-        setLoading(true);
+    const handlePayment = async () => {
+        if (!validateForm()) {
+            return;
+        }
 
         try {
-            const jwtToken = await AsyncStorage.getItem('jwtToken');
-            if (!jwtToken) throw new Error('No token found');
+            setLoading(true);
 
-            const decoded: DecodedToken = jwtDecode(jwtToken);
-            const buyerId = decoded.sub || decoded.id;
-
-            if (!buyerId) throw new Error('Buyer ID not found in token');
-            if (!sponsorship) throw new Error('Sponsorship data not loaded');
-
-            const [expiryMonth, expiryYear] = expiryDate.split('/');
-            const cardType = getCardType(cardNumber.replace(/\s/g, ''));
-            const last4 = cardNumber.replace(/\s/g, '').slice(-4);
-
-            const payload = {
-                amount: parseFloat(totalAmount),
-                cardholderName,
+            const paymentData = {
+                orderId: params.orderId,
+                amount: parseFloat(totalAmount) * 100,
                 cardNumber: cardNumber.replace(/\s/g, ''),
-                cardExpiryMm: expiryMonth,
-                cardExpiryYyyy: `20${expiryYear}`,
+                cardExpiryMm: expiryDate.split('/')[0],
+                cardExpiryYyyy: `20${expiryDate.split('/')[1]}`,
                 cardCvc: cvv,
-                sponsorShipId: id,
-                serviceProviderId: sponsorship.sponsor.id, // Ensure this is sent to backend
+                cardholderName: cardholderName
             };
 
-            const response = await axiosInstance.post('/api/payment', payload, {
-                headers: {
-                    'Authorization': `Bearer ${jwtToken}`,
-                },
-            });
-            // Show success alert
-            if (response.data.message === "successfully initiated") {
+            const response = await axiosInstance.post('/api/sponsorship-process/payment', paymentData);
+
+            if (response.data.success) {
                 Alert.alert(
-                    'Success',
-                    'Payment completed successfully!',
+                    "Success",
+                    "Payment processed successfully!",
                     [
                         {
-                            text: 'OK',
+                            text: "Continue",
                             onPress: () => {
-                                // Optionally navigate back or to a confirmation screen
-                                navigation.goBack();
-                            },
-                        },
-                    ],
-                    { cancelable: false }
+                                router.push({
+                                    pathname: "/sponsorshipTrack/deliveryBuyer",
+                                    params: { 
+                                        orderId: params.orderId,
+                                        sponsorshipId: params.sponsorshipId,
+                                        status: 'PAID'
+                                    }
+                                });
+                            }
+                        }
+                    ]
                 );
+            } else {
+                throw new Error(response.data.message || "Payment failed");
             }
-
         } catch (error: any) {
-            console.error('Error processing payment:', error);
-            // Show failure alert
+            console.error("Payment error:", error);
             Alert.alert(
-                'Error',
-                error.response?.data?.message || 'Failed to process payment. Please try again.',
-                [{ text: 'OK' }],
-                { cancelable: true }
+                "Payment Failed",
+                error.response?.data?.message || error.message || "Failed to process payment"
             );
         } finally {
             setLoading(false);
@@ -223,8 +233,10 @@ const CreditCardPayment: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchSponsorshipDetails();
-    }, []);
+        if (type === 'sponsorship' && sponsorshipId) {
+            fetchSponsorshipDetails();
+        }
+    }, [type, sponsorshipId]);
 
     return (
         <ThemedView style={styles.container}>
@@ -348,7 +360,7 @@ const CreditCardPayment: React.FC = () => {
 
                 <TouchableOpacity
                     style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-                    onPress={handleSubmit}
+                    onPress={handlePayment}
                     disabled={loading}
                 >
                     <ThemedText style={styles.submitButtonText}>
