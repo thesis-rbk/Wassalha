@@ -1,14 +1,18 @@
 import { ViewStyle, TextStyle } from 'react-native';
+import { CardFieldInput } from '@stripe/stripe-react-native';
 
-export interface CardDetails {
-  complete: boolean;
+export interface CardDetails extends CardFieldInput.Details {
+  complete?: boolean;
+  validNumber?: boolean;
+  validExpiry?: boolean;
+  validCVC?: boolean;
 }
 
 export interface ProgressStep {
   id: number;
   title: string;
   icon: string;
-  status: 'completed' | 'current' | 'pending';
+  status: string;
 }
 
 export interface PaymentBuyerStyles {
@@ -28,7 +32,7 @@ export interface PaymentBuyerStyles {
   paymentMethodSection: ViewStyle;
   sectionTitle: TextStyle;
   cardContainer: ViewStyle;
-  cardStyle: object;
+  cardStyle: ViewStyle;
   cardField: ViewStyle;
   securityNote: ViewStyle;
   securityText: TextStyle;
@@ -39,4 +43,7 @@ export interface PaymentBuyerStyles {
   footer: ViewStyle;
   button: ViewStyle;
   buttonText: TextStyle;
+  errorText: TextStyle;
+  validationStatus: ViewStyle;
+  validText: TextStyle;
 } 
