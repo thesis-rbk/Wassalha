@@ -29,11 +29,14 @@ import { RouteParams } from "@/types/Sponsorship";
 import NavigationProp from "@/types/navigation";
 export default function VerificationBuyer() {
   const params = useLocalSearchParams();
+  const orderId = params.orderId;
+  const sponsorshipId = params.sponsorshipId;
+  const price = params.price;
   const colorScheme = useColorScheme() ?? "light";
   const route = useRoute<RouteProp<RouteParams, "SponsorshipDetails">>()
   const router = useRouter();
   const { id } = route.params;
-  const [process, setProcess] = useState<any>(null);
+  const [order, setOrder] = useState<any>(null);
   const [sponsorship, setSponsorship] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { updateSponsorshipStatus } = useSponsorshipProcess();
@@ -47,20 +50,15 @@ export default function VerificationBuyer() {
   ];
 
   // Fetch process details
-  useEffect(() => {
-    if (id) {
-      fetchProcessDetails();
-    }
-  }, [id]);
-
   const fetchProcessDetails = async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get(`/api/sponsorship-process/${id}`);
-      setProcess(response.data);
-
+      // Get order details
+      const orderResponse = await axiosInstance.get(`/api/sponsorship-process/${orderId}`);
+      setOrder(orderResponse.data.data);
+      
       // Fetch sponsorship details
-      const sponsorshipResponse = await axiosInstance.get(`/api/one/${response.data.data.sponsorshipId}`);
+      const sponsorshipResponse = await axiosInstance.get(`/api/one/${sponsorshipId}`);
       setSponsorship(sponsorshipResponse.data);
     } catch (error) {
       console.error("Error fetching process details:", error);
@@ -70,13 +68,26 @@ export default function VerificationBuyer() {
     }
   };
 
+  useEffect(() => {
+    if (orderId && sponsorshipId) {
+      fetchProcessDetails();
+    }
+  }, [orderId, sponsorshipId]);
+
   const handleProceedToPayment = () => {
+    if (!sponsorship) {
+      Alert.alert("Error", "Please wait for sponsorship details to load");
+      return;
+    }
+
     router.push({
-      pathname: "/sponsorshipTrack/paymentBuyer",
+      pathname: "/verification/Payment" as const,
       params: {
-        processId: id,
-        sponsorshipId: process.sponsorshipId,
-        price: sponsorship.price,
+        orderId: orderId,
+        sponsorshipId: sponsorshipId,
+        price: sponsorship.price.toString(),
+        type: 'sponsorship',
+        returnPath: '/sponsorshipTrack/deliveryBuyer' as const
       },
     });
   };

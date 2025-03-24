@@ -269,7 +269,7 @@ export function useChat(chatId?: number, userId?: string) {
     // Add a simple message object to Redux so it shows immediately
     const clientMessage: Message = {
       id: Date.now(), // Simple temporary ID
-      chatId: chatId,
+      chatId: chatId.toString(),
       chat: { id: chatId } as any, // Simplified chat object
       senderId: parseInt(userId),
       receiverId: receiverId,

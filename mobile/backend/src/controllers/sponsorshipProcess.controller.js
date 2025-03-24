@@ -24,13 +24,13 @@ exports.upload = multer({ storage });
 // Initiate a new sponsorship process
 exports.initiateSponsorshipProcess = async (req, res) => {
   try {
-    const { sponsorshipId, reciptienId } = req.body;
+    const { sponsorshipId, recipientId } = req.body;
 
     // Validate input
-    if (!sponsorshipId || !reciptienId) {
+    if (!sponsorshipId || !recipientId) {
       return res.status(400).json({
         success: false,
-        message: 'Sponsorship ID and buyer ID are required'
+        message: 'Sponsorship ID and recipient ID are required'
       });
     }
 
@@ -50,11 +50,11 @@ exports.initiateSponsorshipProcess = async (req, res) => {
     // Create a new order to track the sponsorship process
     const order = await prisma.orderSponsor.create({
       data: {
-        recipientId: parseInt(reciptienId),
+        recipientId: parseInt(recipientId),
         serviceProviderId: sponsorship.sponsorId,
-        status: 'PENDING',
+        sponsorshipId: parseInt(sponsorshipId),
         amount: sponsorship.price,
-        sponsorshipId: parseInt(sponsorshipId)
+        status: 'PENDING'
       }
     });
 
@@ -78,29 +78,24 @@ exports.getSponsorshipProcess = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const process = await prisma.goodsProcess.findUnique({
+    const order = await prisma.orderSponsor.findUnique({
       where: { id: parseInt(id) },
       include: {
-        order: {
+        recipient: {
           include: {
-            buyer: {
-              include: {
-                profile: true
-              }
-            },
-            seller: {
-              include: {
-                profile: true,
-                serviceProvider: true
-              }
-            },
-            sponsorship: true
+            profile: true
+          }
+        },
+        serviceProvider: true,
+        sponsorship: {
+          include: {
+            sponsor: true
           }
         }
       }
     });
 
-    if (!process) {
+    if (!order) {
       return res.status(404).json({
         success: false,
         message: 'Sponsorship process not found'
@@ -109,7 +104,7 @@ exports.getSponsorshipProcess = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: process
+      data: order
     });
   } catch (error) {
     console.error('Error fetching sponsorship process:', error);
@@ -127,41 +122,21 @@ exports.updateSponsorshipStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    // Validate status
-    const validStatuses = ['INITIALIZED', 'CONFIRMED', 'PAID', 'IN_TRANSIT', 'PICKUP_MEET', 'FINALIZED', 'CANCELLED'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid status'
-      });
-    }
-
-    const updatedProcess = await prisma.goodsProcess.update({
+    const order = await prisma.orderSponsor.update({
       where: { id: parseInt(id) },
       data: { status }
-    });
-
-    // Create a process event to track the status change
-    await prisma.processEvent.create({
-      data: {
-        goodsProcessId: parseInt(id),
-        fromStatus: updatedProcess.status,
-        toStatus: status,
-        changedByUserId: req.user.id,
-        note: `Status updated to ${status}`
-      }
     });
 
     res.status(200).json({
       success: true,
       message: 'Status updated successfully',
-      data: updatedProcess
+      data: order
     });
   } catch (error) {
-    console.error('Error updating sponsorship status:', error);
+    console.error('Error updating status:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to update sponsorship status',
+      message: 'Failed to update status',
       error: error.message
     });
   }
@@ -400,74 +375,59 @@ exports.cancelSponsorshipProcess = async (req, res) => {
 // Create payment intent for Stripe
 exports.createPaymentIntent = async (req, res) => {
   try {
-    const { processId, amount } = req.body;
+    const { orderId, amount, cardNumber, cardExpiryMm, cardExpiryYyyy, cardCvc, cardholderName } = req.body;
+
+    console.log('Creating payment for order:', orderId);
 
     // Validate input
-    if (!processId || !amount) {
+    if (!orderId || !amount || !cardNumber || !cardExpiryMm || !cardExpiryYyyy || !cardCvc || !cardholderName) {
       return res.status(400).json({
         success: false,
-        message: 'Process ID and amount are required'
+        message: 'All payment details are required'
       });
     }
 
-    // Get the process
-    const process = await prisma.goodsProcess.findUnique({
-      where: { id: parseInt(processId) },
-      include: { order: true }
+    // Get the order
+    const order = await prisma.orderSponsor.findUnique({
+      where: { id: parseInt(orderId) },
+      include: { sponsorship: true }
     });
 
-    if (!process) {
+    if (!order) {
       return res.status(404).json({
         success: false,
-        message: 'Process not found'
+        message: 'Order not found'
       });
     }
 
-    // Create payment intent with Stripe
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Stripe requires amount in cents
-      currency: 'usd',
-      metadata: { processId, orderId: process.orderId }
-    });
+    try {
+      // Process the payment (mock success for now)
+      // In production, integrate with your payment provider here
+      
+      // Update order status
+      const updatedOrder = await prisma.orderSponsor.update({
+        where: { id: parseInt(orderId) },
+        data: { status: 'CONFIRMED' }
+      });
 
-    // Create a payment record
-    await prisma.payment.create({
-      data: {
-        orderId: process.orderId,
-        amount: parseFloat(amount),
-        currency: 'USD',
-        paymentMethod: 'STRIPE',
-        paymentState: 'PENDING',
-        transactionId: paymentIntent.id
-      }
-    });
-
-    // Update the process status
-    await prisma.goodsProcess.update({
-      where: { id: parseInt(processId) },
-      data: { status: 'CONFIRMED' }
-    });
-
-    // Create a process event
-    await prisma.processEvent.create({
-      data: {
-        goodsProcessId: parseInt(processId),
-        fromStatus: process.status,
-        toStatus: 'CONFIRMED',
-        changedByUserId: req.user.id,
-        note: 'Payment initiated'
-      }
-    });
-
-    res.status(200).json({
-      success: true,
-      clientSecret: paymentIntent.client_secret
-    });
+      res.status(200).json({
+        success: true,
+        message: 'Payment processed successfully',
+        data: updatedOrder
+      });
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      res.status(400).json({
+        success: false,
+        message: 'Payment processing failed',
+        error: error.message
+      });
+    }
   } catch (error) {
-    console.error('Error creating payment intent:', error);
+    console.error('Error in payment endpoint:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create payment intent',
+      message: 'Internal server error',
       error: error.message
     });
   }
