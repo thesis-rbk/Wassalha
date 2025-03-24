@@ -69,12 +69,12 @@ export default function RootLayout() {
                     onAnimationComplete={() => setAnimationComplete(true)}
                   />
                 ) : hasSeenOnboarding === null ? (
-                  <MainLoading 
-                    onLoadingComplete={() => setHasSeenOnboarding(false)} 
+                  <MainLoading
+                    onLoadingComplete={() => setHasSeenOnboarding(false)}
                   />
                 ) : !hasSeenOnboarding ? (
-                  <OnboardingContainer 
-                    onComplete={handleOnboardingComplete} 
+                  <OnboardingContainer
+                    onComplete={handleOnboardingComplete}
                   />
                 ) : (
                   <Stack>
@@ -159,8 +159,12 @@ export default function RootLayout() {
                       options={{ title: "Take Selfie" }}
                     />
                     <Stack.Screen
-                      name="verification/creditCardVerification"
+                      name="verification/CreditCardVerification"
                       options={{ title: "Credit Card Verification" }}
+                    />
+                    <Stack.Screen
+                      name="verification/Payment"
+                      options={{ title: "payment" }}
                     />
                     <Stack.Screen
                       name="orders&requests/order"
@@ -233,7 +237,7 @@ export default function RootLayout() {
                       name="reporting-system/create-ticket"
                       options={{ title: "Create Report" }}
                     />
-                      <Stack.Screen
+                    <Stack.Screen
                       name="goodPost/goodpostpage"
                       options={{ title: "Traveler Posts" }}
                     />
