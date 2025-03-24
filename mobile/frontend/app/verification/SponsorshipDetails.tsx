@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { TabBar } from "@/components/navigation/TabBar";
 import { RouteParams } from "@/types/Sponsorship";
 import NavigationProp from "@/types/navigation";
+import { router, useLocalSearchParams, useRouter } from "expo-router";
 const SponsorshipDetails: React.FC = () => {
     const [activeTab, setActiveTab] = useState("Home");
     const route = useRoute<RouteProp<RouteParams, "SponsorshipDetails">>()
@@ -34,7 +35,10 @@ const SponsorshipDetails: React.FC = () => {
         }
     }
     const buyNow = () => {
-        navigation.navigate('verification/PaymentByKH', { id });
+        router.push({
+            pathname: "/sponsorshipTrack/initializationBuyer",
+            params: { id }
+        });
     };
     // Fetch reviews and calculate average rating
     const fetchReviews = async () => {

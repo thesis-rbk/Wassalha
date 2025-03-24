@@ -188,7 +188,7 @@ const sponsor = {
 
             // Create and confirm the payment intent
             const paymentIntent = await stripe.paymentIntents.create({
-                amount: amount * 100, // Convert to cents
+                amount: Math.round(amount * 100), // Convert to cents
                 currency: "eur",
                 payment_method_types: ["card"],
                 payment_method: paymentMethodId,
@@ -207,7 +207,7 @@ const sponsor = {
             // Store payment information in the database
             const payment = await prisma.sponsorCheckout.create({
                 data: {
-                    amount,
+                    amount: Math.round(amount),
                     currency: "TND",
                     paymentMethod: "CARD",
                     status: paymentIntent.status === "succeeded" ? "COMPLETED" : "PENDING",
@@ -241,13 +241,18 @@ const sponsor = {
                 };
                 console.log("Transferred to Connected Account (mocked):", mockTransfer.id);
             }
-
-            // Return response to frontend
+            const sub = await prisma.sponsorship.findUnique({ where: { id: payment.sponsorShipId }, include: { sponsor: true } })
+            const order = await prisma.orderSponsor.create({
+                data: {
+                    serviceProviderId: parseInt(sub.sponsor.id),
+                    sponsorshipId: parseFloat(sub.id),
+                    recipientId: parseInt(id),
+                    amount: Math.round(amount),
+                    status: "PENDING",
+                },
+            });
             res.send({
-                message: "successfully initiated",
-                clientSecret: paymentIntent.client_secret,
-                paymentId: payment.id,
-                status: paymentIntent.status,
+                message: "successfully initiated", order
             });
         } catch (error) {
             console.error("Payment error:", error);

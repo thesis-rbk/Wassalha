@@ -69,12 +69,12 @@ export default function RootLayout() {
                     onAnimationComplete={() => setAnimationComplete(true)}
                   />
                 ) : hasSeenOnboarding === null ? (
-                  <MainLoading 
-                    onLoadingComplete={() => setHasSeenOnboarding(false)} 
+                  <MainLoading
+                    onLoadingComplete={() => setHasSeenOnboarding(false)}
                   />
                 ) : !hasSeenOnboarding ? (
-                  <OnboardingContainer 
-                    onComplete={handleOnboardingComplete} 
+                  <OnboardingContainer
+                    onComplete={handleOnboardingComplete}
                   />
                 ) : (
                   <Stack>
@@ -163,7 +163,7 @@ export default function RootLayout() {
                       options={{ title: "Credit Card Verification" }}
                     />
                     <Stack.Screen
-                      name="verification/PaymentByKH"
+                      name="verification/Payment"
                       options={{ title: "payment" }}
                     />
                     <Stack.Screen

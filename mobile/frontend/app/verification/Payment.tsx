@@ -11,23 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
 import { RouteParams } from "@/types/Sponsorship";
 import NavigationProp from "@/types/navigation";
-import type { Sponsorship } from "@/types/Sponsorship";
-
-interface DecodedToken {
-    sub?: string;
-    id?: string;
-}
-
-enum PaymentCurrency {
-    TND = "TND",
-    EUR = "EUR",
-    USD = "USD",
-}
-
-enum PaymentMethod {
-    CARD = "CARD",
-    BANK_TRANSFER = "BANK_TRANSFER",
-}
+import type { Sponsorship, DecodedToken } from "@/types/Sponsorship";
 
 const CreditCardPayment: React.FC = () => {
     const navigation = useNavigation<NavigationProp>();
@@ -195,9 +179,10 @@ const CreditCardPayment: React.FC = () => {
                 cardholderName,
                 cardNumber: cardNumber.replace(/\s/g, ''),
                 cardExpiryMm: expiryMonth,
-                cardExpiryYyyy: `20${expiryYear}`, // Assuming YY format, convert to YYYY
+                cardExpiryYyyy: `20${expiryYear}`,
                 cardCvc: cvv,
                 sponsorShipId: id,
+                serviceProviderId: sponsorship.sponsor.id, // Ensure this is sent to backend
             };
 
             const response = await axiosInstance.post('/api/payment', payload, {
@@ -205,24 +190,32 @@ const CreditCardPayment: React.FC = () => {
                     'Authorization': `Bearer ${jwtToken}`,
                 },
             });
-            console.log('Payment response:', response.data);
-            if (response.data.message === 'successfully initiated') {
-                const ressss = await axiosInstance.post('/api/createOrder', {
-                    serviceProviderId: sponsorship.sponsor.id,
-                    sponsorshipId: id,
-                    amount: sponsorship.price,
-                }, {
-                    headers: {
-                        'Authorization': `Bearer ${jwtToken}`,
-                    }
-                })
-
+            // Show success alert
+            if (response.data.message === "successfully initiated") {
+                Alert.alert(
+                    'Success',
+                    'Payment completed successfully!',
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => {
+                                // Optionally navigate back or to a confirmation screen
+                                navigation.goBack();
+                            },
+                        },
+                    ],
+                    { cancelable: false }
+                );
             }
+
         } catch (error: any) {
             console.error('Error processing payment:', error);
+            // Show failure alert
             Alert.alert(
                 'Error',
-                error.message || 'Failed to process payment. Please try again.'
+                error.response?.data?.message || 'Failed to process payment. Please try again.',
+                [{ text: 'OK' }],
+                { cancelable: true }
             );
         } finally {
             setLoading(false);
