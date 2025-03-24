@@ -24,10 +24,10 @@ exports.upload = multer({ storage });
 // Initiate a new sponsorship process
 exports.initiateSponsorshipProcess = async (req, res) => {
   try {
-    const { sponsorshipId, buyerId } = req.body;
+    const { sponsorshipId, reciptienId } = req.body;
 
     // Validate input
-    if (!sponsorshipId || !buyerId) {
+    if (!sponsorshipId || !reciptienId) {
       return res.status(400).json({
         success: false,
         message: 'Sponsorship ID and buyer ID are required'
@@ -48,33 +48,20 @@ exports.initiateSponsorshipProcess = async (req, res) => {
     }
 
     // Create a new order to track the sponsorship process
-    const order = await prisma.order.create({
+    const order = await prisma.orderSponsor.create({
       data: {
-        buyerId: parseInt(buyerId),
-        sellerId: sponsorship.sponsorId,
-        totalAmount: sponsorship.amount,
-        orderStatus: 'PENDING',
-        orderType: 'SPONSORSHIP',
+        recipientId: parseInt(reciptienId),
+        serviceProviderId: sponsorship.sponsorId,
+        status: 'PENDING',
+        amount: sponsorship.price,
         sponsorshipId: parseInt(sponsorshipId)
-      }
-    });
-
-    // Create a goods process for this order
-    const process = await prisma.goodsProcess.create({
-      data: {
-        orderId: order.id,
-        status: 'INITIALIZED'
       }
     });
 
     res.status(201).json({
       success: true,
       message: 'Sponsorship process initiated successfully',
-      data: {
-        orderId: order.id,
-        processId: process.id,
-        status: process.status
-      }
+      order
     });
   } catch (error) {
     console.error('Error initiating sponsorship process:', error);

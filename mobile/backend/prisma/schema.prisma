@@ -299,9 +299,6 @@ model User {
   subscriptions Subscription[] @relation("UserSubscriptions")
   sponsorships  Sponsorship[]  @relation("UserSponsorships")
 
-  // New relation for user as recipient
-  sponsorshipsReceived Sponsorship[] @relation("SponsorshipRecipients")
-
   // Reputation
   reputation Reputation?
 
@@ -330,7 +327,8 @@ model User {
   // Add this line
 
   // Add this relation field
-  sponsorshipsCreated Sponsorship[] @relation("UserSponsorshipsCreated")
+  sponsorshipsCreated Sponsorship[]  @relation("UserSponsorshipsCreated")
+  OrderSponsor        OrderSponsor[]
 }
 
 // ========== PROFILE ==========
@@ -410,8 +408,9 @@ model ServiceProvider {
   sponsorships Sponsorship[]   @relation("ServiceProviderSponsors")
   reviews      ReviewSponsor[] @relation("ServiceProviderReviews")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  OrderSponsor OrderSponsor[]
 }
 
 model SponsorCheckout {
@@ -422,7 +421,6 @@ model SponsorCheckout {
   cardExpiryYyyy String // Expiry year (YYYY)
   cardCvc        String // CVC code
   cardholderName String // Name of cardholder
-  postalCode     String // Postal code of the cardholder's address
   amount         Float // Payment amount
   qrCode         String? // Optional: QR code for payment
   paymentUrl     String? // Optional: Payment URL
@@ -701,7 +699,6 @@ model Sponsorship {
   // Existing fields
   sponsorId        Int
   sponsor          ServiceProvider   @relation("ServiceProviderSponsors", fields: [sponsorId], references: [id])
-  amount           Float
   status           String            @default("pending")
   reviewsponsor    ReviewSponsor[] // This links to the ReviewSponsor model
   // Relationships
@@ -710,9 +707,7 @@ model Sponsorship {
   User             User?             @relation("UserSponsorshipsCreated", fields: [userId], references: [id])
   userId           Int?
   updatedAt        DateTime          @updatedAt
-
-  // Add this line
-  recipients User[] @relation("SponsorshipRecipients")
+  OrderSponsor     OrderSponsor[]
 }
 
 // ========== GOODS POSTS ==========
@@ -837,6 +832,22 @@ model PickupSuggestion {
   contactPhoneNumber String?
   scheduledTime      DateTime?
   createdAt          DateTime   @default(now())
+}
+
+//sponsorrrrrrrrrrrrrrrrrrrrrrr
+model OrderSponsor {
+  id                Int         @id @default(autoincrement())
+  serviceProviderId Int
+  sponsorshipId     Int
+  recipientId       Int
+  amount            Float
+  status            OrderStatus @default(PENDING)
+
+  serviceProvider ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sponsorship     Sponsorship     @relation(fields: [sponsorshipId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  recipient       User            @relation(fields: [recipientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 }
 
 // Add Ticket model before the existing models
