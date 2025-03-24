@@ -31,15 +31,40 @@ import { CardDetails, ProgressStep, PaymentBuyerStyles } from '@/types/PaymentBu
 
 export default function PaymentBuyer() {
   const params = useLocalSearchParams();
-  const processId = params.processId;
-  const sponsorshipId = params.sponsorshipId;
-  const price = parseFloat(params.price as string);
+  const orderId = params.orderId as string;
+  const sponsorshipId = params.sponsorshipId as string;
+  const price = typeof params.price === 'string' ? parseFloat(params.price) : 0;
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [cardDetails, setCardDetails] = useState<CardDetails | null>(null);
+  const [cardError, setCardError] = useState<string>('');
   const { confirmPayment, loading: paymentLoading } = useConfirmPayment();
   const { updateSponsorshipStatus } = useSponsorshipProcess();
+
+  // Add validation for price
+  useEffect(() => {
+    if (isNaN(price) || price <= 0) {
+      Alert.alert("Error", "Invalid price amount");
+      router.back();
+    }
+  }, [price]);
+
+  // Add this console log to debug the button state
+  useEffect(() => {
+    console.log('Card Details:', cardDetails);
+    console.log('Loading:', loading);
+    console.log('Card Complete:', cardDetails?.complete);
+  }, [cardDetails, loading]);
+
+  // Add this near the top of your component
+  useEffect(() => {
+    console.log('Card Details Changed:', {
+      complete: cardDetails?.complete,
+      brand: cardDetails?.brand,
+      last4: cardDetails?.last4,
+    });
+  }, [cardDetails]);
 
   // Progress steps
   const progressSteps: ProgressStep[] = [
@@ -53,20 +78,32 @@ export default function PaymentBuyer() {
   const serviceFee = price * 0.05; // 5% service fee
   const totalAmount = price + serviceFee;
 
-  const handlePayment = async (): Promise<void> => {
-    if (!cardDetails?.complete) {
-      Alert.alert("Error", "Please complete card details");
-      return;
-    }
-
+  const handlePayment = async () => {
     try {
+      console.log('Starting payment with card details:', {
+        complete: cardDetails?.complete,
+        brand: cardDetails?.brand,
+      });
+
+      if (!cardDetails?.complete) {
+        Alert.alert("Error", "Please complete card details");
+        return;
+      }
+
       setLoading(true);
       
-      // Create payment intent on the server
-      const response = await axiosInstance.post("/api/sponsorship-process/payment", {
-        processId: processId,
-        amount: totalAmount * 100, // Convert to cents for Stripe
+      // Log the request payload
+      console.log('Payment Request:', {
+        orderId,
+        amount: totalAmount * 100
       });
+
+      const response = await axiosInstance.post("/api/sponsorship-process/payment", {
+        orderId: orderId,
+        amount: totalAmount * 100
+      });
+
+      console.log('Payment Response:', response.data);
 
       if (!response.data.success || !response.data.clientSecret) {
         throw new Error("Failed to create payment intent");
@@ -74,7 +111,7 @@ export default function PaymentBuyer() {
 
       // Confirm payment with Stripe
       const { error, paymentIntent } = await confirmPayment(response.data.clientSecret, {
-        paymentMethodType: 'Card' as const,
+        paymentMethodType: 'Card'
       });
 
       if (error) {
@@ -82,22 +119,34 @@ export default function PaymentBuyer() {
       }
 
       if (paymentIntent.status === "Succeeded") {
-        // Update process status
-        await updateSponsorshipStatus(Number(processId), "PAID");
+        // Update order status
+        await axiosInstance.patch(`/api/sponsorship-process/${orderId}/status`, {
+          status: 'CONFIRMED'
+        });
         
-        // Navigate to success screen
         router.push({
           pathname: "/sponsorshipTrack/deliveryBuyer",
-          params: { processId: processId },
+          params: { orderId }
         });
       }
     } catch (error: any) {
       console.error("Payment error:", error);
-      Alert.alert("Payment Failed", error.message || "There was an error processing your payment");
+      Alert.alert(
+        "Payment Failed", 
+        error.response?.data?.message || error.message || "There was an error processing your payment"
+      );
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    console.log('Button disabled state:', {
+      loading,
+      cardComplete: cardDetails?.complete,
+      disabled: loading || !cardDetails?.complete
+    });
+  }, [loading, cardDetails]);
 
   return (
     <ThemedView style={styles.container}>
@@ -138,11 +187,47 @@ export default function PaymentBuyer() {
               postalCodeEnabled={false}
               placeholders={{
                 number: "4242 4242 4242 4242",
+                expiration: "MM/YY",
+                cvc: "CVC",
               }}
-              cardStyle={styles.cardStyle}
-              style={styles.cardField}
-              onCardChange={setCardDetails}
+              cardStyle={{
+                backgroundColor: '#FFFFFF',
+                textColor: '#000000',
+                fontSize: 14,
+                placeholderColor: '#999999',
+              }}
+              style={{
+                width: '100%',
+                height: 50,
+                marginVertical: 10,
+              }}
+              onCardChange={(cardDetails) => {
+                console.log("Card details changed:", cardDetails);
+                // Check if all fields are valid
+                const isComplete = 
+                  cardDetails.validNumber === true && 
+                  cardDetails.validExpiry === true && 
+                  cardDetails.validCVC === true;
+                
+                setCardDetails({
+                  ...cardDetails,
+                  complete: isComplete
+                });
+              }}
             />
+            {cardDetails && (
+              <View style={styles.validationStatus}>
+                {cardDetails.validNumber && (
+                  <ThemedText style={styles.validText}>✓ Valid card number</ThemedText>
+                )}
+                {cardDetails.validExpiry && (
+                  <ThemedText style={styles.validText}>✓ Valid expiry date</ThemedText>
+                )}
+                {cardDetails.validCVC && (
+                  <ThemedText style={styles.validText}>✓ Valid CVC</ThemedText>
+                )}
+              </View>
+            )}
           </View>
           
           <View style={styles.securityNote}>
@@ -170,15 +255,17 @@ export default function PaymentBuyer() {
           variant="primary"
           onPress={handlePayment}
           style={styles.button}
-          disabled={loading || !cardDetails?.complete}
+          disabled={loading || !cardDetails?.complete || !cardDetails?.validNumber}
         >
           {loading ? (
             <ActivityIndicator color="white" size="small" />
           ) : (
-            <>
-              <ThemedText style={styles.buttonText}>Pay ${totalAmount.toFixed(2)}</ThemedText>
-              <DollarSign size={20} color="white" />
-            </>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <ThemedText style={styles.buttonText}>
+                Pay ${totalAmount.toFixed(2)}
+              </ThemedText>
+              <DollarSign size={20} color="white" style={{ marginLeft: 8 }} />
+            </View>
           )}
         </BaseButton>
       </View>
@@ -335,5 +422,18 @@ const styles = StyleSheet.create<PaymentBuyerStyles>({
     color: "white",
     fontWeight: "600",
     fontSize: 16,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  validationStatus: {
+    marginTop: 8,
+  },
+  validText: {
+    color: '#16a34a',
+    fontSize: 12,
+    marginVertical: 2,
   },
 }); 

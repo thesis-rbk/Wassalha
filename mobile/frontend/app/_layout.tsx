@@ -292,6 +292,15 @@ export default function RootLayout() {
                       name="pickup/PickupDashboard"
                       options={{ title: "Pickup" }}
                     />
+                     <Stack.Screen
+                      name="reporting-system/MyTicketsPage"
+                      
+                    />
+                     <Stack.Screen
+                      name="reporting-system/detailsTicket/[id]"
+                      options={{ title: "Ticket " }}
+
+                    />
                   </Stack>
 
                 )}

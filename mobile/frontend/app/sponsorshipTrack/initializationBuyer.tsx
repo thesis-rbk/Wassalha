@@ -114,17 +114,12 @@ export default function InitializationBuyer() {
         return;
       }
 
-      if (!sponsorship?.sponsor?.id) {
-        Alert.alert("Error", "Sponsor information not found.");
-        return;
-      }
+      const response = await axiosInstance.post('/api/sponsorship-process/initiate', {
+        sponsorshipId: Number(id),
+        recipientId: Number(user.id)
+      });
 
-      const result = await initiateSponsorshipProcess(
-        Number(params.id),
-        Number(user.id)
-      );
-
-      if (result.success) {
+      if (response.data.success) {
         Alert.alert(
           "Success",
           "Sponsorship process initiated successfully!",
@@ -132,30 +127,24 @@ export default function InitializationBuyer() {
             {
               text: "Continue",
               onPress: () => {
-                router.replace({
+                router.push({
                   pathname: "/sponsorshipTrack/verificationBuyer",
                   params: {
-                    ...params,
-                    processId: result.data.id,
-                    sponsorId: sponsorship.sponsor.id,
-                    buyerId: user.id,
-                    price: sponsorship.price,
-                    platform: sponsorship.platform,
-                    description: sponsorship.description,
-                  },
+                    orderId: response.data.order.id,
+                    sponsorshipId: id,
+                    price: sponsorship?.price
+                  }
                 });
               },
             },
           ]
         );
-
       } else {
-
-        Alert.alert("Error", result.message || "Failed to initiate process");
+        Alert.alert("Error", response.data.message || "Failed to initiate process");
       }
-    } catch (error) {
-      console.error("Error initiating sponsorship process:", error);
-      Alert.alert("Error", "Failed to initiate sponsorship process");
+    } catch (error: any) {
+      console.error('Error initiating process:', error);
+      Alert.alert('Error', error.response?.data?.message || 'Failed to initiate sponsorship process');
     } finally {
       setProcessing(false);
     }
