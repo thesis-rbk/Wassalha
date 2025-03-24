@@ -24,3 +24,4 @@ export * from './Message';
 export * from './Role';
 export * from './Traveler';
 export * from './VerificationStatusProps';
+export * from "./PaymentParams"
