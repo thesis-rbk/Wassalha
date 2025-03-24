@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import axiosInstance from '@/config';
-import { getSocket, connectSocket, cleanupSockets } from '../services/SocketService';
+import { getSocket, connectSocket, cleanupSockets } from '../services/socketService';
 import { sendSocketNotification } from '@/services/notificationService';
 import { NotificationType, NotificationStatus } from '@/types/NotificationProcess';
 import { useSelector, useDispatch } from 'react-redux';

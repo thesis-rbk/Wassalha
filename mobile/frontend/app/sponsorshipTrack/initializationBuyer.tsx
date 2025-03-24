@@ -30,8 +30,13 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react-native";
-
+import { useRoute, type RouteProp, useNavigation } from "@react-navigation/native"
+import { RouteParams } from "@/types/Sponsorship";
+import NavigationProp from "@/types/navigation";
 export default function InitializationBuyer() {
+  const route = useRoute<RouteProp<RouteParams, "SponsorshipDetails">>()
+  const navigation = useNavigation<NavigationProp>();
+  const { id } = route.params
   const params = useLocalSearchParams();
   const sponsorshipId = params.sponsorshipId;
   const processId = params.processId;
@@ -44,7 +49,7 @@ export default function InitializationBuyer() {
   const { sendNotification } = useNotification();
   const { initiateSponsorshipProcess } = useSponsorshipProcess();
 
-console.log("slmmmmmmmmmmmmmmmm alykom",params);
+  console.log("slmmmmmmmmmmmmmmmm alykom", params);
 
   // Progress steps
   const progressSteps = [
@@ -53,7 +58,16 @@ console.log("slmmmmmmmmmmmmmmmm alykom",params);
     { id: 3, title: "Payment", icon: "payment" },
     { id: 4, title: "Delivery", icon: "pickup" },
   ];
-
+  const fetchSponsorshipDetails = async () => {
+    try {
+      const response = await axiosInstance.get(`/api/one/${id}`)
+      setSponsorship(response.data)
+    } catch (error) {
+      console.error("Error fetching sponsorship details:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
   // Load user data
   useEffect(() => {
     const loadUserData = async () => {
@@ -91,29 +105,16 @@ console.log("slmmmmmmmmmmmmmmmm alykom",params);
     fetchSponsorshipDetails();
   }, [sponsorshipId]);
 
-  const fetchSponsorshipDetails = async () => {
-    try {
-      setLoading(true);
-      const response = await axiosInstance.get(`/api/one/${parseInt(params.id.toString()
-      )}`);
-      setSponsorship(response.data);
-    } catch (error) {
-      console.error("Error fetching sponsorship details:", error);
-      Alert.alert("Error", "Failed to load sponsorship details");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleInitiateProcess = async () => {
     try {
       setProcessing(true);
-      
+
       if (!user?.id) {
         Alert.alert("Error", "User information not found. Please log in again.");
         return;
       }
-      
+
       if (!sponsorship?.sponsor?.id) {
         Alert.alert("Error", "Sponsor information not found.");
         return;
@@ -123,10 +124,10 @@ console.log("slmmmmmmmmmmmmmmmm alykom",params);
         Number(params.id),
         Number(user.id)
       );
-      
+
       if (result.success) {
         Alert.alert(
-          "Success", 
+          "Success",
           "Sponsorship process initiated successfully!",
           [
             {
@@ -150,7 +151,7 @@ console.log("slmmmmmmmmmmmmmmmm alykom",params);
         );
 
       } else {
-        
+
         Alert.alert("Error", result.message || "Failed to initiate process");
       }
     } catch (error) {

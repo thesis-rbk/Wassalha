@@ -19,7 +19,10 @@ export interface Sponsorship {
     createdAt: string;
     updatedAt: string;
 }
-
+export interface DecodedToken {
+    sub?: string;
+    id?: string;
+}
 export interface ServiceProvider {
     id: number;
     userId: number;

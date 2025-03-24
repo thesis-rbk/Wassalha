@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, router } from "expo-router";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import { ThemedView } from "@/components/ThemedView";
@@ -24,12 +24,15 @@ import {
   AlertCircle,
   ArrowRight,
 } from "lucide-react-native";
-
+import { useRoute, type RouteProp, useNavigation } from "@react-navigation/native"
+import { RouteParams } from "@/types/Sponsorship";
+import NavigationProp from "@/types/navigation";
 export default function VerificationBuyer() {
   const params = useLocalSearchParams();
-  const processId = params.processId;
   const colorScheme = useColorScheme() ?? "light";
+  const route = useRoute<RouteProp<RouteParams, "SponsorshipDetails">>()
   const router = useRouter();
+  const { id } = route.params;
   const [process, setProcess] = useState<any>(null);
   const [sponsorship, setSponsorship] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -45,17 +48,17 @@ export default function VerificationBuyer() {
 
   // Fetch process details
   useEffect(() => {
-    if (processId) {
+    if (id) {
       fetchProcessDetails();
     }
-  }, [processId]);
+  }, [id]);
 
   const fetchProcessDetails = async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get(`/api/sponsorship-process/${processId}`);
-      setProcess(response.data.data);
-      
+      const response = await axiosInstance.get(`/api/sponsorship-process/${id}`);
+      setProcess(response.data);
+
       // Fetch sponsorship details
       const sponsorshipResponse = await axiosInstance.get(`/api/one/${response.data.data.sponsorshipId}`);
       setSponsorship(sponsorshipResponse.data);
@@ -71,7 +74,7 @@ export default function VerificationBuyer() {
     router.push({
       pathname: "/sponsorshipTrack/paymentBuyer",
       params: {
-        processId: processId,
+        processId: id,
         sponsorshipId: process.sponsorshipId,
         price: sponsorship.price,
       },
@@ -103,7 +106,7 @@ export default function VerificationBuyer() {
             <ThemedText style={styles.statusTitle}>Request Accepted</ThemedText>
           </View>
           <ThemedText style={styles.statusText}>
-            Good news! The sponsor has accepted your request for {sponsorship?.platform} sponsorship. 
+            Good news! The sponsor has accepted your request for {sponsorship?.platform} sponsorship.
             You can now proceed to payment to secure your purchase.
           </ThemedText>
 
@@ -132,7 +135,7 @@ export default function VerificationBuyer() {
         <View style={styles.infoCard}>
           <ThemedText style={styles.infoTitle}>What happens next?</ThemedText>
           <ThemedText style={styles.infoText}>
-            After you complete the payment, the sponsor will be notified and will prepare your 
+            After you complete the payment, the sponsor will be notified and will prepare your
             {sponsorship?.platform} account. They will provide proof of delivery which you'll need to confirm.
           </ThemedText>
 
@@ -148,7 +151,7 @@ export default function VerificationBuyer() {
                 </ThemedText>
               </View>
             </View>
-            
+
             <View style={styles.stepItem}>
               <View style={styles.stepNumber}>
                 <ThemedText style={styles.stepNumberText}>2</ThemedText>
@@ -160,7 +163,7 @@ export default function VerificationBuyer() {
                 </ThemedText>
               </View>
             </View>
-            
+
             <View style={styles.stepItem}>
               <View style={styles.stepNumber}>
                 <ThemedText style={styles.stepNumberText}>3</ThemedText>
