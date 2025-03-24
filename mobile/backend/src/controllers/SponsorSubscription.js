@@ -1,6 +1,6 @@
 const prisma = require("../../prisma");
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
+const axios = require("axios")
 const sponsor = {
     createSponsorShip: async (req, res) => {
         const sponsorId = req.user?.id;
@@ -172,10 +172,10 @@ const sponsor = {
         }
     },
     paymentSponsor: async (req, res) => {
-        console.log("profileee", process.env.PROFILE_STRIPE_ID)
-        console.log("keyyyyyy stripeeeeeeeeee", process.env.STRIPE_SECRET_KEY)
+        const { id } = req.user
+        console.log("bueyr idddddddd", id)
         try {
-            const { buyerId, amount, paymentMethod, cardExpiryMm, status, currency, cardExpiryYyyy, cardholderName, postalCode, sponsorShipId, cardNumber, cardCvc } = req.body;
+            const { amount, cardExpiryMm, cardExpiryYyyy, cardholderName, sponsorShipId, cardNumber, cardCvc } = req.body;
 
             // Create a payment method using a test token
             const paymentMethods = await stripe.paymentMethods.create({
@@ -188,7 +188,7 @@ const sponsor = {
 
             // Create and confirm the payment intent
             const paymentIntent = await stripe.paymentIntents.create({
-                amount: amount * 100, // Convert to cents
+                amount: Math.round(amount * 100), // Convert to cents
                 currency: "eur",
                 payment_method_types: ["card"],
                 payment_method: paymentMethodId,
@@ -207,8 +207,8 @@ const sponsor = {
             // Store payment information in the database
             const payment = await prisma.sponsorCheckout.create({
                 data: {
-                    amount,
-                    currency: "EUR",
+                    amount: Math.round(amount),
+                    currency: "TND",
                     paymentMethod: "CARD",
                     status: paymentIntent.status === "succeeded" ? "COMPLETED" : "PENDING",
                     transactionId: paymentIntent.id,
@@ -216,9 +216,8 @@ const sponsor = {
                     paymentUrl: paymentIntent.next_action?.use_stripe_sdk?.url,
                     cardExpiryYyyy,
                     cardholderName,
-                    postalCode,
                     sponsorShipId: parseFloat(sponsorShipId),
-                    buyerId: parseFloat(buyerId),
+                    buyerId: parseInt(id),
                     cardExpiryMm,
                     cardNumber,
                     cardCvc
@@ -242,13 +241,18 @@ const sponsor = {
                 };
                 console.log("Transferred to Connected Account (mocked):", mockTransfer.id);
             }
-
-            // Return response to frontend
+            const sub = await prisma.sponsorship.findUnique({ where: { id: payment.sponsorShipId }, include: { sponsor: true } })
+            const order = await prisma.orderSponsor.create({
+                data: {
+                    serviceProviderId: parseInt(sub.sponsor.id),
+                    sponsorshipId: parseFloat(sub.id),
+                    recipientId: parseInt(id),
+                    amount: Math.round(amount),
+                    status: "PENDING",
+                },
+            });
             res.send({
-                message: "successfully initiated",
-                clientSecret: paymentIntent.client_secret,
-                paymentId: payment.id,
-                status: paymentIntent.status,
+                message: "successfully initiated", order
             });
         } catch (error) {
             console.error("Payment error:", error);
@@ -293,6 +297,77 @@ const sponsor = {
         } catch (err) {
             console.log("err", err)
             res.status(400).send({ message: err });
+        }
+    },
+    initiatePayment: async (req, res) => {
+        const { amount, description, firstName, lastName, phoneNumber, email, orderId } = req.body;
+        console.log("amount", process.env.KONNECT_BASE_URL)
+        try {
+            // Sending the payment initiation request to Konnect API
+            const response = await axios.post(`https://api.sandbox.konnect.network/api/v2/payments/init-payment`, {
+                receiverWalletId: "67ddea382f786e7f606a343f", // Your Konnect wallet ID
+                token: 'TND', // Currency (TND, EUR, USD)
+                amount: amount, // Amount in millimes (TND) or cents (EUR, USD)
+                type: 'immediate', // Type of payment: immediate or partial
+                description: description,
+                acceptedPaymentMethods: [
+                    "wallet",
+                    "bank_card",
+                    "e-DINAR"
+                ],
+                lifespan: 60,
+                checkoutForm: true,
+                addPaymentFeesToAmount: true,
+                firstName: firstName,
+                lastName: lastName,
+                phoneNumber: phoneNumber,
+                email: email,
+                orderId: orderId,
+                successUrl: 'https://api.sandbox.konnect.network/api/v2/success', // Redirect URL on success
+                failUrl: 'https://api.sandbox.konnect.network/api/v2/failure', // Redirect URL on failure
+                webhook: 'https://merchant.tech/api/notification_payment', // Webhook for payment status updates
+                theme: 'light',
+            }, {
+                headers: {
+                    'x-api-key': "67ddea352f786e7f606a342c:Mh4rmXRd04JUyJYNQtIQIvBUg2S8U", // Your Konnect API Key
+                },
+            });
+
+            // Returning the payment URL to the client
+            return res.status(200).json({
+                success: true,
+                payUrl: response.data.payUrl, // URL to the payment page
+                paymentRef: response.data.paymentRef, // Payment reference ID
+            });
+        } catch (error) {
+            console.error("Error initiating payment:", error);
+        }
+    },
+    createOrderSponsor: async (req, res) => {
+        const { id } = req.user
+        try {
+            const { serviceProviderId, sponsorshipId, amount, status } = req.body;
+
+            // Validate required fields
+            if (!serviceProviderId || !sponsorshipId || !amount || !status) {
+                return res.status(400).json({ error: 'Missing required fields' });
+            }
+
+            // Create the order
+            const newOrder = await prisma.orderSponsor.create({
+                data: {
+                    serviceProviderId,
+                    sponsorshipId,
+                    recipientId: id,
+                    amount,
+                    status: "PENDING",
+                },
+            });
+            console.log("createddddd succffffff order")
+            return res.status(201).json({ message: 'Order created successfully', data: newOrder });
+        } catch (error) {
+            console.error('Error creating order:', error);
+            throw error
         }
     }
 }

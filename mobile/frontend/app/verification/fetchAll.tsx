@@ -128,7 +128,7 @@ const SponsorshipsScreen: React.FC = () => {
     const handleBuyPress = (sponsorshipId: number) => {
         router.push({
             pathname: "/sponsorshipTrack/initializationBuyer",
-            params: { id: sponsorshipId },
+            params: { id: sponsorshipId }
         });
     };
 

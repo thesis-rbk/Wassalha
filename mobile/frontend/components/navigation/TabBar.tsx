@@ -39,7 +39,7 @@ export function TabBar({
       route: "../orders&requests/order" as Route,
     },
     {
-      name: "Create",
+      name: "",
       icon: (
         <View style={styles.plusIconContainer}>
           <Plus size={24} color="white" />
