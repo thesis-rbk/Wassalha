@@ -1,139 +1,248 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
-  TouchableOpacity,
-  ViewStyle,
-  TextStyle,
-} from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
-import { ThemedView } from "@/components/ThemedView";
-import { ThemedText } from "@/components/ThemedText";
-import ProgressBar from "@/components/ProgressBar";
-import { BaseButton } from "@/components/ui/buttons/BaseButton";
-import { useSponsorshipProcess } from "@/context/SponsorshipProcessContext";
-import axiosInstance from "@/config";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
-import {
-  CreditCard,
-  Lock,
-  CheckCircle,
-  Shield,
-  DollarSign,
-} from "lucide-react-native";
-import { CardDetails, ProgressStep, PaymentBuyerStyles } from '@/types/PaymentBuyer';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
+import { useRoute, type RouteProp, useNavigation } from "@react-navigation/native";
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import { Colors } from '@/constants/Colors';
+import { CreditCard, Lock } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import axiosInstance from '@/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from 'jwt-decode';
+import { RouteParams } from "@/types/Sponsorship";
+import NavigationProp from "@/types/navigation.d";
+import type { Sponsorship, DecodedToken } from "@/types/Sponsorship";
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { PaymentParams } from '@/types';
+// Add type for valid return paths
 
-export default function PaymentBuyer() {
+
+const CreditCardPayment: React.FC = () => {
+  const navigation = useNavigation<NavigationProp>();
+  const route = useRoute<RouteProp<RouteParams, "SponsorshipDetails">>();
+  const { id } = route.params;
+  const [cardNumber, setCardNumber] = useState<string>('');
+  const [expiryDate, setExpiryDate] = useState<string>('');
+  const [cvv, setCvv] = useState<string>('');
+  const [cardholderName, setCardholderName] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [sponsorship, setSponsorship] = useState<Sponsorship | null>(null);
+  const router = useRouter();
   const params = useLocalSearchParams();
   const orderId = params.orderId as string;
-  const sponsorshipId = params.sponsorshipId as string;
   const price = typeof params.price === 'string' ? parseFloat(params.price) : 0;
-  const colorScheme = useColorScheme() ?? "light";
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [cardDetails, setCardDetails] = useState<CardDetails | null>(null);
-  const [cardError, setCardError] = useState<string>('');
-  const { confirmPayment, loading: paymentLoading } = useConfirmPayment();
-  const { updateSponsorshipStatus } = useSponsorshipProcess();
-
-  // Add validation for price
-  useEffect(() => {
-    if (isNaN(price) || price <= 0) {
-      Alert.alert("Error", "Invalid price amount");
-      router.back();
+  const type = params.type as string; // 'sponsorship' or 'regular'
+  const returnPath = params.returnPath as string;
+  const sponsorShipId = params.sponsorshipId as string;
+  const [token, setToken] = useState<null | string>()
+  console.log("sponsoshipid", sponsorShipId)
+  // Platform fee (5% of the price)
+  const platformFeePercentage = 0.05;
+  const platformFee = sponsorship?.price
+    ? (sponsorship.price * platformFeePercentage).toFixed(2)
+    : '0.00';
+  const totalAmount = sponsorship?.price
+    ? (sponsorship.price + parseFloat(platformFee)).toFixed(2)
+    : '0.00';
+  //get tokeeeeeeeeeeeeeee
+  const getToken = async (): Promise<string | null> => {
+    try {
+      const token = await AsyncStorage.getItem('jwtToken');
+      setToken(token)
+      console.log("tokennnnnnnn from payment", token)
+      return token;
+    } catch (error) {
+      console.error('Error retrieving token:', error);
+      return null;
     }
-  }, [price]);
+  };
+  // Fetch sponsorship details
+  const fetchSponsorshipDetails = async () => {
+    try {
+      setLoading(true);
+      const token = await getToken();
+      if (!token) {
+        throw new Error("No token found, please log in again.");
+      }
+      // Use the correct endpoint
+      const response = await axiosInstance.get(`/api/one/${sponsorShipId}`);
 
-  // Add this console log to debug the button state
-  useEffect(() => {
-    console.log('Card Details:', cardDetails);
-    console.log('Loading:', loading);
-    console.log('Card Complete:', cardDetails?.complete);
-  }, [cardDetails, loading]);
+      if (response?.data) {
+        setSponsorship(response.data);
+      } else {
+        throw new Error("Invalid sponsorship data");
+      }
+    } catch (error: any) {
+      console.error("Error fetching sponsorship details:", error);
+      Alert.alert(
+        "Error",
+        "Failed to load sponsorship details. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Add this near the top of your component
-  useEffect(() => {
-    console.log('Card Details Changed:', {
-      complete: cardDetails?.complete,
-      brand: cardDetails?.brand,
-      last4: cardDetails?.last4,
-    });
-  }, [cardDetails]);
+  // Format card number with spaces
+  const formatCardNumber = (text: string) => {
+    const cleaned = text.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const formatted = cleaned.match(/.{1,4}/g)?.join(' ') || cleaned;
+    return formatted.slice(0, 19); // Limit to 16 digits + 3 spaces
+  };
 
-  // Progress steps
-  const progressSteps: ProgressStep[] = [
-    { id: 1, title: "Initialization", icon: "initialization", status: "completed" },
-    { id: 2, title: "Verification", icon: "verification", status: "completed" },
-    { id: 3, title: "Payment", icon: "payment", status: "current" },
-    { id: 4, title: "Delivery", icon: "pickup", status: "pending" },
-  ];
+  // Format expiry date as MM/YY
+  const formatExpiryDate = (text: string) => {
+    const cleaned = text.replace(/\D/g, '');
+    if (cleaned.length >= 3) {
+      return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}`;
+    }
+    return cleaned;
+  };
 
-  // Calculate fees and total
-  const serviceFee = price * 0.05; // 5% service fee
-  const totalAmount = price + serviceFee;
+  const handleCardNumberChange = (text: string) => {
+    setCardNumber(formatCardNumber(text));
+  };
+
+  const handleExpiryDateChange = (text: string) => {
+    setExpiryDate(formatExpiryDate(text));
+  };
+
+  const handleCvvChange = (text: string) => {
+    setCvv(text.replace(/\D/g, '').slice(0, 3));
+  };
+
+  // Validation functions
+  const validateCardNumber = (number: string) => {
+    const cleaned = number.replace(/\s/g, '');
+    return /^[0-9]{16}$/.test(cleaned) && validateLuhn(cleaned);
+  };
+
+  const validateExpiryDate = (date: string) => {
+    const [month, year] = date.split('/').map(Number);
+    const now = new Date();
+    const currentYear = now.getFullYear() % 100;
+    const currentMonth = now.getMonth() + 1;
+
+    return month >= 1 && month <= 12 &&
+      year >= currentYear &&
+      (year > currentYear || month >= currentMonth);
+  };
+
+  const validateCVV = (cvv: string) => {
+    return /^[0-9]{3}$/.test(cvv); // Assuming 3-digit CVV for simplicity
+  };
+
+  const validateForm = (): boolean => {
+    if (!validateCardNumber(cardNumber)) {
+      Alert.alert('Error', 'Please enter a valid 16-digit card number');
+      return false;
+    }
+
+    if (!validateExpiryDate(expiryDate)) {
+      Alert.alert('Error', 'Please enter a valid future expiry date');
+      return false;
+    }
+
+    if (!validateCVV(cvv)) {
+      Alert.alert('Error', 'Please enter a valid 3-digit CVV');
+      return false;
+    }
+
+    if (cardholderName.trim().length < 3) {
+      Alert.alert('Error', 'Please enter the full cardholder name');
+      return false;
+    }
+
+    if (!sponsorship?.price || sponsorship.price <= 0) {
+      Alert.alert('Error', 'Invalid sponsorship price');
+      return false;
+    }
+
+    return true;
+  };
+
+  // Luhn algorithm for card validation
+  const validateLuhn = (number: string): boolean => {
+    let sum = 0;
+    let shouldDouble = false;
+
+    for (let i = number.length - 1; i >= 0; i--) {
+      let digit = parseInt(number.charAt(i));
+      if (shouldDouble) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+      shouldDouble = !shouldDouble;
+    }
+
+    return (sum % 10) === 0;
+  };
+
+  // Get card type based on number
+  const getCardType = (number: string): string => {
+    const firstDigit = number.charAt(0);
+    const firstTwoDigits = number.substring(0, 2);
+
+    if (number.startsWith('4')) return 'Visa';
+    if (['51', '52', '53', '54', '55'].includes(firstTwoDigits)) return 'Mastercard';
+    if (['34', '37'].includes(firstTwoDigits)) return 'American Express';
+    if (['300', '301', '302', '303', '304', '305'].includes(number.substring(0, 3))) return 'Diners Club';
+    if (number.startsWith('6')) return 'Discover';
+    if (number.startsWith('35')) return 'JCB';
+    return 'Unknown';
+  };
 
   const handlePayment = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
     try {
-      console.log('Starting payment with card details:', {
-        complete: cardDetails?.complete,
-        brand: cardDetails?.brand,
-      });
-
-      if (!cardDetails?.complete) {
-        Alert.alert("Error", "Please complete card details");
-        return;
-      }
-
       setLoading(true);
-      
-      // Log the request payload
-      console.log('Payment Request:', {
-        orderId,
-        amount: totalAmount * 100
+
+      const paymentData = {
+        sponsorShipId,
+        amount: parseFloat(totalAmount) * 100,
+        cardNumber: cardNumber.replace(/\s/g, ''),
+        cardExpiryMm: expiryDate.split('/')[0],
+        cardExpiryYyyy: `20${expiryDate.split('/')[1]}`,
+        cardCvc: cvv,
+        cardholderName: cardholderName
+      };
+
+      const response = await axiosInstance.post('/api/payment', paymentData, {
+        headers: { Authorization: `Bearer ${token}`, }
       });
 
-      const response = await axiosInstance.post("/api/sponsorship-process/payment", {
-        orderId: orderId,
-        amount: totalAmount * 100
-      });
-
-      console.log('Payment Response:', response.data);
-
-      if (!response.data.success || !response.data.clientSecret) {
-        throw new Error("Failed to create payment intent");
-      }
-
-      // Confirm payment with Stripe
-      const { error, paymentIntent } = await confirmPayment(response.data.clientSecret, {
-        paymentMethodType: 'Card'
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (paymentIntent.status === "Succeeded") {
-        // Update order status
-        await axiosInstance.patch(`/api/sponsorship-process/${orderId}/status`, {
-          status: 'CONFIRMED'
-        });
-        
-        router.push({
-          pathname: "/sponsorshipTrack/deliveryBuyer",
-          params: { orderId }
-        });
+      if (response.data.message === "successfully initiated") {
+        Alert.alert(
+          "Success",
+          "Payment processed successfully!",
+          [
+            {
+              text: "Continue",
+              onPress: () => {
+                router.push({
+                  pathname: "/sponsorshipTrack/deliveryBuyer",
+                  params: {
+                    sponsorshipId: params.sponsorshipId,
+                    status: 'PAID'
+                  }
+                });
+              }
+            }
+          ]
+        );
+      } else {
+        throw new Error(response.data.message || "Payment failed");
       }
     } catch (error: any) {
       console.error("Payment error:", error);
       Alert.alert(
-        "Payment Failed", 
-        error.response?.data?.message || error.message || "There was an error processing your payment"
+        "Payment Failed",
+        error.response?.data?.message || error.message || "Failed to process payment"
       );
     } finally {
       setLoading(false);
@@ -141,299 +250,280 @@ export default function PaymentBuyer() {
   };
 
   useEffect(() => {
-    console.log('Button disabled state:', {
-      loading,
-      cardComplete: cardDetails?.complete,
-      disabled: loading || !cardDetails?.complete
-    });
-  }, [loading, cardDetails]);
+    if (type === 'sponsorship' && sponsorShipId) {
+      fetchSponsorshipDetails();
+    }
+  }, [type, sponsorShipId]);
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <ThemedText style={styles.title}>Payment</ThemedText>
-        <ThemedText style={styles.subtitle}>
-          Complete your payment to secure your sponsorship
+      <LinearGradient
+        colors={['#4F46E5', '#7C3AED']}
+        style={styles.header}
+      >
+        <CreditCard size={32} color="#FFF" />
+        <ThemedText style={styles.headerTitle}>Add Payment</ThemedText>
+        <ThemedText style={styles.headerSubtitle}>
+          Enter your payment details securely
         </ThemedText>
+      </LinearGradient>
 
-        <ProgressBar currentStep={3} steps={progressSteps} />
-
-        <View style={styles.paymentSummary}>
-          <ThemedText style={styles.summaryTitle}>Payment Summary</ThemedText>
-          
-          <View style={styles.summaryRow}>
-            <ThemedText style={styles.summaryLabel}>Sponsorship Price</ThemedText>
-            <ThemedText style={styles.summaryValue}>${price.toFixed(2)}</ThemedText>
-          </View>
-          
-          <View style={styles.summaryRow}>
-            <ThemedText style={styles.summaryLabel}>Service Fee (5%)</ThemedText>
-            <ThemedText style={styles.summaryValue}>${serviceFee.toFixed(2)}</ThemedText>
-          </View>
-          
-          <View style={styles.divider} />
-          
-          <View style={styles.summaryRow}>
-            <ThemedText style={styles.totalLabel}>Total</ThemedText>
-            <ThemedText style={styles.totalValue}>${totalAmount.toFixed(2)}</ThemedText>
-          </View>
-        </View>
-
-        <View style={styles.paymentMethodSection}>
-          <ThemedText style={styles.sectionTitle}>Payment Method</ThemedText>
-          
-          <View style={styles.cardContainer}>
-            <CardField
-              postalCodeEnabled={false}
-              placeholders={{
-                number: "4242 4242 4242 4242",
-                expiration: "MM/YY",
-                cvc: "CVC",
-              }}
-              cardStyle={{
-                backgroundColor: '#FFFFFF',
-                textColor: '#000000',
-                fontSize: 14,
-                placeholderColor: '#999999',
-              }}
-              style={{
-                width: '100%',
-                height: 50,
-                marginVertical: 10,
-              }}
-              onCardChange={(cardDetails) => {
-                console.log("Card details changed:", cardDetails);
-                // Check if all fields are valid
-                const isComplete = 
-                  cardDetails.validNumber === true && 
-                  cardDetails.validExpiry === true && 
-                  cardDetails.validCVC === true;
-                
-                setCardDetails({
-                  ...cardDetails,
-                  complete: isComplete
-                });
-              }}
-            />
-            {cardDetails && (
-              <View style={styles.validationStatus}>
-                {cardDetails.validNumber && (
-                  <ThemedText style={styles.validText}>✓ Valid card number</ThemedText>
-                )}
-                {cardDetails.validExpiry && (
-                  <ThemedText style={styles.validText}>✓ Valid expiry date</ThemedText>
-                )}
-                {cardDetails.validCVC && (
-                  <ThemedText style={styles.validText}>✓ Valid CVC</ThemedText>
-                )}
-              </View>
-            )}
-          </View>
-          
-          <View style={styles.securityNote}>
-            <Shield size={16} color="#64748b" />
-            <ThemedText style={styles.securityText}>
-              Your payment information is secure and encrypted
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.cardPreview}>
+          <LinearGradient
+            colors={['#1E293B', '#334155']}
+            style={styles.cardBackground}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <CreditCard size={32} color="#FFF" style={styles.cardIcon} />
+            <ThemedText style={styles.cardNumber}>
+              {cardNumber || '•••• •••• •••• ••••'}
             </ThemedText>
+            <View style={styles.cardDetails}>
+              <View>
+                <ThemedText style={styles.cardLabel}>CARDHOLDER NAME</ThemedText>
+                <ThemedText style={styles.cardValue}>
+                  {cardholderName || 'YOUR NAME'}
+                </ThemedText>
+              </View>
+              <View>
+                <ThemedText style={styles.cardLabel}>EXPIRES</ThemedText>
+                <ThemedText style={styles.cardValue}>
+                  {expiryDate || 'MM/YY'}
+                </ThemedText>
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
+
+        <View style={styles.form}>
+          <View style={styles.inputGroup}>
+            <ThemedText style={styles.label}>Card Number</ThemedText>
+            <TextInput
+              style={styles.input}
+              placeholder="1234 5678 9012 3456"
+              placeholderTextColor="#94A3B8"
+              value={cardNumber}
+              onChangeText={handleCardNumberChange}
+              keyboardType="numeric"
+              maxLength={19}
+            />
+          </View>
+
+          <View style={styles.row}>
+            <View style={[styles.inputGroup, { flex: 1, marginRight: 12 }]}>
+              <ThemedText style={styles.label}>Expiry Date</ThemedText>
+              <TextInput
+                style={styles.input}
+                placeholder="MM/YY"
+                placeholderTextColor="#94A3B8"
+                value={expiryDate}
+                onChangeText={handleExpiryDateChange}
+                keyboardType="numeric"
+                maxLength={5}
+              />
+            </View>
+
+            <View style={[styles.inputGroup, { flex: 1 }]}>
+              <ThemedText style={styles.label}>CVV</ThemedText>
+              <TextInput
+                style={styles.input}
+                placeholder="123"
+                placeholderTextColor="#94A3B8"
+                value={cvv}
+                onChangeText={handleCvvChange}
+                keyboardType="numeric"
+                maxLength={3}
+                secureTextEntry
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <ThemedText style={styles.label}>Cardholder Name</ThemedText>
+            <TextInput
+              style={styles.input}
+              placeholder="Name as shown on card"
+              placeholderTextColor="#94A3B8"
+              value={cardholderName}
+              onChangeText={setCardholderName}
+              autoCapitalize="characters"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <ThemedText style={styles.label}>Amount (TND)</ThemedText>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter amount"
+              placeholderTextColor="#94A3B8"
+              value={sponsorship?.price ? sponsorship.price.toFixed(2) : ''}
+              editable={false}
+              keyboardType="numeric"
+            />
+          </View>
+
+          <View style={styles.feeContainer}>
+            <ThemedText style={styles.feeLabel}>Platform Fee (5%):</ThemedText>
+            <ThemedText style={styles.feeValue}>{platformFee} TND</ThemedText>
+          </View>
+
+          <View style={styles.feeContainer}>
+            <ThemedText style={styles.feeLabel}>Total Amount:</ThemedText>
+            <ThemedText style={styles.feeValue}>{totalAmount} TND</ThemedText>
           </View>
         </View>
 
-        <View style={styles.infoCard}>
-          <View style={styles.infoHeader}>
-            <Lock size={20} color="#3b82f6" />
-            <ThemedText style={styles.infoTitle}>Secure Transaction</ThemedText>
-          </View>
-          <ThemedText style={styles.infoText}>
-            Your payment will be held securely until you confirm successful delivery of your sponsorship.
-            This protects both you and the sponsor during the transaction.
+        <TouchableOpacity
+          style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+          onPress={handlePayment}
+          disabled={loading}
+        >
+          <ThemedText style={styles.submitButtonText}>
+            {loading ? 'Processing...' : 'Submit Payment'}
+          </ThemedText>
+        </TouchableOpacity>
+
+        <View style={styles.securityNote}>
+          <Lock size={16} color="#64748B" />
+          <ThemedText style={styles.securityText}>
+            Your payment details are encrypted and secure
           </ThemedText>
         </View>
       </ScrollView>
-
-      <View style={styles.footer}>
-        <BaseButton
-          variant="primary"
-          onPress={handlePayment}
-          style={styles.button}
-          disabled={loading || !cardDetails?.complete || !cardDetails?.validNumber}
-        >
-          {loading ? (
-            <ActivityIndicator color="white" size="small" />
-          ) : (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <ThemedText style={styles.buttonText}>
-                Pay ${totalAmount.toFixed(2)}
-              </ThemedText>
-              <DollarSign size={20} color="white" style={{ marginLeft: 8 }} />
-            </View>
-          )}
-        </BaseButton>
-      </View>
     </ThemedView>
   );
-}
+};
 
-const styles = StyleSheet.create<PaymentBuyerStyles>({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F8FAFC',
   },
-  scrollView: {
-    flex: 1,
+  header: {
+    padding: 24,
+    alignItems: 'center',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  title: {
+  headerTitle: {
     fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#64748b",
-    marginBottom: 24,
-  },
-  paymentSummary: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 24,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 16,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: "#64748b",
-  },
-  summaryValue: {
-    fontSize: 14,
-    color: "#1e293b",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#e2e8f0",
-    marginVertical: 12,
-  },
-  totalLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1e293b",
-  },
-  totalValue: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1e293b",
-  },
-  paymentMethodSection: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 12,
-  },
-  cardContainer: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  cardStyle: {
-    backgroundColor: "#FFFFFF",
-    color: "#1A1A1A",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-  },
-  cardField: {
-    width: "100%",
-    height: 50,
-  },
-  securityNote: {
-    flexDirection: "row",
-    alignItems: "center",
+    fontWeight: '700',
+    color: '#FFF',
     marginTop: 12,
   },
-  securityText: {
-    fontSize: 12,
-    color: "#64748b",
-    marginLeft: 8,
+  headerSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 8,
+    textAlign: 'center',
   },
-  infoCard: {
-    backgroundColor: "#f0f9ff",
+  content: {
+    padding: 20,
+  },
+  cardPreview: {
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  cardBackground: {
+    padding: 24,
+    borderRadius: 16,
+    height: 200,
+  },
+  cardIcon: {
+    marginBottom: 24,
+  },
+  cardNumber: {
+    fontSize: 22,
+    color: '#FFF',
+    letterSpacing: 2,
+    marginBottom: 24,
+  },
+  cardDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  cardLabel: {
+    fontSize: 10,
+    color: '#94A3B8',
+    marginBottom: 4,
+  },
+  cardValue: {
+    fontSize: 14,
+    color: '#FFF',
+    textTransform: 'uppercase',
+  },
+  form: {
+    marginBottom: 24,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  input: {
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: "#3b82f6",
+    fontSize: 16,
+    color: '#1E293B',
   },
-  infoHeader: {
-    flexDirection: "row",
-    alignItems: "center",
+  row: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  feeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 12,
   },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#0369a1",
-    marginLeft: 8,
-  },
-  infoText: {
+  feeLabel: {
     fontSize: 14,
-    color: "#1e293b",
-    lineHeight: 20,
+    color: '#64748B',
+    fontWeight: '500',
   },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
+  feeValue: {
+    fontSize: 14,
+    color: '#1E293B',
+    fontWeight: '600',
+  },
+  submitButton: {
+    backgroundColor: Colors.light.primary,
     padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
-    backgroundColor: "white",
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  button: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+  submitButtonDisabled: {
+    opacity: 0.5,
   },
-  buttonText: {
-    color: "white",
-    fontWeight: "600",
+  submitButtonText: {
+    color: '#FFF',
     fontSize: 16,
+    fontWeight: '600',
   },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 4,
+  securityNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
   },
-  validationStatus: {
-    marginTop: 8,
+  securityText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#64748B',
   },
-  validText: {
-    color: '#16a34a',
-    fontSize: 12,
-    marginVertical: 2,
-  },
-}); 
+});
+
+export default CreditCardPayment;
