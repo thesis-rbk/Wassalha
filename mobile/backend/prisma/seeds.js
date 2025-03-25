@@ -100,7 +100,7 @@ async function seed() {
 
     console.log('Database cleaned. Starting to seed...');
 
-    // Create Users
+    // Create Users with correct Role enum
     const users = await Promise.all(
       Array.from({ length: 10 }).map(() =>
         prisma.user.create({
@@ -111,7 +111,7 @@ async function seed() {
             googleId: faker.datatype.boolean() ? faker.string.alphanumeric(21) : undefined,
             password: faker.datatype.boolean() ? faker.internet.password() : undefined,
             hasCompletedOnboarding: faker.datatype.boolean(),
-            role: faker.helpers.enumValue(Role),
+            role: faker.helpers.arrayElement(['USER', 'ADMIN', 'SUPER_ADMIN']), // Match Role enum
           },
         })
       )
@@ -175,15 +175,26 @@ async function seed() {
             firstName: faker.person.firstName(),
             lastName: faker.person.lastName(),
             bio: faker.lorem.sentence(),
-            country: faker.helpers.enumValue(Country),
+            country: faker.helpers.arrayElement([
+              'USA', 'CANADA', 'UK', 'AUSTRALIA', 'GERMANY', 
+              'FRANCE', 'INDIA', 'JAPAN', 'TUNISIA', 'MOROCCO',
+              'ALGERIA', 'TURKEY', 'SPAIN', 'ITALY', 'OTHER'
+            ]), // Match Country enum
             phoneNumber: faker.phone.number(),
-            gender: faker.helpers.enumValue(Gender),
+            gender: faker.helpers.arrayElement(['MALE', 'FEMALE']), // Match Gender enum
             isAnonymous: faker.datatype.boolean(),
             isBanned: faker.datatype.boolean(),
             isVerified: faker.datatype.boolean(),
             isOnline: faker.datatype.boolean(),
             isSponsor: faker.datatype.boolean(),
-            referralSource: faker.helpers.enumValue(ReferralSource),
+            referralSource: faker.helpers.arrayElement([
+              'SOCIAL_MEDIA',
+              'FRIEND_RECOMMENDATION',
+              'APP_STORE',
+              'GOOGLE_SEARCH',
+              'ADVERTISEMENT',
+              'OTHER'
+            ]), // Match ReferralSource enum
           },
         })
       )
@@ -242,6 +253,7 @@ async function seed() {
             cardExpiryYyyy: faker.date.future().getFullYear().toString(),
             cardCvc: faker.finance.creditCardCVV(),
             cardholderName: faker.person.fullName(),
+            postalCode: faker.location.zipCode(),
             amount: sponsorship.price,
             qrCode: faker.datatype.boolean() ? faker.string.alphanumeric(10) : undefined,
             paymentUrl: faker.datatype.boolean() ? faker.internet.url() : undefined,
@@ -478,7 +490,7 @@ async function seed() {
       })
     );
 
-    // Create Tickets
+    // Create Tickets with correct TicketCategory and TicketStatus
     const tickets = await Promise.all(
       Array.from({ length: 5 }).map(() =>
         prisma.ticket.create({
@@ -486,35 +498,36 @@ async function seed() {
             title: faker.lorem.sentence(3),
             description: faker.lorem.paragraph(1),
             user: { connect: { id: faker.helpers.arrayElement(users).id } },
-            status: faker.helpers.enumValue(TicketStatus),
+            status: faker.helpers.arrayElement(['PENDING', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']), // Match TicketStatus enum
+            category: faker.helpers.arrayElement([
+              'REQUEST_ISSUE',
+              'OFFER_ISSUE',
+              'PAYMENT_ISSUE',
+              'PICKUP_ISSUE',
+              'DELIVERY_ISSUE',
+              'TRAVELER_NON_COMPLIANCE',
+              'OTHER'
+            ]), // Match TicketCategory enum
           },
         })
       )
     );
 
-    // Create Messages
-    const messages = await Promise.all(
-      Array.from({ length: 20 }).map(() => {
-        const chat = faker.helpers.arrayElement(chats);
-        const ticket = faker.datatype.boolean() ? faker.helpers.arrayElement(tickets) : undefined;
-        const isRequester = faker.datatype.boolean();
-        const senderId = isRequester ? chat.requesterId : chat.providerId;
-        const receiverId = isRequester ? chat.providerId : chat.requesterId;
-
-        return prisma.message.create({
+    // Create TicketMessages instead of regular Messages for tickets
+    const ticketMessages = await Promise.all(
+      tickets.map((ticket) =>
+        prisma.ticketMessage.create({
           data: {
-            chat: { connect: { id: chat.id } },
-            sender: { connect: { id: senderId } },
-            receiver: { connect: { id: receiverId } },
-            type: faker.helpers.arrayElement(["text", "image", "video"]),
-            content: faker.lorem.sentence(),
-            media: faker.datatype.boolean() ? { connect: { id: faker.helpers.arrayElement(media).id } } : undefined,
-            isRead: faker.datatype.boolean(),
-            time: faker.date.recent(),
-            ticket: ticket ? { connect: { id: ticket.id } } : undefined,
+            ticketId: ticket.id,
+            senderId: faker.helpers.arrayElement(users).id,
+            content: faker.lorem.paragraph(1),
+            isAdmin: faker.datatype.boolean(),
+            media: {
+              connect: faker.helpers.arrayElements(media, { min: 0, max: 2 }).map(m => ({ id: m.id }))
+            }
           },
-        });
-      })
+        })
+      )
     );
 
     // Create Goods Processes
@@ -603,6 +616,21 @@ async function seed() {
             publisher: { connect: { id: faker.helpers.arrayElement(users).id } },
             category: { connect: { id: faker.helpers.arrayElement(categories).id } },
             isPublished: faker.datatype.boolean(),
+          },
+        })
+      )
+    );
+
+    // Create OrderSponsors
+    const orderSponsors = await Promise.all(
+      Array.from({ length: 5 }).map(() =>
+        prisma.orderSponsor.create({
+          data: {
+            serviceProviderId: faker.helpers.arrayElement(serviceProviders).id,
+            sponsorshipId: faker.helpers.arrayElement(sponsorships).id,
+            recipientId: faker.helpers.arrayElement(users).id,
+            amount: faker.number.float({ min: 100, max: 1000 }),
+            status: faker.helpers.arrayElement(['PENDING', 'CONFIRMED', 'IN_TRANSIT', 'DELIVERED']), // Match OrderStatus enum
           },
         })
       )

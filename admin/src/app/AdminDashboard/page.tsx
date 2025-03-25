@@ -519,25 +519,67 @@ const Dashboard = () => {
     }
   };
 
+  // Add this helper function near the top of your component
+  const formatCategory = (category: string) => {
+    return category?.replace(/_/g, ' ').toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ') || 'No category';
+  };
+
+  // Add state for card hover
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  
+  // Define hover styles
+  const getHoverStyles = (cardType: string) => {
+    return hoveredCard === cardType ? {
+      transform: 'translateY(-5px)',
+      boxShadow: '0 10px 20px rgba(0, 0, 0, 0.15)',
+      transition: 'all 0.3s ease'
+    } : {
+      transition: 'all 0.3s ease'
+    };
+  };
+
   return (
     <div className={styles.dashboard}>
       <Nav />
       <div className={styles.content}>
         {/* Metrics Cards */}
         <div className={styles.metricsContainer}>
-          <div className={`${styles.metricCard} ${animationComplete ? styles.metricCardAnimated : ''}`}>
+          <div 
+            className={styles.metricCard}
+            style={getHoverStyles('revenue')}
+            onMouseEnter={() => setHoveredCard('revenue')}
+            onMouseLeave={() => setHoveredCard(null)}
+          >
             <h3>Total Revenue</h3>
             <h2>${formattedAnimatedRevenue}</h2>
           </div>
-          <div className={`${styles.metricCard} ${animationComplete ? styles.metricCardAnimated : ''}`}>
+          <div 
+            className={styles.metricCard}
+            style={getHoverStyles('users')}
+            onMouseEnter={() => setHoveredCard('users')}
+            onMouseLeave={() => setHoveredCard(null)}
+          >
             <h3>Total Users</h3>
             <h2>{animatedTotalUsers}</h2>
           </div>
-          <div className={`${styles.metricCard} ${animationComplete ? styles.metricCardAnimated : ''}`}>
+          <div 
+            className={styles.metricCard}
+            style={getHoverStyles('active')}
+            onMouseEnter={() => setHoveredCard('active')}
+            onMouseLeave={() => setHoveredCard(null)}
+          >
             <h3>Active Users</h3>
             <h2>{animatedActivePercentage}%</h2>
           </div>
-          <div className={`${styles.metricCard} ${animationComplete ? styles.metricCardAnimated : ''}`}>
+          <div 
+            className={styles.metricCard}
+            style={getHoverStyles('profit')}
+            onMouseEnter={() => setHoveredCard('profit')}
+            onMouseLeave={() => setHoveredCard(null)}
+          >
             <h3>Profit Rate</h3>
             <h2>{animatedProfitRate}%</h2>
           </div>
@@ -545,26 +587,47 @@ const Dashboard = () => {
 
         {/* Charts Section */}
         <div className={styles.chartsContainer} style={{ gridTemplateColumns: "2fr 1fr 1fr" }}>
-          {/* Trend Chart - Give more space to this */}
-          <div className={styles.chartCard}>
+          {/* Trend Chart */}
+          <div 
+            className={styles.chartCard}
+            style={getHoverStyles('posts')}
+            onMouseEnter={() => setHoveredCard('posts')}
+            onMouseLeave={() => setHoveredCard(null)}
+          >
             <h3>Posts Overview</h3>
             <Bar data={barData} options={chartOptions} />
           </div>
 
-          {/* User Chart - Make it smaller and ensure pie chart is visible */}
-          <div className={styles.chartCard} style={{ height: '250px' }}>
+          {/* User Chart */}
+          <div 
+            className={styles.chartCard} 
+            style={{
+              height: '250px',
+              ...getHoverStyles('distribution')
+            }}
+            onMouseEnter={() => setHoveredCard('distribution')}
+            onMouseLeave={() => setHoveredCard(null)}
+          >
             <h3>User Distribution</h3>
             <div style={{ height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Pie data={userChartData} options={{
-              ...chartOptions,
+              <Pie data={userChartData} options={{
+                ...chartOptions,
                 maintainAspectRatio: true,
                 responsive: true
-            }} />
+              }} />
             </div>
           </div>
 
-          {/* Transactions - with fixed height and proper button positioning */}
-          <div className={styles.chartCard} style={{ position: 'relative' }}>
+          {/* Transactions */}
+          <div 
+            className={styles.chartCard} 
+            style={{
+              position: 'relative',
+              ...getHoverStyles('transactions')
+            }}
+            onMouseEnter={() => setHoveredCard('transactions')}
+            onMouseLeave={() => setHoveredCard(null)}
+          >
             <h3>Transactions</h3>
             <div style={{ marginTop: '10px', marginBottom: '50px' }}>
               {transactions.map((transaction, index) => (
@@ -589,17 +652,23 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Bottom Section - with equal heights for tickets and map */}
+        {/* Bottom Section */}
         <div className={styles.bottomContainer} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-          {/* Support Tickets - with height matching map */}
-          <div className={styles.ticketsCard} style={{ 
-            position: 'relative', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            height: '100%', 
-            minHeight: '470px',
-            maxHeight: '470px' 
-          }}>
+          {/* Support Tickets */}
+          <div 
+            className={styles.ticketsCard} 
+            style={{ 
+              position: 'relative', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              height: '100%', 
+              minHeight: '470px',
+              maxHeight: '470px',
+              ...getHoverStyles('tickets')
+            }}
+            onMouseEnter={() => setHoveredCard('tickets')}
+            onMouseLeave={() => setHoveredCard(null)}
+          >
             <h3>Support Tickets</h3>
             <div className={styles.ticketsList} style={{ 
               overflowY: 'auto', 
@@ -610,7 +679,7 @@ const Dashboard = () => {
                 ticketData.slice(0, 4).map((ticket, index) => (
                 <div key={index} className={styles.ticketItem}>
                     <span>{ticket.user?.email || 'No email'}</span>
-                    <span>{ticket.title || 'No title'}</span>
+                    <span>{formatCategory(ticket.category)}</span>
                 </div>
                 ))
               ) : (
@@ -633,16 +702,22 @@ const Dashboard = () => {
           </div>
 
           {/* Customer Demographics Map */}
-          <div className={styles.mapCard} style={{ 
-            height: '100%',
-            minHeight: '470px',
-            maxHeight: '470px',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
+          <div 
+            className={styles.mapCard} 
+            style={{ 
+              height: '100%',
+              minHeight: '470px',
+              maxHeight: '470px',
+              display: 'flex',
+              flexDirection: 'column',
+              ...getHoverStyles('map')
+            }}
+            onMouseEnter={() => setHoveredCard('map')}
+            onMouseLeave={() => setHoveredCard(null)}
+          >
             <h3>Customer Demographic</h3>
             <div style={{ flex: 1, position: 'relative' }}>
-            <WorldMap />
+              <WorldMap />
             </div>
           </div>
         </div>

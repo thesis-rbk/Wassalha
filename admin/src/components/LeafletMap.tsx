@@ -56,53 +56,34 @@ const countryCoordinates: { [key: string]: [number, number] } = {
   'Australia': [-25.3, 133.8]
 };
 
-
-
-
-
 const LeafletMap: React.FC<LeafletMapProps> = ({ countryData, isDarkMode }) => {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const markersRef = useRef<L.CircleMarker[]>([]);
   const labelsRef = useRef<L.Marker[]>([]);
+  const markerPaneRef = useRef<HTMLElement | null>(null);
   
-  // Initialize map
-  useEffect(() => {
-    if (!mapContainerRef.current) return;
-    
-    // Fix leaflet icons
-    fixLeafletIcons();
-    
-    // Calculate total users for percentage
-    const totalUsers = countryData.reduce((sum, country) => sum + country.count, 0) || 1;
-    
-    // Initialize map if not already done
-    if (!mapRef.current) {
-      // Create the map
-      mapRef.current = L.map(mapContainerRef.current, {
-        center: [20, 0], // Center of the world
-        zoom: 2,
-        maxBounds: [[-90, -180], [90, 180]],
-        minZoom: 2,
-        maxZoom: 6,
-        zoomControl: true,
-        attributionControl: false,
-      });
+  // Add a function to ensure markers are visible
+  const ensureMarkersVisible = () => {
+    // Make sure marker pane is always on top
+    if (mapRef.current) {
+      const markerPane = document.querySelector('.leaflet-marker-pane');
+      const overlayPane = document.querySelector('.leaflet-overlay-pane');
       
-      // Add tile layer based on dark mode
-      if (isDarkMode) {
-        tileLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        }).addTo(mapRef.current);
-      } else {
-        tileLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        }).addTo(mapRef.current);
+      if (markerPane && overlayPane) {
+        markerPane.parentNode?.appendChild(markerPane); // Move to the end (top)
+        markerPaneRef.current = markerPane as HTMLElement;
+        (markerPane as HTMLElement).style.zIndex = '650'; // Set a high z-index
       }
     }
+  };
+  
+  // Add function to create markers with retry logic
+  const createMapMarkers = () => {
+    if (!mapRef.current) return;
     
-    // Clear existing markers
+    // Clear existing markers first
     if (markersRef.current.length > 0) {
       markersRef.current.forEach(marker => {
         if (mapRef.current) mapRef.current.removeLayer(marker);
@@ -118,6 +99,9 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ countryData, isDarkMode }) => {
       labelsRef.current = [];
     }
     
+    // Calculate total users for percentage
+    const totalUsers = countryData.reduce((sum, country) => sum + country.count, 0) || 1;
+    
     // Add markers for each country
     countryData.forEach(country => {
       const coords = countryCoordinates[country.country];
@@ -128,8 +112,7 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ countryData, isDarkMode }) => {
       const percentageText = percentage.toFixed(1);
       
       // Determine marker size based on user count percentage
-      // Make markers smaller overall with more responsive sizing
-      const radius = Math.max(5, Math.min(20, 5 + Math.sqrt(percentage) * 2.5));
+      const radius = Math.max(7, Math.min(22, 7 + Math.sqrt(percentage) * 2.5)); // Slightly larger markers
       
       // Get marker color based on percentage (using a gradient from blue)
       let color: string;
@@ -138,15 +121,17 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ countryData, isDarkMode }) => {
       else if (percentage > 10) color = '#05AFF0'; // color-dark from theme
       else color = '#6ac8ee'; // lighter blue for smallest values
       
-      // Create circle marker with improved styling
+      // Create circle marker with improved styling for better visibility
       const marker = L.circleMarker(coords, {
         radius: radius,
         fillColor: color,
-        color: 'white',
-        weight: 1.5,
-        opacity: 0.9,
-        fillOpacity: 0.7,
-        className: styles.mapMarker
+        color: isDarkMode ? '#ffffff' : '#333333', // Better contrast with the map
+        weight: 2.5, // Thicker border
+        opacity: 1, // Full opacity
+        fillOpacity: 0.85, // More opaque fill
+        className: styles.mapMarker,
+        bubblingMouseEvents: false, // Prevents events from bubbling to map
+        interactive: true // Ensures the marker receives mouse events
       }).addTo(mapRef.current);
       
       // Add popup with country info
@@ -160,24 +145,83 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ countryData, isDarkMode }) => {
       
       markersRef.current.push(marker);
       
-      // Only add label if percentage is significant (above 5%)
-      if (percentage >= 5) {
-        // Custom icon with percentage label
-        const labelIcon = L.divIcon({
-          html: `<div class="${styles.markerLabel}">${percentageText}%</div>`,
-          className: '',
-          iconSize: [36, 18],
-          iconAnchor: [18, 9]
-        });
-        
-        const label = L.marker(coords, { icon: labelIcon }).addTo(mapRef.current);
-        labelsRef.current.push(label);
-      }
+      // Add label for all countries to ensure visibility
+      const labelIcon = L.divIcon({
+        html: `<div class="${styles.markerLabel}" style="background-color: ${isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.85)'}; color: ${isDarkMode ? '#fff' : '#333'}; padding: 3px 5px; border: 1px solid ${isDarkMode ? 'white' : 'black'}; font-weight: bold;">${percentageText}%</div>`,
+        className: '',
+        iconSize: [40, 20],
+        iconAnchor: [20, 10]
+      });
+      
+      const label = L.marker(coords, { 
+        icon: labelIcon,
+        interactive: false,
+        zIndexOffset: 1000 // Ensure labels are on top
+      }).addTo(mapRef.current);
+      
+      labelsRef.current.push(label);
     });
+    
+    // Ensure markers are visible
+    ensureMarkersVisible();
+    
+    // Add a slight delay and ensure again (helps with race conditions)
+    setTimeout(ensureMarkersVisible, 500);
+  };
+  
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    
+    // Fix leaflet icons
+    fixLeafletIcons();
+    
+    // Initialize map if not already done
+    if (!mapRef.current) {
+      // Create the map
+      mapRef.current = L.map(mapContainerRef.current, {
+        center: [20, 0], // Center of the world
+        zoom: 2,
+        maxBounds: [[-90, -180], [90, 180]],
+        minZoom: 2,
+        maxZoom: 6,
+        zoomControl: true,
+        attributionControl: false,
+        renderer: L.canvas() // Use canvas renderer for better performance
+      });
+      
+      // Add tile layer based on dark mode
+      if (isDarkMode) {
+        tileLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        }).addTo(mapRef.current);
+      } else {
+        tileLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        }).addTo(mapRef.current);
+      }
+      
+      // Wait for tile layer to load before adding markers
+      tileLayerRef.current.on('load', () => {
+        createMapMarkers();
+      });
+      
+      // Add markers anyway after a short delay (fallback)
+      setTimeout(createMapMarkers, 1000);
+      
+      // Listen for zoom events to ensure markers stay visible
+      mapRef.current.on('zoomend', ensureMarkersVisible);
+      mapRef.current.on('moveend', ensureMarkersVisible);
+    } else {
+      // If map already exists, just update markers
+      createMapMarkers();
+    }
     
     // Cleanup
     return () => {
       if (mapRef.current) {
+        mapRef.current.off('zoomend', ensureMarkersVisible);
+        mapRef.current.off('moveend', ensureMarkersVisible);
         mapRef.current.remove();
         mapRef.current = null;
         tileLayerRef.current = null;
@@ -207,7 +251,21 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ countryData, isDarkMode }) => {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       }).addTo(mapRef.current);
     }
+    
+    // Recreate markers after tile layer changes
+    tileLayerRef.current.on('load', () => {
+      createMapMarkers();
+    });
+    
+    // Fallback: create markers after a short delay anyway
+    setTimeout(createMapMarkers, 1000);
   }, [isDarkMode]);
+  
+  // Add additional effect to ensure markers remain visible during component updates
+  useEffect(() => {
+    const interval = setInterval(ensureMarkersVisible, 2000);
+    return () => clearInterval(interval);
+  }, []);
   
   return <div ref={mapContainerRef} className={styles.leafletMap}></div>;
 };

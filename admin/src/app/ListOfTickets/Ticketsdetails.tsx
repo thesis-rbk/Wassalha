@@ -127,6 +127,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
                 <div>
                   <p><strong>ID:</strong> #{ticket.id}</p>
                   <p><strong>Title:</strong> {ticket.title}</p>
+                  <p><strong>Category:</strong> {ticket.category}</p>
                 </div>
                 <div>
                   <p>

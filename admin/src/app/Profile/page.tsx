@@ -686,6 +686,13 @@ const Profile: React.FC = () => {
                                 <>
                                     <div className={styles.label}>Name: {userProfile?.name}</div>
                                     <div className={styles.label}>Role: {userProfile?.role}</div>
+                                    <div className={styles.label}>Sponsor Status:
+                                        {userProfile?.profile?.isSponsor ? (
+                                            <span className={styles.sponsorBadge} style={{ marginLeft: '10px' }}>Sponsor</span>
+                                        ) : (
+                                            " Not a Sponsor"
+                                        )}
+                                    </div>
                                 </>
                             )}
 
@@ -948,6 +955,40 @@ const Profile: React.FC = () => {
                                             {userProfile?.profile?.review || 'No review available'}
                                         </div>
                                     </div>
+
+                                    {/* Service Provider Details if available */}
+                                    {userProfile?.serviceProvider && (
+                                        <>
+                                            <h3 className={styles.sectionTitle}>Service Provider Information</h3>
+                                            <div className={styles.infoRow}>
+                                                <div className={styles.label}>Provider Type:</div>
+                                                <div className={styles.value}>{userProfile.serviceProvider.type}</div>
+                                            </div>
+                                            <div className={styles.infoRow}>
+                                                <div className={styles.label}>Verification Status:</div>
+                                                <div className={styles.value}>
+                                                    {userProfile.serviceProvider.isVerified ? (
+                                                        <span className={styles.verifiedBadge}>Verified</span>
+                                                    ) : (
+                                                        <span className={styles.unverifiedBadge}>Not Verified</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {userProfile.serviceProvider.badge && (
+                                                <div className={styles.infoRow}>
+                                                    <div className={styles.label}>Badge:</div>
+                                                    <div className={styles.value}>{userProfile.serviceProvider.badge}</div>
+                                                </div>
+                                            )}
+                                            {userProfile.serviceProvider.subscriptionLevel && (
+                                                <div className={styles.infoRow}>
+                                                    <div className={styles.label}>Subscription Level:</div>
+                                                    <div className={styles.value}>{userProfile.serviceProvider.subscriptionLevel}</div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
                                     <div className={styles.actionButtons}>
                                         <div className={styles.buttonRow}>
                                             {canEditProfile() && (
