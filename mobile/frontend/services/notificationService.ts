@@ -1,4 +1,4 @@
-import { getSocket } from "./socketService";
+import { getSocket } from "./SocketService";
 
 /**
  * Send a notification via socket
@@ -9,7 +9,7 @@ export const sendSocketNotification = async (
 ): Promise<boolean> => {
   console.log(`🔍 NOTIFICATION SERVICE: Attempting to send ${eventName}`, data);
   try {
-    const socket = await getSocket('notifications');
+    const socket = await getSocket("notifications");
 
     if (!socket || !socket.connected) {
       console.log("⚠️ Socket not connected, cannot send notification");
