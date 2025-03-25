@@ -6,11 +6,10 @@ const sponsor = {
         const sponsorId = req.user?.id;
 
         try {
-            const { name, description, price, duration, platform, categoryId, product, amount } = req.body;
+            const { description, price, duration, platform, categoryId, amount } = req.body;
 
             const sponsorships = await prisma.sponsorship.create({
                 data: {
-                    name,
                     description,
                     price,
                     duration,
@@ -21,7 +20,6 @@ const sponsor = {
                     sponsor: {
                         connect: { id: parseInt(sponsorId) } // Changed from string to integer
                     },
-                    product: product || "",
                     amount,
                     status: "pending",
                 },
@@ -216,7 +214,7 @@ const sponsor = {
                     paymentUrl: paymentIntent.next_action?.use_stripe_sdk?.url,
                     cardExpiryYyyy,
                     cardholderName,
-                    sponsorShipId: parseFloat(sponsorShipId),
+                    sponsorShipId: parseInt(sponsorShipId),
                     buyerId: parseInt(id),
                     cardExpiryMm,
                     cardNumber,
@@ -368,6 +366,22 @@ const sponsor = {
         } catch (error) {
             console.error('Error creating order:', error);
             throw error
+        }
+    },
+    getAllRequestsSponsor: async (req, res) => {
+        const { id } = req.user
+        try {
+            const serviceProvider = await prisma.serviceProvider.findUnique({ where: { userId: id } })
+            const requests = await prisma.orderSponsor.findMany({
+                where: { serviceProviderId: serviceProvider.id }, include: {
+                    sponsorship: true,     // Include sponsorship details
+                    recipient: true        // Include recipient (User) details
+                }
+            })
+            res.send({ requests })
+        } catch (err) {
+            console.log("errrrrrrrrr", err)
+            res.Send({ message: err })
         }
     }
 }

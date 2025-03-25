@@ -26,7 +26,7 @@ import {
 } from "lucide-react-native";
 import { useRoute, type RouteProp, useNavigation } from "@react-navigation/native"
 import { RouteParams } from "@/types/Sponsorship";
-import NavigationProp from "@/types/navigation";
+import NavigationProp from "@/types/navigation.d";
 export default function VerificationBuyer() {
   const params = useLocalSearchParams();
   const orderId = params.orderId;
@@ -56,7 +56,7 @@ export default function VerificationBuyer() {
       // Get order details
       const orderResponse = await axiosInstance.get(`/api/sponsorship-process/${orderId}`);
       setOrder(orderResponse.data.data);
-      
+
       // Fetch sponsorship details
       const sponsorshipResponse = await axiosInstance.get(`/api/one/${sponsorshipId}`);
       setSponsorship(sponsorshipResponse.data);
@@ -81,7 +81,7 @@ export default function VerificationBuyer() {
     }
 
     router.push({
-      pathname: "/verification/Payment" as const,
+      pathname: "/sponsorshipTrack/paymentBuyer" as const,
       params: {
         orderId: orderId,
         sponsorshipId: sponsorshipId,
