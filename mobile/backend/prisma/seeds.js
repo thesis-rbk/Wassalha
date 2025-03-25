@@ -1,8 +1,6 @@
-// Add this section at the top of your file, before requiring PrismaClient
 const fs = require('fs');
 const path = require('path');
 
-// Check if .env file exists in the project root, create one if not
 const envPath = path.join(__dirname, '../.env');
 if (!fs.existsSync(envPath)) {
   console.log('Creating .env file with DATABASE_URL...');
@@ -11,14 +9,12 @@ if (!fs.existsSync(envPath)) {
     'DATABASE_URL="mysql://root:root@localhost:3306/your_database_name"'
   );
   console.log('.env file created. Please edit it with your actual database credentials.');
-  process.exit(1); // Exit to let the user update the credentials
+  process.exit(1);
 }
 
-// Use CommonJS to avoid ES module issues
 const { PrismaClient } = require("@prisma/client");
 const { faker } = require("@faker-js/faker");
 
-// Import enums from Prisma
 const {
   Country,
   Gender,
@@ -53,7 +49,6 @@ async function seed() {
   try {
     console.log('Cleaning existing data...');
 
-    // Safe delete - wrap each deletion in try/catch
     const tables = [
       'reputationTransaction',
       'reputation',
@@ -84,7 +79,6 @@ async function seed() {
       'user'
     ];
 
-    // Safely delete from each table, ignoring if table doesn't exist
     for (const table of tables) {
       try {
         console.log(`Deleting from ${table}...`);
@@ -118,7 +112,7 @@ async function seed() {
     );
     console.log('Created users');
 
-    // Create Media first (as many other entities depend on it)
+    // Create Media
     const media = await Promise.all(
       Array.from({ length: 20 }).map(() =>
         prisma.media.create({
@@ -214,7 +208,6 @@ async function seed() {
         const sponsor = faker.helpers.arrayElement(serviceProviders);
         const category = faker.helpers.arrayElement(categories);
         const creator = faker.helpers.arrayElement(users);
-        const recipients = faker.helpers.arrayElements(users, { min: 1, max: 3 });
 
         return prisma.sponsorship.create({
           data: {
@@ -277,7 +270,7 @@ async function seed() {
       })
     );
 
-    // Create Goods
+    // Create Goods - Fixed to make image optional
     const goods = await Promise.all(
       Array.from({ length: 15 }).map(() =>
         prisma.goods.create({
@@ -287,7 +280,7 @@ async function seed() {
             weight: faker.number.float({ min: 0.1, max: 50 }),
             price: faker.number.float({ min: 1, max: 1000 }),
             description: faker.commerce.productDescription(),
-            image: { connect: { id: faker.helpers.arrayElement(media).id } },
+            image: faker.datatype.boolean() ? { connect: { id: faker.helpers.arrayElement(media).id } } : undefined, // Made optional
             goodsUrl: faker.datatype.boolean() ? faker.internet.url() : undefined,
             isVerified: faker.datatype.boolean(),
             category: { connect: { id: faker.helpers.arrayElement(categories).id } },
@@ -295,6 +288,7 @@ async function seed() {
         })
       )
     );
+    console.log('Created goods');
 
     // Create Requests
     const requests = await Promise.all(
@@ -313,8 +307,9 @@ async function seed() {
         })
       )
     );
+    console.log('Created requests');
 
-    // Create Orders
+    // Create Orders - Ensure unique request mapping
     const orders = await Promise.all(
       requests.map((request) =>
         prisma.order.create({
@@ -332,6 +327,7 @@ async function seed() {
         })
       )
     );
+    console.log('Created orders');
 
     // Create Payments
     const payments = await Promise.all(
@@ -351,7 +347,7 @@ async function seed() {
       )
     );
 
-    // Create Pickups
+    // Create Pickups - Ensure unique order mapping
     const pickups = await Promise.all(
       orders.map((order) =>
         prisma.pickup.create({
@@ -371,6 +367,7 @@ async function seed() {
         })
       )
     );
+    console.log('Created pickups');
 
     // Update Requests with Pickups
     await Promise.all(
@@ -383,6 +380,7 @@ async function seed() {
         })
       )
     );
+    console.log('Updated requests with pickups');
 
     // Create Pickup Suggestions
     const pickupSuggestions = await Promise.all(
@@ -395,7 +393,7 @@ async function seed() {
             pickupType: faker.helpers.enumValue(PickupType),
             location: faker.location.city(),
             address: faker.location.streetAddress(),
-            qrCode: faker.datatype.boolean() ? faker.string.alphanumeric(10) : undefined,
+            qrCode: faker.datatype.boolean() ? farke.string.alphanumeric(10) : undefined,
             coordinates: `${faker.location.latitude()},${faker.location.longitude()}`,
             contactPhoneNumber: faker.phone.number(),
             scheduledTime: faker.date.soon(),
@@ -404,47 +402,8 @@ async function seed() {
       )
     );
 
-    // Create Notifications (Fixed)
-    const notifications = await Promise.all(
-      Array.from({ length: 20 }).map(() => {
-        const user = faker.helpers.arrayElement(users);
-        const sender = faker.helpers.maybe(() => faker.helpers.arrayElement(users.filter(u => u.id !== user.id)), { probability: 0.5 });
-
-        return prisma.notification.create({
-          data: {
-            user: { connect: { id: user.id } },
-            sender: sender ? { connect: { id: sender.id } } : undefined, // Use sender relation instead of senderId
-            type: faker.helpers.enumValue(NotificationType),
-            title: faker.lorem.sentence(5),
-            message: faker.lorem.paragraph(1),
-            status: faker.helpers.enumValue(NotificationStatus),
-            request: faker.datatype.boolean() ? { connect: { id: faker.helpers.arrayElement(requests).id } } : undefined,
-            order: faker.datatype.boolean() ? { connect: { id: faker.helpers.arrayElement(orders).id } } : undefined,
-            pickup: faker.datatype.boolean() ? { connect: { id: faker.helpers.arrayElement(pickups).id } } : undefined,
-          },
-        });
-      })
-    );
-
     // Create Reviews
-    const reviews = await Promise.all(
-      Array.from({ length: 10 }).map(() => {
-        const reviewer = faker.helpers.arrayElement(users);
-        const reviewed = faker.helpers.arrayElement(users.filter((u) => u.id !== reviewer.id));
-        return prisma.review.create({
-          data: {
-            reviewer: { connect: { id: reviewer.id } },
-            reviewed: { connect: { id: reviewed.id } },
-            order: { connect: { id: faker.helpers.arrayElement(orders).id } },
-            rating: faker.number.int({ min: 1, max: 5 }),
-            title: faker.lorem.sentence(3),
-            comment: faker.lorem.paragraph(1),
-            reviewType: faker.helpers.enumValue(ReviewType),
-            status: faker.helpers.enumValue(ReviewStatus),
-          },
-        });
-      })
-    );
+  
 
     // Create Subscriptions
     const subscriptions = await Promise.all(
@@ -465,19 +424,7 @@ async function seed() {
     );
 
     // Create Chats
-    const chats = await Promise.all(
-      Array.from({ length: 5 }).map(() => {
-        const requester = faker.helpers.arrayElement(users);
-        const provider = faker.helpers.arrayElement(users.filter(u => u.id !== requester.id));
-        return prisma.chat.create({
-          data: {
-            requester: { connect: { id: requester.id } },
-            provider: { connect: { id: provider.id } },
-            goods: { connect: { id: faker.helpers.arrayElement(goods).id } },
-          },
-        });
-      })
-    );
+
 
     // Create Tickets
     const tickets = await Promise.all(
@@ -493,30 +440,7 @@ async function seed() {
       )
     );
 
-    // Create Messages
-    const messages = await Promise.all(
-      Array.from({ length: 20 }).map(() => {
-        const chat = faker.helpers.arrayElement(chats);
-        const ticket = faker.datatype.boolean() ? faker.helpers.arrayElement(tickets) : undefined;
-        const isRequester = faker.datatype.boolean();
-        const senderId = isRequester ? chat.requesterId : chat.providerId;
-        const receiverId = isRequester ? chat.providerId : chat.requesterId;
-
-        return prisma.message.create({
-          data: {
-            chat: { connect: { id: chat.id } },
-            sender: { connect: { id: senderId } },
-            receiver: { connect: { id: receiverId } },
-            type: faker.helpers.arrayElement(["text", "image", "video"]),
-            content: faker.lorem.sentence(),
-            media: faker.datatype.boolean() ? { connect: { id: faker.helpers.arrayElement(media).id } } : undefined,
-            isRead: faker.datatype.boolean(),
-            time: faker.date.recent(),
-            ticket: ticket ? { connect: { id: ticket.id } } : undefined,
-          },
-        });
-      })
-    );
+  
 
     // Create Goods Processes
     const goodsProcesses = await Promise.all(
@@ -531,49 +455,13 @@ async function seed() {
     );
 
     // Create Process Events
-    const processEvents = await Promise.all(
-      goodsProcesses.map((process) =>
-        prisma.processEvent.create({
-          data: {
-            goodsProcess: { connect: { id: process.id } },
-            fromStatus: ProcessStatus.PREINITIALIZED,
-            toStatus: process.status,
-            changedByUser: { connect: { id: faker.helpers.arrayElement(users).id } },
-            note: faker.lorem.sentence(),
-          },
-        })
-      )
-    );
+
 
     // Create Reputations
-    const reputations = await Promise.all(
-      users.map((user) =>
-        prisma.reputation.create({
-          data: {
-            user: { connect: { id: user.id } },
-            score: faker.number.float({ min: 0, max: 100 }),
-            totalRatings: faker.number.int({ min: 0, max: 50 }),
-            positiveRatings: faker.number.int({ min: 0, max: 40 }),
-            negativeRatings: faker.number.int({ min: 0, max: 10 }),
-            level: faker.number.int({ min: 1, max: 5 }),
-          },
-        })
-      )
-    );
+  
 
     // Create Reputation Transactions
-    const reputationTransactions = await Promise.all(
-      reputations.map((rep) =>
-        prisma.reputationTransaction.create({
-          data: {
-            reputation: { connect: { id: rep.id } },
-            change: faker.number.float({ min: -10, max: 10 }),
-            eventType: faker.helpers.arrayElement(["REVIEW", "FEEDBACK", "ADMIN_ACTION"]),
-            comment: faker.lorem.sentence(),
-          },
-        })
-      )
-    );
+
 
     // Create Goods Posts
     const goodsPosts = await Promise.all(
