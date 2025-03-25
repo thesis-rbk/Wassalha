@@ -14,7 +14,7 @@ export interface TravelerProfile {
   imageId: string | null;
   gender: string
   image: { url: string }
-  name: string
+  firstName: string
 }
 
 export interface Traveler {
@@ -27,6 +27,7 @@ export interface Traveler {
   stats: TravelerStats;
   user: {
     profile: TravelerProfile
+    name: string
   }
   score: number
 } 
