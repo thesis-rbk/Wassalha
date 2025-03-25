@@ -125,3 +125,21 @@ export interface OrderSponsor {
     serviceProvider?: ServiceProvider;
     sponsorship?: Sponsorship;
 }
+export interface Order {
+    id: number;
+    amount: number;
+    status: string;
+    sponsorship: {
+        platform: string;
+    };
+    recipient: {
+        name: string;
+    };
+}
+
+export interface OrderCardProps {
+    order: Order;
+    onPress?: () => void;
+    onAccept?: () => void;
+    onReject?: () => void;
+}

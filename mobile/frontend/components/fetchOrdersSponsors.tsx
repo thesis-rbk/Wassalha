@@ -1,25 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-
+import { Order, OrderCardProps } from "../types/Sponsorship"
 // Define TypeScript interface for the Order data
-interface Order {
-    id: number;
-    amount: number;
-    status: string;
-    sponsorship: {
-        platform: string;
-    };
-    recipient: {
-        name: string;
-    };
-}
 
-interface OrderCardProps {
-    order: Order;
-    onPress?: () => void;
-    onAccept?: () => void;
-    onReject?: () => void;
-}
 
 const OrderCard: React.FC<OrderCardProps> = ({ order, onPress, onAccept, onReject }) => {
     const { amount, status, sponsorship, recipient } = order;
