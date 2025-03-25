@@ -109,7 +109,9 @@ export interface SponsorshipCardProps {
     onPress: () => void
     onBuyPress: () => void
 }
-
+interface User {
+    id: number
+}
 export interface OrderSponsor {
     id: number;
     recipientId: number;
