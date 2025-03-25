@@ -163,16 +163,16 @@ export default function RootLayout() {
                       options={{ title: "Credit Card Verification" }}
                     />
                     <Stack.Screen
-                      name="verification/Payment"
-                      options={{ title: "payment" }}
-                    />
-                    <Stack.Screen
                       name="orders&requests/order"
                       options={{ title: "Orders & Requests" }}
                     />
                     <Stack.Screen
                       name="processTrack/initializationSO"
                       options={{ title: "Initialization" }}
+                    />
+                    <Stack.Screen
+                      name="verification/SponsorRequestst"
+                      options={{ title: "requests" }}
                     />
                     <Stack.Screen
                       name="processTrack/initializationSP"
@@ -292,11 +292,11 @@ export default function RootLayout() {
                       name="pickup/PickupDashboard"
                       options={{ title: "Pickup" }}
                     />
-                     <Stack.Screen
+                    <Stack.Screen
                       name="reporting-system/MyTicketsPage"
-                      
+
                     />
-                     <Stack.Screen
+                    <Stack.Screen
                       name="reporting-system/detailsTicket/[id]"
                       options={{ title: "Ticket " }}
 

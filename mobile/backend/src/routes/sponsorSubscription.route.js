@@ -20,4 +20,5 @@ router.get("/one/:id", sponsor.findOneSponsor)
 router.get("/allRev/:id", sponsor.sponsorShipReview)
 router.post("/payment_Konnect", sponsor.initiatePayment)
 router.post("/createOrder", authenticateUser, sponsor.createOrderSponsor)
+router.get("/requests", authenticateUser, sponsor.getAllRequestsSponsor)
 module.exports = router;

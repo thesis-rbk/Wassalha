@@ -11,7 +11,7 @@ import platformImages from "../../types/Sponsorship"
 import { Ionicons } from "@expo/vector-icons"
 import { TabBar } from "@/components/navigation/TabBar";
 import { RouteParams } from "@/types/Sponsorship";
-import NavigationProp from "@/types/navigation";
+import NavigationProp from "@/types/navigation.d";
 import { router, useLocalSearchParams, useRouter } from "expo-router";
 const SponsorshipDetails: React.FC = () => {
     const [activeTab, setActiveTab] = useState("Home");

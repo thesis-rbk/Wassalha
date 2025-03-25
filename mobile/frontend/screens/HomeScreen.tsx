@@ -27,10 +27,10 @@ export default function HomeScreen() {
   const travelersScrollRef = useRef<ScrollView>(null);
   const sponsorsScrollRef = useRef<ScrollView>(null);
   const scrollAnimationRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Track user interaction with scrolling
   const [userScrolling, setUserScrolling] = useState(false);
-  
+
   // Track current scroll positions
   const [scrollPositions, setScrollPositions] = useState({
     travelers: 0,
@@ -49,7 +49,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     handleBestTraveler();
-    
+
     // Only start auto-scrolling if we have data
     if (travelers.length > 0 && sponsors.length > 0) {
       startAutoScroll();
@@ -71,32 +71,32 @@ export default function HomeScreen() {
   const startAutoScroll = () => {
     // Don't start auto-scroll if user is actively scrolling
     if (userScrolling) return;
-    
+
     stopAutoScroll(); // Clear any existing interval
 
     scrollAnimationRef.current = setInterval(() => {
       if (!userScrolling && travelersScrollRef.current && travelers.length > 0) {
         const maxScrollX = Math.max(0, contentWidths.travelers - containerWidths.travelers);
         const newX = scrollPositions.travelers + 1;
-        
+
         // Only scroll if we haven't reached the end
         if (newX < maxScrollX) {
           travelersScrollRef.current.scrollTo({ x: newX, animated: false });
-          setScrollPositions(prev => ({...prev, travelers: newX}));
+          setScrollPositions(prev => ({ ...prev, travelers: newX }));
         } else {
           // Stop scrolling when reaching the end
           stopAutoScroll();
         }
       }
-      
+
       if (!userScrolling && sponsorsScrollRef.current && sponsors.length > 0) {
         const maxScrollX = Math.max(0, contentWidths.sponsors - containerWidths.sponsors);
         const newX = scrollPositions.sponsors + 1;
-        
+
         // Only scroll if we haven't reached the end
         if (newX < maxScrollX) {
           sponsorsScrollRef.current.scrollTo({ x: newX, animated: false });
-          setScrollPositions(prev => ({...prev, sponsors: newX}));
+          setScrollPositions(prev => ({ ...prev, sponsors: newX }));
         } else {
           // Stop scrolling when reaching the end
           stopAutoScroll();
@@ -125,12 +125,12 @@ export default function HomeScreen() {
   // Track scroll position changes
   const handleTravelersScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { x } = event.nativeEvent.contentOffset;
-    setScrollPositions(prev => ({...prev, travelers: x}));
+    setScrollPositions(prev => ({ ...prev, travelers: x }));
   };
 
   const handleSponsorsScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { x } = event.nativeEvent.contentOffset;
-    setScrollPositions(prev => ({...prev, sponsors: x}));
+    setScrollPositions(prev => ({ ...prev, sponsors: x }));
   };
 
   const onTravelersLayout = (event: LayoutChangeEvent) => {
@@ -233,7 +233,7 @@ export default function HomeScreen() {
                 {travelers.map((traveler, index) => (
                   <UserCard
                     key={`traveler-${index}`}
-                    name={traveler.user.profile.name || "Traveler"}
+                    name={traveler.user.profile.firstName}
                     score={traveler.score}
                     gender={traveler.user.profile.gender}
                     img={
@@ -241,6 +241,7 @@ export default function HomeScreen() {
                       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCZlf5lc5tX-0gY-y94pGS0mQdL-D0lCH2OQ&s"
                     }
                     isVerified={true}
+                    role="Traveler"
                   />
                 ))}
               </View>
@@ -268,7 +269,7 @@ export default function HomeScreen() {
                 {sponsors.map((sponsor, index) => (
                   <UserCard
                     key={`sponsor-${index}`}
-                    name={sponsor.user.profile.name || "Sponsor"}
+                    name={sponsor.user.profile.firstName}
                     score={sponsor.score}
                     gender={sponsor.user.profile.gender}
                     img={
@@ -276,6 +277,7 @@ export default function HomeScreen() {
                       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCZlf5lc5tX-0gY-y94pGS0mQdL-D0lCH2OQ&s"
                     }
                     isVerified={true}
+                    role="Sponsor"
                   />
                 ))}
               </View>

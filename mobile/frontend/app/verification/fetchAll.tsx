@@ -8,20 +8,31 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Animated,
-    PlatformColor,
 } from "react-native";
 import Icon from 'react-native-vector-icons/Feather';
 import axiosInstance from "@/config";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Sponsorship } from "@/types/Sponsorship";
-import NavigationProp from "@/types/navigation";
+import NavigationProp from "@/types/navigation.d";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router, useLocalSearchParams, useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
 import { SponsorshipCard } from "../../components/sponsorCards";
 import { TabBar } from "@/components/navigation/TabBar";
+import SegmentedControl from "@/components/SegmentedControl";
+import OrdersScreen from "./SponsorRequests"
+// Placeholder for Requests Component (replace with your actual component)
+const RequestsComponent: React.FC = () => {
+    return (
+        <View style={styles.fakeRequestsContainer}>
+            <Text style={styles.fakeRequestsText}>Requests View (Placeholder)</Text>
+            <Text style={styles.fakeRequestsSubText}>Replace this with your actual Requests component.</Text>
+        </View>
+    );
+};
 
 const SponsorshipsScreen: React.FC = () => {
-    const [activeTab, setActiveTab] = useState("home"); // Set to "home" to match the screenshot
+    const [activeTab, setActiveTab] = useState("home"); // For TabBar
+    const [view, setView] = useState<"requests" | "all">("all"); // Updated for SegmentedControl
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -117,11 +128,13 @@ const SponsorshipsScreen: React.FC = () => {
         check();
     }, [token]);
 
-    // Fetch sponsorships when search query changes
+    // Fetch sponsorships when search query changes in "All" view
     useFocusEffect(
         useCallback(() => {
-            fetchSponsorships();
-        }, [searchQuery])
+            if (view === "all") {
+                fetchSponsorships();
+            }
+        }, [searchQuery, view])
     );
 
     // Handle "Buy" button press
@@ -160,9 +173,9 @@ const SponsorshipsScreen: React.FC = () => {
         />
     );
 
-    return (
-        <View style={styles.container}>
-            {/* Search Bar and Add Sponsorship Button */}
+    // Render "All" View with search and FlatList
+    const renderAllView = () => (
+        <>
             <Animated.View style={[styles.searchContainer, { transform: [{ scale: animatedScale }] }]}>
                 <Icon name="search" size={20} color="#007BFF" style={styles.searchIcon} />
                 <TextInput
@@ -186,7 +199,6 @@ const SponsorshipsScreen: React.FC = () => {
                 )}
             </Animated.View>
 
-            {/* Sponsorships List */}
             {loading ? (
                 <ActivityIndicator size="large" color="#007BFF" style={styles.loading} />
             ) : (
@@ -197,6 +209,26 @@ const SponsorshipsScreen: React.FC = () => {
                     ListEmptyComponent={<Text style={styles.emptyText}>No sponsorships found.</Text>}
                     contentContainerStyle={styles.listContent}
                 />
+            )}
+        </>
+    );
+
+    return (
+        <View style={styles.container}>
+            {/* Conditionally render SegmentedControl if user is a sponsor */}
+            {isSponsor && (
+                <SegmentedControl
+                    values={["Requests", "All"]}
+                    selectedIndex={view === "requests" ? 0 : 1}
+                    onChange={(index) => setView(index === 0 ? "requests" : "all")}
+                />
+            )}
+
+            {/* Render views based on sponsor status */}
+            {isSponsor ? (
+                view === "requests" ? <OrdersScreen /> : renderAllView()
+            ) : (
+                renderAllView()
             )}
 
             {/* TabBar */}
@@ -217,7 +249,8 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         paddingHorizontal: 12,
         paddingVertical: 8,
-        margin: 20,
+        marginHorizontal: 20,
+        marginTop: 10,
         marginBottom: 10,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
@@ -263,7 +296,24 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: 20,
-        paddingBottom: 80, // Add padding to avoid content being hidden behind TabBar
+        paddingBottom: 80,
+    },
+    fakeRequestsContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    fakeRequestsText: {
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "#333",
+        marginBottom: 10,
+    },
+    fakeRequestsSubText: {
+        fontSize: 16,
+        color: "#666",
+        textAlign: "center",
     },
 });
 
