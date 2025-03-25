@@ -3,7 +3,7 @@ import { BACKEND_URL } from "@/config";
 import { Chat } from "@/types/Chat";
 import { store } from "@/store";
 import { addChat } from "@/store/chatSlice";
-import { getSocket } from "@/services/SocketService";
+import { getSocket } from "@/services/socketService";
 import axiosInstance from "@/config";
 import { router } from "expo-router";
 
