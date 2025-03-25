@@ -258,12 +258,25 @@ export default function InitializationSP() {
       const response = await axiosInstance.post("/api/orders", orderData);
 
       if (response.status === 201) {
+        console.log("✅ Order created:", response.data.data.id);
+        
+        // Connect to socket and emit event
         const socket = io(`${BACKEND_URL}/processTrack`);
-        socket.emit("offerMade", {
-          processId: response.data.data.id,
-          requestId: requestId
+        
+        socket.on("connect", () => {
+          console.log("🔌 Socket connected for offer");
+          // Emit the offerMade event
+          socket.emit("offerMade", {
+            processId: response.data.data.id,
+            requestId: requestId
+          });
+          console.log("📤 Emitted offerMade event", {
+            processId: response.data.data.id,
+            requestId: requestId
+          });
+          // Disconnect after emitting
+          socket.disconnect();
         });
-        socket.disconnect();
 
         sendNotification("offer_made", {
           requesterId: params.requesterId,

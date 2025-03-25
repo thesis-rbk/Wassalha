@@ -627,31 +627,29 @@ export default function OrderPage() {
   const socketRef = useRef<any>(null);
 
   useEffect(() => {
+    console.log("🔄 Setting up socket connection in Orders page");
     const socket = io(`${BACKEND_URL}/processTrack`);
-    let isMounted = true;  // Add mounted flag
 
     socket.on("connect", () => {
-      console.log("Connected to processTrack namespace");
+      console.log("🔌 Orders page socket connected");
     });
 
-    // Use a debounced version of fetchRequests to prevent multiple calls
-    const handleNewRequest = (data) => {
-      console.log("New request received:", data);
-      if (isMounted) {  // Only fetch if component is mounted
-        fetchRequests();
-        isMounted = false;  // Prevent multiple fetches
-        // Reset the flag after a short delay
-        setTimeout(() => {
-          isMounted = true;
-        }, 1000);
-      }
-    };
+    socket.on("newRequest", (data) => {
+      console.log("📦 New request received:", data);
+      fetchRequests();
+    });
 
-    socket.on("newRequest", handleNewRequest);
+    socket.on("processStatusChanged", (data) => {
+      console.log("🔄 Status changed to:", data.status);
+      fetchRequests();
+      fetchGoodsProcesses();
+    });
+
+    socket.on("disconnect", () => {
+      console.log("🔌 Socket disconnected");
+    });
 
     return () => {
-      isMounted = false;
-      socket.off("newRequest", handleNewRequest);
       socket.disconnect();
     };
   }, []);
