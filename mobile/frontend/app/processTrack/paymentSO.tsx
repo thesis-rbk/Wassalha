@@ -34,7 +34,7 @@ export default function PaymentScreen() {
   const serviceFee = totalPrice * 0.1;
   const totalAmount = totalPrice + serviceFee;
 
-  console.log(params);
+  console.log(params,"paraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaamss");
 
   // Add user data loading effect
   useEffect(() => {
