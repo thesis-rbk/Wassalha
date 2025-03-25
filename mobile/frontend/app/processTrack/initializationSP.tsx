@@ -44,6 +44,7 @@ import { Picker } from "@react-native-picker/picker";
 // import { useRoleDetection } from "@/hooks/useRoleDetection";
 import Card from "@/components/cards/ProcessCard";
 import { useNotification } from "@/context/NotificationContext";
+import { io } from "socket.io-client";
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -257,6 +258,13 @@ export default function InitializationSP() {
       const response = await axiosInstance.post("/api/orders", orderData);
 
       if (response.status === 201) {
+        const socket = io(`${BACKEND_URL}/processTrack`);
+        socket.emit("offerMade", {
+          processId: response.data.data.id,
+          requestId: requestId
+        });
+        socket.disconnect();
+
         sendNotification("offer_made", {
           requesterId: params.requesterId,
           travelerId: currentUser?.id,

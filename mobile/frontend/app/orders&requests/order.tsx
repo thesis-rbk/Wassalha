@@ -23,6 +23,7 @@ import { useRouter } from "expo-router";
 import { decode as atob } from "base-64";
 import { GoodsProcess, ProcessStatus } from "@/types/GoodsProcess";
 import { LinearGradient } from 'expo-linear-gradient';
+import { io } from "socket.io-client";
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
@@ -621,6 +622,39 @@ export default function OrderPage() {
   const handleProfilePress = () => {
     router.push("/profile");
   };
+
+  // Inside OrderPage component, add this useEffect
+  const socketRef = useRef<any>(null);
+
+  useEffect(() => {
+    const socket = io(`${BACKEND_URL}/processTrack`);
+    let isMounted = true;  // Add mounted flag
+
+    socket.on("connect", () => {
+      console.log("Connected to processTrack namespace");
+    });
+
+    // Use a debounced version of fetchRequests to prevent multiple calls
+    const handleNewRequest = (data) => {
+      console.log("New request received:", data);
+      if (isMounted) {  // Only fetch if component is mounted
+        fetchRequests();
+        isMounted = false;  // Prevent multiple fetches
+        // Reset the flag after a short delay
+        setTimeout(() => {
+          isMounted = true;
+        }, 1000);
+      }
+    };
+
+    socket.on("newRequest", handleNewRequest);
+
+    return () => {
+      isMounted = false;
+      socket.off("newRequest", handleNewRequest);
+      socket.disconnect();
+    };
+  }, []);
 
   return (
     <ThemedView style={styles.container}>
