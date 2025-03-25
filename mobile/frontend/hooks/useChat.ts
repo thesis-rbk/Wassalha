@@ -11,7 +11,7 @@ import {
   setLoading,
   setError
 } from '@/store/chatSlice';
-import { getSocket } from '@/services/SocketService';
+import { getSocket } from '@/services/socketService';
 import { BACKEND_URL } from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Socket } from 'socket.io-client';
@@ -269,7 +269,7 @@ export function useChat(chatId?: number, userId?: string) {
     // Add a simple message object to Redux so it shows immediately
     const clientMessage: Message = {
       id: Date.now(), // Simple temporary ID
-      chatId: chatId,
+      chatId: chatId.toString(),
       chat: { id: chatId } as any, // Simplified chat object
       senderId: parseInt(userId),
       receiverId: receiverId,
