@@ -172,7 +172,7 @@ const addTicketMessage = async (req, res) => {
         const { id } = req.params;
         const { content, mediaIds } = req.body; // Added mediaIds for multiple media attachments
         const senderId = req.user.id;
-        const isAdmin = req.user.role === 'ADMIN';
+        const isAdmin = req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN';
 
         // Validate ticket existence
         const ticket = await prisma.ticket.findUnique({

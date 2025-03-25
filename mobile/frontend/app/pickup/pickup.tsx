@@ -18,7 +18,7 @@ import { Colors } from "@/constants/Colors";
 import { FontAwesome5 } from "@expo/vector-icons";
 import axios from "axios";
 import * as Location from "expo-location";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import PickupMap from "./pickupMap";
 import axiosInstance from "@/config";
@@ -28,6 +28,8 @@ import { PickupProps } from "@/types/PickupsProps";
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 
 export default function Pickups({ pickupId, orderId: initialOrderId, pickups, setPickups }: PickupProps) {  const router = useRouter();
+  const params=useLocalSearchParams();
+  console.log("paraams",params);
   const colorScheme = useColorScheme() ?? "light";
   const [location, setLocation] = useState<string>("");
   const [address, setAddress] = useState<string>("");
@@ -40,7 +42,11 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
   const [manualAddress, setManualAddress] = useState<string>("");
   const [currentLocation, setCurrentLocation] = useState<string>("");
   const [pickupDescription, setPickupDescription] = useState<string>("");
-  const [orderId, setOrderId] = useState<number | null>(initialOrderId || null);
+  const [orderId, setOrderId] = useState<number | null>(() => {
+    const initial = initialOrderId ? Number(initialOrderId) : null;
+    const paramOrderId = params.idOrder ? Number(params.idOrder) : null;
+    return initial !== null ? initial : paramOrderId;
+  });
   const [scheduledTime, setScheduledTime] = useState<string>("");
   const [coordinates, setCoordinates] = useState<{
     latitude: number;
