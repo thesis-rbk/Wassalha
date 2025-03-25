@@ -215,75 +215,119 @@ const ListOfSubscriptions: React.FC = () => {
                         </div>
                     )}
 
-                    <div className={tableStyles.controls}>
-                        <div className={tableStyles.searchContainer}>
+                    <div className={tableStyles.controls} style={{ 
+                        display: 'flex', 
+                        flexDirection: 'row', 
+                        alignItems: 'center', 
+                        flexWrap: 'nowrap', 
+                        gap: '16px', 
+                        overflowX: 'hidden',
+                        width: '100%',
+                        margin: '15px 0',
+                        padding: '0 10px'
+                    }}>
+                        <div style={{ 
+                            flex: '1.8',
+                            minWidth: '250px',
+                            maxWidth: '450px',
+                            marginRight: '24px'
+                        }}>
                             <input
                                 type="text"
                                 placeholder="Search by subscription name..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className={tableStyles.searchInput}
+                                style={{ width: '100%', padding: '9px 12px' }}
                             />
                         </div>
-                        <div className={tableStyles.filterContainer}>
-                            <select
-                                value={typeFilter}
-                                onChange={(e) => setTypeFilter(e.target.value)}
-                                className={tableStyles.filterSelect}
-                            >
-                                <option value="ALL">All Types</option>
-                                <option value={SubscriptionType.STREAMING}>Streaming</option>
-                                <option value={SubscriptionType.SOFTWARE}>Software</option>
-                                <option value={SubscriptionType.GAMING}>Gaming</option>
-                                <option value={SubscriptionType.EDUCATION}>Education</option>
-                                <option value={SubscriptionType.OTHER}>Other</option>
-                            </select>
+                        <select
+                            value={typeFilter}
+                            onChange={(e) => setTypeFilter(e.target.value)}
+                            className={tableStyles.filterSelect}
+                            style={{ 
+                                flex: '1',
+                                minWidth: '120px',
+                                padding: '8px 12px',
+                                fontSize: '0.9rem'
+                            }}
+                        >
+                            <option value="ALL">All Types</option>
+                            <option value={SubscriptionType.STREAMING}>Streaming</option>
+                            <option value={SubscriptionType.SOFTWARE}>Software</option>
+                            <option value={SubscriptionType.GAMING}>Gaming</option>
+                            <option value={SubscriptionType.EDUCATION}>Education</option>
+                            <option value={SubscriptionType.OTHER}>Other</option>
+                        </select>
 
-                            <select
-                                value={categoryFilter}
-                                onChange={(e) => setCategoryFilter(e.target.value)}
-                                className={tableStyles.filterSelect}
-                            >
-                                <option value="ALL">All Categories</option>
-                                {availableCategories.map((category) => (
-                                    <option key={category.id} value={category.id.toString()}>
-                                        {category.name}
-                                    </option>
-                                ))}
-                            </select>
+                        <select
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            className={tableStyles.filterSelect}
+                            style={{ 
+                                flex: '1',
+                                minWidth: '130px',
+                                padding: '8px 12px',
+                                fontSize: '0.9rem'
+                            }}
+                        >
+                            <option value="ALL">All Categories</option>
+                            {availableCategories.map((category) => (
+                                <option key={category.id} value={category.id.toString()}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </select>
 
-                            <select
-                                value={activeFilter}
-                                onChange={(e) => setActiveFilter(e.target.value)}
-                                className={tableStyles.filterSelect}
-                            >
-                                <option value="ALL">All Status</option>
-                                <option value="ACTIVE">Active</option>
-                                <option value="INACTIVE">Inactive</option>
-                            </select>
+                        <select
+                            value={activeFilter}
+                            onChange={(e) => setActiveFilter(e.target.value)}
+                            className={tableStyles.filterSelect}
+                            style={{ 
+                                flex: '1',
+                                minWidth: '110px',
+                                padding: '8px 12px',
+                                fontSize: '0.9rem'
+                            }}
+                        >
+                            <option value="ALL">All Status</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="INACTIVE">Inactive</option>
+                        </select>
 
-                            <select
-                                value={durationFilter}
-                                onChange={(e) => setDurationFilter(e.target.value)}
-                                className={tableStyles.filterSelect}
-                            >
-                                <option value="ALL">All Durations</option>
-                                <option value="Monthly">Monthly (≤ 30 days)</option>
-                                <option value="Quarterly">Quarterly (31-90 days)</option>
-                                <option value="Semi-Annual">Semi-Annual (91-180 days)</option>
-                                <option value="Annual">Annual (181-365 days)</option>
-                                <option value="Multi-Year">Multi-Year (&gt; 365 days)</option>
-                            </select>
+                        <select
+                            value={durationFilter}
+                            onChange={(e) => setDurationFilter(e.target.value)}
+                            className={tableStyles.filterSelect}
+                            style={{ 
+                                flex: '1',
+                                minWidth: '140px',
+                                padding: '8px 12px',
+                                fontSize: '0.9rem'
+                            }}
+                        >
+                            <option value="ALL">All Durations</option>
+                            <option value="Monthly">Monthly</option>
+                            <option value="Quarterly">Quarterly</option>
+                            <option value="Semi-Annual">Semi-Annual</option>
+                            <option value="Annual">Annual</option>
+                            <option value="Multi-Year">Multi-Year</option>
+                        </select>
 
-                            <select
-                                value={sortOrder}
-                                onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
-                                className={tableStyles.filterSelect}
-                            >
-                                <option value="desc">Newest First</option>
-                                <option value="asc">Oldest First</option>
-                            </select>
-                        </div>
+                        <select
+                            value={sortOrder}
+                            onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
+                            className={tableStyles.filterSelect}
+                            style={{ 
+                                flex: '1',
+                                minWidth: '130px',
+                                padding: '8px 12px',
+                                fontSize: '0.9rem'
+                            }}
+                        >
+                            <option value="desc">Newest First</option>
+                            <option value="asc">Oldest First</option>
+                        </select>
                     </div>
 
                     <div className={tableStyles.tableWrapper}>

@@ -236,6 +236,11 @@ export default function Nav() {
           <CreditCard size={20} />
           <span className={styles.itemText}>List of Payments</span>
         </Link>
+
+        <Link href="/ListOfSponsorCheckout" className={styles.sidebarItem}>
+          <CreditCard size={20} />
+          <span className={styles.itemText}>List of Sponsor Checkout</span>
+        </Link>
         <Link href="/ListOfOrders" className={styles.sidebarItem}>
           <ShoppingCart size={20} />
           <span className={styles.itemText}>List of Orders</span>
