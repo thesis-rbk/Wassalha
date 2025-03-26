@@ -44,7 +44,7 @@ const TermsAndConditions: React.FC = () => {
             try {
                 console.log('Saving terms acceptance...');
                 // Save that user has accepted the terms
-                await AsyncStorage.setItem('sponsorshipTermsAccepted', 'true');
+                await AsyncStorage.setItem('sponsorshipTermsAccepted', 'false');
                 console.log('Terms acceptance saved successfully');
                 router.push('/verification/start');
             } catch (error) {
@@ -224,7 +224,6 @@ const TermsAndConditions: React.FC = () => {
                         (!isAgreed || !hasReadToBottom) && styles.nextButtonDisabled
                     ]} 
                     onPress={handleNextPress}
-                    disabled={!isAgreed || !hasReadToBottom}
                 >
                     <ThemedText style={styles.nextButtonText}>Continue</ThemedText>
                 </TouchableOpacity>

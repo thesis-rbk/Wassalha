@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const http = require("http");
 const path = require("path");
+const nodemailer = require('nodemailer');
 
 // Import routes
 const requestRoutes = require("./routes/requestRoutes");
@@ -34,6 +35,8 @@ const chatRoutes = require("./routes/chat.route");
 const paymentProcessRoutes = require("./routes/paymentProcess.route");
 const ticketRoutes = require("./routes/Ticket.route");
 const travelerRoutes = require('./routes/traveler.route');
+const sponsorRequestRoutes = require('./routes/sponsorRequest.route');
+const sponsorOrderRoutes = require('./routes/sponsorOrder.route');
 const sponsorCheckoutRoutes = require('./routes/sponsorcheckout.route');
 
 const sponsorshipProcessRoutes=require("./routes/sponsorshipProcess.routes")
@@ -62,6 +65,7 @@ app.use(express.json());
 app.use("/api/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
+
 app.use("/api", fetchRoute); // sponsorSubscription.route
 app.use("/api/requests", requestRoutes);
 app.use("/api/users", userRoutes);
@@ -90,9 +94,21 @@ app.use("/api", all); // I kept this last since it may include mixed routes
 app.use("/api/payment-process", paymentProcessRoutes);
 app.use("/api/tickets", ticketRoutes);
 app.use('/api/travelers', travelerRoutes);
+app.use('/api/requests', sponsorRequestRoutes);
+app.use('/api/sponsor-orders', sponsorOrderRoutes);
 app.use('/api/sponsor-checkouts', sponsorCheckoutRoutes);
 
 app.use('/api/sponsorship-process',sponsorshipProcessRoutes);
+
+// Configure nodemailer
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+    }
+});
+
 // Health check
 app.get("/api/health", (req, res) => {
   console.log("Health check request received");
