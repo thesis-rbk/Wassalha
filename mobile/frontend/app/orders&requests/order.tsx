@@ -233,24 +233,48 @@ export default function OrderPage() {
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
+      console.log("Fetching requests from API...");
       const response = await axiosInstance.get("/api/requests");
+      
+      // Debug log the raw response 
+      console.log("Request API response:", response.data);
+      console.log("Number of requests received:", response.data.data ? response.data.data.length : 0);
+      
+      // Store unfiltered requests first to check if we're getting data
+      const allRequests = response.data.data || [];
+      console.log("All requests statuses:", allRequests.map(r => r.status));
+      
+      if (allRequests.length === 0) {
+        console.log("No requests received from API");
+        setRequests([]);
+        setIsLoading(false);
+        return;
+      }
       
       // Filter the requests to only show those that are in "PENDING" status
       // AND either don't have an associated order OR have a cancelled order
-      const filteredRequests = (response.data.data || []).filter((request: Request) => {
+      const filteredRequests = allRequests.filter((request: Request) => {
         // Check if the request is in PENDING status
         const isPending = request.status === "PENDING";
+        console.log(`Request ${request.id} status: ${request.status}, isPending: ${isPending}`);
         
         // Check if the request has no order or a cancelled order
         const hasNoActiveOrder = !request.order || request.order.orderStatus === "CANCELLED";
+        console.log(`Request ${request.id} hasOrder: ${!!request.order}, orderStatus: ${request.order?.orderStatus}, hasNoActiveOrder: ${hasNoActiveOrder}`);
         
         // Only include requests that meet both conditions
-        return isPending && hasNoActiveOrder;
+        const shouldInclude = isPending && hasNoActiveOrder;
+        console.log(`Request ${request.id} shouldInclude: ${shouldInclude}`);
+        return shouldInclude;
       });
       
-      console.log(`Filtered from ${response.data.data?.length || 0} to ${filteredRequests.length} requests`);
+      console.log(`Filtered from ${allRequests.length} to ${filteredRequests.length} requests`);
       
-      setRequests(filteredRequests);
+      // TEMPORARY: Set all requests to see if filtering is the issue
+      setRequests(allRequests);
+      
+      // Normal functionality
+      // setRequests(filteredRequests);
     } catch (error) {
       console.error("Error fetching requests:", error);
       setRequests([]);

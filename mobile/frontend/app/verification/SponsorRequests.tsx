@@ -29,7 +29,7 @@ const OrdersScreen: React.FC = () => {
         if (!token) return;
         setLoading(true);
         try {
-            const result = await axiosInstance.get("/api/requests", {
+            const result = await axiosInstance.get("/api/requestsSponsor", {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     Accept: "application/json",
