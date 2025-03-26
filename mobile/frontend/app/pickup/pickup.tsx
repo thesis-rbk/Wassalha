@@ -24,12 +24,23 @@ import PickupMap from "./pickupMap";
 import axiosInstance from "@/config";
 import io from "socket.io-client";
 import { PickupProps } from "@/types/PickupsProps";
+import { navigateToChatFromPickup } from "@/services/chatService";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
-const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
+const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
 
-export default function Pickups({ pickupId, orderId: initialOrderId, pickups, setPickups }: PickupProps) {  const router = useRouter();
-  const params=useLocalSearchParams();
-  console.log("paraams",params);
+export default function Pickups({
+  pickupId,
+  orderId: initialOrderId,
+  pickups,
+  setPickups,
+}: PickupProps) {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const { user } = useSelector((state: RootState) => state.auth);
+  // const userId = user?.id;
+  console.log("paraams from pickup/pickup:", params);
   const colorScheme = useColorScheme() ?? "light";
   const [location, setLocation] = useState<string>("");
   const [address, setAddress] = useState<string>("");
@@ -58,8 +69,41 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
   const [isFetchingAirports, setIsFetchingAirports] = useState<boolean>(false);
   const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
+  const openChat = async () => {
+    if (!user?.id) {
+      Alert.alert("Error", "You need to be logged in to chat");
+      return;
+    }
+
+    try {
+      const requesterId = parseInt(params.requesterId.toString());
+      const providerId = parseInt(params.travelerId.toString());
+      const goodsId = parseInt(params.idGood.toString());
+
+      console.log("Opening chat with:", {
+        requesterId: user?.id,
+        providerId: parseInt(params.travelerId.toString()),
+        goodsId: parseInt(params.idGood.toString()),
+      });
+
+      await navigateToChatFromPickup(requesterId, providerId, goodsId, {
+        orderId: parseInt(params.idOrder.toString()),
+        goodsName: params.goodsName?.toString() || "Item",
+      });
+    } catch (error) {
+      console.error("Error opening chat:", error);
+      Alert.alert(
+        "Chat Error",
+        "Failed to open chat. Error: " +
+          (error instanceof Error ? error.message : String(error))
+      );
+    }
+  };
+
   // Socket.IO setup
   useEffect(() => {
+    openChat();
+
     const socket = io(SOCKET_URL, {
       transports: ["websocket"],
     });
@@ -75,7 +119,6 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
     socket.on("connect_error", (error) => {
       console.error("❌ Socket.IO connection error:", error.message);
     });
-        
 
     return () => {
       socket.disconnect();
@@ -99,7 +142,8 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       const requestHeaders = {
         "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY,
         "Content-Type": "application/json",
-        "X-Goog-FieldMask": "places.displayName,places.types,places.formattedAddress",
+        "X-Goog-FieldMask":
+          "places.displayName,places.types,places.formattedAddress",
       };
 
       const response = await axios.post(
@@ -134,7 +178,10 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission Denied", "Permission to access location was denied");
+        Alert.alert(
+          "Permission Denied",
+          "Permission to access location was denied"
+        );
         return;
       }
 
@@ -146,7 +193,8 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       setCoordinates({ latitude, longitude });
 
       let address = await Location.reverseGeocodeAsync({ latitude, longitude });
-      const displayAddress = address[0]?.name || address[0]?.street || "Current Location";
+      const displayAddress =
+        address[0]?.name || address[0]?.street || "Current Location";
       setManualAddress(displayAddress);
     } catch (error) {
       console.error("Error getting location:", error);
@@ -216,14 +264,20 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       pickupType,
       contactPhoneNumber: contact || null,
       scheduledTime: scheduledTime || new Date().toISOString(),
-      coordinates: coordinates ? `${coordinates.latitude},${coordinates.longitude}` : null,
+      coordinates: coordinates
+        ? `${coordinates.latitude},${coordinates.longitude}`
+        : null,
       qrCode: null,
     };
 
     let payload;
     switch (pickupType) {
       case "AIRPORT":
-        payload = { ...basePayload, location: airportName || null, address: "Airport Pickup Zone" };
+        payload = {
+          ...basePayload,
+          location: airportName || null,
+          address: "Airport Pickup Zone",
+        };
         break;
       case "DELIVERY":
         payload = {
@@ -253,18 +307,23 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
     }
 
     try {
-      const response = await axiosInstance.post("/api/pickup/handle-confirm", payload, { headers });
+      const response = await axiosInstance.post(
+        "/api/pickup/handle-confirm",
+        payload,
+        { headers }
+      );
       console.log("Pickup response aaaaaaaaaaaaaaaaaaaaaaa:", response.data);
       const pickupData = response.data; // Backend returns { message, pickup }
 
-      const socket = io(`${SOCKET_URL}/pickup`, { // Fixed namespace
+      const socket = io(`${SOCKET_URL}/pickup`, {
+        // Fixed namespace
         transports: ["websocket"],
       });
       const room = `pickup:${pickupData.id}`;
       socket.emit("joinPickupRoom", pickupData.id);
       socket.emit("suggestionUpdate", pickupData); // Match backend event name
       console.log(`✅ Emitted suggestionUpdate to room ${room}:`, pickupData);
-    
+
       Alert.alert(
         "Success",
         pickupId
@@ -281,7 +340,10 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       router.back();
     } catch (error) {
       console.error("Pickup error:", error);
-      Alert.alert("Error", pickupId ? "Failed to update pickup" : "Failed to schedule pickup");
+      Alert.alert(
+        "Error",
+        pickupId ? "Failed to update pickup" : "Failed to schedule pickup"
+      );
     }
   };
 
@@ -447,17 +509,20 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
 
   return (
     <ThemedView style={styles.container}>
-    
-      
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {step === "select" ? (
           <>
             <ThemedText style={styles.headerText}>Schedule Pickup</ThemedText>
-            <ThemedText style={styles.subText}>Choose your pickup method</ThemedText>
+            <ThemedText style={styles.subText}>
+              Choose your pickup method
+            </ThemedText>
 
             <View style={styles.pickupOptionsContainer}>
               <TouchableOpacity
-                style={[styles.pickupOption, pickupType === "AIRPORT" && styles.selectedOption]}
+                style={[
+                  styles.pickupOption,
+                  pickupType === "AIRPORT" && styles.selectedOption,
+                ]}
                 onPress={() => handlePickupSelection("AIRPORT")}
               >
                 <View style={styles.optionHeader}>
@@ -473,7 +538,11 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   <ThemedText style={styles.optionText}>
                     Airport Pickup Point
                     {pickupType === "AIRPORT" && (
-                      <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />
+                      <FontAwesome5
+                        name="check"
+                        size={16}
+                        style={{ marginLeft: 8 }}
+                      />
                     )}
                   </ThemedText>
                 </View>
@@ -483,7 +552,10 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.pickupOption, pickupType === "DELIVERY" && styles.selectedOption]}
+                style={[
+                  styles.pickupOption,
+                  pickupType === "DELIVERY" && styles.selectedOption,
+                ]}
                 onPress={() => handlePickupSelection("DELIVERY")}
               >
                 <View style={styles.optionHeader}>
@@ -499,7 +571,11 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   <ThemedText style={styles.optionText}>
                     Home Delivery
                     {pickupType === "DELIVERY" && (
-                      <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />
+                      <FontAwesome5
+                        name="check"
+                        size={16}
+                        style={{ marginLeft: 8 }}
+                      />
                     )}
                   </ThemedText>
                 </View>
@@ -509,7 +585,10 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.pickupOption, pickupType === "IN_PERSON" && styles.selectedOption]}
+                style={[
+                  styles.pickupOption,
+                  pickupType === "IN_PERSON" && styles.selectedOption,
+                ]}
                 onPress={() => handlePickupSelection("IN_PERSON")}
               >
                 <View style={styles.optionHeader}>
@@ -525,7 +604,11 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   <ThemedText style={styles.optionText}>
                     In-Person Pickup
                     {pickupType === "IN_PERSON" && (
-                      <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />
+                      <FontAwesome5
+                        name="check"
+                        size={16}
+                        style={{ marginLeft: 8 }}
+                      />
                     )}
                   </ThemedText>
                 </View>
@@ -535,7 +618,10 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.pickupOption, pickupType === "PICKUPPOINT" && styles.selectedOption]}
+                style={[
+                  styles.pickupOption,
+                  pickupType === "PICKUPPOINT" && styles.selectedOption,
+                ]}
                 onPress={() => handlePickupSelection("PICKUPPOINT")}
               >
                 <View style={styles.optionHeader}>
@@ -551,7 +637,11 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   <ThemedText style={styles.optionText}>
                     Designated Pickup Point
                     {pickupType === "PICKUPPOINT" && (
-                      <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />
+                      <FontAwesome5
+                        name="check"
+                        size={16}
+                        style={{ marginLeft: 8 }}
+                      />
                     )}
                   </ThemedText>
                 </View>
@@ -572,12 +662,13 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
             {pickupType === "AIRPORT" && (
               <>
                 <ThemedText style={styles.modalText}>
-                  Airport Pickup Process: Our airport employee receives your package from the
-                  traveler. Visit the pickup zone with your QR code to collect it. Requires
-                  traveler confirmation.
+                  Airport Pickup Process: Our airport employee receives your
+                  package from the traveler. Visit the pickup zone with your QR
+                  code to collect it. Requires traveler confirmation.
                 </ThemedText>
                 <ThemedText style={styles.importantTextSafe}>
-                  IMPORTANT: This process is managed by our team for your convenience and safety.
+                  IMPORTANT: This process is managed by our team for your
+                  convenience and safety.
                 </ThemedText>
                 <TextInput
                   style={styles.airportInput}
@@ -593,7 +684,9 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                         style={styles.suggestionItem}
                         onPress={() => handleSuggestionSelect(item)}
                       >
-                        <ThemedText style={styles.suggestionText}>{item}</ThemedText>
+                        <ThemedText style={styles.suggestionText}>
+                          {item}
+                        </ThemedText>
                       </TouchableOpacity>
                     )}
                     keyExtractor={(item) => item}
@@ -606,11 +699,13 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
             {pickupType === "DELIVERY" && (
               <>
                 <ThemedText style={styles.modalText}>
-                  Home Delivery Process: We deliver to your door. Provide your address or use
-                  current location. Requires traveler confirmation.
+                  Home Delivery Process: We deliver to your door. Provide your
+                  address or use current location. Requires traveler
+                  confirmation.
                 </ThemedText>
                 <ThemedText style={styles.importantTextSafe}>
-                  IMPORTANT: This process is fully managed and guaranteed by us - no risk to you!
+                  IMPORTANT: This process is fully managed and guaranteed by us
+                  - no risk to you!
                 </ThemedText>
                 <InputField
                   label="Manual Address"
@@ -624,7 +719,9 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   style={styles.locationButton}
                 >
                   <FontAwesome5 name="location-arrow" size={16} />
-                  <ThemedText style={styles.buttonText}>Use Current Location</ThemedText>
+                  <ThemedText style={styles.buttonText}>
+                    Use Current Location
+                  </ThemedText>
                 </BaseButton>
               </>
             )}
@@ -632,13 +729,13 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
             {pickupType === "PICKUPPOINT" && (
               <>
                 <ThemedText style={styles.modalText}>
-                  Designated Pickup Point Process: Specify a location for traveler drop-off.
-                  Collect with QR code. Requires traveler confirmation. Provide clear
-                  instructions for smooth pickup.
+                  Designated Pickup Point Process: Specify a location for
+                  traveler drop-off. Collect with QR code. Requires traveler
+                  confirmation. Provide clear instructions for smooth pickup.
                 </ThemedText>
                 <ThemedText style={styles.importantTextSafe}>
-                  IMPORTANT: This process is managed by us once the package reaches the point -
-                  safe process!
+                  IMPORTANT: This process is managed by us once the package
+                  reaches the point - safe process!
                 </ThemedText>
                 <InputField
                   label="Address"
@@ -653,7 +750,10 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   onChangeText={setPickupDescription}
                   multiline
                 />
-                <PickupMap setCoordinates={setCoordinates} setManualAddress={setManualAddress} />
+                <PickupMap
+                  setCoordinates={setCoordinates}
+                  setManualAddress={setManualAddress}
+                />
               </>
             )}
 
@@ -705,7 +805,9 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       >
         <View style={styles.modalView}>
           <View style={styles.modalContent}>
-            <ThemedText style={styles.modalTitle}>{pickupType} Information</ThemedText>
+            <ThemedText style={styles.modalTitle}>
+              {pickupType} Information
+            </ThemedText>
             <ScrollView>
               <ThemedText style={styles.modalText}>
                 {selectedOptionInfo.split("\n\n")[0]}
@@ -755,8 +857,6 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
           </View>
         </View>
       </Modal>
-      
-    
     </ThemedView>
   );
 }

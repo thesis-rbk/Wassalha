@@ -15,6 +15,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
 import { TabBar } from "@/components/navigation/TabBar";
+import { router } from "expo-router";
+import { navigateToChat } from "@/services/chatService";
 export default function MessagesScreen() {
   const { user } = useSelector((state: RootState) => state.auth);
   const [conversations, setConversations] = useState<
@@ -64,7 +66,7 @@ export default function MessagesScreen() {
           if (
             !existingConversation ||
             new Date(message.time) >
-            new Date(existingConversation.lastMessage.time)
+              new Date(existingConversation.lastMessage.time)
           ) {
             const unreadCount =
               !message.isRead && message.senderId !== currentUserId
@@ -123,14 +125,32 @@ export default function MessagesScreen() {
   }) => {
     const { user, lastMessage, unreadCount } = item;
 
+    // Determine the product ID from the last message (adjust as needed)
+    // const productId = lastMessage.productId || 0; // Default to 0 if not available
+    const productId = 2; // TO BE CHANGED
+
     return (
-      <TouchableOpacity style={styles.conversationItem}>
+      <TouchableOpacity
+        style={styles.conversationItem}
+        onPress={() => {
+          // Navigate to the chat screen
+          navigateToChat(
+            currentUserId!, // Requester ID (current user)
+            user.id, // Provider ID (other user)
+            productId // Product ID (from message or default)
+            // {
+            // orderId: lastMessage.orderId || 0, // Optional order info
+            // goodsName: lastMessage.goodsName || "Product", // Optional goods name
+            // }
+          );
+        }}
+      >
         <View style={styles.avatarContainer}>
           <Image
             source={{
               uri: user.profile?.imageId
                 ? `https://your-backend-url.com/images/${user.profile.imageId}`
-                : "https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-Transparent-Clip-Art-PNG.png", // Fallback image
+                : "https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-Transparent-Clip-Art-PNG.png",
             }}
             style={styles.avatar}
           />
@@ -166,7 +186,7 @@ export default function MessagesScreen() {
   };
 
   const handleNotificationPress = () => {
-    router.push("/notifications");
+    router.push("./notifications");
   };
 
   const handleProfilePress = () => {

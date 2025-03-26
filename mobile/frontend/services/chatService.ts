@@ -3,7 +3,7 @@ import { BACKEND_URL } from "@/config";
 import { Chat } from "@/types/Chat";
 import { store } from "@/store";
 import { addChat } from "@/store/chatSlice";
-import { getSocket } from "@/services/socketService";
+import { getSocket } from "../services/SocketService";
 import axiosInstance from "@/config";
 import { router } from "expo-router";
 
@@ -168,6 +168,37 @@ export const navigateToChat = async (
         context: "pickup", // Tells the chat screen this is about pickup
       },
     });
+
+    // sendMessage(chat.id, "Testing content", "text");
+
+    return true;
+  } catch (error) {
+    console.error("❌ Error navigating to chat:", error);
+    return false;
+  }
+};
+
+export const navigateToChatFromPickup = async (
+  requesterId: number,
+  providerId: number,
+  productId: number,
+  orderInfo?: {
+    orderId: number;
+    goodsName: string;
+  }
+) => {
+  try {
+    console.log("🔄 Opening chat from pickup screen...");
+
+    // Create or find existing chat
+    const chat = await createChat(requesterId, providerId, productId);
+
+    if (!chat) {
+      console.error("❌ Failed to create chat");
+      return false;
+    }
+
+    sendMessage(chat.id, "Testing content", "text");
 
     return true;
   } catch (error) {
