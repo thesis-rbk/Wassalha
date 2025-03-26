@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Alert, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import axiosInstance from '../../config';
@@ -49,45 +49,54 @@ const ForgotPassword = () => {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ThemedText style={styles.title}>Forgot Password?</ThemedText>
-        <ThemedText style={styles.subtitle}>Enter your email to reset password</ThemedText>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.keyboardAvoidingView}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ThemedText style={styles.title}>Forgot Password?</ThemedText>
+          <ThemedText style={styles.subtitle}>Enter your email to reset password</ThemedText>
 
-        <InputField
-          label="Email"
-          placeholder="Enter your email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          error={undefined}
-        />
+          <InputField
+            label="Email"
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            error={undefined}
+          />
 
-        <BaseButton
-          variant="primary"
-          size="login"
-          style={styles.button}
-          onPress={handleRequestReset}
-        >
-          Send Reset Link
-        </BaseButton>
-
-        <ThemedText style={styles.loginText}>
-          Remember your password?{' '}
-          <ThemedText
-            style={styles.loginLink}
-            onPress={() => router.push('/auth/login')}
+          <BaseButton
+            variant="primary"
+            size="login"
+            style={styles.button}
+            onPress={handleRequestReset}
           >
-            Login
+            Send Reset Link
+          </BaseButton>
+
+          <ThemedText style={styles.loginText}>
+            Remember your password?{' '}
+            <ThemedText
+              style={styles.loginLink}
+              onPress={() => router.push('/auth/login')}
+            >
+              Login
+            </ThemedText>
           </ThemedText>
-        </ThemedText>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  keyboardAvoidingView: {
     flex: 1,
   },
   scrollContent: {

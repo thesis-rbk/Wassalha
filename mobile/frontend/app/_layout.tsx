@@ -77,25 +77,27 @@ export default function RootLayout() {
                     onComplete={handleOnboardingComplete}
                   />
                 ) : (
-                  <Stack>
-                    {/* Optionally define specific screens if needed */}
+                  <Stack screenOptions={{ headerShown: false }}>
+                    {/* Auth screens with no headers */}
                     <Stack.Screen
                       name="auth/signup"
-                      options={{ title: "Sign Up" }}
+                      options={{ headerShown: false }}
                     />
                     <Stack.Screen
                       name="auth/login"
-                      options={{ title: "Log In" }}
+                      options={{ headerShown: false }}
                     />
                     <Stack.Screen name="home" />
                     <Stack.Screen
                       name="auth/ResetPassword"
-                      options={{ title: "Reset Password" }}
+                      options={{ headerShown: false }}
                     />
                     <Stack.Screen
                       name="auth/NewPassword"
-                      options={{ title: "New Password" }}
+                      options={{ headerShown: false }}
                     />
+                    
+                    {/* Rest of the screens with normal headers */}
                     <Stack.Screen
                       name="productDetails"
                       options={{
