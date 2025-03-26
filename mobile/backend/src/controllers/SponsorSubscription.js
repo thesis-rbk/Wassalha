@@ -372,16 +372,19 @@ const sponsor = {
         const { id } = req.user
         try {
             const serviceProvider = await prisma.serviceProvider.findUnique({ where: { userId: id } })
-            const requests = await prisma.orderSponsor.findMany({
-                where: { serviceProviderId: serviceProvider.id }, include: {
-                    sponsorship: true,     // Include sponsorship details
-                    recipient: true        // Include recipient (User) details
-                }
-            })
-            res.send({ requests })
+            if (serviceProvider) {
+                const requests = await prisma.orderSponsor.findMany({
+                    where: { serviceProviderId: serviceProvider.id }, include: {
+                        sponsorship: true,     // Include sponsorship details
+                        recipient: true        // Include recipient (User) details
+                    }
+                })
+                res.send({ requests })
+            }
+            res.send({ message: "you're not a sponsor" })
         } catch (err) {
             console.log("errrrrrrrrr", err)
-            res.Send({ message: err })
+            res.send({ message: err })
         }
     }
 }

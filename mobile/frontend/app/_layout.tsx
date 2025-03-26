@@ -17,6 +17,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { SponsorshipProcessProvider } from "@/context/SponsorshipProcessContext";
 import { OnboardingContainer } from '@/components/onboarding';
 import { OnboardingService } from '@/services/onboardingService';
+import { StatusProvider } from '@/context/StatusContext';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -55,256 +56,258 @@ export default function RootLayout() {
         <AuthProvider>
           <ThemeProvider>
             <SponsorshipProcessProvider>
-              <StripeProvider
-                publishableKey={STRIPE_PUBLISHABLE_KEY}
-                urlScheme="wassalha"
-                merchantIdentifier="merchant.com.wassalha"
-              >
-                {!loadingComplete ? (
-                  <MainLoading
-                    onLoadingComplete={() => setLoadingComplete(true)}
-                  />
-                ) : !animationComplete ? (
-                  <WelcomeAnimation
-                    onAnimationComplete={() => setAnimationComplete(true)}
-                  />
-                ) : hasSeenOnboarding === null ? (
-                  <MainLoading
-                    onLoadingComplete={() => setHasSeenOnboarding(false)}
-                  />
-                ) : !hasSeenOnboarding ? (
-                  <OnboardingContainer
-                    onComplete={handleOnboardingComplete}
-                  />
-                ) : (
-                  <Stack>
-                    {/* Optionally define specific screens if needed */}
-                    <Stack.Screen
-                      name="auth/signup"
-                      options={{ title: "Sign Up" }}
+              <StatusProvider>
+                <StripeProvider
+                  publishableKey={STRIPE_PUBLISHABLE_KEY}
+                  urlScheme="wassalha"
+                  merchantIdentifier="merchant.com.wassalha"
+                >
+                  {!loadingComplete ? (
+                    <MainLoading
+                      onLoadingComplete={() => setLoadingComplete(true)}
                     />
-                    <Stack.Screen
-                      name="auth/login"
-                      options={{ title: "Log In" }}
+                  ) : !animationComplete ? (
+                    <WelcomeAnimation
+                      onAnimationComplete={() => setAnimationComplete(true)}
                     />
-                    <Stack.Screen name="home" />
-                    <Stack.Screen
-                      name="auth/ResetPassword"
-                      options={{ title: "Reset Password" }}
+                  ) : hasSeenOnboarding === null ? (
+                    <MainLoading
+                      onLoadingComplete={() => setHasSeenOnboarding(false)}
                     />
-                    <Stack.Screen
-                      name="auth/NewPassword"
-                      options={{ title: "New Password" }}
+                  ) : !hasSeenOnboarding ? (
+                    <OnboardingContainer
+                      onComplete={handleOnboardingComplete}
                     />
-                    <Stack.Screen
-                      name="productDetails"
-                      options={{
-                        title: "Product Details",
-                      }}
-                    />
-                    <Stack.Screen
-                      name="test/Subscription"
-                      options={{ title: "Subscription" }}
-                    />
-                    <Stack.Screen
-                      name="onboarding/howYouHeard"
-                      options={{ title: "How You Heard" }}
-                    />
-                    <Stack.Screen
-                      name="onboarding/selectCategories"
-                      options={{ title: "Select Categories" }}
-                    />
-                    <Stack.Screen
-                      name="onboarding/customScreen"
-                      options={{ title: "Custom Screen" }}
-                    />
-                    <Stack.Screen
-                      name="profile/change"
-                      options={{ title: "Change Password" }}
-                    />
-                    <Stack.Screen
-                      name="profile/edit"
-                      options={{ title: "Edit Profile" }}
-                    />
-                    <Stack.Screen
-                      name="profile/index"
-                      options={{ title: "Profile" }}
-                    />
-                    <Stack.Screen
-                      name="messages/messages"
-                      options={{ title: "Messages" }}
-                    />
-                    <Stack.Screen
-                      name="test/Terms&&Conditions"
-                      options={{ title: "terms n conditions" }}
-                    />
-                    <Stack.Screen
-                      name="test/Travel"
-                      options={{ title: "Travel" }}
-                    />
-                    <Stack.Screen
-                      name="test/Pickup"
-                      options={{ title: "Pickup" }}
-                    />
-                    <Stack.Screen
-                      name="test/chat"
-                      options={{ title: "Chat" }}
-                    />
-                    <Stack.Screen
-                      name="verification/start"
-                      options={{ title: "verification" }}
-                    />
-                    <Stack.Screen
-                      name="verification/TakeSelfie"
-                      options={{ title: "Take Selfie" }}
-                    />
-                    <Stack.Screen
-                      name="verification/CreditCardVerification"
-                      options={{ title: "Credit Card Verification" }}
-                    />
-                    <Stack.Screen
-                      name="orders&requests/order"
-                      options={{ title: "Orders & Requests" }}
-                    />
-                    <Stack.Screen
-                      name="processTrack/initializationSO"
-                      options={{ title: "Initialization" }}
-                    />
-                    <Stack.Screen
-                      name="verification/SponsorRequestst"
-                      options={{ title: "requests" }}
-                    />
-                    <Stack.Screen
-                      name="processTrack/initializationSP"
-                      options={{ title: "Initialization" }}
-                    />
-                    <Stack.Screen
-                      name="processTrack/verificationSO"
-                      options={{ title: "Verification" }}
-                    />
-                    <Stack.Screen
-                      name="processTrack/verificationSP"
-                      options={{ title: "Verification" }}
-                    />
-                    <Stack.Screen
-                      name="processTrack/paymentSO"
-                      options={{ title: "Payment" }}
-                    />
-                    <Stack.Screen
-                      name="processTrack/paymentSP"
-                      options={{ title: "Payment" }}
-                    />
-                    <Stack.Screen
-                      name="processTrack/pickupSO"
-                      options={{ title: "Pickup" }}
-                    />
-                    <Stack.Screen
-                      name="processTrack/pickupSP"
-                      options={{ title: "Pickup" }}
-                    />
-                    <Stack.Screen name="test/order-details" />
-                    <Stack.Screen
-                      name="processTrack/makeOffer"
-                      options={{ title: "Make Offer" }}
-                    />
+                  ) : (
+                    <Stack>
+                      {/* Optionally define specific screens if needed */}
+                      <Stack.Screen
+                        name="auth/signup"
+                        options={{ title: "Sign Up" }}
+                      />
+                      <Stack.Screen
+                        name="auth/login"
+                        options={{ title: "Log In" }}
+                      />
+                      <Stack.Screen name="home" />
+                      <Stack.Screen
+                        name="auth/ResetPassword"
+                        options={{ title: "Reset Password" }}
+                      />
+                      <Stack.Screen
+                        name="auth/NewPassword"
+                        options={{ title: "New Password" }}
+                      />
+                      <Stack.Screen
+                        name="productDetails"
+                        options={{
+                          title: "Product Details",
+                        }}
+                      />
+                      <Stack.Screen
+                        name="test/Subscription"
+                        options={{ title: "Subscription" }}
+                      />
+                      <Stack.Screen
+                        name="onboarding/howYouHeard"
+                        options={{ title: "How You Heard" }}
+                      />
+                      <Stack.Screen
+                        name="onboarding/selectCategories"
+                        options={{ title: "Select Categories" }}
+                      />
+                      <Stack.Screen
+                        name="onboarding/customScreen"
+                        options={{ title: "Custom Screen" }}
+                      />
+                      <Stack.Screen
+                        name="profile/change"
+                        options={{ title: "Change Password" }}
+                      />
+                      <Stack.Screen
+                        name="profile/edit"
+                        options={{ title: "Edit Profile" }}
+                      />
+                      <Stack.Screen
+                        name="profile/index"
+                        options={{ title: "Profile" }}
+                      />
+                      <Stack.Screen
+                        name="messages/messages"
+                        options={{ title: "Messages" }}
+                      />
+                      <Stack.Screen
+                        name="test/Terms&&Conditions"
+                        options={{ title: "terms n conditions" }}
+                      />
+                      <Stack.Screen
+                        name="test/Travel"
+                        options={{ title: "Travel" }}
+                      />
+                      <Stack.Screen
+                        name="test/Pickup"
+                        options={{ title: "Pickup" }}
+                      />
+                      <Stack.Screen
+                        name="test/chat"
+                        options={{ title: "Chat" }}
+                      />
+                      <Stack.Screen
+                        name="verification/start"
+                        options={{ title: "verification" }}
+                      />
+                      <Stack.Screen
+                        name="verification/TakeSelfie"
+                        options={{ title: "Take Selfie" }}
+                      />
+                      <Stack.Screen
+                        name="verification/CreditCardVerification"
+                        options={{ title: "Credit Card Verification" }}
+                      />
+                      <Stack.Screen
+                        name="orders&requests/order"
+                        options={{ title: "Orders & Requests" }}
+                      />
+                      <Stack.Screen
+                        name="processTrack/initializationSO"
+                        options={{ title: "Initialization" }}
+                      />
+                      <Stack.Screen
+                        name="verification/SponsorRequestst"
+                        options={{ title: "requests" }}
+                      />
+                      <Stack.Screen
+                        name="processTrack/initializationSP"
+                        options={{ title: "Initialization" }}
+                      />
+                      <Stack.Screen
+                        name="processTrack/verificationSO"
+                        options={{ title: "Verification" }}
+                      />
+                      <Stack.Screen
+                        name="processTrack/verificationSP"
+                        options={{ title: "Verification" }}
+                      />
+                      <Stack.Screen
+                        name="processTrack/paymentSO"
+                        options={{ title: "Payment" }}
+                      />
+                      <Stack.Screen
+                        name="processTrack/paymentSP"
+                        options={{ title: "Payment" }}
+                      />
+                      <Stack.Screen
+                        name="processTrack/pickupSO"
+                        options={{ title: "Pickup" }}
+                      />
+                      <Stack.Screen
+                        name="processTrack/pickupSP"
+                        options={{ title: "Pickup" }}
+                      />
+                      <Stack.Screen name="test/order-details" />
+                      <Stack.Screen
+                        name="processTrack/makeOffer"
+                        options={{ title: "Make Offer" }}
+                      />
 
-                    {/* Add the new success screens */}
-                    <Stack.Screen
-                      name="screens/RequestSuccessScreen"
-                      options={{
-                        title: "Request Created",
-                      }}
-                    />
-                    <Stack.Screen
-                      name="screens/OrderSuccessScreen"
-                      options={{
-                        title: "Order Created",
-                      }}
-                    />
-                    <Stack.Screen
-                      name="verification/fetchAll"
-                      options={{ title: "Fetch Sub" }}
-                    />
-                    <Stack.Screen
-                      name="verification/SponsorshipDetails"
-                      options={{ title: "verif details" }}
-                    />
-                    <Stack.Screen
-                      name="verification/CreateSponsorPost"
-                      options={{ title: "Create Sponsor Post" }}
-                    />
-                    <Stack.Screen
-                      name="reporting-system/create-ticket"
-                      options={{ title: "Create Report" }}
-                    />
-                    <Stack.Screen
-                      name="goodPost/goodpostpage"
-                      options={{ title: "Traveler Posts" }}
-                    />
-                    <Stack.Screen
-                      name="goodPost/createGoodsPost"
-                      options={{ title: "Create Goods Post" }}
-                    />
-                    <Stack.Screen
-                      name="traveler/becomeTraveler"
-                      options={{ title: "Become Traveler" }}
-                    />
-                    <Stack.Screen
-                      name="screens/NotificationsScreen"
-                      options={{
-                        title: "Notifications",
-                      }}
-                    />
-                    <Stack.Screen
-                      name="sponsorshipTrack/initializationBuyer"
-                      options={{ title: "Sponsorship Details" }}
-                    />
-                    <Stack.Screen
-                      name="sponsorshipTrack/verificationBuyer"
-                      options={{ title: "Verification" }}
-                    />
-                    <Stack.Screen
-                      name="sponsorshipTrack/paymentBuyer"
-                      options={{ title: "Payment" }}
-                    />
-                    <Stack.Screen
-                      name="sponsorshipTrack/deliveryBuyer"
-                      options={{ title: "Delivery" }}
-                    />
+                      {/* Add the new success screens */}
+                      <Stack.Screen
+                        name="screens/RequestSuccessScreen"
+                        options={{
+                          title: "Request Created",
+                        }}
+                      />
+                      <Stack.Screen
+                        name="screens/OrderSuccessScreen"
+                        options={{
+                          title: "Order Created",
+                        }}
+                      />
+                      <Stack.Screen
+                        name="verification/fetchAll"
+                        options={{ title: "Fetch Sub" }}
+                      />
+                      <Stack.Screen
+                        name="verification/SponsorshipDetails"
+                        options={{ title: "verif details" }}
+                      />
+                      <Stack.Screen
+                        name="verification/CreateSponsorPost"
+                        options={{ title: "Create Sponsor Post" }}
+                      />
+                      <Stack.Screen
+                        name="reporting-system/create-ticket"
+                        options={{ title: "Create Report" }}
+                      />
+                      <Stack.Screen
+                        name="goodPost/goodpostpage"
+                        options={{ title: "Traveler Posts" }}
+                      />
+                      <Stack.Screen
+                        name="goodPost/createGoodsPost"
+                        options={{ title: "Create Goods Post" }}
+                      />
+                      <Stack.Screen
+                        name="traveler/becomeTraveler"
+                        options={{ title: "Become Traveler" }}
+                      />
+                      <Stack.Screen
+                        name="screens/NotificationsScreen"
+                        options={{
+                          title: "Notifications",
+                        }}
+                      />
+                      <Stack.Screen
+                        name="sponsorshipTrack/initializationBuyer"
+                        options={{ title: "Sponsorship Details" }}
+                      />
+                      <Stack.Screen
+                        name="sponsorshipTrack/verificationBuyer"
+                        options={{ title: "Verification" }}
+                      />
+                      <Stack.Screen
+                        name="sponsorshipTrack/paymentBuyer"
+                        options={{ title: "Payment" }}
+                      />
+                      <Stack.Screen
+                        name="sponsorshipTrack/deliveryBuyer"
+                        options={{ title: "Delivery" }}
+                      />
 
-                    <Stack.Screen
-                      name="sponsorshipTrack/initializationSponsor"
-                      options={{ title: "Sponsorship Details" }}
-                    />
-                    <Stack.Screen
-                      name="sponsorshipTrack/verificationSponsor"
-                      options={{ title: "Verification" }}
-                    />
-                    <Stack.Screen
-                      name="sponsorshipTrack/paymentSponsor"
-                      options={{ title: "Payment" }}
-                    />
-                    <Stack.Screen
-                      name="sponsorshipTrack/deliverySponsor"
-                      options={{ title: "Delivery" }}
-                    />
-                    <Stack.Screen
-                      name="pickup/PickupDashboard"
-                      options={{ title: "Pickup" }}
-                    />
-                    <Stack.Screen
-                      name="reporting-system/MyTicketsPage"
+                      <Stack.Screen
+                        name="sponsorshipTrack/initializationSponsor"
+                        options={{ title: "Sponsorship Details" }}
+                      />
+                      <Stack.Screen
+                        name="sponsorshipTrack/verificationSponsor"
+                        options={{ title: "Verification" }}
+                      />
+                      <Stack.Screen
+                        name="sponsorshipTrack/paymentSponsor"
+                        options={{ title: "Payment" }}
+                      />
+                      <Stack.Screen
+                        name="sponsorshipTrack/deliverySponsor"
+                        options={{ title: "Delivery" }}
+                      />
+                      <Stack.Screen
+                        name="pickup/PickupDashboard"
+                        options={{ title: "Pickup" }}
+                      />
+                      <Stack.Screen
+                        name="reporting-system/MyTicketsPage"
 
-                    />
-                    <Stack.Screen
-                      name="reporting-system/detailsTicket/[id]"
-                      options={{ title: "Ticket " }}
+                      />
+                      <Stack.Screen
+                        name="reporting-system/detailsTicket/[id]"
+                        options={{ title: "Ticket " }}
 
-                    />
-                  </Stack>
+                      />
+                    </Stack>
 
-                )}
-              </StripeProvider>
+                  )}
+                </StripeProvider>
+              </StatusProvider>
             </SponsorshipProcessProvider>
           </ThemeProvider>
         </AuthProvider>

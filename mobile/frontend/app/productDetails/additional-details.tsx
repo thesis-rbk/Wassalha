@@ -25,11 +25,13 @@ import * as DocumentPicker from "expo-document-picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "@/config";
+import { useStatus } from '@/context/StatusContext';
 
 const AdditionalDetails: React.FC = () => {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { show, hide } = useStatus();
 
   // Update the productDetails conversion to include all passed data
   const [productDetails, setProductDetails] = useState({
@@ -121,7 +123,15 @@ const AdditionalDetails: React.FC = () => {
       }
     } catch (error) {
       console.error("❌ Error picking document:", error);
-      Alert.alert("Error", "Failed to pick document");
+      show({
+        type: 'error',
+        title: 'Document Error',
+        message: 'Failed to pick document',
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => pickDocument()
+        }
+      });
     } finally {
       setImageLoading(false);
     }
@@ -148,6 +158,16 @@ const AdditionalDetails: React.FC = () => {
 
   // Then modify your handleSubmit function to include debugging
   const handleSubmit = async () => {
+    // Add category check at the beginning
+    if (!categoryId) {
+      Alert.alert(
+        "Missing Information",
+        "Please select a category before submitting",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
     try {
       console.log("🚀 Starting submission process...");
       let jwtToken = await AsyncStorage.getItem("jwtToken");
@@ -155,7 +175,15 @@ const AdditionalDetails: React.FC = () => {
 
       // Make sure we have a token
       if (!jwtToken) {
-        Alert.alert("Error", "You need to be logged in to create a request");
+        show({
+          type: 'error',
+          title: 'Authentication Required',
+          message: 'You need to be logged in to create a request',
+          primaryAction: {
+            label: 'Login',
+            onPress: () => router.replace("../login")
+          }
+        });
         return;
       }
 
@@ -188,14 +216,34 @@ const AdditionalDetails: React.FC = () => {
               }
             } else {
               // If refresh fails, redirect to login
-              Alert.alert("Session Expired", "Please log in again");
-              router.replace("../login");
+              show({
+                type: 'error',
+                title: 'Session Expired',
+                message: 'Please log in again',
+                primaryAction: {
+                  label: 'Login',
+                  onPress: () => {
+                    hide();
+                    router.replace("../login");
+                  }
+                }
+              });
               return;
             }
           } catch (refreshError) {
             console.error("❌ Token refresh failed:", refreshError);
-            Alert.alert("Session Expired", "Please log in again");
-            router.replace("../login");
+            show({
+              type: 'error',
+              title: 'Session Expired',
+              message: 'Please log in again',
+              primaryAction: {
+                label: 'Login',
+                onPress: () => {
+                  hide();
+                  router.replace("../login");
+                }
+              }
+            });
             return;
           }
         }
@@ -230,31 +278,25 @@ const AdditionalDetails: React.FC = () => {
           }
         } catch (error) {
           console.error("❌ Image download error:", error);
-          Alert.alert(
-            "Image Download Failed",
-            "We couldn't download the web image. Would you like to continue without an image or go back and select a local image?",
-            [
-              {
-                text: "Continue Without Image",
-                onPress: () => {
-                  setProductDetails((prev) => ({
-                    ...prev,
-                    imageUri: undefined,
-                  }));
-                  // Continue with submission
-                  if (jwtToken) {
-                    submitForm(jwtToken);
-                  } else {
-                    Alert.alert("Error", "Authentication token is missing");
-                  }
-                },
-              },
-              {
-                text: "Go Back",
-                style: "cancel",
-              },
-            ]
-          );
+          show({
+            type: 'error',
+            title: 'Image Download Failed',
+            message: 'We couldn\'t download the web image.',
+            primaryAction: {
+              label: 'Continue Without Image',
+              onPress: () => {
+                setProductDetails((prev) => ({
+                  ...prev,
+                  imageUri: undefined,
+                }));
+                if (jwtToken) submitForm(jwtToken);
+              }
+            },
+            secondaryAction: {
+              label: 'Go Back',
+              onPress: () => hide()
+            }
+          });
           return;
         } finally {
           setImageLoading(false);
@@ -265,14 +307,31 @@ const AdditionalDetails: React.FC = () => {
       if (jwtToken) {
         submitForm(jwtToken);
       } else {
-        Alert.alert("Error", "Authentication token is missing");
+        show({
+          type: 'error',
+          title: 'Authentication Error',
+          message: 'Authentication token is missing',
+          primaryAction: {
+            label: 'Login',
+            onPress: () => router.replace("../login")
+          }
+        });
       }
     } catch (error) {
       console.error("❌ Outer error:", error);
-      Alert.alert(
-        "Error",
-        (error as Error).message || "An unknown error occurred"
-      );
+      show({
+        type: 'error',
+        title: 'Error',
+        message: (error as Error).message || "An unknown error occurred",
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => handleSubmit()
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     }
   };
 
@@ -408,19 +467,28 @@ const AdditionalDetails: React.FC = () => {
           console.log("✅ Request created:", requestResponse.data);
 
           if (requestResponse.data.success) {
+            show({
+              type: 'success',
+              title: 'Success',
+              message: 'Your request has been created successfully!',
+              primaryAction: {
+                label: 'Continue',
+                onPress: () => {
+                  router.replace({
+                    pathname: "/screens/RequestSuccessScreen",
+                    params: {
+                      requestId: requestResponse.data.data.id,
+                      goodsName: productDetails.name,
+                    },
+                  });
+                }
+              }
+            });
+            
             console.log("Emitting socket event for new request...");
             const socket = io(`${BACKEND_URL}/processTrack`);
-            
             socket.emit("requestCreated", {
               requestId: requestResponse.data.data.id
-            });
-
-            router.replace({
-              pathname: "/screens/RequestSuccessScreen",
-              params: {
-                requestId: requestResponse.data.data.id,
-                goodsName: productDetails.name,
-              },
             });
           }
         }
@@ -438,7 +506,19 @@ const AdditionalDetails: React.FC = () => {
             ? "Request was made but no response received"
             : "Request setup failed",
         });
-        Alert.alert("Error", error.message || "An unknown error occurred");
+        show({
+          type: 'error',
+          title: 'Error',
+          message: error.message || "An unknown error occurred",
+          primaryAction: {
+            label: 'Try Again',
+            onPress: () => handleSubmit()
+          },
+          secondaryAction: {
+            label: 'Cancel',
+            onPress: () => hide()
+          }
+        });
       }
     } catch (error: any) {
       console.error("❌ Error:", error);
@@ -454,12 +534,41 @@ const AdditionalDetails: React.FC = () => {
           ? "Request was made but no response received"
           : "Request setup failed",
       });
-      Alert.alert(
-        "Error",
-        (error as Error).message || "An unknown error occurred"
-      );
+      show({
+        type: 'error',
+        title: 'Error',
+        message: (error as Error).message || "An unknown error occurred",
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => handleSubmit()
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     }
   }
+
+  // Add this quantity validation function to your component
+  const handleQuantityChange = (text: string) => {
+    // Check if the input contains non-numeric characters
+    if (/[^0-9]/.test(text)) {
+      // Show an alert for invalid input
+      Alert.alert(
+        "Invalid Input",
+        "Please enter only numbers for quantity",
+        [{ text: "OK" }]
+      );
+      
+      // Only allow numeric characters
+      const numericValue = text.replace(/[^0-9]/g, '');
+      setQuantity(numericValue);
+    } else {
+      // Input is already numeric, just set it directly
+      setQuantity(text);
+    }
+  };
 
   return (
     <ScrollView style={styles.container} scrollEnabled={!dropdownVisible}>
@@ -628,7 +737,7 @@ const AdditionalDetails: React.FC = () => {
         <InputField
           label="Quantity *"
           value={quantity}
-          onChangeText={setQuantity}
+          onChangeText={handleQuantityChange}
           placeholder="Enter quantity"
           keyboardType="numeric"
           style={styles.input}
@@ -675,9 +784,6 @@ const AdditionalDetails: React.FC = () => {
           <BaseButton
             size="large"
             onPress={handleSubmit}
-            disabled={
-              !categoryId || !quantity || !goodsLocation || !goodsDestination
-            }
           >
             <BodyMedium style={styles.buttonText}>
               Create Product & Request

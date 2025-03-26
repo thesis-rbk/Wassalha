@@ -263,20 +263,35 @@ export default function InitializationSP() {
         // Connect to socket and emit event
         const socket = io(`${BACKEND_URL}/processTrack`);
         
-        socket.on("connect", () => {
-          console.log("🔌 Socket connected for offer");
-          // Emit the offerMade event
-          socket.emit("offerMade", {
-            processId: response.data.data.id,
-            requestId: requestId
+        // First approach: Use a promise to ensure the event is sent
+        const emitOfferEvent = () => {
+          return new Promise<void>((resolve) => {  // Specify void as the Promise type
+            // If already connected
+            if (socket.connected) {
+              socket.emit("offerMade", {
+                processId: response.data.data.id,
+                requestId: requestId
+              });
+              console.log("📤 Emitted offerMade event immediately");
+              resolve();
+            } else {
+              // Wait for connection
+              socket.on("connect", () => {
+                console.log("🔌 Socket connected for offer");
+                socket.emit("offerMade", {
+                  processId: response.data.data.id,
+                  requestId: requestId
+                });
+                console.log("📤 Emitted offerMade event after connection");
+                resolve();
+              });
+            }
           });
-          console.log("📤 Emitted offerMade event", {
-            processId: response.data.data.id,
-            requestId: requestId
-          });
-          // Disconnect after emitting
-          socket.disconnect();
-        });
+        };
+
+        // Wait for the event to be sent before navigating
+        await emitOfferEvent();
+        socket.disconnect();
 
         sendNotification("offer_made", {
           requesterId: params.requesterId,
