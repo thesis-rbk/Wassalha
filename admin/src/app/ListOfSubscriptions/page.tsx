@@ -338,10 +338,11 @@ const ListOfSubscriptions: React.FC = () => {
                                     <th className={tableStyles.th}>Name</th>
                                     <th className={tableStyles.th}>Description</th>
                                     <th className={tableStyles.th}>Price</th>
-                                    <th className={tableStyles.th}>Duration</th>
+                                    
                                     <th className={tableStyles.th}>Type</th>
                                     <th className={tableStyles.th}>Category</th>
                                     <th className={tableStyles.th}>Status</th>
+                                    <th className={tableStyles.th}>Duration</th>
                                     <th className={tableStyles.th}>Users</th>
                                     <th className={tableStyles.th}>Actions</th>
                                 </tr>
@@ -353,10 +354,7 @@ const ListOfSubscriptions: React.FC = () => {
                                         <td className={tableStyles.td}>{subscription.name}</td>
                                         <td className={tableStyles.td}>{subscription.description || 'N/A'}</td>
                                         <td className={tableStyles.td}>${subscription.price.toFixed(2)}</td>
-                                        <td className={tableStyles.td}>
-                                            {subscription.duration} days
-                                            ({getDurationCategory(subscription.duration)})
-                                        </td>
+                                      
                                         <td className={tableStyles.td}>{subscription.type}</td>
                                         <td className={tableStyles.td}>
                                             {subscription.category?.name || 'N/A'}
@@ -366,6 +364,12 @@ const ListOfSubscriptions: React.FC = () => {
                                                 {subscription.isActive ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
+                                        <td className={tableStyles.td}>
+                                            {subscription.duration} days
+                                            ({getDurationCategory(subscription.duration)})
+                                        </td>
+
+
                                         <td className={tableStyles.td}>
                                             {subscription.users?.length || 0}
                                         </td>

@@ -372,6 +372,9 @@ const sponsor = {
         const { id } = req.user
         try {
             const serviceProvider = await prisma.serviceProvider.findUnique({ where: { userId: id } })
+            if (!serviceProvider) {
+                return res.status(404).send({ message: "Service provider not found" })
+            }
             const requests = await prisma.orderSponsor.findMany({
                 where: { serviceProviderId: serviceProvider.id }, include: {
                     sponsorship: true,     // Include sponsorship details
@@ -381,7 +384,7 @@ const sponsor = {
             res.send({ requests })
         } catch (err) {
             console.log("errrrrrrrrr", err)
-            res.Send({ message: err })
+            res.send({ message: err.message || "An error occurred" })
         }
     }
 }

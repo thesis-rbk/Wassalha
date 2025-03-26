@@ -111,27 +111,27 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ countryData, isDarkMode }) => {
       const percentage = (country.count / totalUsers) * 100;
       const percentageText = percentage.toFixed(1);
       
-      // Determine marker size based on user count percentage
-      const radius = Math.max(7, Math.min(22, 7 + Math.sqrt(percentage) * 2.5)); // Slightly larger markers
+      // Determine marker size based on user count percentage (making them slightly larger to fit text)
+      const radius = Math.max(12, Math.min(20, 12 + Math.sqrt(percentage) * 1.5));
       
-      // Get marker color based on percentage (using a gradient from blue)
+      // Get marker color based on percentage (using solid colors with slight transparency)
       let color: string;
-      if (percentage > 40) color = '#3703C8'; // color-primary from theme
-      else if (percentage > 20) color = '#018ABE'; // color-secondary from theme
-      else if (percentage > 10) color = '#05AFF0'; // color-dark from theme
-      else color = '#6ac8ee'; // lighter blue for smallest values
+      if (percentage > 40) color = '#3703C8E6'; // Solid primary color with 90% opacity
+      else if (percentage > 20) color = '#018ABEE6'; // Solid secondary color with 90% opacity
+      else if (percentage > 10) color = '#05AFF0E6'; // Solid dark color with 90% opacity
+      else color = '#6ac8eeE6'; // Solid light blue with 90% opacity
       
-      // Create circle marker with improved styling for better visibility
+      // Create circle marker with no border and slight transparency
       const marker = L.circleMarker(coords, {
         radius: radius,
         fillColor: color,
-        color: isDarkMode ? '#ffffff' : '#333333', // Better contrast with the map
-        weight: 2.5, // Thicker border
-        opacity: 1, // Full opacity
-        fillOpacity: 0.85, // More opaque fill
+        color: 'transparent', // Remove border
+        weight: 0, // No border width
+        opacity: 1,
+        fillOpacity: 0.9, // 90% opacity for fill
         className: styles.mapMarker,
-        bubblingMouseEvents: false, // Prevents events from bubbling to map
-        interactive: true // Ensures the marker receives mouse events
+        bubblingMouseEvents: false,
+        interactive: true
       }).addTo(mapRef.current);
       
       // Add popup with country info
@@ -145,18 +145,28 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ countryData, isDarkMode }) => {
       
       markersRef.current.push(marker);
       
-      // Add label for all countries to ensure visibility
-      const labelIcon = L.divIcon({
-        html: `<div class="${styles.markerLabel}" style="background-color: ${isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.85)'}; color: ${isDarkMode ? '#fff' : '#333'}; padding: 3px 5px; border: 1px solid ${isDarkMode ? 'white' : 'black'}; font-weight: bold;">${percentageText}%</div>`,
+      // Add percentage text directly on the marker
+      const textIcon = L.divIcon({
+        html: `<div style="
+          width: ${radius * 2}px;
+          height: ${radius * 2}px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #ffffff;
+          font-size: 11px;
+          font-weight: 500;
+          text-shadow: 0 0 2px rgba(0,0,0,0.5);
+        ">${percentageText}%</div>`,
         className: '',
-        iconSize: [40, 20],
-        iconAnchor: [20, 10]
+        iconSize: [radius * 2, radius * 2],
+        iconAnchor: [radius, radius]
       });
       
       const label = L.marker(coords, { 
-        icon: labelIcon,
+        icon: textIcon,
         interactive: false,
-        zIndexOffset: 1000 // Ensure labels are on top
+        zIndexOffset: 1000
       }).addTo(mapRef.current);
       
       labelsRef.current.push(label);

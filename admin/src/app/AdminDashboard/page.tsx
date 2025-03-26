@@ -610,11 +610,11 @@ const Dashboard = () => {
           >
             <h3>User Distribution</h3>
             <div style={{ height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Pie data={userChartData} options={{
-                ...chartOptions,
+            <Pie data={userChartData} options={{
+              ...chartOptions,
                 maintainAspectRatio: true,
                 responsive: true
-              }} />
+            }} />
             </div>
           </div>
 
@@ -717,7 +717,7 @@ const Dashboard = () => {
           >
             <h3>Customer Demographic</h3>
             <div style={{ flex: 1, position: 'relative' }}>
-              <WorldMap />
+            <WorldMap />
             </div>
           </div>
         </div>

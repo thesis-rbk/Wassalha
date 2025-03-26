@@ -37,11 +37,9 @@ const AdminLogin = () => {
         { email, password }
       );
 
-      console.log("Login - Full response data:", response.data);
-
       if (!response.data.user?.id) {
-        console.error("Login - No user ID in response:", response.data);
-        throw new Error("No user ID in response");
+        setError("Invalid response from server. Please try again.");
+        return;
       }
 
       const userData = {
@@ -56,25 +54,40 @@ const AdminLogin = () => {
         }
       };
 
-      console.log("Login - Storing user data:", userData);
-
       localStorage.setItem("adminToken", response.data.token);
       localStorage.setItem("userData", JSON.stringify(userData));
-      
-      // Update token timestamp to mark it as fresh
       refreshTokenTimestamp();
-
-      // Verify the data was stored correctly
-      const storedData = localStorage.getItem("userData");
-      console.log("Login - Verified stored data:", storedData);
-
       router.push("/AdminDashboard");
+      
     } catch (error: any) {
       console.error("Login error:", error);
-      if (error.response?.status === 403) {
-        setError("Access denied. Admin privileges required.");
+      
+      if (error.customMessage) {
+        // Handle network connection errors
+        setError(error.customMessage);
+      } else if (error.response) {
+        // Handle HTTP error responses
+        switch (error.response.status) {
+          case 401:
+            setError("Invalid email or password");
+            break;
+          case 403:
+            setError("Access denied. Admin privileges required.");
+            break;
+          case 404:
+            setError("Login service not found. Please try again later.");
+            break;
+          case 500:
+            setError("Server error. Please try again later.");
+            break;
+          default:
+            setError("An error occurred. Please try again.");
+        }
+      } else if (error.request) {
+        // Handle no response errors
+        setError("Unable to connect to the server. Please check your internet connection or try again later.");
       } else {
-        setError("Invalid email or password");
+        setError("An unexpected error occurred. Please try again.");
       }
     }
   };

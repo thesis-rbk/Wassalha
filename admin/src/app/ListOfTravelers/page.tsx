@@ -19,6 +19,7 @@ export default function ListOfTravelers() {
     const [isShowingAll, setIsShowingAll] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [verificationFilter, setVerificationFilter] = useState("ALL");
+    const [genderFilter, setGenderFilter] = useState("ALL");
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -112,6 +113,10 @@ export default function ListOfTravelers() {
             );
         }
 
+        if (genderFilter !== "ALL") {
+            filtered = filtered.filter(traveler => traveler.user.profile?.gender === genderFilter);
+        }
+
         if (verificationFilter !== "ALL") {
             const isVerified = verificationFilter === "VERIFIED";
             filtered = filtered.filter(traveler => traveler.isVerified === isVerified);
@@ -140,7 +145,7 @@ export default function ListOfTravelers() {
 
     useEffect(() => {
         filterTravelers();
-    }, [searchTerm, verificationFilter, travelers]);
+    }, [searchTerm, verificationFilter, genderFilter, travelers]);
 
     const handleVerifyTraveler = async (id: number) => {
         try {
@@ -260,6 +265,16 @@ export default function ListOfTravelers() {
                             />
                         </div>
                         <div className={tableStyles.filterContainer}>
+                            <select
+                                className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}
+                                value={genderFilter}
+                                onChange={(e) => setGenderFilter(e.target.value)}
+                            >
+                                <option value="ALL">All Genders</option>
+                                <option value="MALE">Male</option>
+                                <option value="FEMALE">Female</option>
+                                <option value="OTHER">Other</option>
+                            </select>
                             <select
                                 className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}
                                 value={verificationFilter}

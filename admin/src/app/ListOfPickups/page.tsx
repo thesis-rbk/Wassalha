@@ -25,6 +25,21 @@ const PickupList: React.FC = () => {
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const [qrCodeModalOpen, setQrCodeModalOpen] = useState(false);
     const [selectedQrCode, setSelectedQrCode] = useState<string | null>(null);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    // Add dark mode effect
+    useEffect(() => {
+        const darkMode = localStorage.getItem("darkMode") === "true";
+        setIsDarkMode(darkMode);
+
+        const handleThemeChange = () => {
+            const darkMode = localStorage.getItem("darkMode") === "true";
+            setIsDarkMode(darkMode);
+        };
+
+        window.addEventListener('themeChange', handleThemeChange);
+        return () => window.removeEventListener('themeChange', handleThemeChange);
+    }, []);
 
     // Function to show notification
     const showNotification = (message: string, type: 'success' | 'error') => {
@@ -152,29 +167,29 @@ const PickupList: React.FC = () => {
     };
 
     if (loading) return (
-        <div className={navStyles.layout}>
+        <div className={`${navStyles.layout} ${isDarkMode ? navStyles.darkMode : ''}`}>
             <Nav />
-            <div className={navStyles.mainContent} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div className={`${navStyles.mainContent} ${isDarkMode ? navStyles.darkMode : ''}`} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <div>Loading...</div>
             </div>
         </div>
     );
     
     if (error) return (
-        <div className={navStyles.layout}>
+        <div className={`${navStyles.layout} ${isDarkMode ? navStyles.darkMode : ''}`}>
             <Nav />
-            <div className={navStyles.mainContent} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div className={`${navStyles.mainContent} ${isDarkMode ? navStyles.darkMode : ''}`} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <div>Error: {error}</div>
             </div>
         </div>
     );
 
     return (
-        <div className={navStyles.layout}>
+        <div className={`${navStyles.layout} ${isDarkMode ? navStyles.darkMode : ''}`}>
             <Nav />
-            <div className={navStyles.mainContent}>
-                <div className={tableStyles.container}>
-                    <h1>All Pickups</h1>
+            <div className={`${navStyles.mainContent} ${isDarkMode ? navStyles.darkMode : ''}`}>
+                <div className={`${tableStyles.container} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                    <h1 className={`${tableStyles.title} ${isDarkMode ? tableStyles.darkMode : ''}`}>All Pickups</h1>
                     
                     {/* Custom Notification */}
                     {notification.show && (
@@ -185,11 +200,19 @@ const PickupList: React.FC = () => {
                     
                     {/* QR Code Modal */}
                     {qrCodeModalOpen && selectedQrCode && (
-                        <div className={tableStyles.modal}>
-                            <div className={tableStyles.modalContent}>
-                                <span className={tableStyles.closeModal} onClick={() => setQrCodeModalOpen(false)}>&times;</span>
-                                <h2>QR Code</h2>
-                                <img src={selectedQrCode} alt="QR Code" style={{ maxWidth: '100%' }} />
+                        <div className={`${tableStyles.modalOverlay} ${isDarkMode ? tableStyles.darkMode : ''}`} onClick={() => setQrCodeModalOpen(false)}>
+                            <div className={`${tableStyles.qrCodeModal} ${isDarkMode ? tableStyles.darkMode : ''}`} onClick={e => e.stopPropagation()}>
+                                <img 
+                                    src={selectedQrCode} 
+                                    alt="QR Code" 
+                                    className={tableStyles.qrCodeLarge}
+                                />
+                                <button 
+                                    className={`${tableStyles.closeModalButton} ${isDarkMode ? tableStyles.darkMode : ''}`}
+                                    onClick={() => setQrCodeModalOpen(false)}
+                                >
+                                    Close
+                                </button>
                             </div>
                         </div>
                     )}

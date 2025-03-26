@@ -21,6 +21,21 @@ const ListOfPayments: React.FC = () => {
     const [selectedQrCode, setSelectedQrCode] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    // Add dark mode effect
+    useEffect(() => {
+        const darkMode = localStorage.getItem("darkMode") === "true";
+        setIsDarkMode(darkMode);
+
+        const handleThemeChange = () => {
+            const darkMode = localStorage.getItem("darkMode") === "true";
+            setIsDarkMode(darkMode);
+        };
+
+        window.addEventListener('themeChange', handleThemeChange);
+        return () => window.removeEventListener('themeChange', handleThemeChange);
+    }, []);
 
     const filterAndSortPayments = (payments: Payment[]) => {
         return payments
@@ -130,11 +145,11 @@ const ListOfPayments: React.FC = () => {
     };
 
     return (
-        <div className={navStyles.layout}>
+        <div className={`${navStyles.layout} ${isDarkMode ? navStyles.darkMode : ''}`}>
             <Nav />
-            <div className={navStyles.mainContent}>
-                <div className={tableStyles.container}>
-                    <h1>List of Payments</h1>
+            <div className={`${navStyles.mainContent} ${isDarkMode ? navStyles.darkMode : ''}`}>
+                <div className={`${tableStyles.container} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                    <h1 className={`${tableStyles.title} ${isDarkMode ? tableStyles.darkMode : ''}`}>List of Payments</h1>
 
                     {/* Search and Filter Controls */}
                     <div className={tableStyles.controls}>
@@ -144,14 +159,14 @@ const ListOfPayments: React.FC = () => {
                                 placeholder="Search by order ID or transaction ID..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className={tableStyles.searchInput}
+                                className={`${tableStyles.searchInput} ${isDarkMode ? tableStyles.darkMode : ''}`}
                             />
                         </div>
                         <div className={tableStyles.filterContainer}>
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className={tableStyles.filterSelect}
+                                className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}
                             >
                                 <option value="ALL">All Status</option>
                                 <option value="PENDING">Pending</option>
@@ -164,7 +179,7 @@ const ListOfPayments: React.FC = () => {
                             <select
                                 value={currencyFilter}
                                 onChange={(e) => setCurrencyFilter(e.target.value)}
-                                className={tableStyles.filterSelect}
+                                className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}
                             >
                                 <option value="ALL">All Currencies</option>
                                 {availableCurrencies.map((currency) => (
@@ -177,7 +192,7 @@ const ListOfPayments: React.FC = () => {
                             <select
                                 value={methodFilter}
                                 onChange={(e) => setMethodFilter(e.target.value)}
-                                className={tableStyles.filterSelect}
+                                className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}
                             >
                                 <option value="ALL">All Payment Methods</option>
                                 <option value="CARD">Card</option>
@@ -190,7 +205,7 @@ const ListOfPayments: React.FC = () => {
                             <select
                                 value={sortOrder}
                                 onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
-                                className={tableStyles.filterSelect}
+                                className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}
                             >
                                 <option value="desc">Newest First</option>
                                 <option value="asc">Oldest First</option>
@@ -247,16 +262,14 @@ const ListOfPayments: React.FC = () => {
                                                         'N/A'
                                                     )}
                                                 </td>
-                                                <td className={tableStyles.td}>
+                                                <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
                                                     {payment.qrCode ? (
-                                                        <div className={tableStyles.qrCodeContainer}>
-                                                            <img 
-                                                                src={payment.qrCode} 
-                                                                alt="QR Code" 
-                                                                className={tableStyles.qrCode}
-                                                                onClick={() => handleQrCodeClick(payment.qrCode as string)}
-                                                            />
-                                                        </div>
+                                                        <button
+                                                            onClick={() => handleQrCodeClick(payment.qrCode as string)}
+                                                            className={`${tableStyles.actionButton} ${tableStyles.viewButton} ${isDarkMode ? tableStyles.darkMode : ''}`}
+                                                        >
+                                                            View QR
+                                                        </button>
                                                     ) : (
                                                         'N/A'
                                                     )}

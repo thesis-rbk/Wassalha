@@ -4,12 +4,14 @@ import axios from 'axios';
 let isRefreshingToken = false;
 let tokenRefreshTimestamp = 0;
 
+// Create axios instance with retry logic
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000', // Changed to 3000 to match typical Node.js/Express default
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true  
+  withCredentials: true,
+  timeout: 10000, // 10 second timeout
 });
 
 // Use try-catch with typeof window check for SSR compatibility
@@ -20,6 +22,7 @@ const getToken = () => {
     }
     return null;
   } catch (error) {
+    console.error('Error getting token:', error);
     return null;
   }
 };
@@ -28,23 +31,21 @@ const getToken = () => {
 const isTokenValid = () => {
   try {
     const token = getToken();
-    // If no token, it's not valid
     if (!token) return false;
     
-    // Check if token was refreshed recently (within 5 minutes)
     const currentTime = Date.now();
     if (currentTime - tokenRefreshTimestamp < 5 * 60 * 1000) {
-      return true; // Token was refreshed recently, consider it valid
+      return true;
     }
     
-    // For JWT tokens, you could decode and check expiration
-    // This is a simple implementation that assumes token validity
     return true;
   } catch (error) {
+    console.error('Error checking token validity:', error);
     return false;
   }
 };
 
+// Request interceptor
 api.interceptors.request.use((config) => {
   const adminToken = getToken();
   if (adminToken && isTokenValid()) {
@@ -52,74 +53,64 @@ api.interceptors.request.use((config) => {
   }
   return config;
 }, (error) => {
+  console.error('Request interceptor error:', error);
   return Promise.reject(error);
 });
 
+// Response interceptor with better error handling
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Safe error logging that works in both server and client environments
+  async (error) => {
     if (typeof window !== 'undefined') {
-      // Skip 401 errors for certain endpoints related to admin dashboard to avoid console spam
-      const skipErrorLogging = error.response?.status === 401 && 
-        (error.config?.url?.includes('/api/service-providers') || 
-         error.config?.url?.includes('/api/travelers') ||
-         error.config?.url?.includes('/api/users'));
-      
-      // Handle 401 unauthorized errors that indicate token expiration
+      // Network or server errors
+      if (!error.response) {
+        const errorMessage = 'Unable to connect to the server. Please check if the backend server is running.';
+        console.error('Network Error:', {
+          message: errorMessage,
+          error: error.message
+        });
+        return Promise.reject({
+          ...error,
+          customMessage: errorMessage
+        });
+      }
+
+      // Handle 401 unauthorized errors
       if (error.response?.status === 401 && !isRefreshingToken) {
-        // Only attempt token refresh if we're not already doing so and not on login page
         const currentPath = window.location.pathname;
         if (!currentPath.includes('/AdminLogin')) {
           isRefreshingToken = true;
           
-          // Clear the token since it's invalid
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('adminToken');
+          localStorage.removeItem('adminToken');
+          localStorage.removeItem('userData');
+          
+          if (currentPath.startsWith('/Admin') || 
+              currentPath.includes('Dashboard') || 
+              currentPath.includes('List') || 
+              currentPath.includes('Profile')) {
             
-            // Only redirect if we're on an admin page
-            if (currentPath.startsWith('/Admin') || 
-                currentPath.includes('Dashboard') || 
-                currentPath.includes('List') || 
-                currentPath.includes('Profile')) {
-              
-              console.log('Session expired. Redirecting to login...');
-              setTimeout(() => {
-                window.location.href = '/AdminLogin?expired=true';
-                isRefreshingToken = false;
-              }, 100);
-            }
+            console.log('Session expired. Redirecting to login...');
+            window.location.href = '/AdminLogin?expired=true';
           }
+          isRefreshingToken = false;
         }
       }
-      
-      if (!skipErrorLogging) {
-        if (error.response) {
-          console.error('API Error:', {
-            status: error.response.status,
-            statusText: error.response.statusText,
-            url: error.config?.url || 'unknown endpoint',
-            method: error.config?.method || 'unknown method',
-            message: error.message || 'No error message available'
-          });
-        } else if (error.request) {
-          // The request was made but no response was received
-          console.error('API Request Error (No Response):', {
-            url: error.config?.url || 'unknown endpoint',
-            method: error.config?.method || 'unknown method',
-            message: 'No response received from server'
-          });
-        } else {
-          // Something happened in setting up the request
-          console.error('API Configuration Error:', error.message || 'Unknown error');
-        }
+
+      // Log other errors
+      if (error.response) {
+        console.error('API Error:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          url: error.config?.url,
+          method: error.config?.method,
+          message: error.message
+        });
       }
     }
     return Promise.reject(error);
   }
 );
 
-// Add a function to update token timestamp when it's refreshed
 export const refreshTokenTimestamp = () => {
   tokenRefreshTimestamp = Date.now();
 };

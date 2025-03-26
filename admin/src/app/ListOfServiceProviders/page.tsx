@@ -374,14 +374,12 @@ export default function ListOfServiceProviders() {
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.creditCard || 'N/A'}</td>
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
                                             {provider.selfie ? (
-                                                <div className={tableStyles.qrCodeContainer}>
-                                                    <img 
-                                                        src={provider.selfie} 
-                                                        alt="Selfie" 
-                                                        className={tableStyles.qrCode}
-                                                        onClick={() => handleSelfieClick(provider.selfie as string)}
-                                                    />
-                                                </div>
+                                                <button
+                                                    onClick={() => handleSelfieClick(provider.selfie as string)}
+                                                    className={`${tableStyles.actionButton} ${tableStyles.viewButton} ${isDarkMode ? tableStyles.darkMode : ''}`}
+                                                >
+                                                    View Selfie
+                                                </button>
                                             ) : (
                                                 'N/A'
                                             )}
@@ -424,14 +422,14 @@ export default function ListOfServiceProviders() {
                     {/* Selfie Image Modal */}
                     {selectedSelfie && (
                         <div className={tableStyles.modalOverlay} onClick={closeSelfieModal}>
-                            <div className={tableStyles.qrCodeModal} onClick={e => e.stopPropagation()}>
+                            <div className={`${tableStyles.qrCodeModal} ${isDarkMode ? tableStyles.darkMode : ''}`} onClick={e => e.stopPropagation()}>
                                 <img 
                                     src={selectedSelfie} 
                                     alt="Selfie" 
                                     className={tableStyles.qrCodeLarge}
                                 />
                                 <button 
-                                    className={tableStyles.closeModalButton}
+                                    className={`${tableStyles.closeModalButton} ${isDarkMode ? tableStyles.darkMode : ''}`}
                                     onClick={closeSelfieModal}
                                 >
                                     Close

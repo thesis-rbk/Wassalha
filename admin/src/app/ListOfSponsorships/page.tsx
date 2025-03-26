@@ -348,14 +348,16 @@ const ListOfSponsorships: React.FC = () => {
                             <thead>
                                 <tr>
                                     <th className={tableStyles.th}>ID</th>
-                                    <th className={tableStyles.th}>Category</th>
+                                   
                                     <th className={tableStyles.th}>Description</th>
-                                    <th className={tableStyles.th}>Price</th>
-                                    <th className={tableStyles.th}>Duration</th>
+                                
                                     <th className={tableStyles.th}>Platform</th>
+                                    <th className={tableStyles.th}>Category</th>
                                     <th className={tableStyles.th}>Status</th>
                                     <th className={tableStyles.th}>Active</th>
                                     <th className={tableStyles.th}>Sponsor</th>
+                                    <th className={tableStyles.th}>Price</th>
+                                    <th className={tableStyles.th}>Duration</th>
                                     <th className={tableStyles.th}>Users</th>
                                     <th className={tableStyles.th}>Actions</th>
                                 </tr>
@@ -364,13 +366,10 @@ const ListOfSponsorships: React.FC = () => {
                                 {displayedSponsorships.map(sponsorship => (
                                     <tr key={sponsorship.id} className={tableStyles.tr}>
                                         <td className={tableStyles.td}>{sponsorship.id}</td>
-                                        <td className={tableStyles.td}>{sponsorship.category?.name || 'N/A'}</td>
+                                      
                                         <td className={tableStyles.td}>{sponsorship.description || 'N/A'}</td>
-                                        <td className={tableStyles.td}>${sponsorship.price.toFixed(2)}</td>
-                                        <td className={tableStyles.td}>
-                                            {sponsorship.duration} days
-                                            ({getDurationCategory(sponsorship.duration)})
-                                        </td>
+                                     
+                                        <td className={tableStyles.td}>{sponsorship.category?.name || 'N/A'}</td>
                                         <td className={tableStyles.td}>{sponsorship.platform}</td>
                                         <td className={tableStyles.td}>
                                             <span className={`${tableStyles.badge} ${
@@ -396,6 +395,11 @@ const ListOfSponsorships: React.FC = () => {
                                                     )}
                                                 </div>
                                             ) : 'N/A'}
+                                        </td>
+                                        <td className={tableStyles.td}>${sponsorship.price.toFixed(2)}</td>
+                                        <td className={tableStyles.td}>
+                                            {sponsorship.duration} days
+                                            ({getDurationCategory(sponsorship.duration)})
                                         </td>
                                         <td className={tableStyles.td}>
                                             {sponsorship.users?.length || 0}
