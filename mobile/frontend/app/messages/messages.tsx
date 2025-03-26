@@ -16,7 +16,10 @@ import { RootState } from "@/store";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
 import { TabBar } from "@/components/navigation/TabBar";
 import { router } from "expo-router";
-import { navigateToChat } from "@/services/chatService";
+import {
+  navigateToChat,
+  navigateToChatFromMessages,
+} from "@/services/chatService";
 export default function MessagesScreen() {
   const { user } = useSelector((state: RootState) => state.auth);
   const [conversations, setConversations] = useState<
@@ -125,23 +128,13 @@ export default function MessagesScreen() {
   }) => {
     const { user, lastMessage, unreadCount } = item;
 
-    // Determine the product ID from the last message (adjust as needed)
-    // const productId = lastMessage.productId || 0; // Default to 0 if not available
-    const productId = 2; // TO BE CHANGED
-
     return (
       <TouchableOpacity
         style={styles.conversationItem}
         onPress={() => {
           // Navigate to the chat screen
-          navigateToChat(
-            currentUserId!, // Requester ID (current user)
-            user.id, // Provider ID (other user)
-            productId // Product ID (from message or default)
-            // {
-            // orderId: lastMessage.orderId || 0, // Optional order info
-            // goodsName: lastMessage.goodsName || "Product", // Optional goods name
-            // }
+          navigateToChatFromMessages(
+            7 // chatId
           );
         }}
       >

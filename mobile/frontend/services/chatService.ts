@@ -148,7 +148,7 @@ export const navigateToChat = async (
   }
 ) => {
   try {
-    console.log("🔄 Opening chat from pickup screen...");
+    console.log("🔄 Opening chat from messages screen...");
 
     // Create or find existing chat
     const chat = await createChat(requesterId, providerId, productId);
@@ -169,7 +169,40 @@ export const navigateToChat = async (
       },
     });
 
-    // sendMessage(chat.id, "Testing content", "text");
+    return true;
+  } catch (error) {
+    console.error("❌ Error navigating to chat:", error);
+    return false;
+  }
+};
+
+export const navigateToChatFromMessages = async (chatId: number) => {
+  try {
+    console.log("🔄 Opening chat from messages screen...");
+
+    const token = await AsyncStorage.getItem("jwtToken");
+
+    if (!token) {
+      console.error("❌ No authentication token available");
+      return null;
+    }
+
+    const chat = await axiosInstance.get(`/api/chats/${chatId}/messages`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // Navigate to chat screen with the chat ID and order info
+    router.push({
+      pathname: "/messages/chat",
+      params: {
+        chatId,
+        // orderId: orderInfo?.orderId,
+        // goodsName: orderInfo?.goodsName,
+        // context: "pickup", // Tells the chat screen this is about pickup
+      },
+    });
 
     return true;
   } catch (error) {
@@ -181,11 +214,7 @@ export const navigateToChat = async (
 export const navigateToChatFromPickup = async (
   requesterId: number,
   providerId: number,
-  productId: number,
-  orderInfo?: {
-    orderId: number;
-    goodsName: string;
-  }
+  productId: number
 ) => {
   try {
     console.log("🔄 Opening chat from pickup screen...");
@@ -198,7 +227,9 @@ export const navigateToChatFromPickup = async (
       return false;
     }
 
-    sendMessage(chat.id, "Testing content", "text");
+    const firstMessage = `This message is generated automatically to initiate the conversation.\nYou can now discuss your order. \nHave a nice day!`;
+
+    sendMessage(chat.id, firstMessage, "text");
 
     return true;
   } catch (error) {

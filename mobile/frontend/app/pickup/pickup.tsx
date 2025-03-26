@@ -81,15 +81,12 @@ export default function Pickups({
       const goodsId = parseInt(params.idGood.toString());
 
       console.log("Opening chat with:", {
-        requesterId: user?.id,
-        providerId: parseInt(params.travelerId.toString()),
-        goodsId: parseInt(params.idGood.toString()),
+        requesterId: requesterId,
+        providerId: providerId,
+        goodsId: goodsId,
       });
 
-      await navigateToChatFromPickup(requesterId, providerId, goodsId, {
-        orderId: parseInt(params.idOrder.toString()),
-        goodsName: params.goodsName?.toString() || "Item",
-      });
+      await navigateToChatFromPickup(requesterId, providerId, goodsId);
     } catch (error) {
       console.error("Error opening chat:", error);
       Alert.alert(
