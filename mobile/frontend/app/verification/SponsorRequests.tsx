@@ -1,16 +1,109 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { FlatList, StyleSheet, View, ActivityIndicator, Alert, Platform, Modal, TextInput, TouchableOpacity, Text } from 'react-native';
 import OrderCard from '../../components/fetchOrdersSponsors'; // Adjust the path based on your file structure
 import axiosInstance from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Order } from "../../types/ServiceProvider"
 import { TabBar } from "@/components/navigation/TabBar";
 
+const AccountDetailsModal = ({ visible, onClose, onSubmit }) => {
+    const [detailType, setDetailType] = useState('code'); // 'code' or 'account'
+    const [code, setCode] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleSubmit = () => {
+        if (detailType === 'code') {
+            if (!code) {
+                Alert.alert('Error', 'Please enter the code');
+                return;
+            }
+            onSubmit({ type: 'code', details: code });
+        } else {
+            if (!email || !password) {
+                Alert.alert('Error', 'Please enter both email and password');
+                return;
+            }
+            onSubmit({ type: 'account', details: { email, password } });
+        }
+        // Reset form
+        setCode('');
+        setEmail('');
+        setPassword('');
+        onClose();
+    };
+
+    return (
+        <Modal
+            visible={visible}
+            transparent={true}
+            animationType="slide"
+        >
+            <View style={styles.modalContainer}>
+                <View style={styles.modalContent}>
+                    <View style={styles.typeSelector}>
+                        <TouchableOpacity 
+                            style={[styles.typeButton, detailType === 'code' && styles.selectedType]}
+                            onPress={() => setDetailType('code')}
+                        >
+                            <Text>Code</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={[styles.typeButton, detailType === 'account' && styles.selectedType]}
+                            onPress={() => setDetailType('account')}
+                        >
+                            <Text>Account</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {detailType === 'code' ? (
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter code"
+                            value={code}
+                            onChangeText={setCode}
+                        />
+                    ) : (
+                        <>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter email"
+                                value={email}
+                                onChangeText={setEmail}
+                                keyboardType="email-address"
+                            />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter password"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry
+                            />
+                        </>
+                    )}
+
+                    <View style={styles.buttonContainer}>
+                        <TouchableOpacity style={styles.button} onPress={onClose}>
+                            <Text>Cancel</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.button, styles.submitButton]} onPress={handleSubmit}>
+                            <Text style={styles.submitText}>Submit</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
+};
+
 const OrdersScreen: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [token, setToken] = useState<null | string>(null);
     const [activeTab, setActiveTab] = useState("Home");
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedOrderId, setSelectedOrderId] = useState(null);
+
     // Fetch token
     const fetchToken = async () => {
         try {
@@ -50,7 +143,43 @@ const OrdersScreen: React.FC = () => {
 
     // Accept an order
     const acceptOrder = async (orderId: number) => {
-        // Empty function - implement your API call here
+        setSelectedOrderId(orderId);
+        setModalVisible(true);
+    };
+
+    const handleSubmitDetails = async (details) => {
+        try {
+            console.log('Submitting details:', details); // Debug log
+
+            // Send the details object directly without formatting
+            await sendAccountDetails(selectedOrderId, details);
+        } catch (err) {
+            console.error('Error submitting details:', err);
+            Alert.alert('Error', 'Failed to submit details');
+        }
+    };
+
+    const sendAccountDetails = async (orderId: number, details: any) => {
+        try {
+            console.log('Sending to API:', { orderId, details }); // Debug log
+            
+            const response = await axiosInstance.post(
+                `/api/sponsor-orders/${orderId}/accept`,
+                { accountDetails: details }, // Send the entire details object
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+            
+            console.log('Response:', response.data);
+            Alert.alert("Success", "Order accepted and account details sent!");
+            await fetchOrders(token);
+        } catch (err) {
+            console.error('Error accepting order:', err);
+            Alert.alert("Error", "Failed to accept order");
+        }
     };
 
     // Reject an order
@@ -92,6 +221,11 @@ const OrdersScreen: React.FC = () => {
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerStyle={styles.list}
             />
+            <AccountDetailsModal
+                visible={modalVisible}
+                onClose={() => setModalVisible(false)}
+                onSubmit={handleSubmitDetails}
+            />
             <TabBar activeTab={activeTab} onTabPress={setActiveTab} />
         </View>
     );
@@ -109,6 +243,56 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        padding: 20,
+        borderRadius: 10,
+        width: '80%',
+    },
+    typeSelector: {
+        flexDirection: 'row',
+        marginBottom: 20,
+    },
+    typeButton: {
+        flex: 1,
+        padding: 10,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#ddd',
+    },
+    selectedType: {
+        backgroundColor: '#e3e3e3',
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        padding: 10,
+        marginBottom: 10,
+        borderRadius: 5,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 20,
+    },
+    button: {
+        padding: 10,
+        borderRadius: 5,
+        minWidth: 100,
+        alignItems: 'center',
+    },
+    submitButton: {
+        backgroundColor: '#007AFF',
+    },
+    submitText: {
+        color: 'white',
     },
 });
 
