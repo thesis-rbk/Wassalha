@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require("../../prisma/index");
 
 // Get all sponsor checkouts
 exports.getAllSponsorCheckouts = async (req, res) => {

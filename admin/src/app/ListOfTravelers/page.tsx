@@ -273,7 +273,7 @@ export default function ListOfTravelers() {
                                 <option value="ALL">All Genders</option>
                                 <option value="MALE">Male</option>
                                 <option value="FEMALE">Female</option>
-                                <option value="OTHER">Other</option>
+                              
                             </select>
                             <select
                                 className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}

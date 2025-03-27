@@ -323,7 +323,7 @@ export default function ListOfUsers() {
                 <option value="ALL">All Genders</option>
                 <option value="MALE">Male</option>
                 <option value="FEMALE">Female</option>
-                <option value="OTHER">Other</option>
+               
               </select>
               <select
                 value={verificationFilter}
