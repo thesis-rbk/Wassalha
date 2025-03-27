@@ -28,8 +28,8 @@ const acceptRequest = async (req, res) => {
 
         // Update order status to confirmed
         const orderSponsor = await prisma.orderSponsor.update({
-            where: { 
-                id: parseInt(requestId) 
+            where: {
+                id: parseInt(requestId)
             },
             data: {
                 status: 'CONFIRMED',
@@ -170,25 +170,25 @@ const acceptRequest = async (req, res) => {
                     <div class="order-info">
                         <div class="order-number">Order N° ${orderSponsor.id}</div>
                         <div style="color: #6c757d; margin-top: 5px;">
-                            Date: ${new Date().toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
+                            Date: ${new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })}
                         </div>
                     </div>
 
                     <div class="details-box">
                         <div class="details-title">Your Account Details</div>
                         <div class="details-content">
-                            ${accountDetails.type === 'code' 
-                                ? `<p><strong>Access Code:</strong><br>${accountDetails.details}</p>`
-                                : `<p><strong>Login Credentials</strong><br>
+                            ${accountDetails.type === 'code'
+                ? `<p><strong>Access Code:</strong><br>${accountDetails.details}</p>`
+                : `<p><strong>Login Credentials</strong><br>
                                    Email: ${accountDetails.details.email}<br>
                                    Password: ${accountDetails.details.password}</p>`
-                            }
+            }
                         </div>
                     </div>
 
@@ -223,20 +223,20 @@ const acceptRequest = async (req, res) => {
                 html: htmlTemplate
             });
             console.log('Email sent successfully to:', orderSponsor.recipient.email);
+            await prisma.orderSponsor.update({ where: { id: orderSponsor.id }, data: { status: "DELIVERED" } })
         } catch (emailError) {
             console.error('Error sending email:', emailError);
         }
-
-        res.json({ 
+        res.json({
             message: 'Order accepted and details sent successfully',
-            orderSponsor 
+            orderSponsor
         });
 
     } catch (error) {
         console.error('Error accepting order:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error accepting order',
-            error: error.message 
+            error: error.message
         });
     }
 };
