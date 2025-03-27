@@ -11,13 +11,8 @@ import { Ionicons } from "@expo/vector-icons"
 import { TabBar } from "@/components/navigation/TabBar"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { RouteProp } from "@react-navigation/native"
-
+import { SponsorshipDetailsRouteParams } from "../../types/Subscription"
 // Define the route params type
-type SponsorshipDetailsRouteParams = {
-    SponsorshipDetails: {
-        id: number
-    }
-}
 
 const SponsorshipDetails: React.FC = () => {
     const [activeTab, setActiveTab] = useState("Home")

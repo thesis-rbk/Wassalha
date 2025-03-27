@@ -20,3 +20,8 @@ export interface OrderCardProps {
     onPayment?: () => void;
     onDelete?: () => void;
 }
+export type SponsorshipDetailsRouteParams = {
+    SponsorshipDetails: {
+        id: number
+    }
+}
