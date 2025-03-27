@@ -12,8 +12,7 @@ import { Image as ExpoImage } from "expo-image";
 import platformImages from "../types/Sponsorship"; // Adjust path as needed
 import { SponsorshipDetailsModalProps } from "../types/Sponsorship"
 import { THEME } from "../constants/theme";
-// Define props interface based on your Sponsorship model
-// Theme colors
+
 
 
 const SponsorshipDetailsModal: React.FC<SponsorshipDetailsModalProps> = ({

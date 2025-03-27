@@ -76,6 +76,14 @@ enum OrderStatus {
   DELIVERED
 }
 
+enum OrderSponsorStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  IN_TRANSIT
+  DELIVERED
+}
+
 enum PaymentStatus {
   ON_HOLD
   PAYED
@@ -235,7 +243,6 @@ enum Role {
   SUPER_ADMIN
 }
 
-
 enum TicketCategory {
   REQUEST_ISSUE
   OFFER_ISSUE
@@ -245,6 +252,7 @@ enum TicketCategory {
   TRAVELER_NON_COMPLIANCE
   OTHER
 }
+
 // Add TicketStatus enum with the other enums
 enum TicketStatus {
   PENDING
@@ -271,19 +279,18 @@ model Traveler {
 
 // ========== USER ==========
 model User {
-  id                     Int     @id @default(autoincrement())
+  id                     Int       @id @default(autoincrement())
   name                   String
-  email                  String  @unique
+  email                  String    @unique
   phoneNumber            String?
   googleId               String?
   password               String?
-  hasCompletedOnboarding Boolean @default(false)
-  role                   Role    @default(USER)
+  hasCompletedOnboarding Boolean   @default(false)
+  role                   Role      @default(USER)
   serviceProviderId      String?
-  resetToken                 String?
+  resetToken             String?
   resetTokenExpiry       DateTime?
-  // Relation to Traveler
-  traveler Traveler?
+  traveler               Traveler?
 
   requests         Request[]
   notifications    Notification[]
@@ -320,7 +327,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Existing relation to Ticket
-  tickets       Ticket[]
+  tickets Ticket[]
 
   // New relation to TicketMessage
   ticketMessagesSent TicketMessage[] @relation("TicketMessagesSent")
@@ -330,9 +337,8 @@ model User {
   sponsorshipsCreated Sponsorship[]  @relation("UserSponsorshipsCreated")
   OrderSponsor        OrderSponsor[]
 
-  sponsoredRequests Request[] @relation("SponsoredRequests")
-  codeSubmission  CodeSubmission[]
-
+  sponsoredRequests Request[]        @relation("SponsoredRequests")
+  CodeSubmission    CodeSubmission[]
 }
 
 // ========== PROFILE ==========
@@ -466,29 +472,29 @@ model Goods {
 
 // ========== REQUEST ==========
 model Request {
-  id              Int      @id @default(autoincrement())
-  status          String   @default("PENDING")
-  sponsorId       Int?     // Add this field
-  userId          Int
-  user            User     @relation(fields: [userId], references: [id])
+  id        Int    @id @default(autoincrement())
+  status    String @default("PENDING")
+  sponsorId Int? // Add this field
+  userId    Int
+  user      User   @relation(fields: [userId], references: [id])
 
-  goodsId         Int
-  goods           Goods    @relation(fields: [goodsId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  goodsId Int
+  goods   Goods @relation(fields: [goodsId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  quantity        Int
-  goodsLocation   String
+  quantity         Int
+  goodsLocation    String
   goodsDestination String
-  pickupId        Int?
-  pickup          Pickup?    @relation(fields: [pickupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  pickupId         Int?
+  pickup           Pickup? @relation(fields: [pickupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  date            DateTime
-  withBox         Boolean    @default(false)
+  date    DateTime
+  withBox Boolean  @default(false)
 
-  order           Order?     @relation
-  notifications   Notification[]
+  order         Order?         @relation
+  notifications Notification[]
 
-  sponsor         User?      @relation("SponsoredRequests", fields: [sponsorId], references: [id])
-  codeSubmission  CodeSubmission[]
+  sponsor        User?            @relation("SponsoredRequests", fields: [sponsorId], references: [id])
+  CodeSubmission CodeSubmission[]
 }
 
 
@@ -644,7 +650,7 @@ model Message {
 
 // ========== MEDIA ==========
 model Media {
-  id       Int            @id @default(autoincrement())
+  id       Int       @id @default(autoincrement())
   url      String
   type     MediaType
   mimeType String?
@@ -656,12 +662,12 @@ model Media {
   height    Int?
   duration  Int?
 
-  messages         Message[]       // Existing relation to chat messages
-  profile          Profile?        @relation("ProfileImage")
-  goods            Goods[]         @relation("GoodsImage")
-  orders           Order[]         @relation("VerificationImage")
-  ticketMessages   TicketMessage[] @relation("TicketMessageMedia") // Existing relation for ticket messages
-  tickets          Ticket[]        @relation("TicketMedia")         // New relation for ticket media
+  messages       Message[] // Existing relation to chat messages
+  profile        Profile?        @relation("ProfileImage")
+  goods          Goods[]         @relation("GoodsImage")
+  orders         Order[]         @relation("VerificationImage")
+  ticketMessages TicketMessage[] @relation("TicketMessageMedia") // Existing relation for ticket messages
+  tickets        Ticket[]        @relation("TicketMedia") // New relation for ticket media
 }
 
 // ========== CATEGORY ==========
@@ -844,12 +850,12 @@ model PickupSuggestion {
 
 //sponsorrrrrrrrrrrrrrrrrrrrrrr
 model OrderSponsor {
-  id                Int         @id @default(autoincrement())
+  id                Int                @id @default(autoincrement())
   serviceProviderId Int
   sponsorshipId     Int
   recipientId       Int
   amount            Float
-  status            OrderStatus @default(PENDING)
+  status            OrderSponsorStatus @default(PENDING)
 
   serviceProvider ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   sponsorship     Sponsorship     @relation(fields: [sponsorshipId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -869,9 +875,9 @@ model Ticket {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  messages    TicketMessage[] @relation("TicketMessages") // Changed to new table
-  media       Media[]        @relation("TicketMedia") // New direct relation to Media
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  messages TicketMessage[] @relation("TicketMessages") // Changed to new table
+  media    Media[]         @relation("TicketMedia") // New direct relation to Media
 }
 
 model TicketMessage {
@@ -885,7 +891,7 @@ model TicketMessage {
   createdAt DateTime @default(now())
 
   // Adjusted media support: One-to-many relation
-  media     Media[]  @relation("TicketMessageMedia")
+  media Media[] @relation("TicketMessageMedia")
 }
 
 model CodeSubmission {
@@ -894,8 +900,8 @@ model CodeSubmission {
   sponsorId      Int
   code           String?
   accountDetails String?  @db.Text
-  type           String   // 'CODE' or 'ACCOUNT'
-  status         String   // 'SUBMITTED', 'DELIVERED', etc.
+  type           String // 'CODE' or 'ACCOUNT'
+  status         String // 'SUBMITTED', 'DELIVERED', etc.
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   request        Request  @relation(fields: [requestId], references: [id])

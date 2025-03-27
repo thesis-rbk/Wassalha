@@ -5,7 +5,7 @@ import { InputField } from '@/components/InputField';
 import { BaseButton } from "../../components/ui/buttons/BaseButton";
 import { useNavigation } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import NavigationProp from '@/types/navigation';
+import NavigationProp from '@/types/navigation.d';
 import { Colors } from '@/constants/Colors';
 import { FontFamily } from '@/assets/fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
