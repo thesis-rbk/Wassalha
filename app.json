@@ -1,5 +1,7 @@
 {
   "expo": {
+    "name": "frontend",
+    "slug": "wassalha",
     "plugins": [
       [
         "expo-location",
@@ -14,10 +16,7 @@
       }
     },
     "android": {
-      "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
-      ]
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
     }
   }
-} 
+}
