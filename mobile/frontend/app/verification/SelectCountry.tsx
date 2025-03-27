@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Globe2, CreditCard, FileText, Home, ChevronRight, Shield } from 'lucide-react-native';
 import RNPickerSelect from 'react-native-picker-select';
 import { useRouter } from 'expo-router';
-
+import { TabBar } from "@/components/navigation/TabBar";
 const countries = {
   "USA": "US",
   "FRANCE": "FR",
@@ -53,9 +53,17 @@ const countries = {
 const SelectCountry = () => {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<string>("verification");
 
+  const handleTabPress = (tabName: string) => {
+    setActiveTab(tabName);
+    if (tabName !== "verification") {
+      router.push(`/${tabName}`);
+    }
+  };
   return (
     <ThemedView style={styles.container}>
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
       <LinearGradient
         colors={['#4F46E5', '#7C3AED']}
         style={styles.header}
