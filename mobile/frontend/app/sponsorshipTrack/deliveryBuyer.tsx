@@ -1,213 +1,296 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   StyleSheet,
   ScrollView,
   Alert,
-  ActivityIndicator,
   TouchableOpacity,
+  Linking,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import ProgressBar from "@/components/ProgressBar";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
-import { useSponsorshipProcess } from "@/context/SponsorshipProcessContext";
-import axiosInstance from "@/config";
 import { Image } from "expo-image";
-import {
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Clock,
-  RefreshCw,
-  ThumbsUp,
-  ThumbsDown,
-} from "lucide-react-native";
-import { DeliveryData } from '@/types';
-
-
+import { Mail, Star, Clock, RefreshCw, ExternalLink } from "lucide-react-native";
 
 export default function DeliveryBuyer() {
-  const params = useLocalSearchParams();
-  const processId = params.processId;
-  const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
-  const [process, setProcess] = useState<any>(null);
-  const [sponsorship, setSponsorship] = useState<any>(null);
-  const [sponsor, setSponsor] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [confirming, setConfirming] = useState(false);
-  const [rejecting, setRejecting] = useState(false);
-  const { confirmSponsorshipDelivery, requestNewVerificationPhoto } = useSponsorshipProcess();
-  const [deliveryData, setDeliveryData] = useState<DeliveryData | null>(null);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [detailsReceived, setDetailsReceived] = useState(false);
 
-  // Progress steps
-  const progressSteps = [
-    { id: 1, title: "Initialization", icon: "initialization", status: "completed" },
-    { id: 2, title: "Verification", icon: "verification", status: "completed" },
-    { id: 3, title: "Payment", icon: "payment", status: "completed" },
-    { id: 4, title: "Delivery", icon: "pickup", status: "current" },
-  ];
-
-  // Fetch process details
-  useEffect(() => {
-    if (processId) {
-      fetchProcessDetails();
-    }
-  }, [processId]);
-
-  const fetchProcessDetails = async () => {
+  const handleOpenGmail = async () => {
     try {
-      setLoading(true);
-      const response = await axiosInstance.get(`/api/sponsorship-process/${processId}`);
-      setProcess(response.data.data);
-      
-      // Fetch sponsorship details
-      const sponsorshipResponse = await axiosInstance.get(`/api/one/${response.data.data.sponsorshipId}`);
-      setSponsorship(sponsorshipResponse.data);
-      
-      // Fetch sponsor details
-      const sponsorResponse = await axiosInstance.get(`/api/users/${response.data.data.sponsorId}`);
-      setSponsor(sponsorResponse.data.data);
-
-      if (response.data?.data) {
-        setDeliveryData(response.data.data);
-      } else {
-        setDeliveryData({
-          status: 'PENDING',
-          verificationImage: undefined
-        });
-      }
+      // Open Gmail in browser
+      await Linking.openURL('https://mail.google.com/mail/');
     } catch (error) {
-      console.error("Error fetching process details:", error);
-      Alert.alert("Error", "Failed to load process details");
-    } finally {
-      setLoading(false);
+      console.error('Error:', error);
+      Alert.alert('Error', 'Unable to open Gmail in browser');
     }
   };
 
-  const handleConfirmDelivery = async () => {
-    try {
-      setConfirming(true);
-      await confirmSponsorshipDelivery(Number(processId));
-      Alert.alert(
-        "Success",
-        "You have confirmed receipt of the account. The transaction is now complete.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              router.push("/screens/SponsorshipScreen");
-            },
-          },
-        ]
-      );
-    } catch (error) {
-      console.error("Error confirming delivery:", error);
-      Alert.alert("Error", "Failed to confirm delivery");
-    } finally {
-      setConfirming(false);
-    }
+  const handleRating = (selectedRating: number) => {
+    setRating(selectedRating);
   };
 
-  const handleRequestNewPhoto = async () => {
-    try {
-      setRejecting(true);
-      await requestNewVerificationPhoto(Number(processId));
-      Alert.alert(
-        "Request Sent",
-        "You have requested new verification from the sponsor. They will be notified to provide new details.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              fetchProcessDetails();
-            },
-          },
-        ]
-      );
-    } catch (error) {
-      console.error("Error requesting new photo:", error);
-      Alert.alert("Error", "Failed to request new verification");
-    } finally {
-      setRejecting(false);
+  const submitReview = () => {
+    if (rating === 0) {
+      Alert.alert("Error", "Please select a rating before submitting");
+      return;
     }
+    setHasReviewed(true);
+    Alert.alert("Success", "Thank you for your review!");
   };
 
-  if (loading) {
-    return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" />
-        <ThemedText style={styles.loadingText}>Loading delivery details...</ThemedText>
-      </ThemedView>
+  const confirmDetailsReceived = () => {
+    Alert.alert(
+      "Confirm Receipt",
+      "Have you received the sponsorship details in your email?",
+      [
+        {
+          text: "No, Still Waiting",
+          style: "cancel"
+        },
+        {
+          text: "Yes, Received",
+          onPress: () => setDetailsReceived(true)
+        }
+      ]
     );
-  }
+  };
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText style={styles.title}>Delivery Status</ThemedText>
-      
-      {/* Show different content based on delivery status */}
-      {deliveryData?.status === 'PENDING' && (
+    <ScrollView style={styles.scrollView}>
+      <ThemedView style={styles.container}>
+        {/* Waiting Status */}
         <View style={styles.statusContainer}>
-          <ThemedText style={styles.statusText}>
-            Waiting for sponsor to deliver the sponsorship...
-          </ThemedText>
+          {!detailsReceived ? (
+            <>
+              <Clock color="#f59e0b" size={64} />
+              <ThemedText style={styles.statusTitle}>
+                Waiting for Sponsorship Details
+              </ThemedText>
+              <ThemedText style={styles.statusText}>
+                The sponsor will send your account details shortly. Please check your email.
+              </ThemedText>
+            </>
+          ) : (
+            <>
+              <Mail color="#28a745" size={64} />
+              <ThemedText style={styles.statusTitle}>
+                Details Received!
+              </ThemedText>
+              <ThemedText style={styles.statusText}>
+                You can now access your sponsored account
+              </ThemedText>
+            </>
+          )}
         </View>
-      )}
 
-      {deliveryData?.verificationImage && (
-        <View style={styles.imageContainer}>
-          <Image 
-            source={{ uri: deliveryData.verificationImage }}
-            style={styles.verificationImage}
-          />
+        {/* Email Check Section */}
+        <View style={styles.cardContainer}>
+          <View style={styles.card}>
+            <RefreshCw color="#0061ff" size={32} />
+            <ThemedText style={styles.cardTitle}>Check Your Email</ThemedText>
+            <ThemedText style={styles.cardText}>
+              {!detailsReceived 
+                ? "Please check your email regularly. The sponsor will send your details soon."
+                : "Your sponsorship details have been delivered to your email"}
+            </ThemedText>
+            <BaseButton
+              variant="primary"
+              size="medium"
+              style={styles.emailButton}
+              onPress={handleOpenGmail}
+            >
+              <View style={styles.buttonContent}>
+                <ThemedText style={styles.buttonText}>Open Gmail</ThemedText>
+                <ExternalLink size={20} color="white" />
+              </View>
+            </BaseButton>
+            
+            {!detailsReceived && (
+              <BaseButton
+                variant="secondary"
+                size="medium"
+                style={styles.confirmButton}
+                onPress={confirmDetailsReceived}
+              >
+                <ThemedText>I've Received the Details</ThemedText>
+              </BaseButton>
+            )}
+          </View>
         </View>
-      )}
-    </ThemedView>
+
+        {/* Rating Section - Only show after details are received */}
+        {detailsReceived && !hasReviewed && (
+          <View style={styles.ratingContainer}>
+            <ThemedText style={styles.ratingTitle}>
+              Rate Your Experience
+            </ThemedText>
+            <View style={styles.starsContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity
+                  key={star}
+                  onPress={() => handleRating(star)}
+                >
+                  <Star
+                    size={32}
+                    color={star <= rating ? "#ffc107" : "#e4e5e7"}
+                    fill={star <= rating ? "#ffc107" : "none"}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+            <BaseButton
+              variant="primary"
+              size="medium"
+              style={styles.submitButton}
+              onPress={submitReview}
+            >
+              Submit Review
+            </BaseButton>
+          </View>
+        )}
+
+        {/* Thank You Message (shows after review) */}
+        {hasReviewed && (
+          <View style={styles.thankYouContainer}>
+            <ThemedText style={styles.thankYouText}>
+              Thank you for your feedback! Your review helps improve our service.
+            </ThemedText>
+          </View>
+        )}
+
+        {/* Return to Home Button */}
+        <BaseButton
+          variant="secondary"
+          size="medium"
+          style={styles.homeButton}
+          onPress={() => router.push("/home")}
+        >
+          Return to Home
+        </BaseButton>
+      </ThemedView>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    padding: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
+    padding: 20,
   },
   statusContainer: {
-    padding: 16,
-    backgroundColor: '#f0f9ff',
-    borderRadius: 8,
-    marginBottom: 16,
+    alignItems: "center",
+    marginVertical: 24,
+    padding: 20,
+    backgroundColor: "white",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  statusTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: "center",
   },
   statusText: {
     fontSize: 16,
-    color: '#0369a1',
+    textAlign: "center",
+    color: "#666",
   },
-  imageContainer: {
-    marginTop: 16,
+  cardContainer: {
+    marginVertical: 20,
+  },
+  card: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  cardText: {
+    textAlign: "center",
+    color: "#666",
+    marginBottom: 16,
+  },
+  emailButton: {
+    marginTop: 8,
+    width: "100%",
+  },
+  buttonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  ratingContainer: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+    marginVertical: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  ratingTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 16,
+  },
+  starsContainer: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 20,
+  },
+  submitButton: {
+    width: "100%",
+  },
+  thankYouContainer: {
+    backgroundColor: "#e8f5e9",
+    padding: 16,
     borderRadius: 8,
-    overflow: 'hidden',
+    marginVertical: 20,
   },
-  verificationImage: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'cover',
+  thankYouText: {
+    textAlign: "center",
+    color: "#2e7d32",
+    fontSize: 16,
+  },
+  homeButton: {
+    marginTop: 8,
+  },
+  confirmButton: {
+    marginTop: 12,
+    width: "100%",
   },
 }); 

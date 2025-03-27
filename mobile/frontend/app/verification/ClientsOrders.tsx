@@ -86,27 +86,37 @@ const OrdersSponsor: React.FC = () => {
         initialize();
     }, []);
 
-    // Handle press on card
-    const handleCardPress = (orderId: number) => {
-        console.log(`Card pressed for order ID: ${orderId}`);
-        // Add navigation or other logic here
+    // Update the handleCardPress function
+    const handleCardPress = (orderId: number, status: string) => {
+        console.log(`Card pressed for order ID: ${orderId} with status: ${status}`);
+        if (status === 'IN_TRANSIT') {
+            router.push({
+                pathname: "/sponsorshipTrack/deliveryBuyer",
+                params: { processId: orderId }
+            });
+        }
     };
 
-    // Handle payment button press
-    const handlePayment = (orderId: number) => {
-        router.push({ pathname: "/sponsorshipTrack/initializationBuyer", params: { id: orderId } });
+    // Update the handlePayment function to handle different statuses
+    const handlePayment = (orderId: number, status: string) => {
+        if (status === 'PENDING') {
+            router.push({ 
+                pathname: "/sponsorshipTrack/initializationBuyer", 
+                params: { id: orderId } 
+            });
+        }
     };
 
-    // Render each OrderCard
+    // Update the renderItem function to pass status
     const renderItem = ({ item }: { item: Sponsorship }) => {
-        if (!item || !item.id || !item.sponsorship || !item.sponsorship.id) return null; // Skip invalid items
+        if (!item || !item.id || !item.sponsorship || !item.sponsorship.id) return null;
         return (
             <OrderCard
                 order={item}
                 sponsorship={item.sponsorship}
-                onPress={() => handleCardPress(item.id)}
-                onPayment={() => handlePayment(item.id)}
-                onDelete={() => handleDelete(item.id)} // Pass the handleDelete function
+                onPress={() => handleCardPress(item.id, item.status)}
+                onPayment={() => handlePayment(item.id, item.status)}
+                onDelete={() => handleDelete(item.id)}
             />
         );
     };
