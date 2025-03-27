@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
-import { useRoute, type RouteProp, useNavigation } from "@react-navigation/native";
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
@@ -8,55 +7,45 @@ import { CreditCard, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import axiosInstance from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { jwtDecode } from 'jwt-decode';
-import { RouteParams } from "@/types/Sponsorship";
-import NavigationProp from "@/types/navigation.d";
-import type { Sponsorship, DecodedToken } from "@/types/Sponsorship";
-import { useLocalSearchParams } from 'expo-router';
-import { useRouter } from 'expo-router';
-import { PaymentParams } from '@/types';
-// Add type for valid return paths
-
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const CreditCardPayment: React.FC = () => {
-  const navigation = useNavigation<NavigationProp>();
-  const route = useRoute<RouteProp<RouteParams, "SponsorshipDetails">>();
-  const { id } = route.params;
+  const params = useLocalSearchParams();
   const [cardNumber, setCardNumber] = useState<string>('');
   const [expiryDate, setExpiryDate] = useState<string>('');
   const [cvv, setCvv] = useState<string>('');
   const [cardholderName, setCardholderName] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [sponsorship, setSponsorship] = useState<Sponsorship | null>(null);
+  const [sponsorship, setSponsorship] = useState<any>(null);
   const router = useRouter();
-  const params = useLocalSearchParams();
-  const orderId = params.orderId as string;
-  const price = typeof params.price === 'string' ? parseFloat(params.price) : 0;
-  const type = params.type as string; // 'sponsorship' or 'regular'
-  const returnPath = params.returnPath as string;
+  const orderId = params.orderId
+  // Get parameters from useLocalSearchParams
   const sponsorShipId = params.sponsorshipId as string;
-  const [token, setToken] = useState<null | string>()
-  console.log("sponsoshipid", sponsorShipId)
+  const type = (params.type as string) || 'sponsorship';
+  const returnPath = params.returnPath as string;
+  const [token, setToken] = useState<null | string>(null);
+  console.log("hello payment paramssss", params)
   // Platform fee (5% of the price)
   const platformFeePercentage = 0.05;
-  const platformFee = sponsorship?.price
-    ? (sponsorship.price * platformFeePercentage).toFixed(2)
+  const platformFee = sponsorship?.amount
+    ? (sponsorship.amount * platformFeePercentage).toFixed(2)
     : '0.00';
-  const totalAmount = sponsorship?.price
-    ? (sponsorship.price + parseFloat(platformFee)).toFixed(2)
+  const totalAmount = sponsorship?.amount
+    ? (sponsorship.amount + parseFloat(platformFee)).toFixed(2)
     : '0.00';
-  //get tokeeeeeeeeeeeeeee
+
+  // Get token
   const getToken = async (): Promise<string | null> => {
     try {
       const token = await AsyncStorage.getItem('jwtToken');
-      setToken(token)
-      console.log("tokennnnnnnn from payment", token)
+      setToken(token);
       return token;
     } catch (error) {
       console.error('Error retrieving token:', error);
       return null;
     }
   };
+
   // Fetch sponsorship details
   const fetchSponsorshipDetails = async () => {
     try {
@@ -154,7 +143,7 @@ const CreditCardPayment: React.FC = () => {
       return false;
     }
 
-    if (!sponsorship?.price || sponsorship.price <= 0) {
+    if (!sponsorship?.amount || sponsorship.amount <= 0) {
       Alert.alert('Error', 'Invalid sponsorship price');
       return false;
     }
@@ -203,6 +192,7 @@ const CreditCardPayment: React.FC = () => {
       setLoading(true);
 
       const paymentData = {
+        orderId,
         sponsorShipId,
         amount: parseFloat(totalAmount) * 100,
         cardNumber: cardNumber.replace(/\s/g, ''),
@@ -227,7 +217,7 @@ const CreditCardPayment: React.FC = () => {
                 router.push({
                   pathname: "/sponsorshipTrack/deliveryBuyer",
                   params: {
-                    sponsorshipId: params.sponsorshipId,
+                    sponsorshipId: sponsorShipId,
                     status: 'PAID'
                   }
                 });
@@ -358,7 +348,7 @@ const CreditCardPayment: React.FC = () => {
               style={styles.input}
               placeholder="Enter amount"
               placeholderTextColor="#94A3B8"
-              value={sponsorship?.price ? sponsorship.price.toFixed(2) : ''}
+              value={sponsorship?.amount ? sponsorship.amount.toFixed(2) : ''}
               editable={false}
               keyboardType="numeric"
             />

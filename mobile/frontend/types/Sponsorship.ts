@@ -1,23 +1,53 @@
 export interface Sponsorship {
     id: number;
-    name: string;
-    description?: string;
-    price: number;
-    duration: number;
-    platform: string; // e.g., "YOUTUBE", "TWITTER"
-    categoryId: number;
-    category: { name: string };
-    isActive: boolean;
-    sponsorId: number;
-    sponsor: ServiceProvider;
-    product: string;
     amount: number;
-    status: string;
-    users: UserSponsor[];
-    sponsorCheckouts: SponsorCheckout[];
-    reviews: ReviewSponsor[];
+    status: string; // Top-level status (e.g., "PENDING", "CONFIRMED")
     createdAt: string;
     updatedAt: string;
+    recipientId: number;
+    duration: string
+    recipient: {
+        id: number;
+        name: string;
+        email: string;
+        googleId: string | null;
+        hasCompletedOnboarding: boolean;
+        password: string;
+        phoneNumber: string | null;
+        role: string;
+        serviceProviderId: number | null;
+        createdAt: string;
+        updatedAt: string;
+    };
+    serviceProviderId: number;
+    sponsorshipId: number;
+    sponsorship: {
+        id: number;
+        description?: string;
+        duration: number;
+        platform: string; // e.g., "TIKTOK"
+        price: number;
+        sponsorId: number;
+        status: string; // Nested status (e.g., "pending")
+        isActive: boolean;
+        categoryId: number;
+        updatedAt: string;
+        userId: number | null;
+    };
+    // Optional fields from your original interface
+    name?: string;
+    category?: { name: string };
+    product?: string;
+    users?: UserSponsor[];
+    sponsorCheckouts?: SponsorCheckout[];
+    reviews?: ReviewSponsor[];
+    sponsor?: ServiceProvider;
+    sponsorId: number
+    onPayment?: () => void; // Corrected to be a function
+    platform: string;
+    description: string;
+    price: number;
+    isActive: boolean;
 }
 export interface DecodedToken {
     sub?: string;
@@ -106,8 +136,13 @@ export interface SponsorshipCardProps {
     price: string
     description: string
     isActive: boolean
+    duration: string
     onPress: () => void
     onBuyPress: () => void
+    sponsorship: {
+        description?: string;
+        amount?: number;
+    }
 }
 interface User {
     id: number
@@ -143,3 +178,9 @@ export interface OrderCardProps {
     onAccept?: () => void;
     onReject?: () => void;
 }
+export interface AccountDetailsModalProps {
+    visible: boolean;
+    onClose: () => void;
+    onSubmit: (details: { type: string; details: string | { email: string; password: string } }) => void;
+}
+

@@ -76,6 +76,14 @@ enum OrderStatus {
   DELIVERED
 }
 
+enum OrderSponsorStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  IN_TRANSIT
+  DELIVERED
+}
+
 enum PaymentStatus {
   ON_HOLD
   PAYED
@@ -277,14 +285,12 @@ model User {
   phoneNumber            String?
   googleId               String?
   password               String?
-  resetToken             String?
-  resetTokenExpiry       DateTime?
   hasCompletedOnboarding Boolean   @default(false)
   role                   Role      @default(USER)
   serviceProviderId      String?
-
-  // Relation to Traveler
-  traveler Traveler?
+  resetToken             String?
+  resetTokenExpiry       DateTime?
+  traveler               Traveler?
 
   requests         Request[]
   notifications    Notification[]
@@ -843,12 +849,12 @@ model PickupSuggestion {
 
 //sponsorrrrrrrrrrrrrrrrrrrrrrr
 model OrderSponsor {
-  id                Int         @id @default(autoincrement())
+  id                Int                @id @default(autoincrement())
   serviceProviderId Int
   sponsorshipId     Int
   recipientId       Int
   amount            Float
-  status            OrderStatus @default(PENDING)
+  status            OrderSponsorStatus @default(PENDING)
 
   serviceProvider ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   sponsorship     Sponsorship     @relation(fields: [sponsorshipId], references: [id], onDelete: Cascade, onUpdate: Cascade)
