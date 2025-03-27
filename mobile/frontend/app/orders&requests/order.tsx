@@ -30,6 +30,7 @@ import { io } from "socket.io-client";
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
 const CARD_SPACING = 12;
+import { useStatus } from '@/context/StatusContext';
 import { TabBar } from "@/components/navigation/TabBar";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
 import { AsyncLocalStorage } from "async_hooks";
@@ -113,6 +114,7 @@ export default function OrderPage() {
   const room=user?.id;
   // Animation value for the "Make Offer" button
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const { show, hide } = useStatus();
   
   // Create pulse animation effect
   useEffect(() => {

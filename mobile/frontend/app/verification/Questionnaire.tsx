@@ -110,7 +110,7 @@ const Questionnaire = () => {
   const handleTabPress = (tabName: string) => {
     setActiveTab(tabName);
     if (tabName !== "verification") {
-      router.push(`/${tabName}`);
+      router.push(`./${tabName}`);
     }
   };
 

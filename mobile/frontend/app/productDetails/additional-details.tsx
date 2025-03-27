@@ -25,11 +25,13 @@ import * as DocumentPicker from "expo-document-picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "@/config";
+import { useStatus } from '@/context/StatusContext';
 
 const AdditionalDetails: React.FC = () => {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { show, hide } = useStatus();
 
   // Update the productDetails conversion to include all passed data
   const [productDetails, setProductDetails] = useState({
@@ -121,7 +123,22 @@ const AdditionalDetails: React.FC = () => {
       }
     } catch (error) {
       console.error("❌ Error picking document:", error);
-      Alert.alert("Error", "Failed to pick document");
+      show({
+        type: 'error',
+        title: 'Document Error',
+        message: 'Failed to pick document',
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => {
+            hide();
+            pickDocument();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: hide
+        }
+      });
     } finally {
       setImageLoading(false);
     }
@@ -155,7 +172,18 @@ const AdditionalDetails: React.FC = () => {
 
       // Make sure we have a token
       if (!jwtToken) {
-        Alert.alert("Error", "You need to be logged in to create a request");
+        show({
+          type: 'error',
+          title: 'Authentication Required',
+          message: 'You need to be logged in to create a request',
+          primaryAction: {
+            label: 'Login',
+            onPress: () => {
+              hide();
+              router.replace("../login");
+            }
+          }
+        });
         return;
       }
 
@@ -269,10 +297,22 @@ const AdditionalDetails: React.FC = () => {
       }
     } catch (error) {
       console.error("❌ Outer error:", error);
-      Alert.alert(
-        "Error",
-        (error as Error).message || "An unknown error occurred"
-      );
+      show({
+        type: 'error',
+        title: 'Error',
+        message: (error as Error).message || "An unknown error occurred",
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => {
+            hide();
+            handleSubmit();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: hide
+        }
+      });
     }
   };
 
@@ -438,7 +478,23 @@ const AdditionalDetails: React.FC = () => {
             ? "Request was made but no response received"
             : "Request setup failed",
         });
-        Alert.alert("Error", error.message || "An unknown error occurred");
+        
+        show({
+          type: 'error',
+          title: 'Submission Error',
+          message: error.message || "An unknown error occurred while submitting the form",
+          primaryAction: {
+            label: 'Try Again',
+            onPress: () => {
+              hide();
+              submitForm(jwtToken);
+            }
+          },
+          secondaryAction: {
+            label: 'Cancel',
+            onPress: hide
+          }
+        });
       }
     } catch (error: any) {
       console.error("❌ Error:", error);
@@ -454,10 +510,23 @@ const AdditionalDetails: React.FC = () => {
           ? "Request was made but no response received"
           : "Request setup failed",
       });
-      Alert.alert(
-        "Error",
-        (error as Error).message || "An unknown error occurred"
-      );
+      
+      show({
+        type: 'error',
+        title: 'Submission Error',
+        message: error.message || "An unknown error occurred while submitting the form",
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => {
+            hide();
+            handleSubmit();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: hide
+        }
+      });
     }
   }
 

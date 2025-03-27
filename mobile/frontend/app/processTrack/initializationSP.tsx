@@ -45,6 +45,7 @@ import { Picker } from "@react-native-picker/picker";
 import Card from "@/components/cards/ProcessCard";
 import { useNotification } from "@/context/NotificationContext";
 import { io } from "socket.io-client";
+import { useStatus } from '@/context/StatusContext';
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -91,6 +92,7 @@ export default function InitializationSP() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
   const { sendNotification } = useNotification();
+  const { show, hide } = useStatus();
 
   console.log("kjslkdsldslsd", params);
 
@@ -182,7 +184,25 @@ export default function InitializationSP() {
       setLoading(false);
     } catch (error) {
       console.error("Error fetching request details:", error);
-      Alert.alert("Error", "Failed to load request details");
+      show({
+        type: 'error',
+        title: 'Loading Error',
+        message: 'Failed to load request details',
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => {
+            hide();
+            fetchRequestDetails();
+          }
+        },
+        secondaryAction: {
+          label: 'Go Back',
+          onPress: () => {
+            hide();
+            router.back();
+          }
+        }
+      });
       setLoading(false);
     }
   };
@@ -297,10 +317,25 @@ export default function InitializationSP() {
       }
     } catch (error: any) {
       console.error("Error submitting offer:", error);
-      Alert.alert(
-        "Error",
-        "This request is not available for offers at the moment. Please try another request."
-      );
+      show({
+        type: 'error',
+        title: 'Offer Submission Failed',
+        message: 'This request is not available for offers at the moment. Please try another request.',
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => {
+            hide();
+            handleSubmitOffer();
+          }
+        },
+        secondaryAction: {
+          label: 'Back to Requests',
+          onPress: () => {
+            hide();
+            router.back();
+          }
+        }
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -415,7 +450,15 @@ export default function InitializationSP() {
       setSuggestions(results);
     } catch (error) {
       console.error("Error fetching airports from Google Places:", error);
-      Alert.alert("Error", "Failed to fetch airport suggestions");
+      show({
+        type: 'error',
+        title: 'Airport Search Error',
+        message: 'Failed to fetch airport suggestions',
+        primaryAction: {
+          label: 'OK',
+          onPress: hide
+        }
+      });
     } finally {
       setIsFetchingAirports(false);
     }

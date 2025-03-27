@@ -21,6 +21,7 @@ export default function DeliveryBuyer() {
   const [hasReviewed, setHasReviewed] = useState(false);
   const [rating, setRating] = useState(0);
   const [detailsReceived, setDetailsReceived] = useState(false);
+  const [activeTab, setActiveTab] = useState("");
 
   const handleOpenGmail = async () => {
     try {
@@ -61,11 +62,15 @@ export default function DeliveryBuyer() {
       ]
     );
   };
+   // Add this function to handle tab press
+   const handleTabPress = (tabName: string) => {
+    setActiveTab(tabName);
+  };
 
   return (
     <ScrollView style={styles.scrollView}>
       <ThemedView style={styles.container}>
-        <TabBar />
+        <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
         {/* Waiting Status */}
         <View style={styles.statusContainer}>
           {!detailsReceived ? (

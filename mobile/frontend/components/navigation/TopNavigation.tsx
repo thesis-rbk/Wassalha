@@ -133,7 +133,6 @@ export function TopNavigation({
       label: 'Become a traveler',
       route: '/traveler/becomeTraveler'
     },
-    { icon: <Users size={24} color={Colors[colorScheme].text} />, label: 'Sponsorship', route: '/test/sponsorShip' },
     { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out', onPress: handleLogout },
   ];
 
