@@ -28,6 +28,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useNotification } from "@/context/NotificationContext";
+import { io } from "socket.io-client";
 
 export default function InitializationSO() {
   const params = useLocalSearchParams();
@@ -41,7 +42,7 @@ export default function InitializationSO() {
   const [processing, setProcessing] = useState(false);
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
-
+  console.log(user?.id, "user data");
   // Progress steps
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -112,11 +113,16 @@ export default function InitializationSO() {
 
       try {
         console.log("Updating offer status");
-        await axiosInstance.patch(`/api/process/${processId}/status`, {
+       const response= await axiosInstance.patch(`/api/process/${processId}/status`, {
           status: "INITIALIZED",
         });
         console.log("Offer status updated successfully");
-
+        const socket = io(`${BACKEND_URL}/processTrack`);
+        socket.emit("processStatusUpdate", {
+          processId:processId,
+          status: "INITIALIZED"
+        });
+        console.log("📤 Emitted statut Order event immediately",processId);
         console.log("Current user ID:", user?.id);
         console.log("Request params:", params);
 

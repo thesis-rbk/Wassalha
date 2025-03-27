@@ -9,8 +9,6 @@ import {
   Animated,
   Easing,
 } from "react-native";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store";
 import SegmentedControl from "@/components/SegmentedControl";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -109,8 +107,10 @@ export default function OrderPage() {
   const { user, loading: authLoading } = useReliableAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Order");
-  console.log(user,"USER");
-  const room=user?.id;
+  console.log(user,"USER",user?.id,"USER ID");
+  console.log(user?.id,"ROOM");
+
+  // const room=user?.id;
   // Animation value for the "Make Offer" button
   const pulseAnim = useRef(new Animated.Value(1)).current;
   
@@ -231,6 +231,51 @@ export default function OrderPage() {
       console.log("User loaded, fetching orders...", user);
       fetchGoodsProcesses();
       fetchRequests();
+      console.log("🔄 Setting up socket connection in Orders page");
+      const socket = io(`${BACKEND_URL}/processTrack`,{
+        transports: ["websocket"],
+      });
+      socket.on("connect", () => {
+        console.log("🔌 Orders page socket connected");
+        const room = user?.id; // Example; get this from props, context, or params
+        socket.emit("joinProcessRoom", room);
+        goodsProcesses.forEach((process) => {
+          const proces = process.id;
+          socket.emit("joinProcessRoom", proces);
+          console.log(`Joining room: process:${proces}`);
+        });
+        console.log(`Joining process room: process:${room}`);
+      
+      });
+  
+      socket.on("newRequest", (data) => {
+        console.log("📦 New request received:", data);
+        fetchRequests();
+      });
+  
+      socket.on("processStatusChanged", (data) => {
+        console.log("🔄 Status changed to:", data.status);
+        // console.log(goodsProcesses);
+        setGoodsProcesses((prev) =>
+          prev.map((p) => (p.id === data.processId ? data : p))
+        );
+        fetchGoodsProcesses();
+      });
+      socket.on("offerMadeOrder", (data) => {
+        console.log("🔄 Offer made for you:", data);
+        setRequests((prev) =>
+          prev.map((p) => (p.id === data.requestId ? data : p))
+        );
+        fetchGoodsProcesses();
+  
+      });
+      socket.on("disconnect", () => {
+        console.log("🔌 Socket disconnected");
+      });
+  
+      return () => {
+        socket.disconnect();
+      };
     }
   }, [user, authLoading]);
 
@@ -629,47 +674,6 @@ export default function OrderPage() {
 
   // Inside OrderPage component, add this useEffect
   const socketRef = useRef<any>(null);
-
-  useEffect(() => {
-    console.log("🔄 Setting up socket connection in Orders page");
-    const socket = io(`${BACKEND_URL}/processTrack`,{
-      transports: ["websocket"],
-    });
-    socket.on("connect", () => {
-      console.log("🔌 Orders page socket connected");
-      const processId = room; // Example; get this from props, context, or params
-      socket.emit("joinProcessRoom", processId);
-      console.log(`Joining process room: process:${processId}`);
-    
-    });
-
-    socket.on("newRequest", (data) => {
-      console.log("📦 New request received:", data);
-      fetchRequests();
-    });
-
-    socket.on("processStatusChanged", (data) => {
-      console.log("🔄 Status changed to:", data.status);
-      
-      fetchRequests();
-      fetchGoodsProcesses();
-    });
-    socket.on("offerMadeOrder", (data) => {
-      console.log("🔄 Offer made for you:", data);
-      setRequests((prev) =>
-        prev.map((p) => (p.id === data.requestId ? data : p))
-      );
-      fetchGoodsProcesses();
-
-    });
-    socket.on("disconnect", () => {
-      console.log("🔌 Socket disconnected");
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
 
   return (
     <ThemedView style={styles.container}>

@@ -19,6 +19,7 @@ import { useNotification } from '@/context/NotificationContext';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 import Animated from "react-native-reanimated";
+import { io } from "socket.io-client";
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
@@ -35,19 +36,19 @@ export default function VerificationScreen() {
     { id: 3, title: "Payment", icon: "payment" },
     { id: 4, title: "Pickup", icon: "pickup" },
   ];
-
+  const fetchOrder = async () => {
+    try {
+      const response = await axiosInstance.get(`/api/orders/${orderId}`);
+      setOrder(response.data.data);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      Alert.alert("Error", "Failed to fetch order details");
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        const response = await axiosInstance.get(`/api/orders/${orderId}`);
-        setOrder(response.data.data);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching order:", error);
-        Alert.alert("Error", "Failed to fetch order details");
-        setIsLoading(false);
-      }
-    };
+    
 
     fetchOrder();
   }, [orderId]);
@@ -81,6 +82,23 @@ export default function VerificationScreen() {
     };
 
     loadUserData();
+    const socket = io(`${BACKEND_URL}/processTrack`,{
+      transports: ["websocket"],
+    });
+    socket.on("connect", () => {
+      console.log("🔌 Orders page socket connected");
+      const room = params.idProcess; // Example; get this from props, context, or params
+      socket.emit("joinProcessRoom", room);
+      console.log("🔌 Ophoto socket connected, ",room);
+   
+    })
+    socket.on("photo", (data) => {
+      alert("hi");
+      console.log("🔄 photo updated to:", data);
+      fetchOrder();
+      
+    });
+    
   }, []);
 
   const getImageUrl = () => {

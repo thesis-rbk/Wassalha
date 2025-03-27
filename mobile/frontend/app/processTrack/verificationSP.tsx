@@ -17,6 +17,8 @@ import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useNotification } from '@/context/NotificationContext';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
+import { io } from "socket.io-client";
+import { BACKEND_URL } from "@/config";
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
@@ -131,7 +133,10 @@ export default function VerificationScreen() {
             processId: params.idProcess
           }
         });
-        
+        const socket = io(`${BACKEND_URL}/processTrack`);
+        socket.emit("photo", {
+          processId:params.idProcess,
+        });
         Alert.alert("Success", "Photo uploaded successfully.");
         setIsVerified(true);
       } else {
