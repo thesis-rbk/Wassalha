@@ -45,6 +45,7 @@ import { Picker } from "@react-native-picker/picker";
 import Card from "@/components/cards/ProcessCard";
 import { useNotification } from "@/context/NotificationContext";
 import { io } from "socket.io-client";
+import { useProcessSocket} from '@/context/ProcessSocketContext';
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -91,6 +92,7 @@ export default function InitializationSP() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
   const { sendNotification } = useNotification();
+  const { emitOfferMade, joinProcessRoom } = useProcessSocket();
 
   console.log("kjslkdsldslsd", params);
 
@@ -220,12 +222,15 @@ export default function InitializationSP() {
     try {
       setIsSubmitting(true);
 
-      const requestId = params.idRequest || params.id || params.requestId;
-      console.log("Using request ID for offer:", requestId);
+      // Get and validate requestId
+      const rawRequestId = params.idRequest || params.id || params.requestId;
+      const requestId = Array.isArray(rawRequestId) ? rawRequestId[0] : rawRequestId;
 
-      const checkResponse = await axiosInstance.get(
-        `/api/requests/${requestId}`
-      );
+      if (!requestId) {
+        throw new Error("No request ID found");
+      }
+
+      const checkResponse = await axiosInstance.get(`/api/requests/${requestId}`);
       const request = checkResponse.data.data;
 
       if (request.status !== "PENDING" || request.order) {
@@ -242,17 +247,15 @@ export default function InitializationSP() {
       const trackingNumber = `${airlineCode}${flightNumber}`;
 
       const orderData = {
-        requestId: parseInt(
-          Array.isArray(requestId) ? requestId[0] : requestId
-        ),
+        requestId: parseInt(requestId),
         travelerId: currentUser?.id,
         departureDate: offerDetails.deliveryDate,
         arrivalDate: offerDetails.deliveryDate,
         trackingNumber: trackingNumber,
         orderStatus: "PENDING",
         paymentStatus: "ON_HOLD",
-        departureAirport: offerDetails.departureAirport, // New field
-        arrivalAirport: offerDetails.arrivalAirport, // New field
+        departureAirport: offerDetails.departureAirport,
+        arrivalAirport: offerDetails.arrivalAirport,
       };
 
       const response = await axiosInstance.post("/api/orders", orderData);
@@ -260,48 +263,22 @@ export default function InitializationSP() {
       if (response.status === 201) {
         console.log("✅ Order created:", response.data.data.id);
         
-        // Connect to socket and emit event
-        const socket = io(`${BACKEND_URL}/processTrack`);
-        
-        // First approach: Use a promise to ensure the event is sent
-        const emitOfferEvent = () => {
-          return new Promise<void>((resolve) => {  // Specify void as the Promise type
-            // If already connected
-            if (socket.connected) {
-              socket.emit("offerMade", {
-                processId: response.data.data.id,
-                requestId: requestId
-              });
-              console.log("📤 Emitted offerMade event immediately");
-              resolve();
-            } else {
-              // Wait for connection
-              socket.on("connect", () => {
-                console.log("🔌 Socket connected for offer");
-                socket.emit("offerMade", {
-                  processId: response.data.data.id,
-                  requestId: requestId
-                });
-                console.log("📤 Emitted offerMade event after connection");
-                resolve();
-              });
-            }
-          });
-        };
-
-        // Wait for the event to be sent before navigating
-        await emitOfferEvent();
-        socket.disconnect();
-
+        // Now both arguments are guaranteed to be single values, not arrays
+        emitOfferMade(
+          response.data.data.id.toString(),
+          requestId.toString()
+        );
+       
         sendNotification("offer_made", {
           requesterId: params.requesterId,
           travelerId: currentUser?.id,
           requestDetails: {
             goodsName: requestDetails.goods.name,
-            requestId: params.idRequest || params.id,
+            requestId: requestId,
           },
         });
 
+        // Navigate to success screen
         setTimeout(() => {
           router.replace({
             pathname: "/screens/OrderSuccessScreen",

@@ -18,6 +18,7 @@ import { SponsorshipProcessProvider } from "@/context/SponsorshipProcessContext"
 import { OnboardingContainer } from '@/components/onboarding';
 import { OnboardingService } from '@/services/onboardingService';
 import { StatusProvider } from '@/context/StatusContext';
+import { ProcessSocketProvider } from '@/context/ProcessSocketContext';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -56,6 +57,7 @@ export default function RootLayout() {
         <AuthProvider>
           <ThemeProvider>
             <SponsorshipProcessProvider>
+              <ProcessSocketProvider>
               <StatusProvider>
                 <StripeProvider
                   publishableKey={STRIPE_PUBLISHABLE_KEY}
@@ -308,6 +310,7 @@ export default function RootLayout() {
                   )}
                 </StripeProvider>
               </StatusProvider>
+              </ProcessSocketProvider>
             </SponsorshipProcessProvider>
           </ThemeProvider>
         </AuthProvider>

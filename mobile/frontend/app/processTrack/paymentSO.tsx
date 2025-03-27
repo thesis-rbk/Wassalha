@@ -19,6 +19,7 @@ import { BACKEND_URL } from "@/config";
 import { useNotification } from "@/context/NotificationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
+import { useStatus } from '@/context/StatusContext';
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
@@ -28,6 +29,7 @@ export default function PaymentScreen() {
   const { confirmPayment, loading } = useConfirmPayment();
   const [userData, setUserData] = useState<any>(null);
   const { sendNotification } = useNotification();
+  const { show, hide } = useStatus();
 
   const totalPrice =
     parseInt(params.quantity.toString()) * parseInt(params.price.toString());
@@ -144,12 +146,22 @@ export default function PaymentScreen() {
           });
         }
 
-        Alert.alert("Success", "Payment successful!");
-        console.log("Payment successful:", paymentIntent);
-        router.replace({
-          pathname: "/pickup/pickup",
-          params: params,
+        show({
+          type: 'success',
+          title: 'Payment Successful',
+          message: 'Your payment has been processed successfully.',
+          primaryAction: {
+            label: 'Continue',
+            onPress: () => {
+              hide();
+              router.replace({
+                pathname: "/pickup/pickup",
+                params: params,
+              });
+            }
+          }
         });
+        console.log("Payment successful:", paymentIntent);
       }
     } catch (error: Error | any) {
       console.error("Payment error:", error);
@@ -169,7 +181,22 @@ export default function PaymentScreen() {
         });
       }
 
-      Alert.alert("Error", error.message || "Something went wrong");
+      show({
+        type: 'error',
+        title: 'Payment Failed',
+        message: error.message || "Something went wrong with your payment.",
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => {
+            hide();
+            handlePayment();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     } finally {
       setIsProcessing(false);
     }

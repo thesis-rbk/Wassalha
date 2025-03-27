@@ -17,6 +17,7 @@ import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useNotification } from '@/context/NotificationContext';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
+import { useStatus } from '@/context/StatusContext';
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
@@ -25,6 +26,7 @@ export default function VerificationScreen() {
   const [isVerified, setIsVerified] = useState(false);
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
+  const { show, hide } = useStatus();
 
   console.log(params);
 
@@ -39,10 +41,22 @@ export default function VerificationScreen() {
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert(
-        "Permission Required",
-        "Please allow camera access to take a photo."
-      );
+      show({
+        type: 'error',
+        title: 'Permission Required',
+        message: 'Please allow camera access to take a photo.',
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => {
+            hide();
+            takePhoto();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
       return;
     }
 
@@ -93,7 +107,22 @@ export default function VerificationScreen() {
   // Upload the photo for verification
   const uploadPhoto = async () => {
     if (!image) {
-      Alert.alert("No Image", "Please take a photo first.");
+      show({
+        type: 'error',
+        title: 'No Image',
+        message: 'Please take a photo first.',
+        primaryAction: {
+          label: 'Take Photo',
+          onPress: () => {
+            hide();
+            takePhoto();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
       return;
     }
 
@@ -120,7 +149,6 @@ export default function VerificationScreen() {
       );
 
       if (response.status === 200) {
-        // Send notification - match event name with your NotificationContext
         sendNotification('verification_photo_submitted', {
           requesterId: params.requesterId,
           travelerId: user?.id,
@@ -132,14 +160,39 @@ export default function VerificationScreen() {
           }
         });
         
-        Alert.alert("Success", "Photo uploaded successfully.");
-        setIsVerified(true);
+        show({
+          type: 'success',
+          title: 'Success',
+          message: 'Photo uploaded successfully.',
+          primaryAction: {
+            label: 'OK',
+            onPress: () => {
+              hide();
+              setIsVerified(true);
+            }
+          }
+        });
       } else {
-        Alert.alert("Error", "Failed to upload photo. Please try again.");
+        throw new Error("Failed to upload photo");
       }
     } catch (error) {
       console.error("Error uploading photo:", error);
-      Alert.alert("Error", "An error occurred. Please try again.");
+      show({
+        type: 'error',
+        title: 'Upload Failed',
+        message: 'Failed to upload photo. Please try again.',
+        primaryAction: {
+          label: 'Retry',
+          onPress: () => {
+            hide();
+            uploadPhoto();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     } finally {
       setIsUploading(false);
     }

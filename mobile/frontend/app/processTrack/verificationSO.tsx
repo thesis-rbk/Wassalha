@@ -19,6 +19,7 @@ import { useNotification } from '@/context/NotificationContext';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 import Animated from "react-native-reanimated";
+import { useStatus } from '@/context/StatusContext';
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
@@ -28,6 +29,7 @@ export default function VerificationScreen() {
   const orderId = params.idOrder;
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
+  const { show, hide } = useStatus();
 
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -44,7 +46,25 @@ export default function VerificationScreen() {
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching order:", error);
-        Alert.alert("Error", "Failed to fetch order details");
+        show({
+          type: 'error',
+          title: 'Loading Error',
+          message: 'Failed to fetch order details. Please try again.',
+          primaryAction: {
+            label: 'Retry',
+            onPress: () => {
+              hide();
+              fetchOrder();
+            }
+          },
+          secondaryAction: {
+            label: 'Go Back',
+            onPress: () => {
+              hide();
+              router.back();
+            }
+          }
+        });
         setIsLoading(false);
       }
     };
@@ -127,15 +147,40 @@ export default function VerificationScreen() {
           }
         });
         
-        Alert.alert("Success", "Product confirmed successfully");
-        router.replace({
-          pathname: "/processTrack/paymentSO",
-          params: params,
+        show({
+          type: 'success',
+          title: 'Success',
+          message: 'Product confirmed successfully',
+          primaryAction: {
+            label: 'Continue',
+            onPress: () => {
+              hide();
+              router.replace({
+                pathname: "/processTrack/paymentSO",
+                params: params,
+              });
+            }
+          }
         });
       }
     } catch (error) {
       console.error("Error confirming product:", error);
-      Alert.alert("Error", "Failed to confirm product");
+      show({
+        type: 'error',
+        title: 'Confirmation Failed',
+        message: 'Failed to confirm product. Please try again.',
+        primaryAction: {
+          label: 'Retry',
+          onPress: () => {
+            hide();
+            confirmProduct();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     }
   };
 
@@ -158,17 +203,42 @@ export default function VerificationScreen() {
           }
         });
         
-        Alert.alert("Success", "Another photo has been requested");
-        if (order) {
-          setOrder({
-            ...order,
-            verificationImageId: undefined,
-          });
-        }
+        show({
+          type: 'success',
+          title: 'Request Sent',
+          message: 'Another photo has been requested',
+          primaryAction: {
+            label: 'OK',
+            onPress: () => {
+              hide();
+              if (order) {
+                setOrder({
+                  ...order,
+                  verificationImageId: undefined,
+                });
+              }
+            }
+          }
+        });
       }
     } catch (error) {
       console.error("Error requesting new photo:", error);
-      Alert.alert("Error", "Failed to request another photo");
+      show({
+        type: 'error',
+        title: 'Request Failed',
+        message: 'Failed to request another photo. Please try again.',
+        primaryAction: {
+          label: 'Retry',
+          onPress: () => {
+            hide();
+            requestAnotherPhoto();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     }
   };
 
@@ -188,12 +258,37 @@ export default function VerificationScreen() {
           }
         });
         
-        Alert.alert("Success", "Process cancelled successfully");
-        router.push("/home");
+        show({
+          type: 'success',
+          title: 'Process Cancelled',
+          message: 'Process has been cancelled successfully',
+          primaryAction: {
+            label: 'Return Home',
+            onPress: () => {
+              hide();
+              router.push("/home");
+            }
+          }
+        });
       }
     } catch (error) {
       console.error("Error cancelling process:", error);
-      Alert.alert("Error", "Failed to cancel the process");
+      show({
+        type: 'error',
+        title: 'Cancellation Failed',
+        message: 'Failed to cancel the process. Please try again.',
+        primaryAction: {
+          label: 'Retry',
+          onPress: () => {
+            hide();
+            cancelProcess();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     }
   };
 

@@ -28,6 +28,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useNotification } from "@/context/NotificationContext";
+import { useProcessSocket } from "@/context/ProcessSocketContext";
 
 export default function InitializationSO() {
   const params = useLocalSearchParams();

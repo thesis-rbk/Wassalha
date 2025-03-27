@@ -26,12 +26,14 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "@/config";
 import { useStatus } from '@/context/StatusContext';
+import { useProcessSocket } from '@/context/ProcessSocketContext';
 
 const AdditionalDetails: React.FC = () => {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
   const params = useLocalSearchParams();
   const { show, hide } = useStatus();
+  const { emitRequestCreated } = useProcessSocket();
 
   // Update the productDetails conversion to include all passed data
   const [productDetails, setProductDetails] = useState({
@@ -160,11 +162,15 @@ const AdditionalDetails: React.FC = () => {
   const handleSubmit = async () => {
     // Add category check at the beginning
     if (!categoryId) {
-      Alert.alert(
-        "Missing Information",
-        "Please select a category before submitting",
-        [{ text: "OK" }]
-      );
+      show({
+        type: 'error',
+        title: 'Missing Information',
+        message: 'Please select a category before submitting',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => hide()
+        }
+      });
       return;
     }
 
@@ -486,10 +492,7 @@ const AdditionalDetails: React.FC = () => {
             });
             
             console.log("Emitting socket event for new request...");
-            const socket = io(`${BACKEND_URL}/processTrack`);
-            socket.emit("requestCreated", {
-              requestId: requestResponse.data.data.id
-            });
+            emitRequestCreated(requestResponse.data.data.id);
           }
         }
       } catch (error: any) {
@@ -550,16 +553,19 @@ const AdditionalDetails: React.FC = () => {
     }
   }
 
-  // Add this quantity validation function to your component
+  // Modify handleQuantityChange function
   const handleQuantityChange = (text: string) => {
     // Check if the input contains non-numeric characters
     if (/[^0-9]/.test(text)) {
-      // Show an alert for invalid input
-      Alert.alert(
-        "Invalid Input",
-        "Please enter only numbers for quantity",
-        [{ text: "OK" }]
-      );
+      show({
+        type: 'error',
+        title: 'Invalid Input',
+        message: 'Please enter only numbers for quantity',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => hide()
+        }
+      });
       
       // Only allow numeric characters
       const numericValue = text.replace(/[^0-9]/g, '');
