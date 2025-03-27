@@ -143,7 +143,7 @@ export default function Nav() {
       <nav className={`${styles.nav} ${styles.veryTransparentNav}`}>
         <div className={styles.navSpacer}></div>
         <div className={styles.navItems}>
-          <Bell className={`${styles.bellIcon} ${styles.icon}`} />
+          {/* <Bell className={`${styles.bellIcon} ${styles.icon}`} /> */}
           <div 
             onClick={toggleDarkMode} 
             className={styles.themeToggle}
