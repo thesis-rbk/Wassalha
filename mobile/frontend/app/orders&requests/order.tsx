@@ -254,7 +254,7 @@ export default function OrderPage() {
       const allRequests = response.data.data || [];
       console.log(
         "All requests statuses:",
-        allRequests.map((r) => r.status)
+        allRequests.map((r: any) => r.status)
       );
 
       if (allRequests.length === 0) {
