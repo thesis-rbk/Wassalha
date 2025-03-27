@@ -5,6 +5,7 @@ import axiosInstance from '@/config';
 import OrderCard from '../../components/ordersClient';
 import { Sponsorship } from '../../types/Sponsorship';
 import { useRouter } from 'expo-router';
+import { TabBar } from "@/components/navigation/TabBar";
 
 type FetchOrdersResponse = Sponsorship[];
 
@@ -14,6 +15,7 @@ const OrdersSponsor: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [token, setToken] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<string>("orders");
 
     // Function to retrieve JWT token from AsyncStorage
     const getToken = async (): Promise<string | null> => {
@@ -121,6 +123,11 @@ const OrdersSponsor: React.FC = () => {
         );
     };
 
+    const handleTabPress = (tabName: string) => {
+        setActiveTab(tabName);
+        // Add navigation logic if needed
+    };
+
     return (
         <View style={styles.container}>
             {loading ? (
@@ -137,6 +144,7 @@ const OrdersSponsor: React.FC = () => {
                     contentContainerStyle={styles.listContent}
                 />
             )}
+            <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
         </View>
     );
 };

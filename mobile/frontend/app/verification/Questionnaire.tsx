@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import axiosInstance from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
+import { TabBar } from "@/components/navigation/TabBar";
 
 const questions = [
   {
@@ -45,6 +46,7 @@ const Questionnaire = () => {
   const router = useRouter();
   const [answers, setAnswers] = useState<{ [key: number]: string[] }>({});
   const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [activeTab, setActiveTab] = useState<string>("verification");
 
   const handleSelect = (option: string) => {
     const question = questions[currentQuestion];
@@ -105,6 +107,13 @@ const Questionnaire = () => {
   const canSubmit = currentQuestion === questions.length - 1 && 
     isQuestionAnswered(questions[currentQuestion].id);
 
+  const handleTabPress = (tabName: string) => {
+    setActiveTab(tabName);
+    if (tabName !== "verification") {
+      router.push(`/${tabName}`);
+    }
+  };
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView style={styles.content}>
@@ -160,6 +169,8 @@ const Questionnaire = () => {
           </TouchableOpacity>
         )}
       </View>
+
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   );
 };

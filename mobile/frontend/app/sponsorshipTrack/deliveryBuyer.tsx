@@ -14,6 +14,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { Image } from "expo-image";
 import { Mail, Star, Clock, RefreshCw, ExternalLink } from "lucide-react-native";
+import { TabBar } from "@/components/navigation/TabBar";
 
 export default function DeliveryBuyer() {
   const router = useRouter();
@@ -64,6 +65,7 @@ export default function DeliveryBuyer() {
   return (
     <ScrollView style={styles.scrollView}>
       <ThemedView style={styles.container}>
+        <TabBar />
         {/* Waiting Status */}
         <View style={styles.statusContainer}>
           {!detailsReceived ? (
