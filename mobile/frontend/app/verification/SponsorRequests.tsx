@@ -4,8 +4,8 @@ import OrderCard from '../../components/fetchOrdersSponsors';
 import axiosInstance from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Order } from "../../types/ServiceProvider";
-import { TabBar } from "@/components/navigation/TabBar";
 import { AccountDetailsModalProps } from "../../types/Sponsorship"
+import { TabBar } from "@/components/navigation/TabBar";
 import { useStatus } from '@/context/StatusContext';
 
 const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ visible, onClose, onSubmit }) => {
@@ -58,6 +58,7 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ visible, onCl
             transparent={true}
             animationType="slide"
         >
+            
             <View style={styles.modalContainer}>
                 <View style={styles.modalContent}>
                     <View style={styles.typeSelector}>

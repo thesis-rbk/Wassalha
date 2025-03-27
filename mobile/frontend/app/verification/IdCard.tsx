@@ -13,6 +13,7 @@ import { jwtDecode } from 'jwt-decode';
 import { verificationStyles as globalStyles } from '@/styles/verification';
 import { VerificationCard } from '@/components/verification/VerificationCard';
 import { FileText } from 'lucide-react-native';
+import { TabBar } from "@/components/navigation/TabBar";
 import { useStatus } from '@/context/StatusContext';
 
 const { width } = Dimensions.get('window');
@@ -21,6 +22,14 @@ const CARD_ASPECT_RATIO = 1.586; // Standard ID card aspect ratio
 const IdCard = () => {
   const router = useRouter();
   const [image, setImage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("verification");
+
+  const handleTabPress = (tabName: string) => {
+    setActiveTab(tabName);
+    if (tabName !== "verification") {
+      router.push(`/${tabName}`);
+    }
+  };
   const { show, hide } = useStatus();
 
   const handleDocumentReadable = async () => {
@@ -208,6 +217,8 @@ const IdCard = () => {
           🔒 Your data is encrypted and secure
         </ThemedText>
       </ScrollView>
+
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   );
 };
