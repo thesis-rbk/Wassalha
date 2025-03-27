@@ -872,3 +872,4 @@ async function main() {
 }
 
 main();
+// npx prisma db seed
