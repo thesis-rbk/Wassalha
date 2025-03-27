@@ -37,7 +37,7 @@ export default function InitializationBuyer() {
   const route = useRoute<RouteProp<RouteParams, "SponsorshipDetails">>()
   const navigation = useNavigation<NavigationProp>();
   const params = useLocalSearchParams();
-  const sponsorshipId = params.sponsorshipId;
+  // const sponsorshipId = params.sponsorshipId;
   const processId = params.id;
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
@@ -59,14 +59,15 @@ export default function InitializationBuyer() {
   const fetchSponsorshipDetails = async () => {
     try {
       const response = await axiosInstance.get(`/api/one/${processId}`)
-      setSponsorship(response.data)
+      setSponsorship(response.data.sponsorship)
+      console.log("ressssssssssssss .dataaaa", response.data.sponsorship)
     } catch (error) {
       console.error("Error fetching sponsorship details:", error)
     } finally {
       setLoading(false)
     }
   }
-  console.log("resssssssssss", sponsorship)
+
   // Load user data
   useEffect(() => {
     const loadUserData = async () => {
@@ -102,7 +103,7 @@ export default function InitializationBuyer() {
   // Fetch sponsorship details
   useEffect(() => {
     fetchSponsorshipDetails();
-  }, [sponsorshipId]);
+  }, [processId]);
 
 
   const handleInitiateProcess = async () => {
@@ -115,10 +116,9 @@ export default function InitializationBuyer() {
       }
 
       const response = await axiosInstance.post('/api/sponsorship-process/initiate', {
-        sponsorshipId: Number(processId),
+        sponsorshipId: Number(sponsorship.id),
         recipientId: Number(user.id)
       });
-
       if (response.data.success) {
         Alert.alert(
           "Success",
@@ -130,8 +130,8 @@ export default function InitializationBuyer() {
                 router.push({
                   pathname: "/sponsorshipTrack/verificationBuyer",
                   params: {
-                    orderId: response.data.order.id,
-                    sponsorshipId: processId,
+                    orderId: processId,
+                    sponsorshipId: sponsorship.id,
                     price: sponsorship?.price
                   }
                 });

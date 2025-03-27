@@ -3,7 +3,7 @@ import { useColorScheme } from "react-native"
 import { Image as ExpoImage } from "expo-image"
 import { useNavigation } from "@react-navigation/native"
 import platformImages, { SponsorshipCardProps } from "../types/Sponsorship"
-import type NavigationProp from "@/types/navigation"
+import type NavigationProp from "@/types/navigation.d"
 import { COLORS } from "../constants/theme"
 // Constants for description truncation
 const DESCRIPTION_MAX_LENGTH = 20
