@@ -12,7 +12,6 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY, {
  * Create a payment intent for regular payments
  */
 const createPaymentIntent = async (req, res) => {
-  console.log("Received request to create payment intent", req.body);
   const { amount, currency, orderId } = req.body;
 
   try {
@@ -24,8 +23,6 @@ const createPaymentIntent = async (req, res) => {
     });
 
     const clientSecret = paymentIntent.client_secret;
-
-    console.log("Payment intent created successfully:", clientSecret);
 
     // Create a Payment record in the database
     const payment = await prisma.payment.create({
@@ -52,7 +49,6 @@ const createPaymentIntent = async (req, res) => {
       updatedOrder: updatedOrder,
     });
   } catch (e) {
-    console.error("Error creating payment intent:", e.message);
     res.status(500).json({ error: e.message });
   }
 };
@@ -99,7 +95,6 @@ const createEscrowPaymentIntent = async (req, res) => {
       paymentId: payment.id, // Return the payment ID for reference
     });
   } catch (error) {
-    console.error("Error creating escrow payment intent:", error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -147,7 +142,6 @@ const captureEscrowPayment = async (req, res) => {
       status: result.status,
     });
   } catch (error) {
-    console.error("Error capturing escrow payment:", error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -195,7 +189,6 @@ const cancelEscrowPayment = async (req, res) => {
       status: result.status,
     });
   } catch (error) {
-    console.error("Error canceling escrow payment:", error);
     res.status(500).json({
       success: false,
       error: error.message,
