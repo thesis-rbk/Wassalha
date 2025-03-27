@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Alert, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -63,37 +63,67 @@ export default function MyTicketsPage() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: 'My Tickets' }} />
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.light.primary} />
-        </View>
-      ) : tickets.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <ThemedText style={styles.emptyText}>You have no tickets yet.</ThemedText>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.push('/reporting-system/create-ticket')}
-          >
-            <ThemedText style={styles.backButtonText}>Back to Report Issue</ThemedText>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <FlatList
-          data={tickets}
-          renderItem={renderTicket}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.ticketList}
-        />
-      )}
-    </ThemedView>
+    <SafeAreaView style={styles.safeArea}>
+      <ThemedView style={styles.container}>
+        <Stack.Screen options={{ title: 'My Tickets' }} />
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.light.primary} />
+          </View>
+        ) : tickets.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <ThemedText style={styles.emptyText}>You have no tickets yet.</ThemedText>
+            <ThemedText style={styles.buttonDescription}>
+              Need assistance? Create a new ticket to get help from our support team.
+            </ThemedText>
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={() => router.push('/reporting-system/create-ticket')}
+            >
+              <ThemedText style={styles.createButtonText}>Create a New Ticket</ThemedText>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.contentContainer}>
+            <FlatList
+              data={tickets}
+              renderItem={renderTicket}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={styles.ticketList}
+              showsVerticalScrollIndicator={false}
+            />
+            <View style={styles.buttonWrapper}>
+              <ThemedText style={styles.buttonDescription}>
+                Need more assistance? Our support team is ready to help.
+              </ThemedText>
+              <TouchableOpacity
+                style={styles.createButton}
+                onPress={() => router.push('/reporting-system/create-ticket')}
+              >
+                <ThemedText style={styles.createButtonText}>Create a New Ticket</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </ThemedView>
+      <View style={styles.bottomSpacer} />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.light.background,
+    paddingBottom: Platform.OS === 'ios' ? 70 : 60,
+  },
   container: {
     flex: 1,
+    padding: 16,
+  },
+  contentContainer: {
+    flex: 1,
+    position: 'relative',
   },
   loadingContainer: {
     flex: 1,
@@ -104,46 +134,94 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingBottom: 80,
   },
   emptyText: {
     fontSize: 18,
     color: '#666',
-    marginBottom: 20,
+    marginBottom: 30,
+    textAlign: 'center',
   },
-  backButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    backgroundColor: Colors.light.primary + '20',
-    borderRadius: 8,
+  createButton: {
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    backgroundColor: Colors.light.primary,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    width: '90%',
+    alignItems: 'center',
+    marginBottom: 50,
   },
-  backButtonText: {
+  createButtonText: {
     fontSize: 16,
-    color: Colors.light.primary,
+    color: '#FFFFFF',
     fontWeight: '600',
+    textAlign: 'center',
   },
   ticketList: {
-    padding: 16,
+    paddingTop: 12,
+    paddingBottom: 220,
   },
   ticketItem: {
     backgroundColor: '#f9f9f9',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#e5e5e5',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   ticketTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 10,
   },
   ticketCategory: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 4,
+    marginBottom: 12,
   },
   ticketStatus: {
     fontSize: 14,
     fontWeight: '600',
+    marginTop: 6,
+  },
+  buttonWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: Platform.OS === 'ios' ? 120 : 110,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 30,
+    marginBottom: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  bottomSpacer: {
+    height: 120,
+  },
+  buttonDescription: {
+    fontSize: 16,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 20,
+    lineHeight: 22,
   },
 });

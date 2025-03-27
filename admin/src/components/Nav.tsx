@@ -143,7 +143,7 @@ export default function Nav() {
       <nav className={`${styles.nav} ${styles.veryTransparentNav}`}>
         <div className={styles.navSpacer}></div>
         <div className={styles.navItems}>
-          <Bell className={`${styles.bellIcon} ${styles.icon}`} />
+          {/* <Bell className={`${styles.bellIcon} ${styles.icon}`} /> */}
           <div 
             onClick={toggleDarkMode} 
             className={styles.themeToggle}
@@ -235,6 +235,11 @@ export default function Nav() {
         <Link href="/ListOfPayments" className={styles.sidebarItem}>
           <CreditCard size={20} />
           <span className={styles.itemText}>List of Payments</span>
+        </Link>
+
+        <Link href="/ListOfSponsorCheckout" className={styles.sidebarItem}>
+          <CreditCard size={20} />
+          <span className={styles.itemText}>List of Sponsor Checkout</span>
         </Link>
         <Link href="/ListOfOrders" className={styles.sidebarItem}>
           <ShoppingCart size={20} />

@@ -18,6 +18,8 @@ const ListOfRequests: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const filterAndSortRequests = (requests: Request[]) => {
     return requests
@@ -40,7 +42,9 @@ const ListOfRequests: React.FC = () => {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = await api.get('/api/requests');
+        setLoading(true);
+        setError(null);
+        const response = await api.get('/api/mobile/requests');
         const data = response.data.data;
         setRequests(data);
         const filtered = filterAndSortRequests(data);
@@ -48,6 +52,9 @@ const ListOfRequests: React.FC = () => {
         setIsShowingAll(data.length <= 5);
       } catch (error) {
         console.error("Error fetching requests:", error);
+        setError("Failed to load requests. Please try again later.");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -87,7 +94,7 @@ const ListOfRequests: React.FC = () => {
     try {
         console.log("Attempting to delete request with ID:", requestToDelete);
 
-        await api.delete(`/api/requests/${requestToDelete}`);
+        await api.delete(`/api/mobile/requests/${requestToDelete}`);
         
         const updatedRequests = requests.filter(request => request.id !== requestToDelete);
         setRequests(updatedRequests);
@@ -149,67 +156,79 @@ const ListOfRequests: React.FC = () => {
             </div>
           </div>
           
-          <table className={tableStyles.table}>
-            <thead>
-              <tr>
-                <th className={tableStyles.th}>ID</th>
-                <th className={tableStyles.th}>User</th>
-                <th className={tableStyles.th}>Goods Name</th>
-                <th className={tableStyles.th}>Goods Description</th>
-                <th className={tableStyles.th}>Pickup Location</th>
-                <th className={tableStyles.th}>Pickup Scheduled Time</th>
-                <th className={tableStyles.th}>Order Status</th>
-                <th className={tableStyles.th}>Quantity</th>
-                <th className={tableStyles.th}>Goods Location</th>
-                <th className={tableStyles.th}>Goods Destination</th>
-                <th className={tableStyles.th}>Date</th>
-                <th className={tableStyles.th}>With Box</th>
-                <th className={tableStyles.th}>Created At</th>
-                <th className={tableStyles.th}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayedRequests.map((request) => (
-                <tr key={request.id} className={tableStyles.tr}>
-                  <td className={tableStyles.td}>{request.id}</td>
-                  <td className={tableStyles.td}>{request.user.name}</td>
-                  <td className={tableStyles.td}>{request.goods.name}</td>
-                  <td className={tableStyles.td}>{request.goods.description}</td>
-                  <td className={tableStyles.td}>{request.pickup?.location || 'N/A'}</td>
-                  <td className={tableStyles.td}>{request.pickup?.scheduledTime || 'N/A'}</td>
-                  <td className={tableStyles.td}>
-                    <span className={`${tableStyles.badge} ${tableStyles[`badge${request.order?.status}`]}`}>
-                      {request.order?.status || 'N/A'}
-                    </span>
-                  </td>
-                  <td className={tableStyles.td}>{request.quantity}</td>
-                  <td className={tableStyles.td}>{request.goodsLocation}</td>
-                  <td className={tableStyles.td}>{request.goodsDestination}</td>
-                  <td className={tableStyles.td}>{new Date(request.date).toLocaleDateString()}</td>
-                  <td className={tableStyles.td}>{request.withBox ? 'Yes' : 'No'}</td>
-                  <td className={tableStyles.td}>{new Date(request.createdAt).toLocaleDateString()}</td>
-                  <td className={tableStyles.td}>
-                    <button 
-                      onClick={() => handleDelete(request.id)}
-                      className={`${tableStyles.actionButton} ${tableStyles.deleteButton}`}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {loading && <div className={tableStyles.loading}>Loading requests...</div>}
           
-          {requests.length > 5 && (
-            <div className={tableStyles.seeMoreContainer}>
-              <button 
-                className={tableStyles.seeMoreButton}
-                onClick={handleSeeMore}
-              >
-                {isShowingAll ? 'See Less' : 'See More'}
-              </button>
-            </div>
+          {error && <div className={tableStyles.error}>{error}</div>}
+          
+          {!loading && !error && (
+            <>
+              {displayedRequests.length === 0 ? (
+                <div className={tableStyles.noResults}>No requests found.</div>
+              ) : (
+                <table className={tableStyles.table}>
+                  <thead>
+                    <tr>
+                      <th className={tableStyles.th}>ID</th>
+                      <th className={tableStyles.th}>User</th>
+                      <th className={tableStyles.th}>Goods Name</th>
+                      <th className={tableStyles.th}>Goods Description</th>
+                      <th className={tableStyles.th}>Pickup Location</th>
+                      <th className={tableStyles.th}>Pickup Scheduled Time</th>
+                      <th className={tableStyles.th}>Order Status</th>
+                      <th className={tableStyles.th}>Quantity</th>
+                      <th className={tableStyles.th}>Goods Location</th>
+                      <th className={tableStyles.th}>Goods Destination</th>
+                      <th className={tableStyles.th}>Date</th>
+                      <th className={tableStyles.th}>With Box</th>
+                      <th className={tableStyles.th}>Created At</th>
+                      <th className={tableStyles.th}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {displayedRequests.map((request) => (
+                      <tr key={request.id} className={tableStyles.tr}>
+                        <td className={tableStyles.td}>{request.id}</td>
+                        <td className={tableStyles.td}>{request.user.name}</td>
+                        <td className={tableStyles.td}>{request.goods.name}</td>
+                        <td className={tableStyles.td}>{request.goods.description}</td>
+                        <td className={tableStyles.td}>{request.pickup?.location || 'N/A'}</td>
+                        <td className={tableStyles.td}>{request.pickup?.scheduledTime || 'N/A'}</td>
+                        <td className={tableStyles.td}>
+                          <span className={`${tableStyles.badge} ${tableStyles[`badge${request.order?.status}`]}`}>
+                            {request.order?.status || 'N/A'}
+                          </span>
+                        </td>
+                        <td className={tableStyles.td}>{request.quantity}</td>
+                        <td className={tableStyles.td}>{request.goodsLocation}</td>
+                        <td className={tableStyles.td}>{request.goodsDestination}</td>
+                        <td className={tableStyles.td}>{new Date(request.date).toLocaleDateString()}</td>
+                        <td className={tableStyles.td}>{request.withBox ? 'Yes' : 'No'}</td>
+                        <td className={tableStyles.td}>{new Date(request.createdAt).toLocaleDateString()}</td>
+                        <td className={tableStyles.td}>
+                          <button 
+                            onClick={() => handleDelete(request.id)}
+                            className={`${tableStyles.actionButton} ${tableStyles.deleteButton}`}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              
+              {requests.length > 5 && (
+                <div className={tableStyles.seeMoreContainer}>
+                  <button 
+                    className={tableStyles.seeMoreButton}
+                    onClick={handleSeeMore}
+                  >
+                    {isShowingAll ? 'See Less' : 'See More'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

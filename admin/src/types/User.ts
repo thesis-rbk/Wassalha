@@ -19,6 +19,20 @@ export interface User {
         gender?: string;
         isBanned: boolean;
         isVerified: boolean;
+        isSponsor?: boolean;
         review?: string;
-    }
+    };
+    serviceProvider?: {
+        id: number;
+        type: 'PENDING_SPONSOR' | 'SPONSOR' | 'SUBSCRIBER';
+        isVerified: boolean;
+        badge?: string;
+        subscriptionLevel?: string;
+        idCard?: string;
+        passport?: string;
+        license?: string;
+        creditCard?: string;
+        selfie?: string;
+        questionnaireAnswers?: any;
+    };
 }

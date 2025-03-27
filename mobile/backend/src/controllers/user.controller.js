@@ -656,6 +656,7 @@ const getUserById = async (req, res) => {
             image: true,
           }
         },
+        serviceProvider: true, // Include service provider information
         reviewsGiven: {
           include: {
             reviewer: {
@@ -689,6 +690,18 @@ const getUserById = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // If the user is a service provider, fetch additional related data
+    let serviceProviderDetails = null;
+    if (user.serviceProvider) {
+      serviceProviderDetails = await prisma.serviceProvider.findUnique({
+        where: { id: user.serviceProvider.id },
+        include: {
+          sponsorships: true,
+          reviews: true
+        }
+      });
+    }
+
     res.status(200).json({
       ...user,
       profile: {
@@ -696,8 +709,10 @@ const getUserById = async (req, res) => {
         bio: user.profile?.bio || null,
         review: user.profile?.review || null,
         isBanned: user.profile?.isBanned || false,
-        verified: user.profile?.verified || false,
+        isVerified: user.profile?.isVerified || false,
+        isSponsor: user.profile?.isSponsor || false,
       },
+      serviceProvider: serviceProviderDetails || user.serviceProvider,
       reviewsGiven: user.reviewsGiven,
       reviewsReceived: user.reviewsReceived
     });

@@ -271,18 +271,8 @@ export default function TicketsPage() {
               />
             </div>
             <div className={styles.filterContainer}>
-              <select
-                value={statusFilter}
-                onChange={(e) => handleStatusFilter(e.target.value)}
-                className={`${styles.filterSelect} ${isDarkMode ? styles.darkMode : ''}`}
-              >
-                <option value="ALL">All Statuses</option>
-                <option value="PENDING">Pending</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="RESOLVED">Resolved</option>
-                <option value="CLOSED">Closed</option>
-              </select>
-              <select
+
+            <select
                 value={categoryFilter}
                 onChange={(e) => handleCategoryFilter(e.target.value)}
                 className={`${styles.filterSelect} ${isDarkMode ? styles.darkMode : ''}`}
@@ -294,6 +284,18 @@ export default function TicketsPage() {
                   </option>
                 ))}
               </select>
+              <select
+                value={statusFilter}
+                onChange={(e) => handleStatusFilter(e.target.value)}
+                className={`${styles.filterSelect} ${isDarkMode ? styles.darkMode : ''}`}
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="PENDING">Pending</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="CLOSED">Closed</option>
+              </select>
+       
               <select
                 value={sortOrder}
                 onChange={(e) => handleSort()}

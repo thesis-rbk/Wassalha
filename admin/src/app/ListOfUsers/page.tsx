@@ -19,6 +19,9 @@ export default function ListOfUsers() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  const [verificationFilter, setVerificationFilter] = useState("ALL");
+  const [genderFilter, setGenderFilter] = useState("ALL");
+  const [countryFilter, setCountryFilter] = useState("ALL");
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -81,23 +84,59 @@ export default function ListOfUsers() {
     return () => window.removeEventListener('themeChange', handleThemeChange);
   }, []);
 
-  // Search functionality
+  // Update the handleSearch function to include all filters
   const handleSearch = (searchValue: string) => {
     setSearchTerm(searchValue);
-    const filteredUsers = users.filter((user) => {
-      const searchLower = searchValue.toLowerCase();
-      return (
-        user.profile?.firstName?.toLowerCase().includes(searchLower) ||
-        user.profile?.lastName?.toLowerCase().includes(searchLower) ||
-        user.email.toLowerCase().includes(searchLower)
-      );
-    });
+    filterUsers(searchValue, verificationFilter, genderFilter, countryFilter);
+  };
+
+  // New function to handle all filters
+  const filterUsers = (search: string, verification: string, gender: string, country: string) => {
+    let filteredUsers = users;
+
+    // Apply search filter
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredUsers = filteredUsers.filter((user) => {
+        return (
+          user.profile?.firstName?.toLowerCase().includes(searchLower) ||
+          user.profile?.lastName?.toLowerCase().includes(searchLower) ||
+          user.email.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    // Apply verification filter
+    if (verification !== "ALL") {
+      filteredUsers = filteredUsers.filter((user) => {
+        return user.profile?.isVerified === (verification === "VERIFIED");
+      });
+    }
+
+    // Apply gender filter
+    if (gender !== "ALL") {
+      filteredUsers = filteredUsers.filter((user) => {
+        return user.profile?.gender === gender;
+      });
+    }
+
+    // Apply country filter
+    if (country !== "ALL") {
+      filteredUsers = filteredUsers.filter((user) => {
+        return user.profile?.country === country;
+      });
+    }
 
     // Apply current sorting to filtered results
     const sortedFilteredUsers = sortUsers(filteredUsers, sortOrder);
     setDisplayedUsers(sortedFilteredUsers.slice(0, currentCount));
     setIsShowingAll(sortedFilteredUsers.length <= currentCount);
   };
+
+  // Add effect to handle filter changes
+  useEffect(() => {
+    filterUsers(searchTerm, verificationFilter, genderFilter, countryFilter);
+  }, [verificationFilter, genderFilter, countryFilter]);
 
   // Sorting functionality
   const sortUsers = (usersToSort: User[], order: 'asc' | 'desc') => {
@@ -218,7 +257,7 @@ export default function ListOfUsers() {
         <div className={`${tableStyles.container} ${isDarkMode ? tableStyles.darkMode : ''}`}>
           <h1 className={`${tableStyles.title} ${isDarkMode ? tableStyles.darkMode : ''}`}>List of Users</h1>
           
-          {/* Search Controls */}
+          {/* Updated Controls Section */}
           <div className={tableStyles.controls}>
             <div className={tableStyles.searchContainer}>
               <input
@@ -230,6 +269,71 @@ export default function ListOfUsers() {
               />
             </div>
             <div className={tableStyles.filterContainer}>
+              <select
+                value={countryFilter}
+                onChange={(e) => setCountryFilter(e.target.value)}
+                className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}
+              >
+                <option value="ALL">All Countries</option>
+                <option value="USA">USA</option>
+                <option value="CANADA">Canada</option>
+                <option value="UK">UK</option>
+                <option value="AUSTRALIA">Australia</option>
+                <option value="GERMANY">Germany</option>
+                <option value="FRANCE">France</option>
+                <option value="INDIA">India</option>
+                <option value="JAPAN">Japan</option>
+                <option value="TUNISIA">Tunisia</option>
+                <option value="MOROCCO">Morocco</option>
+                <option value="ALGERIA">Algeria</option>
+                <option value="TURKEY">Turkey</option>
+                <option value="SPAIN">Spain</option>
+                <option value="ITALY">Italy</option>
+                <option value="PORTUGAL">Portugal</option>
+                <option value="NETHERLANDS">Netherlands</option>
+                <option value="BELGIUM">Belgium</option>
+                <option value="SWEDEN">Sweden</option>
+                <option value="NORWAY">Norway</option>
+                <option value="DENMARK">Denmark</option>
+                <option value="FINLAND">Finland</option>
+                <option value="ICELAND">Iceland</option>
+                <option value="AUSTRIA">Austria</option>
+                <option value="SWITZERLAND">Switzerland</option>
+                <option value="BELARUS">Belarus</option>
+                <option value="RUSSIA">Russia</option>
+                <option value="CHINA">China</option>
+                <option value="BRAZIL">Brazil</option>
+                <option value="ARGENTINA">Argentina</option>
+                <option value="CHILE">Chile</option>
+                <option value="MEXICO">Mexico</option>
+                <option value="COLOMBIA">Colombia</option>
+                <option value="PERU">Peru</option>
+                <option value="VENEZUELA">Venezuela</option>
+                <option value="ECUADOR">Ecuador</option>
+                <option value="PARAGUAY">Paraguay</option>
+                <option value="URUGUAY">Uruguay</option>
+                <option value="BOLIVIA">Bolivia</option>
+                <option value="OTHER">Other</option>
+              </select>
+              <select
+                value={genderFilter}
+                onChange={(e) => setGenderFilter(e.target.value)}
+                className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}
+              >
+                <option value="ALL">All Genders</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+               
+              </select>
+              <select
+                value={verificationFilter}
+                onChange={(e) => setVerificationFilter(e.target.value)}
+                className={`${tableStyles.filterSelect} ${isDarkMode ? tableStyles.darkMode : ''}`}
+              >
+                <option value="ALL">All Verification Status</option>
+                <option value="VERIFIED">Verified</option>
+                <option value="UNVERIFIED">Not Verified</option>
+              </select>
               <select
                 value={sortOrder}
                 onChange={(e) => handleSort()}

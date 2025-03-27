@@ -127,6 +127,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
                 <div>
                   <p><strong>ID:</strong> #{ticket.id}</p>
                   <p><strong>Title:</strong> {ticket.title}</p>
+                  <p><strong>Category:</strong> {ticket.category}</p>
                 </div>
                 <div>
                   <p>
@@ -151,7 +152,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
 
           <div className={styles.modalSection}>
             <h3>Comments</h3>
-            <div className={`${styles.commentsContainer} ${isDarkMode ? styles.darkMode : ''}`}>
+            <div className={`${styles.allCommentsContainer} ${isDarkMode ? styles.darkMode : ''}`}>
               {ticket.messages && ticket.messages.length > 0 ? (
                 ticket.messages.map((message:any) => (
                   <div
@@ -166,7 +167,9 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
                           : 'Unknown date'}
                       </span>
                     </div>
-                    <div className={styles.commentContent}>{message.content}</div>
+                    <div className={`${styles.commentContent} ${isDarkMode ? styles.darkMode : ''}`}>
+                      {message.content}
+                    </div>
                   </div>
                 ))
               ) : (
@@ -189,7 +192,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
               <Trash2 size={16} />
               Delete
             </button>
-            <div className={styles.statusUpdateContainer}>
+            <div className={`${styles.statusUpdateContainer} ${isDarkMode ? styles.darkMode : ''}`}>
               <label htmlFor="statusSelect" className={styles.statusLabel}>
                 Status:
               </label>
@@ -206,7 +209,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
               </select>
             </div>
 
-            <div className={styles.messageInputContainer}>
+            <div className={`${styles.messageInputContainer} ${isDarkMode ? styles.darkMode : ''}`}>
               <input
                 type="text"
                 value={messageContent}

@@ -12,35 +12,35 @@ export default function SponsorshipTrackLayout() {
         <Stack>
           <Stack.Screen
             name="initializationBuyer"
-            options={{ title: 'Sponsorship Details' }}
+            options={{ title: 'Sponsorship Details' , headerShown: false }}
           />
           <Stack.Screen
             name="initializationSponsor"
-            options={{ title: 'Sponsorship Request' }}
+            options={{ title: 'Sponsorship Request' , headerShown: false}}
           />
           <Stack.Screen
             name="verificationBuyer"
-            options={{ title: 'Verification' }}
+            options={{ title: 'Verification', headerShown: false }}
           />
           <Stack.Screen
             name="verificationSponsor"
-            options={{ title: 'Verification' }}
+            options={{ title: 'Verification', headerShown: false }}
           />
           <Stack.Screen
             name="paymentBuyer"
-            options={{ title: 'Payment' }}
+            options={{ title: 'Payment' , headerShown: false}}
           />
           <Stack.Screen
             name="paymentSponsor"
-            options={{ title: 'Payment' }}
+            options={{ title: 'Payment' , headerShown: false}}
           />
           <Stack.Screen
             name="deliveryBuyer"
-            options={{ title: 'Delivery' }}
+            options={{ title: 'Delivery', headerShown: false }}
           />
           <Stack.Screen
             name="deliverySponsor"
-            options={{ title: 'Delivery' }}
+            options={{ title: 'Delivery' , headerShown: false}}
           />
         </Stack>
       </SponsorshipProcessProvider>

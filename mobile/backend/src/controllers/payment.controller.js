@@ -3,7 +3,15 @@ const prisma = require("../../prisma/index");
 // Fetch all payments
 exports.getPayments = async (req, res) => {
     try {
-        const payments = await prisma.payment.findMany();
+        const payments = await prisma.payment.findMany({
+            include: {
+                order: {
+                    include: {
+                        request: true
+                    }
+                }
+            }
+        });
         res.status(200).json({
             success: true,
             data: payments,
@@ -20,7 +28,7 @@ exports.getPayments = async (req, res) => {
 
 // Create a new payment
 exports.createPayment = async (req, res) => {
-    const { orderId, amount, currency, status, paymentMethod } = req.body;
+    const { orderId, amount, currency, status, paymentMethod, transactionId, qrCode, paymentUrl } = req.body;
 
     try {
         const newPayment = await prisma.payment.create({
@@ -30,6 +38,9 @@ exports.createPayment = async (req, res) => {
                 currency,
                 status,
                 paymentMethod,
+                transactionId,
+                qrCode,
+                paymentUrl,
             },
         });
         res.status(201).json({
@@ -49,7 +60,7 @@ exports.createPayment = async (req, res) => {
 // Update a payment
 exports.updatePayment = async (req, res) => {
     const { id } = req.params;
-    const { amount, currency, status, paymentMethod } = req.body;
+    const { amount, currency, status, paymentMethod, transactionId, qrCode, paymentUrl } = req.body;
 
     try {
         const updatedPayment = await prisma.payment.update({
@@ -59,6 +70,9 @@ exports.updatePayment = async (req, res) => {
                 currency,
                 status,
                 paymentMethod,
+                transactionId,
+                qrCode,
+                paymentUrl,
             },
         });
         res.status(200).json({

@@ -4,6 +4,8 @@ import { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 declare module "@react-navigation/native-stack" {
     interface NativeStackNavigationOptions {
         headerBackTitleVisible?: boolean;
+        headerShown?: boolean;
+        presentation?: 'card' | 'modal' | 'transparentModal' | 'containedModal' | 'containedTransparentModal';
         title?: string;
         id?: number;
     }
