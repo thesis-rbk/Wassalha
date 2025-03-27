@@ -7,7 +7,6 @@ import { Sponsorship } from '../../types/Sponsorship';
 import { useRouter } from 'expo-router';
 import { TabBar } from "@/components/navigation/TabBar";
 
-type FetchOrdersResponse = Sponsorship[];
 
 const OrdersSponsor: React.FC = () => {
     const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
@@ -40,7 +39,7 @@ const OrdersSponsor: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axiosInstance.get<FetchOrdersResponse>('/api/ordersSponsor', {
+            const response = await axiosInstance.get<Sponsorship[]>('/api/ordersSponsor', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     Accept: 'application/json',
