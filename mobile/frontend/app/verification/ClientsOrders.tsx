@@ -99,12 +99,12 @@ const OrdersSponsor: React.FC = () => {
 
     // Update the handlePayment function to handle different statuses
     const handlePayment = (orderId: number, status: string) => {
-        if (status === 'PENDING') {
+        console.log(`Payment pressed for order ID: ${orderId} with status: ${status}`);
             router.push({ 
                 pathname: "/sponsorshipTrack/initializationBuyer", 
                 params: { id: orderId } 
             });
-        }
+        
     };
 
     // Update the renderItem function to pass status
