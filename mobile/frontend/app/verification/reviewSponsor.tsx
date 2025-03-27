@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Star } from '../../components/stars'; // Custom Star component (defined below)
 import axiosInstance from '@/config';
 import { useNavigation } from 'expo-router';
-import NavigationProp from '@/types/navigation'
+import NavigationProp from '@/types/navigation.d'
 import { ReviewComponentProps } from "../../types/Review"
 
 const ReviewComponent: React.FC<ReviewComponentProps> = ({ onReviewSubmitted }) => {

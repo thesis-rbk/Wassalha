@@ -5,9 +5,8 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-  TouchableOpacity,
 } from "react-native";
-import { useLocalSearchParams, useRouter, router } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import { ThemedView } from "@/components/ThemedView";
@@ -16,26 +15,19 @@ import ProgressBar from "@/components/ProgressBar";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useSponsorshipProcess } from "@/context/SponsorshipProcessContext";
 import axiosInstance from "@/config";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Image } from "expo-image";
 import {
-  Clock,
   CheckCircle,
-  AlertCircle,
   ArrowRight,
 } from "lucide-react-native";
-import { useRoute, type RouteProp, useNavigation } from "@react-navigation/native"
-import { RouteParams } from "@/types/Sponsorship";
-import NavigationProp from "@/types/navigation.d";
+
 export default function VerificationBuyer() {
   const params = useLocalSearchParams();
-  const orderId = params.orderId;
-  const sponsorshipId = params.sponsorshipId;
-  const price = params.price;
+  const orderId = params.orderId as string;
+  const sponsorshipId = params.sponsorshipId as string;
+  const price = params.price as string;
   const colorScheme = useColorScheme() ?? "light";
-  const route = useRoute<RouteProp<RouteParams, "SponsorshipDetails">>()
   const router = useRouter();
-  const { id } = route.params;
+
   const [order, setOrder] = useState<any>(null);
   const [sponsorship, setSponsorship] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -49,17 +41,25 @@ export default function VerificationBuyer() {
     { id: 4, title: "Delivery", icon: "pickup", status: "pending" },
   ];
 
-  // Fetch process details
+  console.log("Verification params:", params);
+
   const fetchProcessDetails = async () => {
     try {
       setLoading(true);
-      // Get order details
-      const orderResponse = await axiosInstance.get(`/api/sponsorship-process/${orderId}`);
-      setOrder(orderResponse.data.data);
 
-      // Fetch sponsorship details
-      const sponsorshipResponse = await axiosInstance.get(`/api/one/${sponsorshipId}`);
-      setSponsorship(sponsorshipResponse.data);
+      // First fetch the order/process details
+      const orderResponse = await axiosInstance.get(`/api/sponsorship-process/${orderId}`);
+      console.log("Order response:", orderResponse.data);
+      setOrder(orderResponse.data);
+
+      // Then fetch the sponsorship details using the sponsorshipId
+      if (sponsorshipId) {
+        const sponsorshipResponse = await axiosInstance.get(`/api/one/${sponsorshipId}`);
+        console.log("Sponsorship response:", sponsorshipResponse.data);
+        setSponsorship(sponsorshipResponse.data); // Store the whole sponsorship object
+      } else {
+        console.warn("No sponsorshipId provided");
+      }
     } catch (error) {
       console.error("Error fetching process details:", error);
       Alert.alert("Error", "Failed to load process details");
@@ -69,8 +69,11 @@ export default function VerificationBuyer() {
   };
 
   useEffect(() => {
-    if (orderId && sponsorshipId) {
+    if (orderId) {
       fetchProcessDetails();
+    } else {
+      console.warn("No orderId provided");
+      setLoading(false);
     }
   }, [orderId, sponsorshipId]);
 
@@ -81,25 +84,28 @@ export default function VerificationBuyer() {
     }
 
     router.push({
-      pathname: "/sponsorshipTrack/paymentBuyer" as const,
+      pathname: "/sponsorshipTrack/paymentBuyer",
       params: {
         orderId: orderId,
         sponsorshipId: sponsorshipId,
-        price: sponsorship.price.toString(),
+        price: sponsorship.price ? sponsorship.price.toString() : price, // Fixed typo and added fallback
         type: 'sponsorship',
-        returnPath: '/sponsorshipTrack/deliveryBuyer' as const
-      },
+        returnPath: '/sponsorshipTrack/deliveryBuyer'
+      }
     });
   };
 
-  // if (loading) {
-  //   return (
-  //     <ThemedView style={styles.loadingContainer}>
-  //       <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-  //       <ThemedText style={styles.loadingText}>Loading verification details...</ThemedText>
-  //     </ThemedView>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <ThemedView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+        <ThemedText style={styles.loadingText}>Loading verification details...</ThemedText>
+      </ThemedView>
+    );
+  }
+
+  // Get platform name safely
+  const platformName = sponsorship?.platform || "your requested";
 
   return (
     <ThemedView style={styles.container}>
@@ -117,7 +123,7 @@ export default function VerificationBuyer() {
             <ThemedText style={styles.statusTitle}>Request Accepted</ThemedText>
           </View>
           <ThemedText style={styles.statusText}>
-            Good news! The sponsor has accepted your request for {sponsorship?.platform} sponsorship.
+            Good news! The sponsor has accepted your request for {platformName} sponsorship.
             You can now proceed to payment to secure your purchase.
           </ThemedText>
 
@@ -147,7 +153,7 @@ export default function VerificationBuyer() {
           <ThemedText style={styles.infoTitle}>What happens next?</ThemedText>
           <ThemedText style={styles.infoText}>
             After you complete the payment, the sponsor will be notified and will prepare your
-            {sponsorship?.platform} account. They will provide proof of delivery which you'll need to confirm.
+            {' '}{platformName} account. They will provide proof of delivery which you'll need to confirm.
           </ThemedText>
 
           <View style={styles.stepsList}>
@@ -364,4 +370,4 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
   },
-}); 
+});

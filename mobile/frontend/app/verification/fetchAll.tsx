@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Animated,
+    Alert,
 } from "react-native";
 import Icon from 'react-native-vector-icons/Feather';
 import axiosInstance from "@/config";
@@ -15,24 +16,15 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Sponsorship } from "@/types/Sponsorship";
 import NavigationProp from "@/types/navigation.d";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router, useRouter } from "expo-router";
 import { SponsorshipCard } from "../../components/sponsorCards";
 import { TabBar } from "@/components/navigation/TabBar";
 import SegmentedControl from "@/components/SegmentedControl";
-import OrdersScreen from "./SponsorRequests"
-// Placeholder for Requests Component (replace with your actual component)
-const RequestsComponent: React.FC = () => {
-    return (
-        <View style={styles.fakeRequestsContainer}>
-            <Text style={styles.fakeRequestsText}>Requests View (Placeholder)</Text>
-            <Text style={styles.fakeRequestsSubText}>Replace this with your actual Requests component.</Text>
-        </View>
-    );
-};
+import OrdersScreen from "./SponsorRequests";
+import OrdersSponsor from "./ClientsOrders";
 
 const SponsorshipsScreen: React.FC = () => {
-    const [activeTab, setActiveTab] = useState("home"); // For TabBar
-    const [view, setView] = useState<"requests" | "all">("all"); // Updated for SegmentedControl
+    const [activeTab, setActiveTab] = useState("home");
+    const [view, setView] = useState<"requests" | "orders" | "all">("all");
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -41,56 +33,37 @@ const SponsorshipsScreen: React.FC = () => {
     const [id, setID] = useState<number>(0);
 
     const navigation = useNavigation<NavigationProp>();
-    const router = useRouter();
 
-    // Animation for search bar focus
     const [isFocused, setIsFocused] = useState(false);
     const animatedScale = new Animated.Value(1);
 
     const handleFocus = () => {
         setIsFocused(true);
-        Animated.spring(animatedScale, {
-            toValue: 1.02,
-            friction: 3,
-            useNativeDriver: true,
-        }).start();
+        Animated.spring(animatedScale, { toValue: 1.02, friction: 3, useNativeDriver: true }).start();
     };
 
     const handleBlur = () => {
         setIsFocused(false);
-        Animated.spring(animatedScale, {
-            toValue: 1,
-            friction: 3,
-            useNativeDriver: true,
-        }).start();
+        Animated.spring(animatedScale, { toValue: 1, friction: 3, useNativeDriver: true }).start();
     };
 
-    const clearSearch = () => {
-        setSearchQuery("");
-    };
+    const clearSearch = () => setSearchQuery("");
 
-    // Fetch JWT token from AsyncStorage
     const tokenVerif = async () => {
         try {
             const tokeny = await AsyncStorage.getItem("jwtToken");
-            console.log("token:", tokeny);
             setToken(tokeny);
         } catch (error) {
             console.error("Error fetching token:", error);
         }
     };
 
-    // Check if the user is a sponsor
     const check = async () => {
         if (!token) return;
         try {
             const response = await axiosInstance.get("/api/checkSponsor", {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: "application/json",
-                },
+                headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
             });
-            console.log("is sponsor:", response.data);
             setIsSponsor(response.data);
         } catch (err) {
             console.log("Error in check function:", err);
@@ -101,9 +74,7 @@ const SponsorshipsScreen: React.FC = () => {
         setLoading(true);
         try {
             const response = await axiosInstance.get("/api/search", {
-                params: {
-                    searchTerm: searchQuery || "",
-                },
+                params: { searchTerm: searchQuery || "" },
             });
             const sorted = response.data.sort(
                 (a: Sponsorship, b: Sponsorship) =>
@@ -118,39 +89,61 @@ const SponsorshipsScreen: React.FC = () => {
         }
     };
 
-    // Fetch token on mount
     useEffect(() => {
         tokenVerif();
     }, []);
 
-    // Check sponsor status when token changes
     useEffect(() => {
         check();
     }, [token]);
 
-    // Fetch sponsorships when search query changes in "All" view
     useFocusEffect(
         useCallback(() => {
-            if (view === "all") {
-                fetchSponsorships();
-            }
+            if (view === "all") fetchSponsorships();
         }, [searchQuery, view])
     );
+    console.log("sponsorships", sponsorships)
+    const handleBuyPress = async (serviceProviderId: number, sponsorshipId: number, amount: number, status: string) => {
+        if (!token) {
+            Alert.alert("Error", "Please log in to make a purchase");
+            return;
+        }
 
-    // Handle "Buy" button press
-    const handleBuyPress = (sponsorshipId: number) => {
-        router.push({
-            pathname: "/sponsorshipTrack/initializationBuyer",
-            params: { id: sponsorshipId }
-        });
+        // Validate inputs before sending
+        if (!serviceProviderId || !sponsorshipId || !amount) {
+            Alert.alert("Error", "Invalid sponsorship data");
+            console.error("Invalid data:", { serviceProviderId, sponsorshipId, amount });
+            return;
+        }
+
+        const payload = {
+            serviceProviderId,
+            sponsorshipId,
+            amount,
+            status: "PENDING"
+        };
+
+        try {
+            const response = await axiosInstance.post("/api/createOrderSponsor", payload, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            Alert.alert("Success", "Order created successfully");
+            navigation.navigate("verification/ClientsOrders")
+            if (view === "all") fetchSponsorships();
+        } catch (error) {
+            console.error("Error creating order:", error);
+            Alert.alert("Error", `Failed to create order: ${error}`);
+        }
     };
 
-    // Handle "Add Sponsorship" button press
     const handleAddSponsorshipPress = (sponsorshipId: number) => {
         navigation.navigate("verification/CreateSponsorPost", { id: sponsorshipId });
     };
 
-    // Handle tab press
     const handleTabPress = (tab: string) => {
         setActiveTab(tab);
         if (tab === "create") {
@@ -160,20 +153,27 @@ const SponsorshipsScreen: React.FC = () => {
         }
     };
 
-    // Render the sponsorship card using SponsorshipCard component
-    const renderItem = ({ item }: { item: Sponsorship }) => (
-        <SponsorshipCard
-            id={item.id}
-            platform={item.platform}
-            price={`$${item.price.toFixed(2)}`}
-            description={item.description ?? ""}
-            isActive={item.isActive}
-            onPress={() => navigation.navigate("verification/SponsorshipDetails", { id: item.id })}
-            onBuyPress={() => handleBuyPress(item.id)}
-        />
-    );
+    const renderItem = ({ item }: { item: Sponsorship }) => {
+        return (
+            <SponsorshipCard
+                id={item.id}
+                platform={item.platform ?? ""}
+                price={`TND${(item.price ?? 0).toFixed(2)}`}
+                description={item.description ?? ""}
+                isActive={item.isActive ?? false}
+                duration={item.duration}
+                onPress={() => navigation.navigate("verification/SponsorshipDetails", { id: item.id })}
+                onBuyPress={() => handleBuyPress(
+                    item.sponsorId, // Fallback to 0 if undefined
+                    item.id,
+                    item.price, // Fallback to 0 if undefined
+                    "PENDING"
+                )}
+                sponsorship={{ description: item.description, amount: item.price }}
+            />
+        );
+    };
 
-    // Render "All" View with search and FlatList
     const renderAllView = () => (
         <>
             <Animated.View style={[styles.searchContainer, { transform: [{ scale: animatedScale }] }]}>
@@ -215,23 +215,26 @@ const SponsorshipsScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
-            {/* Conditionally render SegmentedControl if user is a sponsor */}
-            {isSponsor && (
+            {isSponsor ? (
                 <SegmentedControl
                     values={["Requests", "All"]}
                     selectedIndex={view === "requests" ? 0 : 1}
                     onChange={(index) => setView(index === 0 ? "requests" : "all")}
                 />
+            ) : (
+                <SegmentedControl
+                    values={["Orders", "All"]}
+                    selectedIndex={view === "orders" ? 0 : 1}
+                    onChange={(index) => setView(index === 0 ? "orders" : "all")}
+                />
             )}
 
-            {/* Render views based on sponsor status */}
             {isSponsor ? (
                 view === "requests" ? <OrdersScreen /> : renderAllView()
             ) : (
-                renderAllView()
+                view === "orders" ? <OrdersSponsor /> : renderAllView()
             )}
 
-            {/* TabBar */}
             <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
         </View>
     );
@@ -297,23 +300,6 @@ const styles = StyleSheet.create({
     listContent: {
         padding: 20,
         paddingBottom: 80,
-    },
-    fakeRequestsContainer: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 20,
-    },
-    fakeRequestsText: {
-        fontSize: 20,
-        fontWeight: "bold",
-        color: "#333",
-        marginBottom: 10,
-    },
-    fakeRequestsSubText: {
-        fontSize: 16,
-        color: "#666",
-        textAlign: "center",
     },
 });
 

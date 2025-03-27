@@ -1,32 +1,44 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native"
-import { useRoute, type RouteProp, useNavigation } from "@react-navigation/native"
+import React, { useState, useEffect } from "react"
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from "react-native"
+import { useRoute, useNavigation } from "@react-navigation/native"
 import { Image as ExpoImage } from "expo-image"
 import type { Sponsorship } from "@/types/Sponsorship"
 import axiosInstance from "@/config"
-import platformImages from "../../types/Sponsorship"
+import platformImages from "@/types/Sponsorship" // Fixed import path - should point to actual images file
 import { Ionicons } from "@expo/vector-icons"
-import { TabBar } from "@/components/navigation/TabBar";
-import { RouteParams } from "@/types/Sponsorship";
-import NavigationProp from "@/types/navigation.d";
-import { router, useLocalSearchParams, useRouter } from "expo-router";
+import { TabBar } from "@/components/navigation/TabBar"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { RouteProp } from "@react-navigation/native"
+import { SponsorshipDetailsRouteParams } from "../../types/Subscription"
+// Define the route params type
+
 const SponsorshipDetails: React.FC = () => {
-    const [activeTab, setActiveTab] = useState("Home");
-    const route = useRoute<RouteProp<RouteParams, "SponsorshipDetails">>()
-    const navigation = useNavigation<NavigationProp>();
+    const [activeTab, setActiveTab] = useState("Home")
+    const route = useRoute<RouteProp<SponsorshipDetailsRouteParams, "SponsorshipDetails">>()
+    const navigation = useNavigation<any>() // Using any temporarily, should be typed properly
     const { id } = route.params
     const [sponsorship, setSponsorship] = useState<Sponsorship | null>(null)
     const [loading, setLoading] = useState(true)
     const [averageRating, setAverageRating] = useState<number | null>(null)
     const [reviewCount, setReviewCount] = useState<number>(0)
+    const [token, setToken] = useState<string | null>(null)
+    console.log("ifddddd from details", id)
+    // Fetch token from AsyncStorage
+    const fetchToken = async () => {
+        try {
+            const storedToken = await AsyncStorage.getItem("jwtToken")
+            setToken(storedToken)
+        } catch (error) {
+            console.error("Error fetching token:", error)
+        }
+    }
 
     // Fetch sponsorship details
     const fetchSponsorshipDetails = async () => {
         try {
-            const response = await axiosInstance.get(`/api/one/${id}`)
+            const response = await axiosInstance.get(`/api/getOneSponsorSip/${id}`)
             setSponsorship(response.data)
         } catch (error) {
             console.error("Error fetching sponsorship details:", error)
@@ -34,12 +46,7 @@ const SponsorshipDetails: React.FC = () => {
             setLoading(false)
         }
     }
-    const buyNow = () => {
-        router.push({
-            pathname: "/sponsorshipTrack/initializationBuyer",
-            params: { id }
-        });
-    };
+
     // Fetch reviews and calculate average rating
     const fetchReviews = async () => {
         try {
@@ -56,15 +63,49 @@ const SponsorshipDetails: React.FC = () => {
             }
         } catch (err) {
             console.error("Error fetching reviews:", err)
-            setAverageRating(0)
-            setReviewCount(0)
+        }
+    }
+
+    // Handle "Buy Now" action
+    const buyNow = async () => {
+        if (!token) {
+            Alert.alert("Error", "Please log in to make a purchase")
+            return
+        }
+
+        if (!sponsorship || !sponsorship.sponsorId || !sponsorship.price) {
+            Alert.alert("Error", "Invalid sponsorship data")
+            console.error("Invalid sponsorship data:", sponsorship)
+            return
+        }
+
+        const payload = {
+            serviceProviderId: sponsorship.sponsorId,
+            sponsorshipId: id,
+            amount: sponsorship.price,
+            status: "PENDING"
+        }
+
+        try {
+            const response = await axiosInstance.post("/api/createOrderSponsor", payload, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            })
+            Alert.alert("Success", "Order created successfully")
+            navigation.navigate("verification/ClientsOrders")
+        } catch (error) {
+            console.error("Error creating order:", error)
+            Alert.alert("Error", "Failed to create order")
         }
     }
 
     useEffect(() => {
         fetchSponsorshipDetails()
         fetchReviews()
-    }, [id])
+        fetchToken()
+    }, [])
 
     if (loading) {
         return (
@@ -95,7 +136,7 @@ const SponsorshipDetails: React.FC = () => {
                 <Ionicons
                     key={i}
                     name={i <= roundedRating ? "star" : "star-outline"}
-                    size={24} // Increased size for better visibility
+                    size={24}
                     color={i <= roundedRating ? "#FFD700" : "#D3D3D3"}
                     style={styles.star}
                 />
@@ -109,29 +150,25 @@ const SponsorshipDetails: React.FC = () => {
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <View style={styles.cardWrapper}>
                     <View style={styles.card}>
-                        {/* Platform Image and Header */}
                         <View style={styles.header}>
                             <ExpoImage
                                 source={platformImage}
                                 style={styles.platformImage}
-                                resizeMode="contain"
+                                contentFit="contain"
                                 accessibilityLabel={`${sponsorship.platform} logo`}
                             />
                             <View style={styles.headerText}>
                                 <Text style={styles.platform}>{sponsorship.platform}</Text>
-                                <Text style={styles.price}>${sponsorship.price.toFixed(2)}</Text>
+                                <Text style={styles.price}>TDN{sponsorship.price?.toFixed(2)}</Text>
                             </View>
                         </View>
 
-                        {/* Description */}
                         <Text style={styles.description}>{sponsorship.description}</Text>
 
-                        {/* Status */}
                         <View style={[styles.statusBadge, { backgroundColor: sponsorship.isActive ? "#34C759" : "#FF3B30" }]}>
                             <Text style={styles.statusText}>{sponsorship.isActive ? "Active" : "Inactive"}</Text>
                         </View>
 
-                        {/* Reviews Section */}
                         <View style={styles.reviewsContainer}>
                             <Text style={styles.reviewsTitle}>Reviews</Text>
                             <View style={styles.ratingContainer}>
@@ -147,7 +184,6 @@ const SponsorshipDetails: React.FC = () => {
                             </View>
                         </View>
 
-                        {/* Action Buttons */}
                         <View style={styles.actionContainer}>
                             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                                 <Text style={styles.backButtonText}>Back</Text>
@@ -173,33 +209,33 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         justifyContent: "center",
         alignItems: "center",
-        paddingVertical: 20, // Increased padding for better spacing
-        paddingHorizontal: 10, // Reduced horizontal padding to allow more card width
+        paddingVertical: 20,
+        paddingHorizontal: 10,
     },
     cardWrapper: {
         width: "100%",
-        maxWidth: 380, // Slightly increased for better use of screen space
+        maxWidth: 380,
     },
     card: {
         backgroundColor: "#FFFFFF",
-        borderRadius: 16, // Increased border radius for a softer look
-        padding: 24, // Increased padding for better spacing inside the card
+        borderRadius: 16,
+        padding: 24,
         shadowColor: "#4A4A4A",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15, // Softer shadow
+        shadowOpacity: 0.15,
         shadowRadius: 8,
         elevation: 6,
     },
     header: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 20, // Increased spacing
+        marginBottom: 20,
     },
     platformImage: {
-        width: 60, // Increased size for better visibility
+        width: 60,
         height: 60,
         borderRadius: 10,
-        marginRight: 20, // Increased spacing
+        marginRight: 20,
     },
     headerText: {
         flex: 1,
@@ -208,26 +244,26 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     platform: {
-        fontSize: 28, // Increased font size for better readability
+        fontSize: 28,
         fontWeight: "700",
         color: "#1A1A1A",
     },
     price: {
-        fontSize: 24, // Increased font size
+        fontSize: 24,
         fontWeight: "600",
         color: "#007BFF",
     },
     description: {
         fontSize: 16,
         color: "#666",
-        marginBottom: 20, // Increased spacing
+        marginBottom: 20,
         lineHeight: 24,
     },
     statusBadge: {
         alignSelf: "flex-start",
-        paddingVertical: 6, // Increased padding for better touch area
+        paddingVertical: 6,
         paddingHorizontal: 16,
-        borderRadius: 20, // More rounded for a modern look
+        borderRadius: 20,
         marginBottom: 20,
     },
     statusText: {
@@ -236,13 +272,13 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
     reviewsContainer: {
-        marginBottom: 24, // Increased spacing
+        marginBottom: 24,
     },
     reviewsTitle: {
-        fontSize: 20, // Increased font size
+        fontSize: 20,
         fontWeight: "600",
         color: "#1A1A1A",
-        marginBottom: 12, // Increased spacing
+        marginBottom: 12,
     },
     ratingContainer: {
         flexDirection: "row",
@@ -254,16 +290,16 @@ const styles = StyleSheet.create({
         marginRight: 10,
     },
     star: {
-        marginRight: 6, // Increased spacing between stars
+        marginRight: 6,
     },
     rating: {
-        fontSize: 18, // Increased font size
+        fontSize: 18,
         fontWeight: "600",
         color: "#1A1A1A",
         marginRight: 10,
     },
     reviewCount: {
-        fontSize: 16, // Increased font size
+        fontSize: 16,
         color: "#666",
     },
     noReviews: {
@@ -274,31 +310,31 @@ const styles = StyleSheet.create({
     actionContainer: {
         flexDirection: "row",
         justifyContent: "space-between",
-        marginTop: 10, // Added margin for better separation
+        marginTop: 10,
     },
     backButton: {
         flex: 1,
         backgroundColor: "#E0E0E0",
-        padding: 14, // Increased padding for better touch area
+        padding: 14,
         borderRadius: 10,
         alignItems: "center",
         marginRight: 10,
     },
     backButtonText: {
         color: "#1A1A1A",
-        fontSize: 18, // Increased font size
+        fontSize: 18,
         fontWeight: "600",
     },
     buyButton: {
         flex: 1,
         backgroundColor: "#007BFF",
-        padding: 14, // Increased padding
+        padding: 14,
         borderRadius: 10,
         alignItems: "center",
     },
     buyButtonText: {
         color: "#FFFFFF",
-        fontSize: 18, // Increased font size
+        fontSize: 18,
         fontWeight: "600",
     },
     loadingContainer: {
@@ -308,7 +344,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#F5F5F5",
     },
     errorText: {
-        fontSize: 18, // Increased font size
+        fontSize: 18,
         color: "#FF3B30",
         textAlign: "center",
     },
