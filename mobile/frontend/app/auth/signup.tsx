@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Image, Alert } from "react-native";
+import { View, StyleSheet, ScrollView, Image, Alert, Platform, KeyboardAvoidingView } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { InputField } from "@/components/InputField";
@@ -212,96 +212,102 @@ const Signup = () => {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ThemedText style={styles.welcomeText}>Join Us!</ThemedText>
-        <ThemedText style={styles.subText}>Sign up to get started</ThemedText>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.keyboardAvoidingView}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ThemedText style={styles.welcomeText}>Join Us!</ThemedText>
+          <ThemedText style={styles.subText}>Sign up to get started</ThemedText>
 
-        <View style={styles.photoSection}>
-          <View style={styles.avatarContainer}>
-            {image ? (
-              <Image source={{ uri: image.uri }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatarPlaceholder, { backgroundColor: Colors[colorScheme].primary }]}>
-                <ThemedText style={styles.avatarText}>{name ? name.charAt(0).toUpperCase() : "U"}</ThemedText>
-              </View>
-            )}
-            <BaseButton
-              variant="primary"
-              size="medium"
-              style={[styles.editButton, { backgroundColor: Colors[colorScheme].primary }]}
-              onPress={handleImageUpload}
-            >
-              <Feather name="edit-2" size={16} color="#FFFFFF" />
-            </BaseButton>
+          <View style={styles.photoSection}>
+            <View style={styles.avatarContainer}>
+              {image ? (
+                <Image source={{ uri: image.uri }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatarPlaceholder, { backgroundColor: Colors[colorScheme].primary }]}>
+                  <ThemedText style={styles.avatarText}>{name ? name.charAt(0).toUpperCase() : "U"}</ThemedText>
+                </View>
+              )}
+              <BaseButton
+                variant="primary"
+                size="medium"
+                style={[styles.editButton, { backgroundColor: Colors[colorScheme].primary }]}
+                onPress={handleImageUpload}
+              >
+                <Feather name="edit-2" size={16} color="#FFFFFF" />
+              </BaseButton>
+            </View>
+            <ThemedText style={[styles.photoLimit, { color: Colors[colorScheme].primary }]}>
+              Tap to upload a profile picture
+            </ThemedText>
           </View>
-          <ThemedText style={[styles.photoLimit, { color: Colors[colorScheme].primary }]}>
-            Tap to upload a profile picture
+
+          {/* Name Input */}
+          <InputField
+            label="Name"
+            placeholder="Enter your name"
+            value={name}
+            onChangeText={handleNameChange}
+            error={nameError || undefined}
+          />
+
+          {/* Email Input */}
+          <InputField
+            label="Email"
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={handleEmailChange}
+            error={emailError || undefined}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+
+          {/* Password Input */}
+          <InputFieldPassword
+            label="Password"
+            placeholder="Enter your password"
+            value={password}
+            onChangeText={handlePasswordChange}
+            error={passwordError || undefined}
+            secureTextEntry
+          />
+          {passwordStrength && (
+            <ThemedText style={[styles.strengthText, { color: getStrengthColor() }]}>
+              Password Strength: {passwordStrength}
+            </ThemedText>
+          )}
+
+          {/* Confirm Password Input */}
+          <InputFieldPassword
+            label="Confirm Password"
+            placeholder="Confirm your password"
+            value={confirmPassword}
+            onChangeText={handleConfirmPasswordChange}
+            error={confirmPasswordError || undefined}
+            secureTextEntry
+          />
+
+          {/* Signup Button */}
+          <BaseButton
+            variant="primary"
+            size="login"
+            style={styles.signupButton}
+            onPress={handleEmailSignup}
+          >
+            Sign Up
+          </BaseButton>
+
+          {/* Login Link */}
+          <ThemedText style={styles.loginText}>
+            Already have an account?{" "}
+            <ThemedText style={styles.loginLink} onPress={() => router.push("/auth/login")}>
+              Log In
+            </ThemedText>
           </ThemedText>
-        </View>
-
-        {/* Name Input */}
-        <InputField
-          label="Name"
-          placeholder="Enter your name"
-          value={name}
-          onChangeText={handleNameChange}
-          error={nameError || undefined}
-        />
-
-        {/* Email Input */}
-        <InputField
-          label="Email"
-          placeholder="Enter your email"
-          value={email}
-          onChangeText={handleEmailChange}
-          error={emailError || undefined}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        {/* Password Input */}
-        <InputFieldPassword
-          label="Password"
-          placeholder="Enter your password"
-          value={password}
-          onChangeText={handlePasswordChange}
-          error={passwordError || undefined}
-          secureTextEntry
-        />
-        {passwordStrength && (
-          <ThemedText style={[styles.strengthText, { color: getStrengthColor() }]}>
-            Password Strength: {passwordStrength}
-          </ThemedText>
-        )}
-
-        {/* Confirm Password Input */}
-        <InputFieldPassword
-          label="Confirm Password"
-          placeholder="Confirm your password"
-          value={confirmPassword}
-          onChangeText={handleConfirmPasswordChange}
-          error={confirmPasswordError || undefined}
-          secureTextEntry
-        />
-
-        {/* Signup Button */}
-        <BaseButton
-          variant="primary"
-          size="login"
-          style={styles.signupButton}
-          onPress={handleEmailSignup}
-        >
-          Sign Up
-        </BaseButton>
-
-        {/* Login Link */}
-        <ThemedText style={styles.loginText}>
-          Already have an account?{" "}
-          <ThemedText style={styles.loginLink} onPress={() => router.push("/auth/login")}>
-            Log In
-          </ThemedText>
-        </ThemedText>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 };
@@ -310,6 +316,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.light.background,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,

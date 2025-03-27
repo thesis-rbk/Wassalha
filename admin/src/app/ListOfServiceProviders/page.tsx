@@ -23,6 +23,7 @@ export default function ListOfServiceProviders() {
     const [subscriptionFilter, setSubscriptionFilter] = useState("ALL");
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const [selectedSelfie, setSelectedSelfie] = useState<string | null>(null);
 
     const fetchProviders = async () => {
         try {
@@ -110,7 +111,8 @@ export default function ListOfServiceProviders() {
         if (searchTerm) {
             filtered = filtered.filter(provider =>
                 provider.user.profile?.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                provider.user.profile?.lastName.toLowerCase().includes(searchTerm.toLowerCase())
+                provider.user.profile?.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                provider.user.email.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
@@ -205,6 +207,16 @@ export default function ListOfServiceProviders() {
         }
     };
 
+    // Handle selfie image click to view larger
+    const handleSelfieClick = (selfieUrl: string) => {
+        setSelectedSelfie(selfieUrl);
+    };
+
+    // Close selfie modal
+    const closeSelfieModal = () => {
+        setSelectedSelfie(null);
+    };
+
     if (error) {
         return (
             <div className={`${navStyles.layout} ${isDarkMode ? navStyles.darkMode : ''}`}>
@@ -257,6 +269,7 @@ export default function ListOfServiceProviders() {
                             >
                                 <option value="ALL">All Types</option>
                                 <option value="SPONSOR">Sponsor</option>
+                                <option value="PENDING_SPONSOR">Pending Sponsor</option>
                                 <option value="SUBSCRIBER">Subscriber</option>
                             </select>
                             <select
@@ -301,10 +314,11 @@ export default function ListOfServiceProviders() {
                                     <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Badge</th>
                                     <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Subscription</th>
                                     <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Status</th>
-                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Credit Card</th>
                                     <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>ID Card</th>
-                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>License</th>
                                     <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Passport</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>License</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Credit Card</th>
+                                    <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Selfie</th>
                                     <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Created At</th>
                                     <th className={`${tableStyles.th} ${isDarkMode ? tableStyles.darkMode : ''}`}>Actions</th>
                                 </tr>
@@ -354,10 +368,22 @@ export default function ListOfServiceProviders() {
                                                 {provider.isVerified ? 'Verified' : 'Not Verified'}
                                             </span>
                                         </td>
-                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.creditCardId || 'N/A'}</td>
-                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.idCardNumber || 'N/A'}</td>
-                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.licenseNumber || 'N/A'}</td>
-                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.passportNumber || 'N/A'}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.idCard || 'N/A'}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.passport || 'N/A'}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.license || 'N/A'}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{provider.creditCard || 'N/A'}</td>
+                                        <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
+                                            {provider.selfie ? (
+                                                <button
+                                                    onClick={() => handleSelfieClick(provider.selfie as string)}
+                                                    className={`${tableStyles.actionButton} ${tableStyles.viewButton} ${isDarkMode ? tableStyles.darkMode : ''}`}
+                                                >
+                                                    View Selfie
+                                                </button>
+                                            ) : (
+                                                'N/A'
+                                            )}
+                                        </td>
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>{new Date(provider.createdAt).toLocaleDateString()}</td>
                                         <td className={`${tableStyles.td} ${isDarkMode ? tableStyles.darkMode : ''}`}>
                                             <div className={tableStyles.buttonContainer}>
@@ -390,6 +416,25 @@ export default function ListOfServiceProviders() {
                             >
                                 {isShowingAll ? 'See Less' : 'See More'}
                             </button>
+                        </div>
+                    )}
+
+                    {/* Selfie Image Modal */}
+                    {selectedSelfie && (
+                        <div className={tableStyles.modalOverlay} onClick={closeSelfieModal}>
+                            <div className={`${tableStyles.qrCodeModal} ${isDarkMode ? tableStyles.darkMode : ''}`} onClick={e => e.stopPropagation()}>
+                                <img 
+                                    src={selectedSelfie} 
+                                    alt="Selfie" 
+                                    className={tableStyles.qrCodeLarge}
+                                />
+                                <button 
+                                    className={`${tableStyles.closeModalButton} ${isDarkMode ? tableStyles.darkMode : ''}`}
+                                    onClick={closeSelfieModal}
+                                >
+                                    Close
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>

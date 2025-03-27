@@ -1479,390 +1479,45 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
-  backdrop-filter: blur(3px);
+  z-index: 1000;
 }
 
-.modal {
+.qrCodeModal {
   background-color: var(--color-card-bg);
-  border-radius: var(--radius-large);
-  width: 80%;
-  max-width: 700px;
-  max-height: 90vh;
-  position: relative;
-  z-index: 10000;
-  animation: modalFadeIn 0.3s ease-out;
-  color: var(--color-text);
+  border-radius: 8px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-}
-
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.modalHeader {
-  display: flex;
-  justify-content: center;
   align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--color-border);
-  background-color: var(--color-hover);
-  border-radius: var(--radius-large) var(--radius-large) 0 0;
+  max-width: 90%;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-.modalHeader h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: var(--color-text);
-  font-weight: 600;
-}
-
-.modalBody {
-  padding: 24px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.modalSection {
-  margin-bottom: 24px;
-}
-
-.modalSection h3 {
-  margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 1.2rem;
-  color: var(--color-text);
-  font-weight: 600;
-}
-
-.infoCard {
-  background-color: var(--color-hover);
-  border-radius: var(--radius-medium);
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.infoCard p {
-  margin: 8px 0;
-}
-
-.ticketInfoGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-@media (max-width: 600px) {
-  .ticketInfoGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  margin-left: 8px;
-}
-
-.badgePending {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-.badgeProcessing {
-  background-color: #17a2b8;
-  color: white;
-}
-
-.badgeCompleted {
-  background-color: #28a745;
-  color: white;
-}
-
-.badgeFailed {
-  background-color: #dc3545;
-  color: white;
-}
-
-.descriptionBox {
-  background-color: var(--color-hover);
-  border-radius: var(--radius-medium);
-  padding: 16px;
-  max-height: 200px;
-  overflow-y: auto;
-  border: 1px solid var(--color-border);
-  line-height: 1.6;
-  font-size: 0.95rem;
-  white-space: pre-wrap;
-}
-
-/* Add space at the bottom to prevent content from being hidden behind fixed footer */
-.modalFooterSpacer {
-  height: 70px;
-}
-
-.modalFooterFixed {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 16px 24px;
-  border-top: 1px solid var(--color-border);
-  background-color: var(--color-hover);
-  border-radius: 0 0 var(--radius-large) var(--radius-large);
-  z-index: 1;
-  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-.modalFooterFixed.darkMode {
-  background-color: var(--dark-table-header);
-  border-top: 1px solid var(--dark-border);
-  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.2);
-}
-
-.modalFooterRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+.qrCodeLarge {
+  max-width: 300px;
+  max-height: 300px;
   width: 100%;
+  height: auto;
+  margin-bottom: 20px;
 }
 
-.statusUpdateContainer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 180px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-small);
-  padding: 4px 8px;
-  transition: all 0.2s ease;
-}
-
-.statusUpdateContainer.darkMode {
-  border-color: var(--dark-border);
-}
-
-.statusUpdateContainer:focus-within {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(1, 138, 190, 0.2);
-}
-
-.modalSelect {
-  flex: 1;
-  padding: 6px 8px;
-  border: none;
-  background-color: transparent;
-  color: var(--color-text);
-  font-size: 0.9rem;
-  cursor: pointer;
-  outline: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 16px;
-  padding-right: 28px;
-}
-
-.modalSelect.darkMode {
-  color: var(--dark-text);
-  background-color: transparent;
-}
-
-/* Fix for dropdown options in dark mode */
-.modalSelect.darkMode option {
-  background-color: var(--dark-card-bg);
-  color: var(--dark-text);
-}
-
-/* Ensure dropdown menu has proper styling in dark mode */
-@media (prefers-color-scheme: dark) {
-  .modalSelect option {
-    background-color: var(--dark-card-bg);
-    color: var(--dark-text);
-  }
-}
-
-:root.dark-mode .modalSelect option {
-  background-color: var(--dark-card-bg);
-  color: var(--dark-text);
-}
-
-.statusLabel {
-  font-weight: 500;
-  color: var(--color-text);
-  white-space: nowrap;
-}
-
-.statusLabel.darkMode {
-  color: var(--dark-text);
-}
-
-.messageInputContainer {
-  display: flex;
-  flex: 1;
-  gap: 8px;
-}
-
-.messageInput {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-small);
-  background-color: var(--color-card-bg);
-  color: var(--color-text);
-  font-size: 0.9rem;
-}
-
-.messageInput.darkMode {
-  background-color: var(--dark-input-bg);
-  border-color: var(--dark-border);
-  color: var(--dark-text);
-}
-
-.messageInput:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(1, 138, 190, 0.2);
-}
-
-.sendMessageButton {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.closeModalButton {
   padding: 8px 16px;
   background-color: var(--color-primary);
   color: white;
   border: none;
-  border-radius: var(--radius-small);
+  border-radius: 4px;
+  cursor: pointer;
   font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  white-space: nowrap;
-}
-
-.sendMessageButton:hover {
-  background-color: var(--color-secondary);
-}
-
-.sendMessageButton:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.deleteModalButton {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background-color: var(--color-danger);
-  color: white;
-  border: none;
-  border-radius: var(--radius-small);
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  white-space: nowrap;
-}
-
-.deleteModalButton:hover {
-  background-color: #dc2626;
-}
-
-.closeModalButton {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: transparent;
-  border: none;
-  color: var(--color-text);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border-radius: 50%;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s;
 }
 
 .closeModalButton:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-.closeModalButton.darkMode {
-  color: var(--dark-text);
-}
-
-.closeModalButton.darkMode:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.buttonIcon {
-  width: 16px;
-  height: 16px;
-}
-
-.emailLink {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.emailLink:hover {
-  text-decoration: underline;
-}
-
-/* Update the table wrapper border in dark mode */
-.darkMode .tableWrapper,
-:root.dark-mode .tableWrapper {
-  border-color: var(--color-border);
-  border: 1px solid var(--dark-border, #374151);
-}
-
-/* Update table row borders in dark mode */
-.darkMode .tr,
-:root.dark-mode .tr {
-  border-bottom: 1px solid var(--dark-border, #374151);
-}
-
-/* Update table cell borders in dark mode */
-.darkMode .td,
-:root.dark-mode .td {
-  border-bottom: 1px solid var(--dark-border, #374151);
-}
-
-/* Update table header borders in dark mode */
-.darkMode .th,
-:root.dark-mode .th {
-  border-bottom: 1px solid var(--dark-border, #374151);
-}
-
-/* Update the scroll shadows for dark mode */
-.darkMode.tableWrapper::before,
-:root.dark-mode .tableWrapper::before {
-  background: linear-gradient(to right, var(--dark-card-bg, #1F2937), transparent);
-}
-
-.darkMode.tableWrapper::after,
-:root.dark-mode .tableWrapper::after {
-  background: linear-gradient(to left, var(--dark-card-bg, #1F2937), transparent);
+  background-color: var(--color-primary-dark);
 }
 
 /* Add notification styles */
@@ -1910,5 +1565,426 @@
 .darkMode .notification.notificationError {
   background-color: rgba(231, 76, 60, 0.2);
   color: #ff6b6b;
+}
+
+.qrCodeContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 100px;
+  margin: 0 auto;
+}
+
+.qrCode {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.qrCode:hover {
+  transform: scale(1.1);
+}
+
+.linkText {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.linkText:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+}
+
+.noData {
+  text-align: center;
+  padding: 20px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* QR Code Modal Styles */
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.modal.darkMode {
+  background: #1a1a1a;
+  color: #fff;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.modalHeader {
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.modalHeader.darkMode {
+  border-bottom-color: #444;
+  background-color: #1a1a1a;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.modalBody {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modalBody.darkMode {
+  background: #1a1a1a;
+}
+
+.modalSection {
+  margin-bottom: 2rem;
+}
+
+.modalSection h3 {
+  margin-bottom: 0.8rem;
+  color: #333;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.modalSection.darkMode h3 {
+  color: #fff;
+}
+
+.infoCard {
+  background: #f5f5f5;
+  padding: 1.2rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.infoCard.darkMode {
+  background: #2d2d2d;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.infoCard p {
+  margin: 0.5rem 0;
+}
+
+.ticketInfoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.descriptionBox {
+  background: #f5f5f5;
+  padding: 1.2rem;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  min-height: 100px;
+  line-height: 1.6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.descriptionBox.darkMode {
+  background: #2d2d2d;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.commentsContainer {
+  max-height: 300px;
+  overflow-y: auto;
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.commentsContainer.darkMode {
+  background: #2d2d2d;
+}
+
+.allCommentsContainer {
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.allCommentsContainer.darkMode {
+  background: #2d2d2d;
+}
+
+.commentItem {
+  padding: 0.8rem;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 0.8rem;
+}
+
+.commentItem:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.commentItem.darkMode {
+  border-bottom-color: #444;
+}
+
+.commentSender {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.commentTime {
+  color: #666;
+}
+
+.darkMode .commentTime {
+  color: #aaa;
+}
+
+.commentContent {
+  padding: 0.8rem;
+  background: #fff;
+  border-radius: 4px;
+  line-height: 1.5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.darkMode .commentContent {
+  background: #333;
+  color: #f0f0f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.modalFooterFixed {
+  padding: 1.2rem 1.5rem;
+  border-top: 1px solid #e0e0e0;
+  background: #fff;
+  z-index: 10;
+  position: sticky;
+  bottom: 0;
+}
+
+.modalFooterFixed.darkMode {
+  border-top-color: #444;
+  background: #1a1a1a;
+}
+
+.modalFooterRow {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.modalFooterSpacer {
+  height: 20px;
+}
+
+.closeModalButton {
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.closeModalButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.closeModalButton.darkMode {
+  color: #aaa;
+}
+
+.closeModalButton.darkMode:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.statusUpdateContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background-color: #f9f9f9;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.statusUpdateContainer.darkMode {
+  background-color: #333;
+}
+
+.statusLabel {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.modalSelect {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  min-width: 140px;
+  font-size: 14px;
+}
+
+.modalSelect.darkMode {
+  background: #222;
+  border-color: #444;
+  color: #fff;
+}
+
+.messageInputContainer {
+  display: flex;
+  gap: 0.8rem;
+  flex: 1;
+  background-color: #f9f9f9;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.messageInputContainer.darkMode {
+  background-color: #333;
+}
+
+.messageInput {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.messageInput:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.messageInput.darkMode {
+  background: #222;
+  border-color: #444;
+  color: #fff;
+}
+
+.messageInput.darkMode:focus {
+  border-color: #3a97ff;
+  box-shadow: 0 0 0 2px rgba(58, 151, 255, 0.2);
+}
+
+.sendMessageButton {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 8px 16px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.sendMessageButton:hover {
+  background: #0069d9;
+}
+
+.sendMessageButton:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.deleteModalButton {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 8px 16px;
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.deleteModalButton:hover {
+  background: #c82333;
+}
+
+.deleteModalButton.darkMode {
+  background: #e02d3c;
+}
+
+.deleteModalButton.darkMode:hover {
+  background: #bd2130;
+}
+
+.loadingSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.emailLink {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.emailLink:hover {
+  text-decoration: underline;
+}
+
+.darkMode .emailLink {
+  color: #66b0ff;
+}
+
+.noComments {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.darkMode .noComments {
+  color: #aaa;
 }
 

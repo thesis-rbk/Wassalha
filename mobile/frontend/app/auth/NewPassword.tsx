@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Image, Alert, TextInput } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, Alert, TextInput, Platform, KeyboardAvoidingView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { InputFieldPassword } from '@/components/InputFieldPassword';
@@ -119,70 +119,76 @@ export default function NewPassword() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ThemedText style={styles.title}>Create New Password</ThemedText>
-        <ThemedText style={styles.subText}>
-          Your new password must be different from previous used passwords
-        </ThemedText>
-
-        <View style={styles.inputContainer}>
-          <ThemedText style={styles.label}>Verification Code</ThemedText>
-          <View style={styles.codeContainer}>
-            {code.map((digit, index) => (
-              <TextInput
-                key={index}
-                ref={(ref) => (inputRefs.current[index] = ref)}
-                style={styles.codeInput}
-                value={digit}
-                onChangeText={(text) => handleCodeChange(text, index)}
-                keyboardType="numeric"
-                maxLength={1}
-                textAlign="center"
-              />
-            ))}
-          </View>
-          {isTimerActive && (
-            <ThemedText style={styles.timerText}>
-              Time remaining: {formatTime(timer)}
-            </ThemedText>
-          )}
-
-          <InputFieldPassword
-            label="New Password"
-            placeholder="Enter new password"
-            value={newPassword}
-            onChangeText={setNewPassword}
-            error={passwordError || undefined}
-            secureTextEntry
-          />
-
-          <InputFieldPassword
-            label="Confirm Password"
-            placeholder="Confirm your password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            error={confirmError || undefined}
-            secureTextEntry
-          />
-        </View>
-
-        <BaseButton
-          variant="primary"
-          size="login"
-          style={styles.button}
-          onPress={handleSubmit}
-          disabled={isLoading || (timer <= 0 && isTimerActive)}
-        >
-          {isLoading ? 'Resetting...' : 'Reset Password'}
-        </BaseButton>
-
-        <ThemedText style={styles.loginText}>
-          Remember your password?{' '}
-          <ThemedText style={styles.loginLink} onPress={() => router.push('/auth/login')}>
-            Login
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.keyboardAvoidingView}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ThemedText style={styles.title}>Create New Password</ThemedText>
+          <ThemedText style={styles.subText}>
+            Your new password must be different from previous used passwords
           </ThemedText>
-        </ThemedText>
-      </ScrollView>
+
+          <View style={styles.inputContainer}>
+            <ThemedText style={styles.label}>Verification Code</ThemedText>
+            <View style={styles.codeContainer}>
+              {code.map((digit, index) => (
+                <TextInput
+                  key={index}
+                  ref={(ref) => (inputRefs.current[index] = ref)}
+                  style={styles.codeInput}
+                  value={digit}
+                  onChangeText={(text) => handleCodeChange(text, index)}
+                  keyboardType="numeric"
+                  maxLength={1}
+                  textAlign="center"
+                />
+              ))}
+            </View>
+            {isTimerActive && (
+              <ThemedText style={styles.timerText}>
+                Time remaining: {formatTime(timer)}
+              </ThemedText>
+            )}
+
+            <InputFieldPassword
+              label="New Password"
+              placeholder="Enter new password"
+              value={newPassword}
+              onChangeText={setNewPassword}
+              error={passwordError || undefined}
+              secureTextEntry
+            />
+
+            <InputFieldPassword
+              label="Confirm Password"
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              error={confirmError || undefined}
+              secureTextEntry
+            />
+          </View>
+
+          <BaseButton
+            variant="primary"
+            size="login"
+            style={styles.button}
+            onPress={handleSubmit}
+            disabled={isLoading || (timer <= 0 && isTimerActive)}
+          >
+            {isLoading ? 'Resetting...' : 'Reset Password'}
+          </BaseButton>
+
+          <ThemedText style={styles.loginText}>
+            Remember your password?{' '}
+            <ThemedText style={styles.loginLink} onPress={() => router.push('/auth/login')}>
+              Login
+            </ThemedText>
+          </ThemedText>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
@@ -191,6 +197,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,

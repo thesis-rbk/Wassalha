@@ -77,25 +77,27 @@ export default function RootLayout() {
                     onComplete={handleOnboardingComplete}
                   />
                 ) : (
-                  <Stack>
-                    {/* Optionally define specific screens if needed */}
+                  <Stack screenOptions={{ headerShown: false }}>
+                    {/* Auth screens with no headers */}
                     <Stack.Screen
                       name="auth/signup"
-                      options={{ title: "Sign Up" }}
+                      options={{ headerShown: false }}
                     />
                     <Stack.Screen
                       name="auth/login"
-                      options={{ title: "Log In" }}
+                      options={{ headerShown: false }}
                     />
                     <Stack.Screen name="home" />
                     <Stack.Screen
                       name="auth/ResetPassword"
-                      options={{ title: "Reset Password" }}
+                      options={{ headerShown: false }}
                     />
                     <Stack.Screen
                       name="auth/NewPassword"
-                      options={{ title: "New Password" }}
+                      options={{ headerShown: false }}
                     />
+                    
+                    {/* Rest of the screens with normal headers */}
                     <Stack.Screen
                       name="productDetails"
                       options={{
@@ -136,7 +138,7 @@ export default function RootLayout() {
                     />
                     <Stack.Screen
                       name="test/Terms&&Conditions"
-                      options={{ title: "terms n conditions" }}
+                      options={{ title: "terms n conditions" , headerShown: false }}
                     />
                     <Stack.Screen
                       name="test/Travel"
@@ -257,6 +259,7 @@ export default function RootLayout() {
                       name="screens/NotificationsScreen"
                       options={{
                         title: "Notifications",
+                         headerShown: false
                       }}
                     />
                     <Stack.Screen
