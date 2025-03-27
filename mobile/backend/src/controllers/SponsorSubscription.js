@@ -173,13 +173,13 @@ const sponsor = {
         const { id } = req.user
         console.log("bueyr idddddddd", id)
         try {
-            const { amount, cardExpiryMm, cardExpiryYyyy, cardholderName, sponsorShipId, cardNumber, cardCvc } = req.body;
+            const { amount, cardExpiryMm, cardExpiryYyyy, cardholderName, sponsorShipId, cardNumber, cardCvc, orderId } = req.body;
 
             // Create a payment method using a test token
             const paymentMethods = await stripe.paymentMethods.create({
                 type: "card",
                 card: {
-                    token: "tok_visa", // Test token for Visa: 4242424242424242
+                    token: "tok_visa",
                 },
             });
             const paymentMethodId = paymentMethods.id;
@@ -222,14 +222,13 @@ const sponsor = {
                 },
             });
 
-            // Mock transfer for testing
             if (paymentIntent.status === "succeeded") {
                 const fullPaymentIntent = await stripe.paymentIntents.retrieve(paymentIntent.id);
                 console.log("fullllll", fullPaymentIntent);
                 const chargeId = fullPaymentIntent.latest_charge;
 
                 const connectedAccountId = process.env.PROFILE_STRIPE_ID
-                // Mock transfer response instead of calling Stripe
+
                 const mockTransfer = {
                     id: "tr_mock_" + Date.now(), // Fake transfer ID
                     amount: amount * 100, // Convert to cents
@@ -238,19 +237,10 @@ const sponsor = {
                     source_transaction: chargeId,
                 };
                 console.log("Transferred to Connected Account (mocked):", mockTransfer.id);
-            }
-            const sub = await prisma.sponsorship.findUnique({ where: { id: payment.sponsorShipId }, include: { sponsor: true } })
-            const order = await prisma.orderSponsor.create({
-                data: {
-                    serviceProviderId: parseInt(sub.sponsor.id),
-                    sponsorshipId: parseFloat(sub.id),
-                    recipientId: parseInt(id),
-                    amount: Math.round(amount),
-                    status: "PENDING",
-                },
-            });
+                await prisma.orderSponsor.update({ where: { id: parseInt(orderId) }, data: { status: "IN_TRANSIT" } })
+            } parseInt
             res.send({
-                message: "successfully initiated", order
+                message: "successfully initiated"
             });
         } catch (error) {
             console.error("Payment error:", error);
@@ -276,13 +266,15 @@ const sponsor = {
     findOneSponsor: async (req, res) => {
         try {
             const { id } = req.params;
-            const sponsor = await prisma.sponsorship.findUnique({
+            const sponsorOrder = await prisma.orderSponsor.findUnique({
                 where: { id: parseInt(id) },
                 include: {
-                    sponsor: true,
+                    serviceProvider: true,
+                    recipient: true,
+                    sponsorship: true,
                 }
             });
-            res.status(200).send(sponsor);
+            res.status(200).send(sponsorOrder);
         } catch (err) {
             console.log("err", err)
         }
@@ -364,7 +356,7 @@ const sponsor = {
             console.log("createddddd succffffff order")
             return res.status(201).json({ message: 'Order created successfully', data: newOrder });
         } catch (error) {
-            console.error('Error creating order:', error);
+            console.log('Error creating order:', error);
             throw error
         }
     },
@@ -372,20 +364,95 @@ const sponsor = {
         const { id } = req.user
         try {
             const serviceProvider = await prisma.serviceProvider.findUnique({ where: { userId: id } })
-            if (!serviceProvider) {
-                return res.status(404).send({ message: "Service provider not found" })
+            if (serviceProvider) {
+                const requests = await prisma.orderSponsor.findMany({
+                    where: { serviceProviderId: serviceProvider.id }, include: {
+                        sponsorship: true,     // Include sponsorship details
+                        recipient: true        // Include recipient (User) details
+                    }
+                })
+                return res.status(200).send({ requests })
             }
-            const requests = await prisma.orderSponsor.findMany({
-                where: { serviceProviderId: serviceProvider.id }, include: {
-                    sponsorship: true,     // Include sponsorship details
-                    recipient: true        // Include recipient (User) details
-                }
-            })
-            res.send({ requests })
+            return res.status(200).send({ message: "you're not a sponsor" })
         } catch (err) {
             console.log("errrrrrrrrr", err)
-            res.send({ message: err.message || "An error occurred" })
+            res.send({ message: err })
+        }
+    },
+    getallOrders: async (req, res) => {
+        const { id } = req.user
+        try {
+            const orders = await prisma.orderSponsor.findMany({
+                where: { recipientId: id }, include: {
+                    sponsorship: true,
+                    recipient: true
+                }
+            })
+            res.send(orders)
+        } catch (err) {
+            console.log("errrrrrrrrr", err)
+            res.send({ message: err })
+        }
+    },
+    confirmedUpdate: async (req, res) => {
+        try {
+            const { orderId, status } = req.body;
+
+            // Validate required field
+            if (!orderId) {
+                return res.status(400).json({ error: 'Missing required field: orderId is required' });
+            }
+
+            // Check if the order exists
+            const existingOrder = await prisma.orderSponsor.findUnique({
+                where: { id: orderId },
+            });
+
+            if (!existingOrder) {
+                return res.status(404).json({ error: 'Order not found' });
+            }
+
+            // Update the order status to CONFIRMED
+            const updatedOrder = await prisma.orderSponsor.update({
+                where: { id: orderId },
+                data: { status },
+            });
+
+            console.log("Order status confirmed successfully:", updatedOrder);
+            return res.status(200).json({ message: 'Order status confirmed successfully', data: updatedOrder });
+        } catch (error) {
+            console.error('Error confirming order:', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+    deleteOrder: async (req, res) => {
+        const { id } = req.params; // Get the ID from URL parameters
+        try {
+            const deletedOrder = await prisma.orderSponsor.delete({
+                where: {
+                    id: parseFloat(id), // Make sure ID is a number
+                },
+            });
+            console.log('Deleted Order:', deletedOrder);
+            return res.status(200).json({ message: 'Order deleted successfully', deletedOrder });
+        } catch (error) {
+            console.error('Error deleting order:', error);
+            return res.status(500).json({ message: 'Error deleting order' });
+        } finally {
+            await prisma.$disconnect();
+        }
+    },
+    findOneSponsorShip: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const sponsorOrder = await prisma.sponsorship.findUnique({
+                where: { id: parseInt(id) },
+            });
+            res.status(200).send(sponsorOrder);
+        } catch (err) {
+            console.log("err", err)
         }
     }
+
 }
 module.exports = sponsor;

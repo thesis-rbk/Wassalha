@@ -177,6 +177,10 @@ export default function RootLayout() {
                       options={{ title: "requests" }}
                     />
                     <Stack.Screen
+                      name="verification/ClientsOrders"
+                      options={{ title: "client orders" }}
+                    />
+                    <Stack.Screen
                       name="processTrack/initializationSP"
                       options={{ title: "Initialization" }}
                     />

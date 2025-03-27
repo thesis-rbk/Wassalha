@@ -23,6 +23,7 @@ type RootStackParamList = {
     "verification/SponsorshipDetails": { id: number };
     "verification/CreditCardVerification": { id: number };
     "verification/Payment": { id: number };
+    "verification/ClientsOrders"
 };
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
