@@ -7,10 +7,15 @@ export interface ServiceProvider {
     isVerified: boolean;
     badge?: string;
     subscriptionLevel?: string;
-    creditCardId?: string;
-    idCardNumber?: string;
-    licenseNumber?: string;
-    passportNumber?: string;
+    
+    // Verification fields
+    idCard?: string;               // Optional: Government ID
+    passport?: string;             // Optional: Passport Number
+    license?: string;              // Optional: Driving License
+    creditCard?: string;           // Optional: Last 4 digits for security
+    selfie?: string;               // Optional: Selfie
+    questionnaireAnswers?: any;    // Optional: Questionnaire Answers
+    
     user: {
         id: number;
         name: string;
@@ -29,6 +34,11 @@ export interface ServiceProvider {
             };
         };
     };
+    
+    // Relationships
+    sponsorships?: any[];          // Sponsorships relation
+    reviews?: any[];               // Reviews relation
+    
     createdAt: string;
     updatedAt: string;
 }

@@ -31,15 +31,15 @@ export default function ReportIssuePage() {
 
   const qaList: { question: string; answer: string }[] = [
     {
-      question: "What should I do if a traveler hasn’t responded to my request?",
+      question: "What should I do if a traveler hasn't responded to my request?",
       answer: "Ensure your request details are clear and appealing. If no response within 48 hours, cancel and create a new request from your dashboard.",
     },
     {
-      question: "How do I confirm a traveler’s offer?",
-      answer: "Go to 'Requests,' select your request, review offers, and click 'Accept' on the preferred one. You’ll be notified once confirmed.",
+      question: "How do I confirm a traveler's offer?",
+      answer: "Go to 'Requests,' select your request, review offers, and click 'Accept' on the preferred one. You'll be notified once confirmed.",
     },
     {
-      question: "What if the traveler doesn’t send a photo of the purchased good?",
+      question: "What if the traveler doesn't send a photo of the purchased good?",
       answer: "Contact them via chat. If no response in 24 hours, submit a ticket under 'Traveler Non-Compliance.'",
     },
     {
@@ -55,7 +55,7 @@ export default function ReportIssuePage() {
       answer: "After payment, go to 'Order Details,' select 'Suggest Pickup,' and choose a method. The traveler must confirm.",
     },
     {
-      question: "The traveler didn’t show up for an in-person pickup. What do I do?",
+      question: "The traveler didn't show up for an in-person pickup. What do I do?",
       answer: "Contact them via chat. If unresolved, submit a ticket under 'Pickup Issues,' though liability may remain with you.",
     },
     {
@@ -63,8 +63,8 @@ export default function ReportIssuePage() {
       answer: "Go to 'Order Details,' click 'Confirm Delivery' after verifying the good. Payment releases within 24 hours.",
     },
     {
-      question: "What if I don’t see my issue listed here?",
-      answer: "Submit a support ticket below with detailed information, and we’ll assist you promptly.",
+      question: "What if I don't see my issue listed here?",
+      answer: "Submit a support ticket below with detailed information, and we'll assist you promptly.",
     },
   ];
 
@@ -173,14 +173,21 @@ export default function ReportIssuePage() {
         <Stack.Screen options={{ title: 'Report an Issue' }} />
         <ScrollView style={styles.scrollContainer}>
           <View style={styles.headerContainer}>
-            <AlertCircle size={24} color={Colors.light.primary} style={styles.icon} />
-            <ThemedText style={styles.headerText}>Report an Issue</ThemedText>
-            <TouchableOpacity
-              style={styles.myTicketsButton}
-              onPress={() => router.push('/reporting-system/MyTicketsPage')}
-            >
-              <ThemedText style={styles.myTicketsText}>My Tickets</ThemedText>
-            </TouchableOpacity>
+            <View style={styles.leftHeaderSection}>
+              <TouchableOpacity
+                style={styles.myTicketsButton}
+                onPress={() => router.push('/reporting-system/MyTicketsPage')}
+              >
+                <ThemedText style={styles.myTicketsText}>My Tickets</ThemedText>
+              </TouchableOpacity>
+              <ThemedText style={styles.ticketButtonDescription}>
+                View your ticket history
+              </ThemedText>
+            </View>
+            <View style={styles.rightHeaderSection}>
+              <AlertCircle size={24} color={Colors.light.primary} style={styles.icon} />
+              <ThemedText style={styles.headerText}>Report an Issue</ThemedText>
+            </View>
           </View>
           <ThemedText style={styles.description}>
             Check our common questions below. If your issue persists, submit a ticket.
@@ -205,9 +212,11 @@ export default function ReportIssuePage() {
 
           {/* Ticket Form Toggle */}
           {!showForm && (
-            <TouchableOpacity style={styles.showFormButton} onPress={() => setShowForm(true)}>
-              <ThemedText style={styles.showFormText}>Still Need Help? Submit a Ticket</ThemedText>
-            </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.showFormButton} onPress={() => setShowForm(true)}>
+                <ThemedText style={styles.showFormText}>Still Need Help? Submit a Ticket</ThemedText>
+              </TouchableOpacity>
+            </View>
           )}
 
           {/* Ticket Form */}
@@ -297,23 +306,37 @@ export default function ReportIssuePage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 16,
   },
   scrollContainer: {
-    padding: 16,
+    flex: 1,
+    paddingBottom: 30,
   },
   headerContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 20,
+    paddingVertical: 8,
+  },
+  leftHeaderSection: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  rightHeaderSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    maxWidth: '60%',
   },
   icon: {
     marginRight: 8,
   },
   headerText: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '700',
     color: Colors.light.primary,
+    marginLeft: 8,
   },
   description: {
     fontSize: 16,
@@ -342,16 +365,24 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   showFormButton: {
-    padding: 12,
-    backgroundColor: Colors.light.primary + '20',
-    borderRadius: 8,
+    backgroundColor: Colors.light.primary,
+    paddingVertical: 18,
+    paddingHorizontal: 15,
+    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 16,
+    marginBottom: 10,
+    width: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   showFormText: {
     fontSize: 16,
-    color: Colors.light.primary,
+    color: '#FFFFFF',
     fontWeight: '600',
+    textAlign: 'center',
   },
   formContainer: {
     marginTop: 24,
@@ -442,14 +473,30 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   myTicketsButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     backgroundColor: Colors.light.primary + '20',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.light.primary + '40',
   },
   myTicketsText: {
     fontSize: 16,
     color: Colors.light.primary,
     fontWeight: '600',
+  },
+  ticketButtonDescription: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 5,
+    marginLeft: 3,
+  },
+  buttonContainer: {
+    width: '100%', 
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginBottom: 20,
   },
 });

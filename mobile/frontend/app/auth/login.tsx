@@ -154,10 +154,11 @@ export default function Login() {
       padding: 20,
     },
     logo: {
-      width: 150,
-      height: 150,
+      width: 110,
+      height: 110,
       alignSelf: "center",
       marginBottom: 20,
+      marginTop: 20,
     },
     welcomeText: {
       fontSize: 24,

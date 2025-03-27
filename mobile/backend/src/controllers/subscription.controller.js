@@ -5,8 +5,20 @@ exports.getSubscriptions = async (req, res) => {
   try {
     const subscriptions = await prisma.subscription.findMany({
       include: {
-        users: true, // Correctly include the users relation
-        // Add any other related models you want to include
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          }
+        },
+        category: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          }
+        }
       },
     });
     res.status(200).json({
