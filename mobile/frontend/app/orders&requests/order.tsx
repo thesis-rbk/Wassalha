@@ -240,24 +240,32 @@ export default function OrderPage() {
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
-      const response = await axiosInstance.get("/api/requests/get");
+      const response = await axiosInstance.get("/api/requests");
       
       // Filter the requests to only show those that are in "PENDING" status
       // AND either don't have an associated order OR have a cancelled order
-      const filteredRequests = (response.data.data || []).filter((request: Request) => {
+      const filteredRequests = requests.filter((request: Request) => {
         // Check if the request is in PENDING status
         const isPending = request.status === "PENDING";
+        console.log(`Request ${request.id} status: ${request.status}, isPending: ${isPending}`);
         
         // Check if the request has no order or a cancelled order
         const hasNoActiveOrder = !request.order || request.order.orderStatus === "CANCELLED";
+        console.log(`Request ${request.id} hasOrder: ${!!request.order}, orderStatus: ${request.order?.orderStatus}, hasNoActiveOrder: ${hasNoActiveOrder}`);
         
         // Only include requests that meet both conditions
-        return isPending && hasNoActiveOrder;
+        const shouldInclude = isPending && hasNoActiveOrder;
+        console.log(`Request ${request.id} shouldInclude: ${shouldInclude}`);
+        return shouldInclude;
       });
       
-      console.log(`Filtered from ${response.data.data?.length || 0} to ${filteredRequests.length} requests`);
+      console.log(`Filtered from ${requests.length} to ${filteredRequests.length} requests`);
       
-      setRequests(filteredRequests);
+      // TEMPORARY: Set all requests to see if filtering is the issue
+      setRequests(requests);
+      
+      // Normal functionality
+      // setRequests(filteredRequests);
     } catch (error) {
       console.error("Error fetching requests:", error);
       setRequests([]);
