@@ -198,9 +198,6 @@ export const navigateToChatFromMessages = async (chatId: number) => {
       pathname: "/messages/chat",
       params: {
         chatId,
-        // orderId: orderInfo?.orderId,
-        // goodsName: orderInfo?.goodsName,
-        // context: "pickup", // Tells the chat screen this is about pickup
       },
     });
 
