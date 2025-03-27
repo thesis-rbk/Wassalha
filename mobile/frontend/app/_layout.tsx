@@ -17,8 +17,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import { SponsorshipProcessProvider } from "@/context/SponsorshipProcessContext";
 import { OnboardingContainer } from '@/components/onboarding';
 import { OnboardingService } from '@/services/onboardingService';
-import { StatusProvider } from '@/context/StatusContext';
-import { ProcessSocketProvider } from '@/context/ProcessSocketContext';
+import { ProcessSocketProvider } from "@/context/ProcessSocketContext";
+import { StatusProvider } from "@/context/StatusContext";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -56,6 +56,9 @@ export default function RootLayout() {
       <NotificationProvider>
         <AuthProvider>
           <ThemeProvider>
+            <ProcessSocketProvider>
+              <StatusProvider>
+          
             <SponsorshipProcessProvider>
               <StripeProvider
                 publishableKey={STRIPE_PUBLISHABLE_KEY}
@@ -214,108 +217,109 @@ export default function RootLayout() {
                       options={{ title: "Make Offer" }}
                     />
 
-                      {/* Add the new success screens */}
-                      <Stack.Screen
-                        name="screens/RequestSuccessScreen"
-                        options={{
-                          title: "Request Created",
-                        }}
-                      />
-                      <Stack.Screen
-                        name="screens/OrderSuccessScreen"
-                        options={{
-                          title: "Order Created",
-                        }}
-                      />
-                      <Stack.Screen
-                        name="verification/fetchAll"
-                        options={{ title: "Fetch Sub" }}
-                      />
-                      <Stack.Screen
-                        name="verification/SponsorshipDetails"
-                        options={{ title: "verif details" }}
-                      />
-                      <Stack.Screen
-                        name="verification/CreateSponsorPost"
-                        options={{ title: "Create Sponsor Post" }}
-                      />
-                      <Stack.Screen
-                        name="reporting-system/create-ticket"
-                        options={{ title: "Create Report" }}
-                      />
-                      <Stack.Screen
-                        name="goodPost/goodpostpage"
-                        options={{ title: "Traveler Posts" }}
-                      />
-                      <Stack.Screen
-                        name="goodPost/createGoodsPost"
-                        options={{ title: "Create Goods Post" }}
-                      />
-                      <Stack.Screen
-                        name="traveler/becomeTraveler"
-                        options={{ title: "Become Traveler" }}
-                      />
-                      <Stack.Screen
-                        name="screens/NotificationsScreen"
-                        options={{
-                          title: "Notifications",
-                        }}
-                      />
-                      <Stack.Screen
-                        name="sponsorshipTrack/initializationBuyer"
-                        options={{ title: "Sponsorship Details" }}
-                      />
-                      <Stack.Screen
-                        name="sponsorshipTrack/verificationBuyer"
-                        options={{ title: "Verification" }}
-                      />
-                      <Stack.Screen
-                        name="sponsorshipTrack/paymentBuyer"
-                        options={{ title: "Payment" }}
-                      />
-                      <Stack.Screen
-                        name="sponsorshipTrack/deliveryBuyer"
-                        options={{ title: "Delivery" }}
-                      />
+                    {/* Add the new success screens */}
+                    <Stack.Screen
+                      name="screens/RequestSuccessScreen"
+                      options={{
+                        title: "Request Created",
+                      }}
+                    />
+                    <Stack.Screen
+                      name="screens/OrderSuccessScreen"
+                      options={{
+                        title: "Order Created",
+                      }}
+                    />
+                    <Stack.Screen
+                      name="verification/fetchAll"
+                      options={{ title: "Fetch Sub" }}
+                    />
+                    <Stack.Screen
+                      name="verification/SponsorshipDetails"
+                      options={{ title: "verif details" }}
+                    />
+                    <Stack.Screen
+                      name="verification/CreateSponsorPost"
+                      options={{ title: "Create Sponsor Post" }}
+                    />
+                    <Stack.Screen
+                      name="reporting-system/create-ticket"
+                      options={{ title: "Create Report" }}
+                    />
+                    <Stack.Screen
+                      name="goodPost/goodpostpage"
+                      options={{ title: "Traveler Posts" }}
+                    />
+                    <Stack.Screen
+                      name="goodPost/createGoodsPost"
+                      options={{ title: "Create Goods Post" }}
+                    />
+                    <Stack.Screen
+                      name="traveler/becomeTraveler"
+                      options={{ title: "Become Traveler" }}
+                    />
+                    <Stack.Screen
+                      name="screens/NotificationsScreen"
+                      options={{
+                        title: "Notifications",
+                      }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/initializationBuyer"
+                      options={{ title: "Sponsorship Details" }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/verificationBuyer"
+                      options={{ title: "Verification" }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/paymentBuyer"
+                      options={{ title: "Payment" }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/deliveryBuyer"
+                      options={{ title: "Delivery" }}
+                    />
 
-                      <Stack.Screen
-                        name="sponsorshipTrack/initializationSponsor"
-                        options={{ title: "Sponsorship Details" }}
-                      />
-                      <Stack.Screen
-                        name="sponsorshipTrack/verificationSponsor"
-                        options={{ title: "Verification" }}
-                      />
-                      <Stack.Screen
-                        name="sponsorshipTrack/paymentSponsor"
-                        options={{ title: "Payment" }}
-                      />
-                      <Stack.Screen
-                        name="sponsorshipTrack/deliverySponsor"
-                        options={{ title: "Delivery" }}
-                      />
-                      <Stack.Screen
-                        name="pickup/PickupDashboard"
-                        options={{ title: "Pickup" }}
-                      />
-                      <Stack.Screen
-                        name="reporting-system/MyTicketsPage"
+                    <Stack.Screen
+                      name="sponsorshipTrack/initializationSponsor"
+                      options={{ title: "Sponsorship Details" }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/verificationSponsor"
+                      options={{ title: "Verification" }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/paymentSponsor"
+                      options={{ title: "Payment" }}
+                    />
+                    <Stack.Screen
+                      name="sponsorshipTrack/deliverySponsor"
+                      options={{ title: "Delivery" }}
+                    />
+                    <Stack.Screen
+                      name="pickup/PickupDashboard"
+                      options={{ title: "Pickup" }}
+                    />
+                    <Stack.Screen
+                      name="reporting-system/MyTicketsPage"
 
-                      />
-                      <Stack.Screen
-                        name="reporting-system/detailsTicket/[id]"
-                        options={{ title: "Ticket " }}
+                    />
+                    <Stack.Screen
+                      name="reporting-system/detailsTicket/[id]"
+                      options={{ title: "Ticket " }}
 
-                      />
-                    </Stack>
+                    />
+                  </Stack>
 
-                  )}
-                </StripeProvider>
-              </StatusProvider>
-              </ProcessSocketProvider>
+                )}
+              </StripeProvider>
             </SponsorshipProcessProvider>
+            </StatusProvider>
+            </ProcessSocketProvider>
           </ThemeProvider>
         </AuthProvider>
+      
       </NotificationProvider>
     </Provider>
   );

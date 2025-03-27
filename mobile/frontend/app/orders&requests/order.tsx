@@ -9,6 +9,8 @@ import {
   Animated,
   Easing,
 } from "react-native";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store";
 import SegmentedControl from "@/components/SegmentedControl";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -24,14 +26,13 @@ import { decode as atob } from "base-64";
 import { GoodsProcess, ProcessStatus } from "@/types/GoodsProcess";
 import { LinearGradient } from 'expo-linear-gradient';
 import { io } from "socket.io-client";
-import { useProcessSocket } from '@/context/ProcessSocketContext';
-import { StatusScreen } from '@/app/screens/StatusScreen';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
 const CARD_SPACING = 12;
 import { TabBar } from "@/components/navigation/TabBar";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
+import { AsyncLocalStorage } from "async_hooks";
 
 // Custom hook to ensure we have user data
 const useReliableAuth = () => {
@@ -108,8 +109,8 @@ export default function OrderPage() {
   const { user, loading: authLoading } = useReliableAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Order");
-  const { joinProcessRoom, listenToNewRequests, listenToProcessUpdates } = useProcessSocket();
-
+  console.log(user,"USER");
+  const room=user?.id;
   // Animation value for the "Make Offer" button
   const pulseAnim = useRef(new Animated.Value(1)).current;
   
@@ -224,16 +225,6 @@ export default function OrderPage() {
     }
   };
 
-  // Add state for StatusScreen
-  const [statusScreen, setStatusScreen] = useState({
-    visible: false,
-    type: 'error' as 'success' | 'error',
-    title: '',
-    message: '',
-    primaryAction: undefined as { label: string; onPress: () => void } | undefined,
-    secondaryAction: undefined as { label: string; onPress: () => void } | undefined,
-  });
-
   // Fetch requests when component mounts or user changes
   useEffect(() => {
     if (!authLoading) {
@@ -247,7 +238,7 @@ export default function OrderPage() {
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
-      const response = await axiosInstance.get("/api/requests");
+      const response = await axiosInstance.get("/api/requests/get");
       
       // Filter the requests to only show those that are in "PENDING" status
       // AND either don't have an associated order OR have a cancelled order
@@ -267,23 +258,6 @@ export default function OrderPage() {
       setRequests(filteredRequests);
     } catch (error) {
       console.error("Error fetching requests:", error);
-      setStatusScreen({
-        visible: true,
-        type: 'error',
-        title: 'Unable to Load Requests',
-        message: 'We couldn\'t load your requests at this time. Please check your connection and try again.',
-        primaryAction: {
-          label: 'Retry',
-          onPress: () => {
-            setStatusScreen(prev => ({ ...prev, visible: false }));
-            fetchRequests();
-          }
-        },
-        secondaryAction: {
-          label: 'Close',
-          onPress: () => setStatusScreen(prev => ({ ...prev, visible: false }))
-        }
-      });
       setRequests([]);
     } finally {
       setIsLoading(false);
@@ -653,52 +627,49 @@ export default function OrderPage() {
     router.push("/profile");
   };
 
-  // Listen for new requests
+  // Inside OrderPage component, add this useEffect
+  const socketRef = useRef<any>(null);
+
   useEffect(() => {
-    console.log("🔄 Setting up listeners for requests/processes in Orders page");
+    console.log("🔄 Setting up socket connection in Orders page");
+    const socket = io(`${BACKEND_URL}/processTrack`,{
+      transports: ["websocket"],
+    });
+    socket.on("connect", () => {
+      console.log("🔌 Orders page socket connected");
+      const processId = room; // Example; get this from props, context, or params
+      socket.emit("joinProcessRoom", processId);
+      console.log(`Joining process room: process:${processId}`);
     
-    // Set up listener for new requests
-    const newRequestsUnsubscribe = listenToNewRequests((data) => {
+    });
+
+    socket.on("newRequest", (data) => {
       console.log("📦 New request received:", data);
       fetchRequests();
     });
-    
-    // Set up listener for process status changes
-    if (!user?.id) {
-      console.log("⏳ Waiting for user data before setting up listeners");
-      return;
-    }
 
-    console.log("🔄 Setting up listeners with user:", user.id);
-    
-    const processUpdatesUnsubscribe = listenToProcessUpdates((data) => {
-      console.log(`🔄 Status changed to: ${data.status} for user: ${user.id}`);
-      // Only fetch if we still have a valid user
-      if (user?.id) {
-        fetchRequests();
-        fetchGoodsProcesses();
-      } else {
-        console.warn('⚠️ Skipping fetch - no user ID available');
-      }
+    socket.on("processStatusChanged", (data) => {
+      console.log("🔄 Status changed to:", data.status);
+      
+      fetchRequests();
+      fetchGoodsProcesses();
     });
-    
+    socket.on("offerMadeOrder", (data) => {
+      console.log("🔄 Offer made for you:", data);
+      setRequests((prev) =>
+        prev.map((p) => (p.id === data.requestId ? data : p))
+      );
+      fetchGoodsProcesses();
+
+    });
+    socket.on("disconnect", () => {
+      console.log("🔌 Socket disconnected");
+    });
+
     return () => {
-      console.log('🧹 Cleaning up listeners for user:', user.id);
-      newRequestsUnsubscribe();
-      processUpdatesUnsubscribe();
+      socket.disconnect();
     };
-  }, [user?.id]); // Add user.id as dependency
-  
-  // Join rooms for all processes
-  useEffect(() => {
-    // When processes are loaded, join their rooms
-    if (goodsProcesses.length > 0) {
-      console.log(`Joining rooms for ${goodsProcesses.length} processes`);
-      goodsProcesses.forEach(process => {
-        joinProcessRoom(process.id);
-      });
-    }
-  }, [goodsProcesses]);
+  }, []);
 
   return (
     <ThemedView style={styles.container}>
@@ -754,16 +725,6 @@ export default function OrderPage() {
       
       {/* Add TabBar at the bottom of the screen */}
       <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
-      
-      <StatusScreen
-        visible={statusScreen.visible}
-        type={statusScreen.type}
-        title={statusScreen.title}
-        message={statusScreen.message}
-        primaryAction={statusScreen.primaryAction}
-        secondaryAction={statusScreen.secondaryAction}
-        onClose={() => setStatusScreen(prev => ({ ...prev, visible: false }))}
-      />
     </ThemedView>
   );
 }

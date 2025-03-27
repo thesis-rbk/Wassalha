@@ -5,6 +5,7 @@ import axiosInstance from '@/config';
 import OrderCard from '../../components/ordersClient';
 import { Sponsorship } from '../../types/Sponsorship';
 import { useRouter } from 'expo-router';
+import { useStatus } from '@/context/StatusContext';
 
 type FetchOrdersResponse = Sponsorship[];
 
@@ -14,6 +15,7 @@ const OrdersSponsor: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [token, setToken] = useState<string | null>(null);
+    const { show, hide } = useStatus();
 
     // Function to retrieve JWT token from AsyncStorage
     const getToken = async (): Promise<string | null> => {
@@ -52,7 +54,22 @@ const OrdersSponsor: React.FC = () => {
             setSponsorships(validSponsorships);
         } catch (err) {
             console.error('Error fetching orders:', err);
-            setError('Failed to fetch orders');
+            show({
+                type: 'error',
+                title: 'Loading Failed',
+                message: 'Unable to fetch orders',
+                primaryAction: {
+                    label: 'Retry',
+                    onPress: () => {
+                        hide();
+                        fetchOrders(token);
+                    }
+                },
+                secondaryAction: {
+                    label: 'Cancel',
+                    onPress: () => hide()
+                }
+            });
             setSponsorships([]);
         } finally {
             setLoading(false);
@@ -68,10 +85,33 @@ const OrdersSponsor: React.FC = () => {
             setSponsorships((prevSponsorships) =>
                 prevSponsorships.filter((sponsorship) => sponsorship.id !== orderId)
             );
-            Alert.alert('Success', 'Order deleted successfully');
+            show({
+                type: 'success',
+                title: 'Order Deleted',
+                message: 'Order has been deleted successfully',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
         } catch (err) {
             console.error('Error deleting order:', err);
-            Alert.alert('Error', 'Failed to delete order');
+            show({
+                type: 'error',
+                title: 'Deletion Failed',
+                message: 'Failed to delete order',
+                primaryAction: {
+                    label: 'Retry',
+                    onPress: () => {
+                        hide();
+                        handleDelete(orderId);
+                    }
+                },
+                secondaryAction: {
+                    label: 'Cancel',
+                    onPress: () => hide()
+                }
+            });
         }
     };
 

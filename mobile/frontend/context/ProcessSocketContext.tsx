@@ -57,9 +57,8 @@ export const ProcessSocketProvider: React.FC<{children: React.ReactNode}> = ({ c
           
           setIsConnected(true);
         });
-        
         socket.on('connect_error', (error) => {
-          console.error('❌ Socket connection error:', error.message, error.description);
+          console.error('❌ Socket connection error:', error.message);
         });
 
         socket.on('disconnect', (reason) => {
@@ -97,7 +96,7 @@ export const ProcessSocketProvider: React.FC<{children: React.ReactNode}> = ({ c
         socket.on('refreshOrders', () => {
           console.log('🔄 Refreshing orders list');
           // Call your function to fetch orders here
-          fetchOrders();  // or whatever your function is called
+          //fetchOrders();  // or whatever your function is called
         });
         
         socketRef.current = socket;

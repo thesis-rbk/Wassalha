@@ -13,6 +13,7 @@ import { jwtDecode } from 'jwt-decode';
 import { verificationStyles as globalStyles } from '@/styles/verification';
 import { VerificationCard } from '@/components/verification/VerificationCard';
 import { FileText } from 'lucide-react-native';
+import { useStatus } from '@/context/StatusContext';
 
 const { width } = Dimensions.get('window');
 const CARD_ASPECT_RATIO = 1.586; // Standard ID card aspect ratio
@@ -20,10 +21,26 @@ const CARD_ASPECT_RATIO = 1.586; // Standard ID card aspect ratio
 const IdCard = () => {
   const router = useRouter();
   const [image, setImage] = useState<string | null>(null);
+  const { show, hide } = useStatus();
 
   const handleDocumentReadable = async () => {
     if (!image) {
-      Alert.alert('Error', 'Please take a photo first');
+      show({
+        type: 'error',
+        title: 'Missing Photo',
+        message: 'Please take a photo first',
+        primaryAction: {
+          label: 'Take Photo',
+          onPress: () => {
+            hide();
+            pickImage();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
       return;
     }
 
@@ -55,11 +72,39 @@ const IdCard = () => {
       );
 
       if (response.data.success) {
-        Alert.alert('Success', 'ID Card verified successfully');
-        router.push('/verification/TakeSelfie');
+        show({
+          type: 'success',
+          title: 'ID Card Verified',
+          message: 'Your ID card has been verified successfully',
+          primaryAction: {
+            label: 'Continue',
+            onPress: () => {
+              hide();
+              router.push('/verification/TakeSelfie');
+            }
+          }
+        });
       }
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to verify ID Card');
+      show({
+        type: 'error',
+        title: 'Verification Failed',
+        message: error.response?.data?.message || 'Failed to verify ID Card',
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => {
+            hide();
+            handleDocumentReadable();
+          }
+        },
+        secondaryAction: {
+          label: 'Take New Photo',
+          onPress: () => {
+            hide();
+            pickImage();
+          }
+        }
+      });
     }
   };
 
@@ -74,7 +119,15 @@ const IdCard = () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
 
     if (permissionResult.granted === false) {
-      alert("Permission to access camera is required!");
+      show({
+        type: 'error',
+        title: 'Permission Required',
+        message: 'Permission to access camera is required!',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => hide()
+        }
+      });
       return;
     }
 

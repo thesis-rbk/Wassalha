@@ -21,6 +21,7 @@ import { TabBar } from "@/components/navigation/TabBar";
 import SegmentedControl from "@/components/SegmentedControl";
 import OrdersScreen from "./SponsorRequests";
 import OrdersSponsor from "./ClientsOrders";
+import { useStatus } from '@/context/StatusContext';
 
 const SponsorshipsScreen: React.FC = () => {
     const [activeTab, setActiveTab] = useState("home");
@@ -36,6 +37,8 @@ const SponsorshipsScreen: React.FC = () => {
 
     const [isFocused, setIsFocused] = useState(false);
     const animatedScale = new Animated.Value(1);
+
+    const { show, hide } = useStatus();
 
     const handleFocus = () => {
         setIsFocused(true);
@@ -105,13 +108,29 @@ const SponsorshipsScreen: React.FC = () => {
     console.log("sponsorships", sponsorships)
     const handleBuyPress = async (serviceProviderId: number, sponsorshipId: number, amount: number, status: string) => {
         if (!token) {
-            Alert.alert("Error", "Please log in to make a purchase");
+            show({
+                type: 'error',
+                title: 'Authentication Required',
+                message: 'Please log in to make a purchase',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             return;
         }
 
         // Validate inputs before sending
         if (!serviceProviderId || !sponsorshipId || !amount) {
-            Alert.alert("Error", "Invalid sponsorship data");
+            show({
+                type: 'error',
+                title: 'Invalid Data',
+                message: 'Invalid sponsorship data',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             console.error("Invalid data:", { serviceProviderId, sponsorshipId, amount });
             return;
         }
@@ -131,12 +150,37 @@ const SponsorshipsScreen: React.FC = () => {
                 }
             });
 
-            Alert.alert("Success", "Order created successfully");
-            navigation.navigate("verification/ClientsOrders")
-            if (view === "all") fetchSponsorships();
+            show({
+                type: 'success',
+                title: 'Order Created',
+                message: 'Order created successfully',
+                primaryAction: {
+                    label: 'Continue',
+                    onPress: () => {
+                        hide();
+                        navigation.navigate("verification/ClientsOrders");
+                        if (view === "all") fetchSponsorships();
+                    }
+                }
+            });
         } catch (error) {
             console.error("Error creating order:", error);
-            Alert.alert("Error", `Failed to create order: ${error}`);
+            show({
+                type: 'error',
+                title: 'Order Creation Failed',
+                message: `Failed to create order: ${error}`,
+                primaryAction: {
+                    label: 'Try Again',
+                    onPress: () => {
+                        hide();
+                        handleBuyPress(serviceProviderId, sponsorshipId, amount, status);
+                    }
+                },
+                secondaryAction: {
+                    label: 'Cancel',
+                    onPress: () => hide()
+                }
+            });
         }
     };
 

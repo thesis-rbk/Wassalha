@@ -9,9 +9,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import axiosInstance from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
+import { useStatus } from '@/context/StatusContext';
 
 const CreditCardVerification = () => {
   const router = useRouter();
+  const { show, hide } = useStatus();
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
@@ -70,22 +72,54 @@ const CreditCardVerification = () => {
   // Update the validateForm function
   const validateForm = () => {
     if (!validateCardNumber(cardNumber)) {
-      Alert.alert('Error', 'Please enter a valid 16-digit card number');
+      show({
+        type: 'error',
+        title: 'Invalid Card Number',
+        message: 'Please enter a valid 16-digit card number',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => hide()
+        }
+      });
       return false;
     }
 
     if (!validateExpiryDate(expiryDate)) {
-      Alert.alert('Error', 'Please enter a valid future expiry date');
+      show({
+        type: 'error',
+        title: 'Invalid Expiry Date',
+        message: 'Please enter a valid future expiry date',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => hide()
+        }
+      });
       return false;
     }
 
     if (!validateCVV(cvv)) {
-      Alert.alert('Error', 'Please enter a valid CVV (3-4 digits)');
+      show({
+        type: 'error',
+        title: 'Invalid CVV',
+        message: 'Please enter a valid CVV (3-4 digits)',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => hide()
+        }
+      });
       return false;
     }
 
     if (cardholderName.trim().length < 3) {
-      Alert.alert('Error', 'Please enter the full cardholder name');
+      show({
+        type: 'error',
+        title: 'Invalid Name',
+        message: 'Please enter the full cardholder name',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => hide()
+        }
+      });
       return false;
     }
 
@@ -134,16 +168,37 @@ const CreditCardVerification = () => {
       );
 
       if (response.data.success) {
-        Alert.alert('Success', 'Credit card verified successfully', [
-          { text: 'OK', onPress: () => router.push('/verification/Questionnaire') }
-        ]);
+        show({
+          type: 'success',
+          title: 'Card Verified',
+          message: 'Credit card verified successfully',
+          primaryAction: {
+            label: 'Continue',
+            onPress: () => {
+              hide();
+              router.push('/verification/Questionnaire');
+            }
+          }
+        });
       }
     } catch (error: any) {
       console.error('Error verifying credit card:', error);
-      Alert.alert(
-        'Error',
-        error.message || 'Failed to verify credit card. Please try again.'
-      );
+      show({
+        type: 'error',
+        title: 'Verification Failed',
+        message: error.message || 'Failed to verify credit card. Please try again.',
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => {
+            hide();
+            handleSubmit();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     } finally {
       setLoading(false);
     }

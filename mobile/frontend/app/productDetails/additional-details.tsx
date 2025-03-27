@@ -25,15 +25,11 @@ import * as DocumentPicker from "expo-document-picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "@/config";
-import { useStatus } from '@/context/StatusContext';
-import { useProcessSocket } from '@/context/ProcessSocketContext';
 
 const AdditionalDetails: React.FC = () => {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { show, hide } = useStatus();
-  const { emitRequestCreated } = useProcessSocket();
 
   // Update the productDetails conversion to include all passed data
   const [productDetails, setProductDetails] = useState({
@@ -125,15 +121,7 @@ const AdditionalDetails: React.FC = () => {
       }
     } catch (error) {
       console.error("❌ Error picking document:", error);
-      show({
-        type: 'error',
-        title: 'Document Error',
-        message: 'Failed to pick document',
-        primaryAction: {
-          label: 'Try Again',
-          onPress: () => pickDocument()
-        }
-      });
+      Alert.alert("Error", "Failed to pick document");
     } finally {
       setImageLoading(false);
     }
@@ -160,20 +148,6 @@ const AdditionalDetails: React.FC = () => {
 
   // Then modify your handleSubmit function to include debugging
   const handleSubmit = async () => {
-    // Add category check at the beginning
-    if (!categoryId) {
-      show({
-        type: 'error',
-        title: 'Missing Information',
-        message: 'Please select a category before submitting',
-        primaryAction: {
-          label: 'OK',
-          onPress: () => hide()
-        }
-      });
-      return;
-    }
-
     try {
       console.log("🚀 Starting submission process...");
       let jwtToken = await AsyncStorage.getItem("jwtToken");
@@ -181,15 +155,7 @@ const AdditionalDetails: React.FC = () => {
 
       // Make sure we have a token
       if (!jwtToken) {
-        show({
-          type: 'error',
-          title: 'Authentication Required',
-          message: 'You need to be logged in to create a request',
-          primaryAction: {
-            label: 'Login',
-            onPress: () => router.replace("../login")
-          }
-        });
+        Alert.alert("Error", "You need to be logged in to create a request");
         return;
       }
 
@@ -222,34 +188,14 @@ const AdditionalDetails: React.FC = () => {
               }
             } else {
               // If refresh fails, redirect to login
-              show({
-                type: 'error',
-                title: 'Session Expired',
-                message: 'Please log in again',
-                primaryAction: {
-                  label: 'Login',
-                  onPress: () => {
-                    hide();
-                    router.replace("../login");
-                  }
-                }
-              });
+              Alert.alert("Session Expired", "Please log in again");
+              router.replace("../login");
               return;
             }
           } catch (refreshError) {
             console.error("❌ Token refresh failed:", refreshError);
-            show({
-              type: 'error',
-              title: 'Session Expired',
-              message: 'Please log in again',
-              primaryAction: {
-                label: 'Login',
-                onPress: () => {
-                  hide();
-                  router.replace("../login");
-                }
-              }
-            });
+            Alert.alert("Session Expired", "Please log in again");
+            router.replace("../login");
             return;
           }
         }
@@ -284,25 +230,31 @@ const AdditionalDetails: React.FC = () => {
           }
         } catch (error) {
           console.error("❌ Image download error:", error);
-          show({
-            type: 'error',
-            title: 'Image Download Failed',
-            message: 'We couldn\'t download the web image.',
-            primaryAction: {
-              label: 'Continue Without Image',
-              onPress: () => {
-                setProductDetails((prev) => ({
-                  ...prev,
-                  imageUri: undefined,
-                }));
-                if (jwtToken) submitForm(jwtToken);
-              }
-            },
-            secondaryAction: {
-              label: 'Go Back',
-              onPress: () => hide()
-            }
-          });
+          Alert.alert(
+            "Image Download Failed",
+            "We couldn't download the web image. Would you like to continue without an image or go back and select a local image?",
+            [
+              {
+                text: "Continue Without Image",
+                onPress: () => {
+                  setProductDetails((prev) => ({
+                    ...prev,
+                    imageUri: undefined,
+                  }));
+                  // Continue with submission
+                  if (jwtToken) {
+                    submitForm(jwtToken);
+                  } else {
+                    Alert.alert("Error", "Authentication token is missing");
+                  }
+                },
+              },
+              {
+                text: "Go Back",
+                style: "cancel",
+              },
+            ]
+          );
           return;
         } finally {
           setImageLoading(false);
@@ -313,31 +265,14 @@ const AdditionalDetails: React.FC = () => {
       if (jwtToken) {
         submitForm(jwtToken);
       } else {
-        show({
-          type: 'error',
-          title: 'Authentication Error',
-          message: 'Authentication token is missing',
-          primaryAction: {
-            label: 'Login',
-            onPress: () => router.replace("../login")
-          }
-        });
+        Alert.alert("Error", "Authentication token is missing");
       }
     } catch (error) {
       console.error("❌ Outer error:", error);
-      show({
-        type: 'error',
-        title: 'Error',
-        message: (error as Error).message || "An unknown error occurred",
-        primaryAction: {
-          label: 'Try Again',
-          onPress: () => handleSubmit()
-        },
-        secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
-      });
+      Alert.alert(
+        "Error",
+        (error as Error).message || "An unknown error occurred"
+      );
     }
   };
 
@@ -473,26 +408,20 @@ const AdditionalDetails: React.FC = () => {
           console.log("✅ Request created:", requestResponse.data);
 
           if (requestResponse.data.success) {
-            show({
-              type: 'success',
-              title: 'Success',
-              message: 'Your request has been created successfully!',
-              primaryAction: {
-                label: 'Continue',
-                onPress: () => {
-                  router.replace({
-                    pathname: "/screens/RequestSuccessScreen",
-                    params: {
-                      requestId: requestResponse.data.data.id,
-                      goodsName: productDetails.name,
-                    },
-                  });
-                }
-              }
-            });
-            
             console.log("Emitting socket event for new request...");
-            emitRequestCreated(requestResponse.data.data.id);
+            const socket = io(`${BACKEND_URL}/processTrack`);
+            
+            socket.emit("requestCreated", {
+              requestId: requestResponse.data.data.id
+            });
+
+            router.replace({
+              pathname: "/screens/RequestSuccessScreen",
+              params: {
+                requestId: requestResponse.data.data.id,
+                goodsName: productDetails.name,
+              },
+            });
           }
         }
       } catch (error: any) {
@@ -509,19 +438,7 @@ const AdditionalDetails: React.FC = () => {
             ? "Request was made but no response received"
             : "Request setup failed",
         });
-        show({
-          type: 'error',
-          title: 'Error',
-          message: error.message || "An unknown error occurred",
-          primaryAction: {
-            label: 'Try Again',
-            onPress: () => handleSubmit()
-          },
-          secondaryAction: {
-            label: 'Cancel',
-            onPress: () => hide()
-          }
-        });
+        Alert.alert("Error", error.message || "An unknown error occurred");
       }
     } catch (error: any) {
       console.error("❌ Error:", error);
@@ -537,44 +454,12 @@ const AdditionalDetails: React.FC = () => {
           ? "Request was made but no response received"
           : "Request setup failed",
       });
-      show({
-        type: 'error',
-        title: 'Error',
-        message: (error as Error).message || "An unknown error occurred",
-        primaryAction: {
-          label: 'Try Again',
-          onPress: () => handleSubmit()
-        },
-        secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
-      });
+      Alert.alert(
+        "Error",
+        (error as Error).message || "An unknown error occurred"
+      );
     }
   }
-
-  // Modify handleQuantityChange function
-  const handleQuantityChange = (text: string) => {
-    // Check if the input contains non-numeric characters
-    if (/[^0-9]/.test(text)) {
-      show({
-        type: 'error',
-        title: 'Invalid Input',
-        message: 'Please enter only numbers for quantity',
-        primaryAction: {
-          label: 'OK',
-          onPress: () => hide()
-        }
-      });
-      
-      // Only allow numeric characters
-      const numericValue = text.replace(/[^0-9]/g, '');
-      setQuantity(numericValue);
-    } else {
-      // Input is already numeric, just set it directly
-      setQuantity(text);
-    }
-  };
 
   return (
     <ScrollView style={styles.container} scrollEnabled={!dropdownVisible}>
@@ -743,7 +628,7 @@ const AdditionalDetails: React.FC = () => {
         <InputField
           label="Quantity *"
           value={quantity}
-          onChangeText={handleQuantityChange}
+          onChangeText={setQuantity}
           placeholder="Enter quantity"
           keyboardType="numeric"
           style={styles.input}
@@ -790,6 +675,9 @@ const AdditionalDetails: React.FC = () => {
           <BaseButton
             size="large"
             onPress={handleSubmit}
+            disabled={
+              !categoryId || !quantity || !goodsLocation || !goodsDestination
+            }
           >
             <BodyMedium style={styles.buttonText}>
               Create Product & Request
