@@ -5,8 +5,8 @@ import axiosInstance from '@/config';
 import OrderCard from '../../components/ordersClient';
 import { Sponsorship } from '../../types/Sponsorship';
 import { useRouter } from 'expo-router';
+import { TabBar } from "@/components/navigation/TabBar";
 
-type FetchOrdersResponse = Sponsorship[];
 
 const OrdersSponsor: React.FC = () => {
     const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
@@ -14,6 +14,7 @@ const OrdersSponsor: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [token, setToken] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<string>("orders");
 
     // Function to retrieve JWT token from AsyncStorage
     const getToken = async (): Promise<string | null> => {
@@ -38,7 +39,7 @@ const OrdersSponsor: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axiosInstance.get<FetchOrdersResponse>('/api/ordersSponsor', {
+            const response = await axiosInstance.get<Sponsorship[]>('/api/ordersSponsor', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     Accept: 'application/json',
@@ -86,29 +87,44 @@ const OrdersSponsor: React.FC = () => {
         initialize();
     }, []);
 
-    // Handle press on card
-    const handleCardPress = (orderId: number) => {
-        console.log(`Card pressed for order ID: ${orderId}`);
-        // Add navigation or other logic here
+    // Update the handleCardPress function
+    const handleCardPress = (orderId: number, status: string) => {
+        console.log(`Card pressed for order ID: ${orderId} with status: ${status}`);
+        if (status === 'IN_TRANSIT') {
+            router.push({
+                pathname: "/sponsorshipTrack/deliveryBuyer",
+                params: { processId: orderId }
+            });
+        }
     };
 
-    // Handle payment button press
-    const handlePayment = (orderId: number) => {
-        router.push({ pathname: "/sponsorshipTrack/initializationBuyer", params: { id: orderId } });
+    // Update the handlePayment function to handle different statuses
+    const handlePayment = (orderId: number, status: string) => {
+        console.log(`Payment pressed for order ID: ${orderId} with status: ${status}`);
+            router.push({ 
+                pathname: "/sponsorshipTrack/initializationBuyer", 
+                params: { id: orderId } 
+            });
+        
     };
 
-    // Render each OrderCard
+    // Update the renderItem function to pass status
     const renderItem = ({ item }: { item: Sponsorship }) => {
-        if (!item || !item.id || !item.sponsorship || !item.sponsorship.id) return null; // Skip invalid items
+        if (!item || !item.id || !item.sponsorship || !item.sponsorship.id) return null;
         return (
             <OrderCard
                 order={item}
                 sponsorship={item.sponsorship}
-                onPress={() => handleCardPress(item.id)}
-                onPayment={() => handlePayment(item.id)}
-                onDelete={() => handleDelete(item.id)} // Pass the handleDelete function
+                onPress={() => handleCardPress(item.id, item.status)}
+                onPayment={() => handlePayment(item.id, item.status)}
+                onDelete={() => handleDelete(item.id)}
             />
         );
+    };
+
+    const handleTabPress = (tabName: string) => {
+        setActiveTab(tabName);
+        // Add navigation logic if needed
     };
 
     return (
@@ -127,6 +143,7 @@ const OrdersSponsor: React.FC = () => {
                     contentContainerStyle={styles.listContent}
                 />
             )}
+            <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
         </View>
     );
 };
