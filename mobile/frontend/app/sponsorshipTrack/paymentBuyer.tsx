@@ -18,13 +18,13 @@ const CreditCardPayment: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [sponsorship, setSponsorship] = useState<any>(null);
   const router = useRouter();
-
+  const orderId = params.orderId
   // Get parameters from useLocalSearchParams
   const sponsorShipId = params.sponsorshipId as string;
   const type = (params.type as string) || 'sponsorship';
   const returnPath = params.returnPath as string;
   const [token, setToken] = useState<null | string>(null);
-
+  console.log("hello payment paramssss", params)
   // Platform fee (5% of the price)
   const platformFeePercentage = 0.05;
   const platformFee = sponsorship?.amount
@@ -192,6 +192,7 @@ const CreditCardPayment: React.FC = () => {
       setLoading(true);
 
       const paymentData = {
+        orderId,
         sponsorShipId,
         amount: parseFloat(totalAmount) * 100,
         cardNumber: cardNumber.replace(/\s/g, ''),

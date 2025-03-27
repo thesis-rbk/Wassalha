@@ -5,6 +5,7 @@ export interface Sponsorship {
     createdAt: string;
     updatedAt: string;
     recipientId: number;
+    duration: string
     recipient: {
         id: number;
         name: string;
@@ -135,6 +136,7 @@ export interface SponsorshipCardProps {
     price: string
     description: string
     isActive: boolean
+    duration: string
     onPress: () => void
     onBuyPress: () => void
     sponsorship: {
@@ -176,3 +178,9 @@ export interface OrderCardProps {
     onAccept?: () => void;
     onReject?: () => void;
 }
+export interface AccountDetailsModalProps {
+    visible: boolean;
+    onClose: () => void;
+    onSubmit: (details: { type: string; details: string | { email: string; password: string } }) => void;
+}
+

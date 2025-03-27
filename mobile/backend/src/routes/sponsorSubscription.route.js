@@ -23,4 +23,6 @@ router.post("/createOrderSponsor", authenticateUser, sponsor.createOrderSponsor)
 router.get("/requestsSponsor", authenticateUser, sponsor.getAllRequestsSponsor)
 router.get("/ordersSponsor", authenticateUser, sponsor.getallOrders)
 router.put("/confirmedUpdate", sponsor.confirmedUpdate)
+router.delete("/ordersSponsor/:id", sponsor.deleteOrder)
+router.get("/getOneSponsorSip/:id", sponsor.findOneSponsorShip)
 module.exports = router;

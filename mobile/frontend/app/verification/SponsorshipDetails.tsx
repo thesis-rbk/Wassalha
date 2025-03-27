@@ -2,28 +2,34 @@
 
 import React, { useState, useEffect } from "react"
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from "react-native"
-import { useRoute, type RouteProp, useNavigation } from "@react-navigation/native"
+import { useRoute, useNavigation } from "@react-navigation/native"
 import { Image as ExpoImage } from "expo-image"
 import type { Sponsorship } from "@/types/Sponsorship"
 import axiosInstance from "@/config"
-import platformImages from "../../types/Sponsorship"
+import platformImages from "@/types/Sponsorship" // Fixed import path - should point to actual images file
 import { Ionicons } from "@expo/vector-icons"
 import { TabBar } from "@/components/navigation/TabBar"
-import { RouteParams } from "@/types/Sponsorship"
-import NavigationProp from "@/types/navigation.d"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { RouteProp } from "@react-navigation/native"
+
+// Define the route params type
+type SponsorshipDetailsRouteParams = {
+    SponsorshipDetails: {
+        id: number
+    }
+}
 
 const SponsorshipDetails: React.FC = () => {
     const [activeTab, setActiveTab] = useState("Home")
-    const route = useRoute<RouteProp<RouteParams, "SponsorshipDetails">>()
-    const navigation = useNavigation<NavigationProp>()
+    const route = useRoute<RouteProp<SponsorshipDetailsRouteParams, "SponsorshipDetails">>()
+    const navigation = useNavigation<any>() // Using any temporarily, should be typed properly
     const { id } = route.params
     const [sponsorship, setSponsorship] = useState<Sponsorship | null>(null)
     const [loading, setLoading] = useState(true)
     const [averageRating, setAverageRating] = useState<number | null>(null)
     const [reviewCount, setReviewCount] = useState<number>(0)
     const [token, setToken] = useState<string | null>(null)
-
+    console.log("ifddddd from details", id)
     // Fetch token from AsyncStorage
     const fetchToken = async () => {
         try {
@@ -37,7 +43,7 @@ const SponsorshipDetails: React.FC = () => {
     // Fetch sponsorship details
     const fetchSponsorshipDetails = async () => {
         try {
-            const response = await axiosInstance.get(`/api/one/${id}`)
+            const response = await axiosInstance.get(`/api/getOneSponsorSip/${id}`)
             setSponsorship(response.data)
         } catch (error) {
             console.error("Error fetching sponsorship details:", error)
@@ -62,8 +68,6 @@ const SponsorshipDetails: React.FC = () => {
             }
         } catch (err) {
             console.error("Error fetching reviews:", err)
-            setAverageRating(0)
-            setReviewCount(0)
         }
     }
 
@@ -79,14 +83,13 @@ const SponsorshipDetails: React.FC = () => {
             console.error("Invalid sponsorship data:", sponsorship)
             return
         }
+
         const payload = {
             serviceProviderId: sponsorship.sponsorId,
             sponsorshipId: id,
             amount: sponsorship.price,
             status: "PENDING"
         }
-        console.log("heelo sponso", sponsorship)
-        console.log("Sending payload to /api/createOrderSponsor:", payload)
 
         try {
             const response = await axiosInstance.post("/api/createOrderSponsor", payload, {
@@ -99,15 +102,15 @@ const SponsorshipDetails: React.FC = () => {
             navigation.navigate("verification/ClientsOrders")
         } catch (error) {
             console.error("Error creating order:", error)
-            Alert.alert("Error", `Failed to create order: ${error}`)
+            Alert.alert("Error", "Failed to create order")
         }
     }
 
     useEffect(() => {
-        fetchToken()
         fetchSponsorshipDetails()
         fetchReviews()
-    }, [id])
+        fetchToken()
+    }, [])
 
     if (loading) {
         return (
@@ -156,12 +159,12 @@ const SponsorshipDetails: React.FC = () => {
                             <ExpoImage
                                 source={platformImage}
                                 style={styles.platformImage}
-                                resizeMode="contain"
+                                contentFit="contain"
                                 accessibilityLabel={`${sponsorship.platform} logo`}
                             />
                             <View style={styles.headerText}>
                                 <Text style={styles.platform}>{sponsorship.platform}</Text>
-                                <Text style={styles.price}>${sponsorship.price?.toFixed(2)}</Text>
+                                <Text style={styles.price}>TDN{sponsorship.price?.toFixed(2)}</Text>
                             </View>
                         </View>
 

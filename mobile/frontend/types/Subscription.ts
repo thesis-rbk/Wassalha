@@ -1,6 +1,6 @@
 import { User } from './User';
 import { Category } from './Category';
-
+import { Sponsorship } from './Sponsorship';
 export interface Subscription {
     id: number;
     name: string;
@@ -12,4 +12,11 @@ export interface Subscription {
     category: Category;
     isActive: boolean;
     users: User[];
+}
+export interface OrderCardProps {
+    order: Sponsorship;
+    sponsorship: Sponsorship['sponsorship'];
+    onPress?: () => void;
+    onPayment?: () => void;
+    onDelete?: () => void;
 }

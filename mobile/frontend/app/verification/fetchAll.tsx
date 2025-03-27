@@ -52,7 +52,6 @@ const SponsorshipsScreen: React.FC = () => {
     const tokenVerif = async () => {
         try {
             const tokeny = await AsyncStorage.getItem("jwtToken");
-            console.log("token:", tokeny);
             setToken(tokeny);
         } catch (error) {
             console.error("Error fetching token:", error);
@@ -65,7 +64,6 @@ const SponsorshipsScreen: React.FC = () => {
             const response = await axiosInstance.get("/api/checkSponsor", {
                 headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
             });
-            console.log("is sponsor:", response.data);
             setIsSponsor(response.data);
         } catch (err) {
             console.log("Error in check function:", err);
@@ -104,7 +102,7 @@ const SponsorshipsScreen: React.FC = () => {
             if (view === "all") fetchSponsorships();
         }, [searchQuery, view])
     );
-
+    console.log("sponsorships", sponsorships)
     const handleBuyPress = async (serviceProviderId: number, sponsorshipId: number, amount: number, status: string) => {
         if (!token) {
             Alert.alert("Error", "Please log in to make a purchase");
@@ -124,7 +122,6 @@ const SponsorshipsScreen: React.FC = () => {
             amount,
             status: "PENDING"
         };
-        console.log("Sending payload to /api/createOrderSponsor:", payload);
 
         try {
             const response = await axiosInstance.post("/api/createOrderSponsor", payload, {
@@ -157,14 +154,14 @@ const SponsorshipsScreen: React.FC = () => {
     };
 
     const renderItem = ({ item }: { item: Sponsorship }) => {
-        console.log("Sponsorship item:", item);
         return (
             <SponsorshipCard
                 id={item.id}
                 platform={item.platform ?? ""}
-                price={`$${(item.price ?? 0).toFixed(2)}`}
+                price={`TND${(item.price ?? 0).toFixed(2)}`}
                 description={item.description ?? ""}
                 isActive={item.isActive ?? false}
+                duration={item.duration}
                 onPress={() => navigation.navigate("verification/SponsorshipDetails", { id: item.id })}
                 onBuyPress={() => handleBuyPress(
                     item.sponsorId, // Fallback to 0 if undefined

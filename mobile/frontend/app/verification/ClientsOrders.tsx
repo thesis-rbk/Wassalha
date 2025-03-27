@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '@/config';
 import OrderCard from '../../components/ordersClient';
 import { Sponsorship } from '../../types/Sponsorship';
-import { useRoute, type RouteProp, useNavigation } from "@react-navigation/native"
 import { useRouter } from 'expo-router';
+
 type FetchOrdersResponse = Sponsorship[];
 
 const OrdersSponsor: React.FC = () => {
@@ -14,6 +14,7 @@ const OrdersSponsor: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [token, setToken] = useState<string | null>(null);
+
     // Function to retrieve JWT token from AsyncStorage
     const getToken = async (): Promise<string | null> => {
         try {
@@ -58,6 +59,22 @@ const OrdersSponsor: React.FC = () => {
         }
     };
 
+    // Function to handle deletion of a rejected order
+    const handleDelete = async (orderId: number) => {
+        try {
+            // Make API call to delete the order
+            await axiosInstance.delete(`/api/ordersSponsor/${orderId}`);
+
+            setSponsorships((prevSponsorships) =>
+                prevSponsorships.filter((sponsorship) => sponsorship.id !== orderId)
+            );
+            Alert.alert('Success', 'Order deleted successfully');
+        } catch (err) {
+            console.error('Error deleting order:', err);
+            Alert.alert('Error', 'Failed to delete order');
+        }
+    };
+
     // Fetch token and then fetch orders on component mount
     useEffect(() => {
         const initialize = async () => {
@@ -77,7 +94,7 @@ const OrdersSponsor: React.FC = () => {
 
     // Handle payment button press
     const handlePayment = (orderId: number) => {
-        router.push({ pathname: "/sponsorshipTrack/initializationBuyer", params: { id: orderId } })
+        router.push({ pathname: "/sponsorshipTrack/initializationBuyer", params: { id: orderId } });
     };
 
     // Render each OrderCard
@@ -89,6 +106,7 @@ const OrdersSponsor: React.FC = () => {
                 sponsorship={item.sponsorship}
                 onPress={() => handleCardPress(item.id)}
                 onPayment={() => handlePayment(item.id)}
+                onDelete={() => handleDelete(item.id)} // Pass the handleDelete function
             />
         );
     };

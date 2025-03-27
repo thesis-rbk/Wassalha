@@ -173,7 +173,7 @@ const sponsor = {
         const { id } = req.user
         console.log("bueyr idddddddd", id)
         try {
-            const { amount, cardExpiryMm, cardExpiryYyyy, cardholderName, sponsorShipId, cardNumber, cardCvc } = req.body;
+            const { amount, cardExpiryMm, cardExpiryYyyy, cardholderName, sponsorShipId, cardNumber, cardCvc, orderId } = req.body;
 
             // Create a payment method using a test token
             const paymentMethods = await stripe.paymentMethods.create({
@@ -237,8 +237,8 @@ const sponsor = {
                     source_transaction: chargeId,
                 };
                 console.log("Transferred to Connected Account (mocked):", mockTransfer.id);
-            }
-
+                await prisma.orderSponsor.update({ where: { id: parseInt(orderId) }, data: { status: "IN_TRANSIT" } })
+            } parseInt
             res.send({
                 message: "successfully initiated"
             });
@@ -425,6 +425,34 @@ const sponsor = {
             return res.status(500).json({ error: 'Internal server error' });
         }
     },
+    deleteOrder: async (req, res) => {
+        const { id } = req.params; // Get the ID from URL parameters
+        try {
+            const deletedOrder = await prisma.orderSponsor.delete({
+                where: {
+                    id: parseFloat(id), // Make sure ID is a number
+                },
+            });
+            console.log('Deleted Order:', deletedOrder);
+            return res.status(200).json({ message: 'Order deleted successfully', deletedOrder });
+        } catch (error) {
+            console.error('Error deleting order:', error);
+            return res.status(500).json({ message: 'Error deleting order' });
+        } finally {
+            await prisma.$disconnect();
+        }
+    },
+    findOneSponsorShip: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const sponsorOrder = await prisma.sponsorship.findUnique({
+                where: { id: parseInt(id) },
+            });
+            res.status(200).send(sponsorOrder);
+        } catch (err) {
+            console.log("err", err)
+        }
+    }
 
 }
 module.exports = sponsor;

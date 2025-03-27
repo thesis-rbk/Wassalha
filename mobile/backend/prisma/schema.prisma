@@ -338,7 +338,8 @@ model User {
   sponsorshipsCreated Sponsorship[]  @relation("UserSponsorshipsCreated")
   OrderSponsor        OrderSponsor[]
 
-  sponsoredRequests Request[] @relation("SponsoredRequests")
+  sponsoredRequests Request[]        @relation("SponsoredRequests")
+  CodeSubmission    CodeSubmission[]
 }
 
 // ========== PROFILE ==========
@@ -472,28 +473,29 @@ model Goods {
 
 // ========== REQUEST ==========
 model Request {
-  id              Int      @id @default(autoincrement())
-  status          String   @default("PENDING")
-  sponsorId       Int?     // Add this field
-  userId          Int
-  user            User     @relation(fields: [userId], references: [id])
+  id        Int    @id @default(autoincrement())
+  status    String @default("PENDING")
+  sponsorId Int? // Add this field
+  userId    Int
+  user      User   @relation(fields: [userId], references: [id])
 
-  goodsId         Int
-  goods           Goods    @relation(fields: [goodsId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  goodsId Int
+  goods   Goods @relation(fields: [goodsId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  quantity        Int
-  goodsLocation   String
+  quantity         Int
+  goodsLocation    String
   goodsDestination String
-  pickupId        Int?
-  pickup          Pickup?    @relation(fields: [pickupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  pickupId         Int?
+  pickup           Pickup? @relation(fields: [pickupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  date            DateTime
-  withBox         Boolean    @default(false)
+  date    DateTime
+  withBox Boolean  @default(false)
 
-  order           Order?     @relation
-  notifications   Notification[]
+  order         Order?         @relation
+  notifications Notification[]
 
-  sponsor         User?      @relation("SponsoredRequests", fields: [sponsorId], references: [id])
+  sponsor        User?            @relation("SponsoredRequests", fields: [sponsorId], references: [id])
+  CodeSubmission CodeSubmission[]
 }
 
 // ========== ORDER ==========
@@ -898,8 +900,8 @@ model CodeSubmission {
   sponsorId      Int
   code           String?
   accountDetails String?  @db.Text
-  type           String   // 'CODE' or 'ACCOUNT'
-  status         String   // 'SUBMITTED', 'DELIVERED', etc.
+  type           String // 'CODE' or 'ACCOUNT'
+  status         String // 'SUBMITTED', 'DELIVERED', etc.
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   request        Request  @relation(fields: [requestId], references: [id])
