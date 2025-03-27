@@ -9,6 +9,8 @@ import {
   Animated,
   Easing,
 } from "react-native";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store";
 import SegmentedControl from "@/components/SegmentedControl";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -23,12 +25,14 @@ import { useRouter } from "expo-router";
 import { decode as atob } from "base-64";
 import { GoodsProcess, ProcessStatus } from "@/types/GoodsProcess";
 import { LinearGradient } from 'expo-linear-gradient';
+import { io } from "socket.io-client";
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
 const CARD_SPACING = 12;
 import { TabBar } from "@/components/navigation/TabBar";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
+import { AsyncLocalStorage } from "async_hooks";
 
 // Custom hook to ensure we have user data
 const useReliableAuth = () => {
@@ -105,7 +109,8 @@ export default function OrderPage() {
   const { user, loading: authLoading } = useReliableAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Order");
-
+  console.log(user,"USER");
+  const room=user?.id;
   // Animation value for the "Make Offer" button
   const pulseAnim = useRef(new Animated.Value(1)).current;
   
@@ -233,7 +238,7 @@ export default function OrderPage() {
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
-      const response = await axiosInstance.get("/api/requests");
+      const response = await axiosInstance.get("/api/requests/get");
       
       // Filter the requests to only show those that are in "PENDING" status
       // AND either don't have an associated order OR have a cancelled order
@@ -621,6 +626,50 @@ export default function OrderPage() {
   const handleProfilePress = () => {
     router.push("/profile");
   };
+
+  // Inside OrderPage component, add this useEffect
+  const socketRef = useRef<any>(null);
+
+  useEffect(() => {
+    console.log("🔄 Setting up socket connection in Orders page");
+    const socket = io(`${BACKEND_URL}/processTrack`,{
+      transports: ["websocket"],
+    });
+    socket.on("connect", () => {
+      console.log("🔌 Orders page socket connected");
+      const processId = room; // Example; get this from props, context, or params
+      socket.emit("joinProcessRoom", processId);
+      console.log(`Joining process room: process:${processId}`);
+    
+    });
+
+    socket.on("newRequest", (data) => {
+      console.log("📦 New request received:", data);
+      fetchRequests();
+    });
+
+    socket.on("processStatusChanged", (data) => {
+      console.log("🔄 Status changed to:", data.status);
+      
+      fetchRequests();
+      fetchGoodsProcesses();
+    });
+    socket.on("offerMadeOrder", (data) => {
+      console.log("🔄 Offer made for you:", data);
+      setRequests((prev) =>
+        prev.map((p) => (p.id === data.requestId ? data : p))
+      );
+      fetchGoodsProcesses();
+
+    });
+    socket.on("disconnect", () => {
+      console.log("🔌 Socket disconnected");
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   return (
     <ThemedView style={styles.container}>

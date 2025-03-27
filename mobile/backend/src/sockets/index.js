@@ -3,6 +3,7 @@ require("dotenv").config();
 // Import Socket.IO server and our feature handlers
 const { Server } = require("socket.io");
 const notificationHandlers = require("./notifications/notificationSocket");
+const processTrackSocket = require("./processTrack/processTrackSocket");
 const { trackingHandlers } = require("./tracking/trackingSocket");
 const {
   chatHandlers,
@@ -57,10 +58,14 @@ const initializeSocket = (server) => {
   setIO(io);
 
   // Create separate channels (namespaces) for different features
-  const notifications = io.of("/notifications"); // Notification channel
-  const tracking = io.of("/tracking"); // Tracking channel
-  const chat = io.of("/chat"); // Chat channel
-  const pickup = io.of("/pickup"); // Pickup channel
+  const notifications = io.of("/notifications");
+  const tracking = io.of("/tracking");
+  const chat = io.of("/chat");
+  const pickup = io.of("/pickup");
+  const processTrack = io.of("/processTrack");
+
+  // Set up processTrack handlers once
+  processTrackSocket(processTrack);
 
   // Handle connections to notification namespace
   notifications
