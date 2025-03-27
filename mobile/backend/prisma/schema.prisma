@@ -331,6 +331,8 @@ model User {
   OrderSponsor        OrderSponsor[]
 
   sponsoredRequests Request[] @relation("SponsoredRequests")
+  codeSubmission  CodeSubmission[]
+
 }
 
 // ========== PROFILE ==========
@@ -486,7 +488,9 @@ model Request {
   notifications   Notification[]
 
   sponsor         User?      @relation("SponsoredRequests", fields: [sponsorId], references: [id])
+  codeSubmission  CodeSubmission[]
 }
+
 
 // ========== ORDER ==========
 model Order {
