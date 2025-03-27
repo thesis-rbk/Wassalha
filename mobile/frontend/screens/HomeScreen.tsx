@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
+  Dimensions,
   View,
   StyleSheet,
   ScrollView,
@@ -28,29 +29,23 @@ export default function HomeScreen() {
   const sponsorsScrollRef = useRef<ScrollView>(null);
   const scrollAnimationRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Track user interaction with scrolling
   const [userScrolling, setUserScrolling] = useState(false);
-
-  // Track current scroll positions
   const [scrollPositions, setScrollPositions] = useState({
     travelers: 0,
-    sponsors: 0
+    sponsors: 0,
   });
-
-  // Store content dimensions
   const [contentWidths, setContentWidths] = useState({
     travelers: 0,
-    sponsors: 0
+    sponsors: 0,
   });
   const [containerWidths, setContainerWidths] = useState({
     travelers: 0,
-    sponsors: 0
+    sponsors: 0,
   });
 
   useEffect(() => {
     handleBestTraveler();
 
-    // Only start auto-scrolling if we have data
     if (travelers.length > 0 && sponsors.length > 0) {
       startAutoScroll();
     }
@@ -69,22 +64,19 @@ export default function HomeScreen() {
   };
 
   const startAutoScroll = () => {
-    // Don't start auto-scroll if user is actively scrolling
     if (userScrolling) return;
 
-    stopAutoScroll(); // Clear any existing interval
+    stopAutoScroll();
 
     scrollAnimationRef.current = setInterval(() => {
       if (!userScrolling && travelersScrollRef.current && travelers.length > 0) {
         const maxScrollX = Math.max(0, contentWidths.travelers - containerWidths.travelers);
         const newX = scrollPositions.travelers + 1;
 
-        // Only scroll if we haven't reached the end
         if (newX < maxScrollX) {
           travelersScrollRef.current.scrollTo({ x: newX, animated: false });
-          setScrollPositions(prev => ({ ...prev, travelers: newX }));
+          setScrollPositions((prev) => ({ ...prev, travelers: newX }));
         } else {
-          // Stop scrolling when reaching the end
           stopAutoScroll();
         }
       }
@@ -93,16 +85,14 @@ export default function HomeScreen() {
         const maxScrollX = Math.max(0, contentWidths.sponsors - containerWidths.sponsors);
         const newX = scrollPositions.sponsors + 1;
 
-        // Only scroll if we haven't reached the end
         if (newX < maxScrollX) {
           sponsorsScrollRef.current.scrollTo({ x: newX, animated: false });
-          setScrollPositions(prev => ({ ...prev, sponsors: newX }));
+          setScrollPositions((prev) => ({ ...prev, sponsors: newX }));
         } else {
-          // Stop scrolling when reaching the end
           stopAutoScroll();
         }
       }
-    }, 50); // Adjust this value for scroll speed (smaller = faster)
+    }, 50);
   };
 
   const stopAutoScroll = () => {
@@ -119,36 +109,34 @@ export default function HomeScreen() {
 
   const handleUserScrollEnd = () => {
     setUserScrolling(false);
-    // Don't restart auto-scroll after user interaction
   };
 
-  // Track scroll position changes
   const handleTravelersScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { x } = event.nativeEvent.contentOffset;
-    setScrollPositions(prev => ({ ...prev, travelers: x }));
+    setScrollPositions((prev) => ({ ...prev, travelers: x }));
   };
 
   const handleSponsorsScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { x } = event.nativeEvent.contentOffset;
-    setScrollPositions(prev => ({ ...prev, sponsors: x }));
+    setScrollPositions((prev) => ({ ...prev, sponsors: x }));
   };
 
   const onTravelersLayout = (event: LayoutChangeEvent) => {
     const { width } = event.nativeEvent.layout;
-    setContainerWidths(prev => ({ ...prev, travelers: width }));
+    setContainerWidths((prev) => ({ ...prev, travelers: width }));
   };
 
   const onSponsorsLayout = (event: LayoutChangeEvent) => {
     const { width } = event.nativeEvent.layout;
-    setContainerWidths(prev => ({ ...prev, sponsors: width }));
+    setContainerWidths((prev) => ({ ...prev, sponsors: width }));
   };
 
   const onTravelersContentSizeChange = (width: number) => {
-    setContentWidths(prev => ({ ...prev, travelers: width }));
+    setContentWidths((prev) => ({ ...prev, travelers: width }));
   };
 
   const onSponsorsContentSizeChange = (width: number) => {
-    setContentWidths(prev => ({ ...prev, sponsors: width }));
+    setContentWidths((prev) => ({ ...prev, sponsors: width }));
   };
 
   const services = [
@@ -200,6 +188,7 @@ export default function HomeScreen() {
                   key={service.title}
                   style={styles.serviceCard}
                   onPress={() => handleCardPress(service)}
+                // Removed accessibilityLabel as it is not part of CardProps
                 >
                   <View style={styles.serviceContent}>
                     {service.icon}
@@ -290,7 +279,8 @@ export default function HomeScreen() {
     </ThemedView>
   );
 }
-
+const { width } = Dimensions.get('window');
+const cardSize = (width - 48) / 2
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -321,14 +311,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   servicesGrid: {
-    flexDirection: "column",
+    flexDirection: "row", // Changed from "column" to "row"
+    flexWrap: "wrap", // Added to wrap cards into a 2x2 grid
     gap: 10,
-    justifyContent: "space-between",
+    justifyContent: "space-between", // Ensures even spacing
     width: "100%",
   },
   serviceCard: {
-    width: "100%",
-    height: 80,
+    width: cardSize, // Set the width dynamically
+    height: cardSize, // Set the height equal to width to make it square
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#fff",

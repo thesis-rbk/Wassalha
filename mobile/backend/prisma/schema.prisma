@@ -318,7 +318,6 @@ model User {
   serviceProvider ServiceProvider?
   profile         Profile?
 
-  // New relation for PickupSuggestion
   pickupSuggestions PickupSuggestion[]
 
   sentNotifications Notification[] @relation("SentNotifications")

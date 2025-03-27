@@ -1,11 +1,52 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Text, Animated } from "react-native";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
-import { ChevronRight } from "lucide-react-native";
-import { CardProps } from "@/types/CardProps";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Animated,
+  Dimensions,
+  SafeAreaView,
+} from "react-native";
+import { ChevronRight, Plane, ShoppingBag, MapPin, Repeat } from "lucide-react-native";
 
-// Use Animated for press animations
+// Simulated useColorScheme hook
+const useColorScheme = () => "light";
+
+// Simulated Colors constant
+const Colors = {
+  light: {
+    background: "#F5F7FA",
+    text: "#1A1A1A",
+    primary: "#007AFF",
+    secondary: "#66B2FF",
+    cardBackground: "#FFFFFF",
+    pressedBackground: "#E6F0FA",
+    iconBackground: "#E6F0FA",
+  },
+  dark: {
+    background: "#1C2526",
+    text: "#E0E0E0",
+    primary: "#66B2FF",
+    secondary: "#007AFF",
+    cardBackground: "#2A2E32",
+    pressedBackground: "#3A3E42",
+    iconBackground: "#3A3E42",
+  },
+};
+
+// CardProps type
+type CardProps = {
+  onPress: () => void;
+  children?: React.ReactNode;
+  style?: any;
+  icon?: React.ReactElement;
+  title?: string;
+  iconBackgroundColor?: string;
+  showChevron?: boolean;
+};
+
+// Card Component
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export function Card({
@@ -15,52 +56,49 @@ export function Card({
   icon,
   title,
   iconBackgroundColor,
-  showChevron = true,
+  showChevron = false,
 }: CardProps) {
-  const colorScheme = useColorScheme() ?? "light";
+  const colorScheme = (useColorScheme() ?? "light") as "light" | "dark";
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
-  const backgroundAnim = React.useRef(new Animated.Value(0)).current; // For background color change on press
+  const backgroundAnim = React.useRef(new Animated.Value(0)).current;
 
-  // Handle press-in animation (scale down + background change)
   const handlePressIn = () => {
     Animated.parallel([
       Animated.spring(scaleAnim, {
-        toValue: 0.95, // Slightly more pronounced scale down
-        friction: 8,
-        tension: 100,
+        toValue: 0.97,
+        friction: 10,
+        tension: 120,
         useNativeDriver: true,
       }),
       Animated.timing(backgroundAnim, {
-        toValue: 1, // Trigger background color change
-        duration: 150,
-        useNativeDriver: false, // Background color animations don't support native driver
-      }),
-    ]).start();
-  };
-
-  // Handle press-out animation (scale back up + reset background)
-  const handlePressOut = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
         toValue: 1,
-        friction: 8,
-        tension: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(backgroundAnim, {
-        toValue: 0,
-        duration: 150,
+        duration: 200,
         useNativeDriver: false,
       }),
     ]).start();
   };
 
-  // Interpolate background color for press effect
+  const handlePressOut = () => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 10,
+        tension: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backgroundAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  };
+
   const backgroundColor = backgroundAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [
-      colorScheme === "dark" ? "#1C2526" : "#FFFFFF", // Default background
-      colorScheme === "dark" ? "#2A2E32" : "#F0F4F8", // Pressed background
+      colorScheme === "dark" ? Colors.dark.cardBackground : Colors.light.cardBackground,
+      colorScheme === "dark" ? Colors.dark.pressedBackground : Colors.light.pressedBackground,
     ],
   });
 
@@ -72,50 +110,65 @@ export function Card({
       style={[
         styles.card,
         {
-          backgroundColor, // Animated background color
+          backgroundColor,
           shadowColor: colorScheme === "dark" ? "#000" : "#4A4A4A",
-          shadowOpacity: colorScheme === "dark" ? 0.4 : 0.2,
+          shadowOpacity: colorScheme === "dark" ? 0.3 : 0.15,
           transform: [{ scale: scaleAnim }],
         },
         style,
       ]}
-      accessibilityRole="button" // Improve accessibility
-      accessibilityLabel={title} // Add label for screen readers
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      testID={`card-${title?.toLowerCase()}`}
     >
+      {/* Icon */}
       {icon && (
         <View
           style={[
             styles.iconContainer,
             {
-              backgroundColor: iconBackgroundColor || (colorScheme === "dark" ? "#2A2E32" : "#F0F4F8"),
-              // Add a subtle gradient (you can use a library like `react-native-linear-gradient` for this)
+              backgroundColor: iconBackgroundColor || Colors[colorScheme].iconBackground,
             },
           ]}
         >
           {React.cloneElement(icon as React.ReactElement, {
-            color: iconBackgroundColor ? "#FFFFFF" : (colorScheme === "dark" ? "#66B2FF" : "#007AFF"),
-            size: 24, // Larger icon for better visibility
+            color: iconBackgroundColor ? "#FFFFFF" : Colors[colorScheme].primary,
+            size: 28,
           })}
         </View>
       )}
-      <View style={styles.textContainer}>
-        {title && (
-          <Text
-            style={[
-              styles.title,
-              { color: colorScheme === "dark" ? "#E0E0E0" : "#1A1A1A" },
-            ]}
-          >
-            {title}
-          </Text>
-        )}
-        {children}
-      </View>
+
+      {/* Title (Explicitly below the icon) */}
+      {title && (
+        <Text
+          style={[
+            styles.title,
+            { color: colorScheme === "dark" ? Colors.dark.text : Colors.light.text },
+          ]}
+        >
+          {title}
+        </Text>
+      )}
+
+      {/* Children */}
+      {children && (
+        <View style={styles.childrenContainer}>
+          {typeof children === "string" ? (
+            <Text style={[styles.childrenText, { color: colorScheme === "dark" ? Colors.dark.text : Colors.light.text }]}>
+              {children}
+            </Text>
+          ) : (
+            children
+          )}
+        </View>
+      )}
+
+      {/* Chevron */}
       {showChevron && (
         <View style={styles.chevronContainer}>
           <ChevronRight
-            color={colorScheme === "dark" ? "#66B2FF" : "#007BFF"}
-            size={24}
+            color={colorScheme === "dark" ? Colors.dark.secondary : Colors.light.primary}
+            size={20}
           />
         </View>
       )}
@@ -123,47 +176,136 @@ export function Card({
   );
 }
 
+// HomeScreen Component
+export default function HomeScreen() {
+  const colorScheme = useColorScheme() ?? "light";
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === "dark" ? Colors.dark.background : Colors.light.background }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={[styles.headerTitle, { color: "white" }]}>Home</Text>
+      </View>
+
+      {/* Card Grid */}
+      <View style={styles.cardGrid}>
+        <Card
+          title="Travel"
+          icon={<Plane />}
+          onPress={() => console.log("Travel pressed")}
+        />
+        <Card
+          title="Order"
+          icon={<ShoppingBag />}
+          onPress={() => console.log("Order pressed")}
+        />
+        <Card
+          title="Pickup"
+          icon={<MapPin />}
+          onPress={() => console.log("Pickup pressed")}
+        />
+        <Card
+          title="Subscription"
+          icon={<Repeat />}
+          onPress={() => console.log("Subscription pressed")}
+        />
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const { width } = Dimensions.get("window");
+const cardSize = (width - 48) / 2; // Adjusted for padding and gap
+
 const styles = StyleSheet.create({
-  card: {
+  // Container
+  container: {
+    flex: 1,
+  },
+
+  // Header
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 20, // Increased padding for better touch area
-    borderRadius: 24, // Softer, more modern border radius
-    borderWidth: 1,
-    borderColor: "rgba(0, 0, 0, 0.05)",
+    justifyContent: "center",
+    padding: 20,
+    backgroundColor: "#007BFF",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 1.5,
+  },
+
+  // Card Grid
+  cardGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    padding: 20,
+    gap: 20,
+  },
+
+  // Card Styles
+  card: {
+    flexDirection: "column", // Ensure vertical stacking
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 15,
+    borderRadius: 16,
+    borderWidth: 0,
     shadowOffset: {
       width: 0,
-      height: 6, // Larger shadow for more depth
+      height: 3,
     },
-    shadowRadius: 8,
-    elevation: 10, // Increased elevation for Android
-    marginVertical: 8, // More spacing between cards
-    minWidth: "100%",
-    height: 80, // Taller card for better readability
+    shadowRadius: 6,
+    shadowOpacity: 0.15,
+    elevation: 4,
+    width: cardSize,
+    height: cardSize,
+    backgroundColor: "#FFFFFF",
   },
+
+  // Icon Container
   iconContainer: {
-    width: 48, // Larger icon container
-    height: 48,
-    borderRadius: 16, // Softer corners
+    width: 56,
+    height: 56,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 20, // More spacing between icon and text
+    marginBottom: 12, // Space between icon and title
   },
-  textContainer: {
-    flex: 1,
-    justifyContent: "center",
-  },
+
+  // Title Styles
   title: {
-    fontSize: 18, // Larger font for better readability
-    fontWeight: "600", // Bolder for better hierarchy
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+    letterSpacing: 0.5,
   },
-  subtitle: {
-    fontSize: 14, // Smaller font for subtitle
+
+  // Children Container
+  childrenContainer: {
+    marginTop: 10,
+  },
+
+  // Children Text Styles
+  childrenText: {
+    fontSize: 14,
     fontWeight: "400",
-    marginTop: 2, // Spacing between title and subtitle
+    textAlign: "center",
   },
+
+  // Chevron Container
   chevronContainer: {
-    marginLeft: "auto",
-    justifyContent: "center",
+    marginTop: 10,
   },
 });
