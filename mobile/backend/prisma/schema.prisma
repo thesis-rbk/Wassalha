@@ -331,6 +331,10 @@ model User {
   OrderSponsor        OrderSponsor[]
 
   sponsoredRequests Request[] @relation("SponsoredRequests")
+
+  // Add these relation fields
+  submittedCodes    CodeSubmission[] @relation("UserSubmittedCodes")
+  sponsoredCodes    CodeSubmission[] @relation("UserSponsoredCodes")
 }
 
 // ========== PROFILE ==========
@@ -466,7 +470,7 @@ model Goods {
 model Request {
   id              Int      @id @default(autoincrement())
   status          String   @default("PENDING")
-  sponsorId       Int?     // Add this field
+  sponsorId       Int?
   userId          Int
   user            User     @relation(fields: [userId], references: [id])
 
@@ -486,6 +490,9 @@ model Request {
   notifications   Notification[]
 
   sponsor         User?      @relation("SponsoredRequests", fields: [sponsorId], references: [id])
+  
+  // Update the relation field for CodeSubmission
+  codeSubmissions CodeSubmission[] @relation("RequestCodeSubmissions")
 }
 
 // ========== ORDER ==========
@@ -894,6 +901,10 @@ model CodeSubmission {
   status         String   // 'SUBMITTED', 'DELIVERED', etc.
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  request        Request  @relation(fields: [requestId], references: [id])
-  sponsor        User     @relation(fields: [sponsorId], references: [id])
+  request        Request  @relation("RequestCodeSubmissions", fields: [requestId], references: [id])
+  sponsor        User     @relation("UserSponsoredCodes", fields: [sponsorId], references: [id])
+  
+  // Add relation to user who submitted the code (if different from sponsor)
+  submitter      User?    @relation("UserSubmittedCodes", fields: [submitterId], references: [id])
+  submitterId    Int?
 }

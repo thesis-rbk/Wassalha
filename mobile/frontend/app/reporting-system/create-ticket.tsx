@@ -173,14 +173,21 @@ export default function ReportIssuePage() {
         <Stack.Screen options={{ title: 'Report an Issue' }} />
         <ScrollView style={styles.scrollContainer}>
           <View style={styles.headerContainer}>
-            <AlertCircle size={24} color={Colors.light.primary} style={styles.icon} />
-            <ThemedText style={styles.headerText}>Report an Issue</ThemedText>
-            <TouchableOpacity
-              style={styles.myTicketsButton}
-              onPress={() => router.push('/reporting-system/MyTicketsPage')}
-            >
-              <ThemedText style={styles.myTicketsText}>My Tickets</ThemedText>
-            </TouchableOpacity>
+            <View style={styles.leftHeaderSection}>
+              <TouchableOpacity
+                style={styles.myTicketsButton}
+                onPress={() => router.push('/reporting-system/MyTicketsPage')}
+              >
+                <ThemedText style={styles.myTicketsText}>My Tickets</ThemedText>
+              </TouchableOpacity>
+              <ThemedText style={styles.ticketButtonDescription}>
+                View your ticket history
+              </ThemedText>
+            </View>
+            <View style={styles.rightHeaderSection}>
+              <AlertCircle size={24} color={Colors.light.primary} style={styles.icon} />
+              <ThemedText style={styles.headerText}>Report an Issue</ThemedText>
+            </View>
           </View>
           <ThemedText style={styles.description}>
             Check our common questions below. If your issue persists, submit a ticket.
@@ -307,17 +314,29 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 20,
+    paddingVertical: 8,
+  },
+  leftHeaderSection: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  rightHeaderSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    maxWidth: '60%',
   },
   icon: {
     marginRight: 8,
   },
   headerText: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '700',
     color: Colors.light.primary,
+    marginLeft: 8,
   },
   description: {
     fontSize: 16,
@@ -454,15 +473,23 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   myTicketsButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     backgroundColor: Colors.light.primary + '20',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.light.primary + '40',
   },
   myTicketsText: {
     fontSize: 16,
     color: Colors.light.primary,
     fontWeight: '600',
+  },
+  ticketButtonDescription: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 5,
+    marginLeft: 3,
   },
   buttonContainer: {
     width: '100%', 

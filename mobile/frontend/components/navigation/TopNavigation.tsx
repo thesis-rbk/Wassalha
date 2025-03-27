@@ -114,10 +114,10 @@ export function TopNavigation({
 
   const menuItems: SideMenu[] = [
     { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/screens/NotificationsScreen' },
-    { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
-    { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips', route: '/test/Travel' },
-    { icon: <Home size={24} color={Colors[colorScheme].text} />, label: 'Home', route: 'home' },
-    { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request', route: '/productDetails/create-order' },
+    // { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
+    // { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips', route: '/test/Travel' },
+
+    // { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request', route: '/productDetails/create-order' },
     {
       icon: isSponsor ? <DollarSign size={24} color={Colors[colorScheme].text} /> : <Users size={24} color={Colors[colorScheme].text} />,
       label: isSponsor ? 'Create Subscription' : 'Sponsorship',
@@ -242,7 +242,7 @@ export function TopNavigation({
             ))}
           </ScrollView>
 
-          <TouchableOpacity style={styles.darkModeToggle} onPress={toggleTheme}>
+          {/* <TouchableOpacity style={styles.darkModeToggle} onPress={toggleTheme}>
             {colorScheme === 'dark' ? (
               <Sun size={24} color={Colors[colorScheme].text} />
             ) : (
@@ -251,7 +251,7 @@ export function TopNavigation({
             <ThemedText style={styles.darkModeText}>
               {colorScheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
             </ThemedText>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </Animated.View>
     </>

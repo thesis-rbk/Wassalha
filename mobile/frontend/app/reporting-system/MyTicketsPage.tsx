@@ -73,6 +73,9 @@ export default function MyTicketsPage() {
         ) : tickets.length === 0 ? (
           <View style={styles.emptyContainer}>
             <ThemedText style={styles.emptyText}>You have no tickets yet.</ThemedText>
+            <ThemedText style={styles.buttonDescription}>
+              Need assistance? Create a new ticket to get help from our support team.
+            </ThemedText>
             <TouchableOpacity
               style={styles.createButton}
               onPress={() => router.push('/reporting-system/create-ticket')}
@@ -90,6 +93,9 @@ export default function MyTicketsPage() {
               showsVerticalScrollIndicator={false}
             />
             <View style={styles.buttonWrapper}>
+              <ThemedText style={styles.buttonDescription}>
+                Need more assistance? Our support team is ready to help.
+              </ThemedText>
               <TouchableOpacity
                 style={styles.createButton}
                 onPress={() => router.push('/reporting-system/create-ticket')}
@@ -158,7 +164,7 @@ const styles = StyleSheet.create({
   },
   ticketList: {
     paddingTop: 12,
-    paddingBottom: 200,
+    paddingBottom: 220,
   },
   ticketItem: {
     backgroundColor: '#f9f9f9',
@@ -192,13 +198,30 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: Platform.OS === 'ios' ? 100 : 90,
+    bottom: Platform.OS === 'ios' ? 120 : 110,
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 40,
-    marginBottom: 80,
+    paddingTop: 10,
+    paddingBottom: 30,
+    marginBottom: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 5,
   },
   bottomSpacer: {
     height: 120,
+  },
+  buttonDescription: {
+    fontSize: 16,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 20,
+    lineHeight: 22,
   },
 });
