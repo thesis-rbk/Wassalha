@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Sponsorship } from '../types/Sponsorship';
-import { OrderCardProps } from "../types/Subscription"
+import { OrderCardProps } from "../types/OrderCardProps"
+
+
 
 const OrderCard: React.FC<OrderCardProps> = ({ sponsorship, order, onPress, onPayment, onDelete }) => {
     const { price, platform, description } = sponsorship;

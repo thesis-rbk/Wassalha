@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import axiosInstance from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
+import { TabBar } from "@/components/navigation/TabBar";
 
 const CreditCardVerification = () => {
   const router = useRouter();
@@ -17,6 +18,7 @@ const CreditCardVerification = () => {
   const [cvv, setCvv] = useState('');
   const [cardholderName, setCardholderName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("verification");
 
   // Format card number with spaces
   const formatCardNumber = (text: string) => {
@@ -185,6 +187,13 @@ const CreditCardVerification = () => {
     return 'Unknown';
   };
 
+  const handleTabPress = (tabName: string) => {
+    setActiveTab(tabName);
+    if (tabName !== "verification") {
+      router.push(`/${tabName}`);
+    }
+  };
+
   return (
     <ThemedView style={styles.container}>
       <LinearGradient
@@ -300,6 +309,8 @@ const CreditCardVerification = () => {
           </ThemedText>
         </View>
       </ScrollView>
+
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   );
 };
