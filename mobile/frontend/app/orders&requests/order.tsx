@@ -30,7 +30,6 @@ import { io } from "socket.io-client";
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
 const CARD_SPACING = 12;
-import { useStatus } from '@/context/StatusContext';
 import { TabBar } from "@/components/navigation/TabBar";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
 import { AsyncLocalStorage } from "async_hooks";
@@ -114,7 +113,6 @@ export default function OrderPage() {
   const room=user?.id;
   // Animation value for the "Make Offer" button
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const { show, hide } = useStatus();
   
   // Create pulse animation effect
   useEffect(() => {
@@ -244,28 +242,20 @@ export default function OrderPage() {
       
       // Filter the requests to only show those that are in "PENDING" status
       // AND either don't have an associated order OR have a cancelled order
-      const filteredRequests = requests.filter((request: Request) => {
+      const filteredRequests = (response.data.data || []).filter((request: Request) => {
         // Check if the request is in PENDING status
         const isPending = request.status === "PENDING";
-        console.log(`Request ${request.id} status: ${request.status}, isPending: ${isPending}`);
         
         // Check if the request has no order or a cancelled order
         const hasNoActiveOrder = !request.order || request.order.orderStatus === "CANCELLED";
-        console.log(`Request ${request.id} hasOrder: ${!!request.order}, orderStatus: ${request.order?.orderStatus}, hasNoActiveOrder: ${hasNoActiveOrder}`);
         
         // Only include requests that meet both conditions
-        const shouldInclude = isPending && hasNoActiveOrder;
-        console.log(`Request ${request.id} shouldInclude: ${shouldInclude}`);
-        return shouldInclude;
+        return isPending && hasNoActiveOrder;
       });
       
-      console.log(`Filtered from ${requests.length} to ${filteredRequests.length} requests`);
+      console.log(`Filtered from ${response.data.data?.length || 0} to ${filteredRequests.length} requests`);
       
-      // TEMPORARY: Set all requests to see if filtering is the issue
-      setRequests(requests);
-      
-      // Normal functionality
-      // setRequests(filteredRequests);
+      setRequests(filteredRequests);
     } catch (error) {
       console.error("Error fetching requests:", error);
       setRequests([]);
