@@ -145,7 +145,7 @@ export default function PaymentScreen() {
             },
           });
         }
-        socket.emit("confirmProduct", {
+        socket.emit("confirmPayment", {
                   processId:params.idProcess,
                 });
         Alert.alert("Success", "Payment successful!");

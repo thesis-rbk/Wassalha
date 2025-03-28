@@ -180,9 +180,8 @@ const PaymentScreen = () => {
       console.log("🔌 Ophoto socket connected, ",room);
    
     })
-    socket.on("confirmProduct", (data) => {
-      // alert("hi");
-      console.log("🔄 photo updated to:", data);
+    socket.on("confirmPayment", (data) => {
+      console.log("🔄 payment updated to:", data);
       router.push({
                 pathname: "/processTrack/pickupSP",
                 params: params,

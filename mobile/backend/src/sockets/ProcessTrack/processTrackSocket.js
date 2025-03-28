@@ -47,9 +47,17 @@ module.exports = (processTrackIO) => {
         });
         socket.on("confirmProduct", (data) => {
             const {processId}   = data;
-            console.log(`🔄 verification photo${processId}  updated to `);
+            console.log(`🔄 verification product${processId}  updated to `);
             
             processTrackIO.to(`process:${processId}`).emit("confirmProduct", {
+                processId
+            });
+        });
+        socket.on("confirmPayment", (data) => {
+            const {processId}   = data;
+            console.log(`🔄 verification payment${processId}  updated to `);
+            
+            processTrackIO.to(`process:${processId}`).emit("confirmPayment", {
                 processId
             });
         });
