@@ -1,187 +1,165 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-  Dimensions,
-  TextInput,
-  ScrollView,
-  Text
-} from 'react-native';
-import {
-  Bell,
-  Menu,
-  ChevronRight,
-  Settings,
-  ShoppingBag,
-  Plane,
-  LogOut,
-  Moon,
-  Sun,
-  PenSquare,
-  DollarSign,
-  Users,
-  Home
-} from 'lucide-react-native';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { ThemedText } from '@/components/ThemedText';
-import { useTheme } from '@/context/ThemeContext';
-import { TopNavigationProps } from '@/types/TopNavigationProps';
-import { useSelector, useDispatch } from 'react-redux';
-import { useRouter, Link } from 'expo-router';
-import { SideMenu } from '@/types/Sidemenu';
-import { RootState } from '@/store';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { logout } from '../../store/authSlice';
-import { useNotification } from '@/context/NotificationContext';
-import axiosInstance from '@/config';
+"use client"
 
-// Updated SideMenu interface
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const MENU_WIDTH = SCREEN_WIDTH * 0.8;
+import { useEffect, useState } from "react"
+import { View, StyleSheet, TouchableOpacity, Animated, Dimensions, ScrollView, Text, StatusBar } from "react-native"
+import { Bell, Menu, ChevronRight, LogOut, PenSquare, DollarSign, Users, Home } from "lucide-react-native"
+import { Colors } from "@/constants/Colors"
+import { useColorScheme } from "@/hooks/useColorScheme"
+import { ThemedText } from "@/components/ThemedText"
+import { useTheme } from "@/context/ThemeContext"
+import type { TopNavigationProps } from "@/types/TopNavigationProps"
+import { useSelector, useDispatch } from "react-redux"
+import { useRouter } from "expo-router"
+import type { SideMenu } from "@/types/Sidemenu"
+import type { RootState } from "@/store"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { logout } from "../../store/authSlice"
+import { useNotification } from "@/context/NotificationContext"
+import axiosInstance from "@/config"
 
-export function TopNavigation({
-  title,
-  onNotificationPress,
-  onProfilePress,
-}: TopNavigationProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const { toggleTheme } = useTheme();
-  const [menuAnimation] = useState(new Animated.Value(-MENU_WIDTH));
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [tokeny, setToken] = useState<string | null>(null);
-  const [isSponsor, setIsSponsor] = useState<boolean>(false);
-  const router = useRouter();
-  const { user, token } = useSelector((state: RootState) => state.auth);
-  const dispatch = useDispatch();
-  const { unreadCount } = useNotification();
+const SCREEN_WIDTH = Dimensions.get("window").width
+const SCREEN_HEIGHT = Dimensions.get("window").height
+const MENU_WIDTH = SCREEN_WIDTH * 0.8 // Menu width is 80% of the screen width
+
+export function TopNavigation({ title, onNotificationPress, onProfilePress }: TopNavigationProps) {
+  const colorScheme = useColorScheme() ?? "light"
+  const { toggleTheme } = useTheme()
+  const [menuAnimation] = useState(new Animated.Value(-MENU_WIDTH))
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [tokeny, setToken] = useState<string | null>(null)
+  const [isSponsor, setIsSponsor] = useState<boolean>(false)
+  const router = useRouter()
+  const { user, token } = useSelector((state: RootState) => state.auth)
+  const dispatch = useDispatch()
+  const { unreadCount } = useNotification()
 
   const handleLogout = async () => {
     try {
-      console.log("Starting logout process...");
-
-      // 1. Clear Redux state
-      dispatch(logout());
-      console.log("Redux state cleared");
-
-      // 2. Clear ALL AsyncStorage items related to authentication
-      await AsyncStorage.removeItem("jwtToken");
-      await AsyncStorage.removeItem("token");
-      await AsyncStorage.removeItem("user");
-      console.log("AsyncStorage items cleared");
-
-      // 3. Navigate to login screen (only once)
-      router.replace("/auth/login");
-      console.log("Redirected to login");
+      console.log("Starting logout process...")
+      dispatch(logout())
+      console.log("Redux state cleared")
+      await AsyncStorage.removeItem("jwtToken")
+      await AsyncStorage.removeItem("token")
+      await AsyncStorage.removeItem("user")
+      console.log("AsyncStorage items cleared")
+      router.replace("/auth/login")
+      console.log("Redirected to login")
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error)
     }
-  };
+  }
 
   const tokenVerif = async () => {
-    const tokenys = await AsyncStorage.getItem('jwtToken');
-    console.log("token:", tokenys);
-    setToken(tokenys);
-  };
+    const tokenys = await AsyncStorage.getItem("jwtToken")
+    console.log("token:", tokenys)
+    setToken(tokenys)
+  }
 
   const toggleMenu = () => {
-    const toValue = isMenuOpen ? -MENU_WIDTH : 0;
+    const toValue = isMenuOpen ? -MENU_WIDTH : 0
     Animated.timing(menuAnimation, {
       toValue,
       duration: 300,
       useNativeDriver: true,
-    }).start();
-    setIsMenuOpen(!isMenuOpen);
-  };
+    }).start()
+    setIsMenuOpen(!isMenuOpen)
+  }
 
   const check = async () => {
     tokenVerif()
     try {
-      const response = await axiosInstance.get('/api/checkSponsor', {
+      const response = await axiosInstance.get("/api/checkSponsor", {
         headers: {
-          'Authorization': `Bearer ${tokeny}`,
-          'Accept': 'application/json',
+          Authorization: `Bearer ${tokeny}`,
+          Accept: "application/json",
         },
-      });
-      console.log("is sponsor:", response.data);
-      setIsSponsor(response.data);
+      })
+      console.log("is sponsor:", response.data)
+      setIsSponsor(response.data)
     } catch (err) {
-      console.log("Error in check function:", err);
+      console.log("Error in check function:", err)
     }
-  };
+  }
 
   const menuItems: SideMenu[] = [
-
-    { icon: <Home size={24} color={Colors[colorScheme].text} />, label: 'Home', route: 'home' },
-    { icon: <Bell size={24} color={Colors[colorScheme].text} />, label: 'Notifications', route: '/screens/NotificationsScreen' },
-   
-    // { icon: <ShoppingBag size={24} color={Colors[colorScheme].text} />, label: 'Orders', route: '/test/order' },
-    // { icon: <Plane size={24} color={Colors[colorScheme].text} />, label: 'Trips', route: '/test/Travel' },
-
-    // { icon: <PenSquare size={24} color={Colors[colorScheme].text} />, label: 'Make a Request', route: '/productDetails/create-order' },
+    { icon: <Home size={24} color={Colors[colorScheme].text} />, label: "Home", route: "home" },
     {
-      icon: isSponsor ? <DollarSign size={24} color={Colors[colorScheme].text} /> : <Users size={24} color={Colors[colorScheme].text} />,
-      label: isSponsor ? 'Create Subscription' : 'Sponsorship',
-      route: isSponsor ? 'verification/CreateSponsorPost' : 'screens/SponsorshipScreen' as any
+      icon: <Bell size={24} color={Colors[colorScheme].text} />,
+      label: "Notifications",
+      route: "/screens/NotificationsScreen",
+    },
+    {
+      icon: isSponsor ? (
+        <DollarSign size={24} color={Colors[colorScheme].text} />
+      ) : (
+        <Users size={24} color={Colors[colorScheme].text} />
+      ),
+      label: isSponsor ? "Create Subscription" : "Sponsorship",
+      route: isSponsor ? "verification/CreateSponsorPost" : ("screens/SponsorshipScreen" as any),
     },
     {
       icon: <PenSquare size={24} color={Colors[colorScheme].text} />,
-      label: 'Make a report',
-      route: '/reporting-system/create-ticket'
+      label: "Make a report",
+      route: "/reporting-system/create-ticket",
     },
     {
       icon: <PenSquare size={24} color={Colors[colorScheme].text} />,
-      label: 'Become a traveler',
-      route: '/traveler/becomeTraveler'
+      label: "Become a traveler",
+      route: "/traveler/becomeTraveler",
     },
-  
-    { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: 'Log Out', onPress: handleLogout },
-  ];
+    { icon: <LogOut size={24} color={Colors[colorScheme].text} />, label: "Log Out", onPress: handleLogout },
+  ]
 
   useEffect(() => {
     if (tokeny) {
-      check(); // Check if user is a sponsor whenever the token is updated
+      check()
     }
-  }, [tokeny]);
+  }, [tokeny])
 
   const handleRoutes = (item: SideMenu) => {
     try {
       if (item.onPress) {
-        item.onPress();
+        item.onPress()
       } else if (item.route) {
-        router.push(item.route as any);
+        router.push(item.route as any)
       }
+      toggleMenu() // Close the menu after navigation
     } catch (err) {
-      console.error('Error from navigation:', err);
+      console.error("Error from navigation:", err)
     }
-  };
+  }
 
   return (
     <>
-      <View style={[styles.container, { backgroundColor: "#007BFF" }]}>
-        <TouchableOpacity onPress={toggleMenu}>
+      <StatusBar backgroundColor="#007BFF" barStyle="light-content" translucent={false} />
+      <View style={styles.container}>
+        <TouchableOpacity
+          onPress={() => {
+            console.log("Menu icon pressed")
+            toggleMenu()
+          }}
+          style={styles.iconWrapper}
+        >
           <Menu color="white" size={24} />
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => {
+            console.log("Bell icon pressed")
             try {
-              console.log('Attempting to navigate to NotificationsScreen');
-              router.push('/screens/NotificationsScreen');
+              console.log("Attempting to navigate to NotificationsScreen")
+              router.push("/screens/NotificationsScreen")
             } catch (err) {
-              console.error('Navigation error:', err);
+              console.error("Navigation error:", err)
             }
           }}
+          style={styles.iconWrapper}
         >
           <View style={styles.notificationContainer}>
             <Bell color="white" size={24} />
             {unreadCount > 0 && (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </Text>
+                <Text style={styles.badgeText}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
               </View>
             )}
           </View>
@@ -191,7 +169,10 @@ export function TopNavigation({
       {isMenuOpen && (
         <TouchableOpacity
           style={styles.overlay}
-          onPress={toggleMenu}
+          onPress={() => {
+            console.log("Overlay pressed, closing menu")
+            toggleMenu()
+          }}
           activeOpacity={1}
         />
       )}
@@ -200,29 +181,27 @@ export function TopNavigation({
         style={[
           styles.menu,
           {
-            backgroundColor: Colors[colorScheme].background,
+            backgroundColor: Colors[colorScheme].background || "white",
             transform: [{ translateX: menuAnimation }],
           },
         ]}
       >
+        <View style={styles.menuHeader}></View>
         <View style={styles.menuContent}>
           <View style={styles.profileSection}>
             <View style={styles.profileImage}>
-              <ThemedText style={styles.profileInitial}>
-                {user?.name?.charAt(0) || 'U'}
-              </ThemedText>
+              <ThemedText style={styles.profileInitial}>{user?.name?.charAt(0) || "U"}</ThemedText>
             </View>
             <View style={styles.profileInfo}>
-              <ThemedText style={styles.profileName}>
-                {user?.name || 'User'}
-              </ThemedText>
+              <ThemedText style={styles.profileName}>{user?.name || "User"}</ThemedText>
               <TouchableOpacity
                 style={styles.viewProfile}
-                onPress={() => router.push('/profile')}
+                onPress={() => {
+                  router.push("/profile")
+                  toggleMenu()
+                }}
               >
-                <ThemedText style={styles.viewProfileText}>
-                  View and edit profile
-                </ThemedText>
+                <ThemedText style={styles.viewProfileText}>View and edit profile</ThemedText>
                 <ChevronRight size={16} color={Colors[colorScheme].text} />
               </TouchableOpacity>
             </View>
@@ -234,45 +213,33 @@ export function TopNavigation({
             contentContainerStyle={styles.menuItemsContent}
           >
             {menuItems.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.menuItem}
-                onPress={() => handleRoutes(item)}
-              >
+              <TouchableOpacity key={index} style={styles.menuItem} onPress={() => handleRoutes(item)}>
                 {item.icon}
                 <ThemedText style={styles.menuItemText}>{item.label}</ThemedText>
               </TouchableOpacity>
             ))}
           </ScrollView>
-
-          {/* <TouchableOpacity style={styles.darkModeToggle} onPress={toggleTheme}>
-            {colorScheme === 'dark' ? (
-              <Sun size={24} color={Colors[colorScheme].text} />
-            ) : (
-              <Moon size={24} color={Colors[colorScheme].text} />
-            )}
-            <ThemedText style={styles.darkModeText}>
-              {colorScheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            </ThemedText>
-          </TouchableOpacity> */}
         </View>
       </Animated.View>
     </>
-  );
+  )
 }
 
-// Updated styles
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    height: 60,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E5",
-    zIndex: 1,
+    paddingVertical: 12,
+    height: 56,
+    backgroundColor: "#007BFF",
+    zIndex: 1000,
+  },
+  iconWrapper: {
+    padding: 8,
+    justifyContent: "center",
+    alignItems: "center",
   },
   overlay: {
     position: "absolute",
@@ -281,40 +248,59 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: "rgba(0,0,0,0.5)",
-    zIndex: 1,
+    zIndex: 1500,
   },
   menu: {
     position: "absolute",
-    top: 0,
+    top: 0, // Menu starts from the very top of the screen
     left: 0,
     bottom: 0,
     width: MENU_WIDTH,
-    zIndex: 2,
+    zIndex: 2000,
+    borderTopRightRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 2, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  menuHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.05)",
+  },
+  menuTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
   },
   menuContent: {
     flex: 1,
-    paddingTop: 40,
     paddingHorizontal: 20,
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
+    paddingVertical: 16,
   },
   profileSection: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.05)",
   },
   profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: "#E91E63",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 15,
+    marginRight: 16,
   },
   profileInitial: {
-    fontSize: 24,
+    fontSize: 28,
     color: "#FFFFFF",
     fontWeight: "bold",
   },
@@ -322,7 +308,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     marginBottom: 4,
   },
@@ -333,6 +319,7 @@ const styles = StyleSheet.create({
   viewProfileText: {
     fontSize: 14,
     marginRight: 4,
+    color: "#007BFF",
   },
   menuItemsContainer: {
     flex: 1,
@@ -343,43 +330,33 @@ const styles = StyleSheet.create({
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(0,0,0,0.05)",
   },
   menuItemText: {
     fontSize: 16,
-    marginLeft: 15,
-  },
-  darkModeToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 16,
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  darkModeText: {
-    fontSize: 16,
-    marginLeft: 15,
+    marginLeft: 16,
   },
   notificationContainer: {
-    position: 'relative',
+    position: "relative",
   },
   badge: {
-    position: 'absolute',
+    position: "absolute",
     top: -5,
     right: -5,
-    backgroundColor: '#E91E63',
+    backgroundColor: "#E91E63",
     borderRadius: 10,
     minWidth: 20,
     height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-});
+})
+
