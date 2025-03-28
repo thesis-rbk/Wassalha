@@ -17,6 +17,7 @@ import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { router, useLocalSearchParams } from "expo-router";
 import { BACKEND_URL } from "@/config";
 import { useNotification } from "@/context/NotificationContext";
+import { useStatus } from '@/context/StatusContext';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 import { io } from "socket.io-client";
@@ -29,6 +30,7 @@ export default function PaymentScreen() {
   const { confirmPayment, loading } = useConfirmPayment();
   const [userData, setUserData] = useState<any>(null);
   const { sendNotification } = useNotification();
+  const { show, hide } = useStatus();
   const socket = io(`${BACKEND_URL}/processTrack`);
 
   const totalPrice =
@@ -145,15 +147,27 @@ export default function PaymentScreen() {
             },
           });
         }
-        socket.emit("confirmProduct", {
+        socket.emit("confirmPayment", {
                   processId:params.idProcess,
                 });
-        Alert.alert("Success", "Payment successful!");
-        console.log("Payment successful:", paymentIntent);
-        router.replace({
-          pathname: "/pickup/pickup",
-          params: params,
+        
+        show({
+          type: 'success',
+          title: 'Success',
+          message: 'Payment successful!',
+          primaryAction: {
+            label: 'Continue',
+            onPress: () => {
+              hide();
+              router.replace({
+                pathname: "/pickup/pickup",
+                params: params,
+              });
+            }
+          }
         });
+        
+        console.log("Payment successful:", paymentIntent);
       }
     } catch (error: Error | any) {
       console.error("Payment error:", error);

@@ -37,7 +37,30 @@ module.exports = (processTrackIO) => {
             console.log(offer,"offeeeeeeer backend")
             processTrackIO.to(`process:${processId}`).emit("offerMadeOrder", offer);
         });
+        socket.on("photo", (data) => {
+            const  {processId}  = data;
+            console.log(`🔄 verification photo${processId}  updated to `);
+            
+            processTrackIO.to(`process:${processId}`).emit("photo", {
+                processId
+            });
+        });
+        socket.on("confirmProduct", (data) => {
+            const {processId}   = data;
+            console.log(`🔄 verification product${processId}  updated to `);
+            
+            processTrackIO.to(`process:${processId}`).emit("confirmProduct", {
+                processId
+            });
+        });
+        socket.on("confirmPayment", (data) => {
+            const {processId}   = data;
+            console.log(`🔄 verification payment${processId}  updated to `);
 
+            processTrackIO.to(`process:${processId}`).emit("confirmPayment", {
+                processId
+            });
+        });
         // When process status changes (handles subsequent states)
         socket.on("processStatusUpdate", (data) => {
             const { processId, status } = data;
@@ -49,6 +72,7 @@ module.exports = (processTrackIO) => {
                 timestamp: new Date()
             });
         });
+    
 
         socket.on("disconnect", () => {
             console.log("❌ Client disconnected from processTrack namespace:", socket.id);

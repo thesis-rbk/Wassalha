@@ -21,6 +21,8 @@ import { useIsFocused } from "@react-navigation/native";
 import { useNotification } from '@/context/NotificationContext';
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "@/config";
+import { useStatus } from '@/context/StatusContext';
+
 
 const PaymentScreen = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -33,7 +35,8 @@ const PaymentScreen = () => {
   const router = useRouter();
   const isFocused = useIsFocused();
   const { sendNotification } = useNotification();
-    const socket = io(`${BACKEND_URL}/processTrack`);
+  const { show, hide } = useStatus();
+  const socket = io(`${BACKEND_URL}/processTrack`);
   
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -210,9 +213,9 @@ const PaymentScreen = () => {
       console.log("🔌 Ophoto socket connected, ",room);
    
     })
-    socket.on("confirmProduct", (data) => {
+    socket.on("confirmPayment", (data) => {
       // alert("hi");
-      console.log("🔄 photo updated to:", data);
+      console.log("🔄  payment updated to:", data);
       router.push({
                 pathname: "/processTrack/pickupSP",
                 params: params,

@@ -31,6 +31,7 @@ import { QRCodeModal } from "../pickup/QRCodeModal";
 import { QRCodeScanner } from "../pickup/QRCodeScanner"; // Import the new component
 import io, { Socket } from "socket.io-client";
 import { navigateToChat } from "@/services/chatService";
+import { useStatus } from '@/context/StatusContext';
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -58,6 +59,7 @@ export default function PickupTraveler() {
   );
 
   const socketRef = useRef<Socket | null>(null);
+  const { show, hide } = useStatus();
 
   useEffect(() => {
     if (!socketRef.current) {
@@ -126,7 +128,15 @@ export default function PickupTraveler() {
 
   const openChat = async () => {
     if (!user?.id) {
-      Alert.alert("Error", "You need to be logged in to chat");
+      show({
+        type: 'error',
+        title: 'Authentication Required',
+        message: 'You need to be logged in to chat',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => hide()
+        }
+      });
       return;
     }
 
@@ -147,11 +157,22 @@ export default function PickupTraveler() {
       });
     } catch (error) {
       console.error("Error opening chat:", error);
-      Alert.alert(
-        "Chat Error",
-        "Failed to open chat. Error: " +
-          (error instanceof Error ? error.message : String(error))
-      );
+      show({
+        type: 'error',
+        title: 'Chat Error',
+        message: 'Failed to open chat. ' + (error instanceof Error ? error.message : String(error)),
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => {
+            hide();
+            openChat();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     }
   };
 
@@ -173,7 +194,22 @@ export default function PickupTraveler() {
       console.log("Pickups (Traveler):", response.data.data);
     } catch (error) {
       console.error("Error fetching pickups (Traveler):", error);
-      Alert.alert("Error", "Failed to fetch pickups. Please try again.");
+      show({
+        type: 'error',
+        title: 'Loading Error',
+        message: 'Failed to fetch pickups. Please try again.',
+        primaryAction: {
+          label: 'Retry',
+          onPress: () => {
+            hide();
+            fetchPickups();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     } finally {
       setIsLoading(false);
     }
@@ -211,14 +247,36 @@ export default function PickupTraveler() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      Alert.alert(
-        "Success",
-        `Pickup status updated to ${newStatus} successfully!`
-      );
-      setStatusModalVisible(false);
+      show({
+        type: 'success',
+        title: 'Status Updated',
+        message: `Pickup status updated to ${newStatus} successfully!`,
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {
+            hide();
+            setStatusModalVisible(false);
+          }
+        }
+      });
     } catch (error) {
       console.error("Error updating pickup status:", error);
-      Alert.alert("Error", "Failed to update pickup status. Please try again.");
+      show({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update pickup status. Please try again.',
+        primaryAction: {
+          label: 'Retry',
+          onPress: () => {
+            hide();
+            handleUpdateStatus(pickupId, newStatus);
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     }
   };
 
@@ -250,7 +308,22 @@ export default function PickupTraveler() {
       }
     } catch (error) {
       console.error("Error fetching suggestions:", error);
-      Alert.alert("Error", "Failed to fetch suggestions. Please try again.");
+      show({
+        type: 'error',
+        title: 'Loading Error',
+        message: 'Failed to fetch suggestions. Please try again.',
+        primaryAction: {
+          label: 'Retry',
+          onPress: () => {
+            hide();
+            fetchSuggestions(pickupId);
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     } finally {
       setIsLoading(false);
     }

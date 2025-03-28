@@ -20,6 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 import Animated from "react-native-reanimated";
 import { io } from "socket.io-client";
+import { useStatus } from '@/context/StatusContext';
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
@@ -29,6 +30,7 @@ export default function VerificationScreen() {
   const orderId = params.idOrder;
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
+  const { show, hide } = useStatus();
   const socket = io(`${BACKEND_URL}/processTrack`,{
     transports: ["websocket"],
   });
@@ -45,13 +47,29 @@ export default function VerificationScreen() {
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching order:", error);
-      Alert.alert("Error", "Failed to fetch order details");
+      show({
+        type: 'error',
+        title: 'Loading Error',
+        message: 'Failed to fetch order details. Please try again.',
+        primaryAction: {
+          label: 'Retry',
+          onPress: () => {
+            hide();
+            fetchOrder();
+          }
+        },
+        secondaryAction: {
+          label: 'Go Back',
+          onPress: () => {
+            hide();
+            router.back();
+          }
+        }
+      });
       setIsLoading(false);
     }
   };
   useEffect(() => {
-    
-
     fetchOrder();
   }, [orderId]);
 
@@ -147,10 +165,21 @@ export default function VerificationScreen() {
         socket.emit("confirmProduct", {
           processId:params.idProcess,
         });
-        Alert.alert("Success", "Product confirmed successfully");
-        router.replace({
-          pathname: "/processTrack/paymentSO",
-          params: params,
+        
+        show({
+          type: 'success',
+          title: 'Product Confirmed',
+          message: 'Product confirmed successfully',
+          primaryAction: {
+            label: 'Continue to Payment',
+            onPress: () => {
+              hide();
+              router.replace({
+                pathname: "/processTrack/paymentSO",
+                params: params,
+              });
+            }
+          }
         });
       }
     } catch (error) {

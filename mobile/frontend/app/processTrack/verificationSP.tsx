@@ -20,6 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "@/config";
+import { useStatus } from '@/context/StatusContext';
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
@@ -28,6 +29,7 @@ export default function VerificationScreen() {
   const [isVerified, setIsVerified] = useState(false);
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
+  const { show, hide } = useStatus();
   const socket = io(`${BACKEND_URL}/processTrack`);
   const router = useRouter();
 
@@ -179,8 +181,19 @@ export default function VerificationScreen() {
         socket.emit("photo", {
           processId:params.idProcess,
         });
-        Alert.alert("Success", "Photo uploaded successfully.");
-        setIsVerified(true);
+        
+        show({
+          type: 'success',
+          title: 'Upload Successful',
+          message: 'Photo uploaded successfully. Waiting for product confirmation.',
+          primaryAction: {
+            label: 'OK',
+            onPress: () => {
+              hide();
+              setIsVerified(true);
+            }
+          }
+        });
       } else {
         throw new Error("Failed to upload photo");
       }

@@ -25,6 +25,7 @@ import * as DocumentPicker from "expo-document-picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "@/config";
+import { useStatus } from '@/context/StatusContext';
 
 const AdditionalDetails: React.FC = () => {
   const colorScheme = useColorScheme() ?? "light";
@@ -215,14 +216,34 @@ const AdditionalDetails: React.FC = () => {
               }
             } else {
               // If refresh fails, redirect to login
-              Alert.alert("Session Expired", "Please log in again");
-              router.replace("../login");
+              show({
+                type: 'error',
+                title: 'Session Expired',
+                message: 'Please log in again',
+                primaryAction: {
+                  label: 'OK',
+                  onPress: () => {
+                    hide();
+                    router.replace("../login");
+                  }
+                }
+              });
               return;
             }
           } catch (refreshError) {
             console.error("❌ Token refresh failed:", refreshError);
-            Alert.alert("Session Expired", "Please log in again");
-            router.replace("../login");
+            show({
+              type: 'error',
+              title: 'Session Expired',
+              message: 'Please log in again',
+              primaryAction: {
+                label: 'OK',
+                onPress: () => {
+                  hide();
+                  router.replace("../login");
+                }
+              }
+            });
             return;
           }
         }
@@ -292,7 +313,15 @@ const AdditionalDetails: React.FC = () => {
       if (jwtToken) {
         submitForm(jwtToken);
       } else {
-        Alert.alert("Error", "Authentication token is missing");
+        show({
+          type: 'error',
+          title: 'Error',
+          message: 'Authentication token is missing',
+          primaryAction: {
+            label: 'OK',
+            onPress: hide
+          }
+        });
       }
     } catch (error) {
       console.error("❌ Outer error:", error);
