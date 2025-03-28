@@ -25,18 +25,34 @@ module.exports = (processTrackIO) => {
         });
 
         // When traveler makes an offer (PREINITIALIZED)
-        socket.on("offerMade", (data) => {
+        socket.on("offerMadeOrder", (data) => {
             const { processId, requestId } = data;
-            console.log(`🤝 Offer made for request ${requestId}, process ${processId} (PREINITIALIZED)`);
-            
-            processTrackIO.to(`process:${processId}`).emit("processStatusChanged", {
+            console.log(`🤝 Offer made order for request ${requestId}, process ${processId} (PREINITIALIZED)`);
+            const offer={
                 processId,
                 requestId,
                 status: "PREINITIALIZED",
                 timestamp: new Date()
+            }
+            console.log(offer,"offeeeeeeer backend")
+            processTrackIO.to(`process:${processId}`).emit("offerMadeOrder", offer);
+        });
+        socket.on("photo", (data) => {
+            const  {processId}  = data;
+            console.log(`🔄 verification photo${processId}  updated to `);
+            
+            processTrackIO.to(`process:${processId}`).emit("photo", {
+                processId
             });
         });
-
+        socket.on("confirmProduct", (data) => {
+            const {processId}   = data;
+            console.log(`🔄 verification photo${processId}  updated to `);
+            
+            processTrackIO.to(`process:${processId}`).emit("confirmProduct", {
+                processId
+            });
+        });
         // When process status changes (handles subsequent states)
         socket.on("processStatusUpdate", (data) => {
             const { processId, status } = data;
@@ -48,6 +64,7 @@ module.exports = (processTrackIO) => {
                 timestamp: new Date()
             });
         });
+    
 
         socket.on("disconnect", () => {
             console.log("❌ Client disconnected from processTrack namespace:", socket.id);
