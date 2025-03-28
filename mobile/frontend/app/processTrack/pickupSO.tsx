@@ -127,13 +127,13 @@ export default function PickupOwner() {
       const requesterId = parseInt(params.requesterId.toString());
       const providerId = parseInt(params.travelerId.toString());
       const goodsId = parseInt(params.idGood.toString());
-
+      
       console.log("Opening chat with:", {
         requesterId: user?.id,
         providerId: parseInt(params.travelerId.toString()),
         goodsId: parseInt(params.idGood.toString()),
       });
-
+      
       await navigateToChat(requesterId, providerId, goodsId, {
         orderId: parseInt(params.idOrder.toString()),
         goodsName: params.goodsName?.toString() || "Item",

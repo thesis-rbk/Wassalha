@@ -44,6 +44,7 @@ import { Picker } from "@react-native-picker/picker";
 // import { useRoleDetection } from "@/hooks/useRoleDetection";
 import Card from "@/components/cards/ProcessCard";
 import { useNotification } from "@/context/NotificationContext";
+import { io } from "socket.io-client";
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -152,10 +153,27 @@ export default function InitializationSP() {
 
   useEffect(() => {
     fetchRequestDetails();
+    
   }, [params.id]);
 
   useEffect(() => {
+    const socket = io(`${BACKEND_URL}/processTrack`,{
+           transports: ["websocket"],
+         });
     loadUserFromToken();
+    socket.on("connect", () => {
+      console.log("🔌 Orders page socket connected");
+      const room = params.idProcess; // Example; get this from props, context, or params
+      socket.emit("joinProcessRoom", room);
+      console.log("🔌  socket connected room ",room);
+    });
+    socket.on("processStatusChanged", (data) => {
+      console.log("🔄 Status changed to:", data.status);
+      router.replace({
+        pathname: "/processTrack/verificationSP",
+        params: params,
+      });
+    });
   }, []);
 
   const fetchRequestDetails = async () => {
@@ -257,6 +275,18 @@ export default function InitializationSP() {
       const response = await axiosInstance.post("/api/orders", orderData);
 
       if (response.status === 201) {
+        console.log("✅ Order created:", response.data.data.id);
+        
+        // Connect to socket and emit event
+        const socket = io(`${BACKEND_URL}/processTrack`);
+              socket.emit("offerMadeOrder", {
+                processId: request.userId,
+                requestId: requestId
+              });
+              console.log("📤 Emitted offerMade Order event immediately",request.userId,requestId);
+
+        // Wait for the event to be sent before navigating
+
         sendNotification("offer_made", {
           requesterId: params.requesterId,
           travelerId: currentUser?.id,
