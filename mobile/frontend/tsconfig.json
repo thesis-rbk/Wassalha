@@ -1,5 +1,5 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "expo/tsconfig.base", // Ensure this matches your installed Expo version
   "compilerOptions": {
     "allowJs": true,
     "jsx": "react-native",
@@ -9,15 +9,14 @@
     "noEmit": true,
     "strict": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     },
-    // "types": ["nativewind/types"],
     "typeRoots": [
       "./node_modules/@types",
       "./src/types"
-    ]
+    ],
+    // Remove "types" unless you need specific overrides; expo/tsconfig.base includes these
+    // "types": ["react", "react-native", "expo"]
   },
   "include": [
     "**/*.ts",
@@ -26,5 +25,11 @@
     "expo-env.d.ts",
     "react-native-dotenv.d.ts",
     "screens/NotificationB.tsx"
+, "app/pickup/QRCodeScanner.tsx"  ],
+  "exclude": [
+    "node_modules",
+    "babel.config.js",
+    "metro.config.js",
+    "jest.config.js"
   ]
 }
