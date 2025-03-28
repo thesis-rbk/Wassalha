@@ -12,6 +12,8 @@ import {
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useNotification } from "@/context/NotificationContext";
+import { useRouter } from 'expo-router';
+import { TabBar } from "@/components/navigation/TabBar";
 import {
   NotificationType,
   NotificationStatus,
@@ -41,7 +43,7 @@ export default function NotificationsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-
+  const [activeTab, setActiveTab] = useState("home");
   // Get notifications from Redux
   const { items: notifications } = useSelector(
     (state: RootState) => state.notifications
@@ -50,11 +52,19 @@ export default function NotificationsScreen() {
   // Use the notification context
   const { fetchNotifications, markAsRead, deleteNotification } =
     useNotification();
-
+  const router = useRouter()
   // Load notifications on mount
   useEffect(() => {
     loadNotifications();
   }, []);
+  const handleTabPress = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === "create") {
+      router.push("/verification/CreateSponsorPost");
+    } else {
+      router.push(tab as any);
+    }
+  };
 
   // Function to load notifications with loading state
   const loadNotifications = async () => {
@@ -207,7 +217,7 @@ export default function NotificationsScreen() {
               No notifications yet
             </ThemedText>
             <TouchableOpacity
-              style={[styles.refreshButton, { backgroundColor: TINT_COLOR }]}
+              style={[styles.refreshButton, { backgroundColor: "#007BFF" }]}
               onPress={onRefresh}
             >
               <ThemedText style={styles.refreshButtonText}>Refresh</ThemedText>
@@ -215,6 +225,7 @@ export default function NotificationsScreen() {
           </View>
         )}
       </ThemedView>
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </GestureHandlerRootView>
   );
 }
@@ -280,7 +291,7 @@ const styles = StyleSheet.create({
   refreshButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: TINT_COLOR,
+    backgroundColor: "#007BFF",
     borderRadius: 8,
   },
   refreshButtonText: {
