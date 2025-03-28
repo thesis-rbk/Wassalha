@@ -291,7 +291,7 @@ export default function OrderPage() {
       
       // Store unfiltered requests first to check if we're getting data
       const allRequests = response.data.data || [];
-      console.log("All requests statuses:", allRequests.map(r => r.status));
+      console.log("All requests statuses:", allRequests.map((r:any) => r.status));
       
       if (allRequests.length === 0) {
         console.log("No requests received from API");
