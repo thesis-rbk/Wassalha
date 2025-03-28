@@ -23,12 +23,14 @@ import { useRouter } from "expo-router";
 import { decode as atob } from "base-64";
 import { GoodsProcess, ProcessStatus } from "@/types/GoodsProcess";
 import { LinearGradient } from 'expo-linear-gradient';
+import { io } from "socket.io-client";
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
 const CARD_SPACING = 12;
 import { TabBar } from "@/components/navigation/TabBar";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
+import { AsyncLocalStorage } from "async_hooks";
 
 // Custom hook to ensure we have user data
 const useReliableAuth = () => {
@@ -105,7 +107,10 @@ export default function OrderPage() {
   const { user, loading: authLoading } = useReliableAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Order");
+  console.log(user,"USER",user?.id,"USER ID");
+  console.log(user?.id,"ROOM");
 
+  // const room=user?.id;
   // Animation value for the "Make Offer" button
   const pulseAnim = useRef(new Animated.Value(1)).current;
   
@@ -226,6 +231,51 @@ export default function OrderPage() {
       console.log("User loaded, fetching orders...", user);
       fetchGoodsProcesses();
       fetchRequests();
+      console.log("🔄 Setting up socket connection in Orders page");
+      const socket = io(`${BACKEND_URL}/processTrack`,{
+        transports: ["websocket"],
+      });
+      socket.on("connect", () => {
+        console.log("🔌 Orders page socket connected");
+        const room = user?.id; // Example; get this from props, context, or params
+        socket.emit("joinProcessRoom", room);
+        goodsProcesses.forEach((process) => {
+          const proces = process.id;
+          socket.emit("joinProcessRoom", proces);
+          console.log(`Joining room: process:${proces}`);
+        });
+        console.log(`Joining process room: process:${room}`);
+      
+      });
+  
+      socket.on("newRequest", (data) => {
+        console.log("📦 New request received:", data);
+        fetchRequests();
+      });
+  
+      socket.on("processStatusChanged", (data) => {
+        console.log("🔄 Status changed to:", data.status);
+        // console.log(goodsProcesses);
+        setGoodsProcesses((prev) =>
+          prev.map((p) => (p.id === data.processId ? data : p))
+        );
+        fetchGoodsProcesses();
+      });
+      socket.on("offerMadeOrder", (data) => {
+        console.log("🔄 Offer made for you:", data);
+        setRequests((prev) =>
+          prev.map((p) => (p.id === data.requestId ? data : p))
+        );
+        fetchGoodsProcesses();
+  
+      });
+      socket.on("disconnect", () => {
+        console.log("🔌 Socket disconnected");
+      });
+  
+      return () => {
+        socket.disconnect();
+      };
     }
   }, [user, authLoading]);
 
@@ -233,8 +283,7 @@ export default function OrderPage() {
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
-      console.log("Fetching requests from API...");
-      const response = await axiosInstance.get("/api/requests");
+      const response = await axiosInstance.get("/api/requests/get");
       
       // Debug log the raw response 
       console.log("Request API response:", response.data);
@@ -242,7 +291,7 @@ export default function OrderPage() {
       
       // Store unfiltered requests first to check if we're getting data
       const allRequests = response.data.data || [];
-      console.log("All requests statuses:", allRequests.map(r => r.status));
+      console.log("All requests statuses:", allRequests.map((r:any) => r.status));
       
       if (allRequests.length === 0) {
         console.log("No requests received from API");
@@ -645,6 +694,9 @@ export default function OrderPage() {
   const handleProfilePress = () => {
     router.push("/profile");
   };
+
+  // Inside OrderPage component, add this useEffect
+  const socketRef = useRef<any>(null);
 
   return (
     <ThemedView style={styles.container}>

@@ -23,6 +23,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import * as DocumentPicker from "expo-document-picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { io } from "socket.io-client";
+import { BACKEND_URL } from "@/config";
 
 const AdditionalDetails: React.FC = () => {
   const colorScheme = useColorScheme() ?? "light";
@@ -406,6 +408,13 @@ const AdditionalDetails: React.FC = () => {
           console.log("✅ Request created:", requestResponse.data);
 
           if (requestResponse.data.success) {
+            console.log("Emitting socket event for new request...");
+            const socket = io(`${BACKEND_URL}/processTrack`);
+            
+            socket.emit("requestCreated", {
+              requestId: requestResponse.data.data.id
+            });
+
             router.replace({
               pathname: "/screens/RequestSuccessScreen",
               params: {
