@@ -1,9 +1,9 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
+import { View, StyleSheet, Pressable, Text } from "react-native";
 import {
   Home,
   ShoppingBag,
-  MapPin,
+  Crown,
   MessageCircle,
   Plus,
 } from "lucide-react-native";
@@ -26,21 +26,24 @@ export function TabBar({ activeTab, onTabPress }: TabBarProps) {
 
   const tabs: TabItem[] = [
     {
-      name: "Home",
+      name: "home",
+      label: "Home",
       icon: (isActive: boolean) => (
         <Home size={24} color={isActive ? activeTabColor : iconColor} />
       ),
-      route: "home" as Route,
+      route: "/home" as Route,
     },
     {
-      name: "Services",
+      name: "orders",
+      label: "Orders",
       icon: (isActive: boolean) => (
         <ShoppingBag size={24} color={isActive ? activeTabColor : iconColor} />
       ),
-      route: "../orders&requests/order" as Route,
+      route: "/orders&requests/order" as Route,
     },
     {
-      name: "", // Empty name for the "+" button
+      name: "create",
+      label: "",
       icon: (isActive: boolean) => (
         <View style={styles.plusIconContainer}>
           <Plus size={28} color="white" />
@@ -49,14 +52,16 @@ export function TabBar({ activeTab, onTabPress }: TabBarProps) {
       route: "/productDetails/create-order" as Route,
     },
     {
-      name: "Pick-up",
+      name: "sponsor",
+      label: "Sponsor",
       icon: (isActive: boolean) => (
-        <MapPin size={24} color={isActive ? activeTabColor : iconColor} />
+        <Crown size={24} color={isActive ? activeTabColor : iconColor} />
       ),
-      route: "../pickup/pickup" as Route,
+      route: "/verification/fetchAll" as Route,
     },
     {
-      name: "Messages",
+      name: "messages",
+      label: "Messages",
       icon: (isActive: boolean) => (
         <MessageCircle size={24} color={isActive ? activeTabColor : iconColor} />
       ),
@@ -83,25 +88,38 @@ export function TabBar({ activeTab, onTabPress }: TabBarProps) {
       {tabs.map((tab, index) => {
         const isActive = activeTab === tab.name;
         return (
-          <TouchableOpacity
-            key={tab.name || `tab-${index}`} // Use index for empty name to avoid key duplication
-            style={styles.tab}
+          <Pressable
+            key={tab.name || `tab-${index}`}
+            style={[
+              styles.tab,
+              tab.name === "create" && styles.createTab
+            ]}
             onPress={() => handleRoutes(tab)}
+            android_ripple={{
+              color: Colors[colorScheme].primary,
+              borderless: true,
+              radius: 24
+            }}
           >
             {/* Render the icon */}
             {typeof tab.icon === "function" ? tab.icon(isActive) : tab.icon}
-            {/* Only render label if tab.name exists */}
-            {tab.name && tab.name.length > 0 ? (
+
+            {/* Only render label if tab has a label */}
+            {tab.label && tab.label.length > 0 ? (
               <View style={styles.labelContainer}>
                 <Text
-                  style={[styles.tabText, isActive && styles.activeTabText]}
+                  style={[
+                    styles.tabText,
+                    isActive && styles.activeTabText,
+                    { color: isActive ? activeTabColor : iconColor }
+                  ]}
                 >
-                  {tab.name}
+                  {tab.label}
                 </Text>
-                {isActive && <View style={styles.activeTabUnderline} />}
+                {isActive && <View style={[styles.activeTabIndicator, { backgroundColor: activeTabColor }]} />}
               </View>
             ) : null}
-          </TouchableOpacity>
+          </Pressable>
         );
       })}
     </View>
@@ -112,52 +130,49 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderTopWidth: 1,
     borderTopColor: "#E5E5E5",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    elevation: 8,
+    // Android-specific styling
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
   },
   tab: {
     alignItems: "center",
     justifyContent: "center",
     flex: 1,
+    paddingVertical: 6,
+  },
+  createTab: {
+    marginTop: -30,
   },
   labelContainer: {
     alignItems: "center",
     marginTop: 4,
   },
   tabText: {
-    fontSize: 14,
-    color: Colors.light.text,
+    fontSize: 12,
+    fontFamily: "sans-serif",
+    marginTop: 2,
   },
   activeTabText: {
     fontWeight: "bold",
-    color: Colors.light.primary,
   },
-  activeTabUnderline: {
-    width: 20,
-    height: 2,
-    backgroundColor: Colors.light.primary,
-    marginTop: 2,
+  activeTabIndicator: {
+    width: 24,
+    height: 3,
+    borderRadius: 1.5,
+    marginTop: 3,
   },
   plusIconContainer: {
     backgroundColor: Colors.light.primary,
-    borderRadius: 50,
-    width: 60,
-    height: 60,
+    borderRadius: 30,
+    width: 56,
+    height: 56,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: -30,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
+    elevation: 6,
   },
 });

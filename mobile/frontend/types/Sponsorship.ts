@@ -184,3 +184,26 @@ export interface AccountDetailsModalProps {
     onSubmit: (details: { type: string; details: string | { email: string; password: string } }) => void;
 }
 
+export interface OrderSpon {
+    id: number;
+    status: string;
+    goodsLocation: string;
+    goodsDestination: string;
+    date: string;
+    quantity: number;
+    goods: {
+        price: number;
+        image?: {
+            url: string;
+        };
+        // Add other goods properties as needed
+    };
+    // Add other order properties as needed
+}
+
+export interface OrderfetchCardProps {
+    order: OrderSpon;
+    onPress: () => void;
+    onAccept?: () => void;
+    onReject?: () => void;
+}

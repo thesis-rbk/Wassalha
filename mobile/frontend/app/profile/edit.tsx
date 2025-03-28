@@ -11,6 +11,7 @@ import {
   Alert,
   TouchableOpacity,
   Platform,
+  SafeAreaView,
 } from "react-native"
 import { Picker } from "@react-native-picker/picker"
 import { useState, useEffect } from "react"
@@ -18,7 +19,7 @@ import { router } from "expo-router"
 import { useTheme } from "@/context/ThemeContext"
 import { Colors } from "@/constants/Colors"
 import { BaseButton } from "@/components/ui/buttons/BaseButton"
-import { TopNavigation } from "@/components/navigation/TopNavigation"
+import { TabBar } from '@/components/navigation/TabBar';
 import { jwtDecode } from "jwt-decode"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import axiosInstance from "@/config"
@@ -27,10 +28,8 @@ import * as ImagePicker from "expo-image-picker"
 import { MaterialIcons, Feather, FontAwesome } from "@expo/vector-icons"
 import { Profile } from "@/types"
 
-
-
-
 export default function EditProfile() {
+  const [activeTab, setActiveTab] = useState("home");
   const { theme } = useTheme();
   const [showPicker, setShowPicker] = useState(false);
   const [profile, setProfile] = useState<Profile>({
@@ -46,6 +45,15 @@ export default function EditProfile() {
 
   const getInitials = () => {
     return `${profile.firstName?.charAt(0) || ''}${profile.lastName?.charAt(0) || ''}`.toUpperCase();
+  };
+
+  const handleTabPress = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === "create") {
+      router.push("/verification/CreateSponsorPost");
+    } else {
+      router.push(tab as any);
+    }
   };
 
   useEffect(() => {
@@ -64,6 +72,14 @@ export default function EditProfile() {
             }
           );
           setProfile(response.data.data);
+          // Ensure we store the fetched data safely in AsyncStorage
+          await AsyncStorage.setItem('firstName', response.data.data.firstName || '');
+          await AsyncStorage.setItem('lastName', response.data.data.lastName || '');
+          await AsyncStorage.setItem('bio', response.data.data.bio || '');
+          await AsyncStorage.setItem('phoneNumber', response.data.data.phoneNumber || '');
+          if (response.data.data.imageId) {
+            await AsyncStorage.setItem('imageId', String(response.data.data.imageId));
+          }
         } else {
           console.error("No token found");
         }
@@ -154,14 +170,16 @@ export default function EditProfile() {
       );
 
       if (response.data.success) {
+        // Ensure all values are strings when storing in AsyncStorage
         await AsyncStorage.setItem('firstName', profile.firstName || '');
         await AsyncStorage.setItem('lastName', profile.lastName || '');
         await AsyncStorage.setItem('bio', profile.bio || '');
         await AsyncStorage.setItem('phoneNumber', profile.phoneNumber || '');
 
         if (response.data.data.imageId) {
-          await AsyncStorage.setItem('imageId',
-            String(response.data.data.imageId));
+          await AsyncStorage.setItem('imageId', String(response.data.data.imageId) || '');
+        } else {
+          await AsyncStorage.removeItem('imageId'); // Remove if no imageId is returned
         }
 
         Alert.alert('Success', 'Profile updated successfully');
@@ -188,288 +206,286 @@ export default function EditProfile() {
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: Colors[theme].background }} showsVerticalScrollIndicator={false}>
-      <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-        <TopNavigation
-          title="Edit Profile"
-          onNotificationPress={() => { }}
-          profileName={profile.firstName}
-          onProfilePress={() => {
-            console.log("Navigating to profile")
-            router.push("/profile/edit")
-          }}
-        />
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: Colors[theme].background }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
 
-        <View style={styles.header}>
-          <TitleLarge style={[styles.headerTitle, { color: Colors[theme].primary }]}>Edit Profile</TitleLarge>
-          <Text style={[styles.headerSubtitle, { color: Colors[theme].primary }]}>
-            Update your personal information
-          </Text>
-        </View>
-
-        <View style={styles.photoSection}>
-          <View style={styles.avatarContainer}>
-            {profile.imageId ? (
-              <Image
-                source={{
-                  uri:
-                    profile.image?.uri || `${process.env.EXPO_PUBLIC_API_URL}/api/uploads/${profile.image?.filename}`,
-                }}
-                style={styles.avatar}
-                onError={(error) => {
-                  console.error("Image preview error:", error.nativeEvent.error)
-                }}
-              />
-            ) : (
-              <View style={[styles.avatarPlaceholder, { backgroundColor: Colors[theme].primary }]}>
-                <Text style={styles.avatarText}>{getInitials()}</Text>
-              </View>
-            )}
-            <TouchableOpacity
-              style={[styles.editButton, { backgroundColor: Colors[theme].primary }]}
-              onPress={handleImageUpload}
-            >
-              <Feather name="edit-2" size={16} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-          <Text style={[styles.photoLimit, { color: Colors[theme].primary }]}>Tap to upload a profile picture</Text>
-        </View>
-
-        <View style={styles.formSection}>
-          <View style={styles.inputGroup}>
-            <View style={styles.inputLabel}>
-              <FontAwesome name="user" size={16} color={Colors[theme].primary} />
-              <BodyMedium style={styles.labelText}>First name</BodyMedium>
-            </View>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  borderColor: Colors[theme].border,
-                  backgroundColor: Colors[theme].card,
-                  color: Colors[theme].text,
-                },
-              ]}
-              value={profile.firstName}
-              onChangeText={(text) => setProfile((prev) => ({ ...prev, firstName: text }))}
-              placeholder="Enter your first name"
-              placeholderTextColor={Colors[theme].secondary}
-            />
+          <View style={styles.header}>
+            <TitleLarge style={[styles.headerTitle, { color: Colors[theme].primary }]}>Edit Profile</TitleLarge>
+            <Text style={[styles.headerSubtitle, { color: Colors[theme].primary }]}>
+              Update your personal information
+            </Text>
           </View>
 
-          <View style={styles.inputGroup}>
-            <View style={styles.inputLabel}>
-              <FontAwesome name="user" size={16} color={Colors[theme].primary} />
-              <BodyMedium style={styles.labelText}>Last name</BodyMedium>
-            </View>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  borderColor: Colors[theme].border,
-                  backgroundColor: Colors[theme].card,
-                  color: Colors[theme].text,
-                },
-              ]}
-              value={profile.lastName}
-              onChangeText={(text) => setProfile((prev) => ({ ...prev, lastName: text }))}
-              placeholder="Enter your last name"
-              placeholderTextColor={Colors[theme].secondary}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <View style={styles.inputLabel}>
-              <MaterialIcons name="description" size={16} color={Colors[theme].primary} />
-              <BodyMedium style={styles.labelText}>Bio</BodyMedium>
-            </View>
-            <TextInput
-              style={[
-                styles.input,
-                styles.bioInput,
-                {
-                  borderColor: Colors[theme].border,
-                  backgroundColor: Colors[theme].card,
-                  color: Colors[theme].text,
-                },
-              ]}
-              value={profile.bio}
-              onChangeText={(text) => setProfile((prev) => ({ ...prev, bio: text }))}
-              multiline
-              placeholder="Describe yourself in 140 characters or less"
-              placeholderTextColor={Colors[theme].secondary}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <View style={styles.inputLabel}>
-              <MaterialIcons name="location-on" size={16} color={Colors[theme].primary} />
-              <BodyMedium style={styles.labelText}>Country</BodyMedium>
-            </View>
-
-            {Platform.OS === "ios" ? (
+          <View style={styles.photoSection}>
+            <View style={styles.avatarContainer}>
+              {profile.imageId ? (
+                <Image
+                  source={{
+                    uri:
+                      profile.image?.uri || `${process.env.EXPO_PUBLIC_API_URL}/api/uploads/${profile.image?.filename}`,
+                  }}
+                  style={styles.avatar}
+                  onError={(error) => {
+                    console.error("Image preview error:", error.nativeEvent.error)
+                  }}
+                />
+              ) : (
+                <View style={[styles.avatarPlaceholder, { backgroundColor: Colors[theme].primary }]}>
+                  <Text style={styles.avatarText}>{getInitials()}</Text>
+                </View>
+              )}
               <TouchableOpacity
+                style={[styles.editButton, { backgroundColor: Colors[theme].primary }]}
+                onPress={handleImageUpload}
+              >
+                <Feather name="edit-2" size={16} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.photoLimit, { color: Colors[theme].primary }]}>Tap to upload a profile picture</Text>
+          </View>
+
+          <View style={styles.formSection}>
+            <View style={styles.inputGroup}>
+              <View style={styles.inputLabel}>
+                <FontAwesome name="user" size={16} color={Colors[theme].primary} />
+                <BodyMedium style={styles.labelText}>First name</BodyMedium>
+              </View>
+              <TextInput
                 style={[
                   styles.input,
-                  styles.pickerButton,
                   {
                     borderColor: Colors[theme].border,
                     backgroundColor: Colors[theme].card,
+                    color: Colors[theme].text,
                   },
                 ]}
-                onPress={() => setShowPicker(true)}
-              >
-                <Text style={{ color: profile.country ? Colors[theme].text : Colors[theme].secondary }}>
-                  {profile.country || "Select your country"}
-                </Text>
-                <MaterialIcons name="arrow-drop-down" size={24} color={Colors[theme].secondary} />
-              </TouchableOpacity>
-            ) : (
-              <View
-                style={[
-                  styles.pickerContainer,
-                  {
-                    borderColor: Colors[theme].border,
-                    backgroundColor: Colors[theme].card,
-                  },
-                ]}
-              >
-                <Picker
-                  selectedValue={profile.country}
-                  style={{ color: Colors[theme].text }}
-                  dropdownIconColor={Colors[theme].primary}
-                  onValueChange={(itemValue) => setProfile((prev) => ({ ...prev, country: itemValue }))}
-                >
-                  <Picker.Item label="Select your country" value="" />
-                  <Picker.Item label="USA" value="USA" />
-                  <Picker.Item label="Canada" value="CANADA" />
-                  <Picker.Item label="UK" value="UK" />
-                  <Picker.Item label="Australia" value="AUSTRALIA" />
-                  <Picker.Item label="Germany" value="GERMANY" />
-                  <Picker.Item label="France" value="FRANCE" />
-                  <Picker.Item label="India" value="INDIA" />
-                  <Picker.Item label="Japan" value="JAPAN" />
-                  <Picker.Item label="Tunisia" value="TUNISIA" />
-                  <Picker.Item label="Morocco" value="MOROCCO" />
-                  <Picker.Item label="Algeria" value="ALGERIA" />
-                  <Picker.Item label="Turkey" value="TURKEY" />
-                  <Picker.Item label="Spain" value="SPAIN" />
-                  <Picker.Item label="Italy" value="ITALY" />
-                  <Picker.Item label="Portugal" value="PORTUGAL" />
-                  <Picker.Item label="Netherlands" value="NETHERLANDS" />
-                  <Picker.Item label="Belgium" value="BELGIUM" />
-                  <Picker.Item label="Sweden" value="SWEDEN" />
-                  <Picker.Item label="Norway" value="NORWAY" />
-                  <Picker.Item label="Denmark" value="DENMARK" />
-                  <Picker.Item label="Finland" value="FINLAND" />
-                  <Picker.Item label="Iceland" value="ICELAND" />
-                  <Picker.Item label="Austria" value="AUSTRIA" />
-                  <Picker.Item label="Switzerland" value="SWITZERLAND" />
-                  <Picker.Item label="Belarus" value="BELARUS" />
-                  <Picker.Item label="Russia" value="RUSSIA" />
-                  <Picker.Item label="China" value="CHINA" />
-                  <Picker.Item label="Brazil" value="BRAZIL" />
-                  <Picker.Item label="Argentina" value="ARGENTINA" />
-                  <Picker.Item label="Chile" value="CHILE" />
-                  <Picker.Item label="Mexico" value="MEXICO" />
-                  <Picker.Item label="Colombia" value="COLOMBIA" />
-                  <Picker.Item label="Peru" value="PERU" />
-                  <Picker.Item label="Venezuela" value="VENEZUELA" />
-                  <Picker.Item label="Ecuador" value="ECUADOR" />
-                  <Picker.Item label="Paraguay" value="PARAGUAY" />
-                  <Picker.Item label="Uruguay" value="URUGUAY" />
-                  <Picker.Item label="Bolivia" value="BOLIVIA" />
-                  <Picker.Item label="Other" value="OTHER" />
-                </Picker>
-              </View>
-            )}
-
-            {showPicker && Platform.OS === "ios" && (
-              <View style={styles.iosPicker}>
-                <View style={styles.pickerHeader}>
-                  <TouchableOpacity onPress={() => setShowPicker(false)}>
-                    <Text style={{ color: Colors[theme].primary, fontWeight: "bold" }}>Done</Text>
-                  </TouchableOpacity>
-                </View>
-                <Picker
-                  selectedValue={profile.country}
-                  onValueChange={(itemValue) => {
-                    setProfile((prev) => ({ ...prev, country: itemValue }))
-                  }}
-                >
-                  <Picker.Item label="Select your country" value="" />
-                  <Picker.Item label="USA" value="USA" />
-                  <Picker.Item label="Canada" value="CANADA" />
-                  <Picker.Item label="UK" value="UK" />
-                  <Picker.Item label="Australia" value="AUSTRALIA" />
-                  <Picker.Item label="Germany" value="GERMANY" />
-                  <Picker.Item label="France" value="FRANCE" />
-                  <Picker.Item label="India" value="INDIA" />
-                  <Picker.Item label="Japan" value="JAPAN" />
-                  <Picker.Item label="Tunisia" value="TUNISIA" />
-                  <Picker.Item label="Morocco" value="MOROCCO" />
-                  <Picker.Item label="Algeria" value="ALGERIA" />
-                  <Picker.Item label="Turkey" value="TURKEY" />
-                  <Picker.Item label="Spain" value="SPAIN" />
-                  <Picker.Item label="Italy" value="ITALY" />
-                  <Picker.Item label="Portugal" value="PORTUGAL" />
-                  <Picker.Item label="Netherlands" value="NETHERLANDS" />
-                  <Picker.Item label="Belgium" value="BELGIUM" />
-                  <Picker.Item label="Sweden" value="SWEDEN" />
-                  <Picker.Item label="Norway" value="NORWAY" />
-                  <Picker.Item label="Denmark" value="DENMARK" />
-                  <Picker.Item label="Finland" value="FINLAND" />
-                  <Picker.Item label="Iceland" value="ICELAND" />
-                  <Picker.Item label="Austria" value="AUSTRIA" />
-                  <Picker.Item label="Switzerland" value="SWITZERLAND" />
-                  <Picker.Item label="Belarus" value="BELARUS" />
-                  <Picker.Item label="Russia" value="RUSSIA" />
-                  <Picker.Item label="China" value="CHINA" />
-                  <Picker.Item label="Brazil" value="BRAZIL" />
-                  <Picker.Item label="Argentina" value="ARGENTINA" />
-                  <Picker.Item label="Chile" value="CHILE" />
-                  <Picker.Item label="Mexico" value="MEXICO" />
-                  <Picker.Item label="Colombia" value="COLOMBIA" />
-                  <Picker.Item label="Peru" value="PERU" />
-                  <Picker.Item label="Venezuela" value="VENEZUELA" />
-                  <Picker.Item label="Ecuador" value="ECUADOR" />
-                  <Picker.Item label="Paraguay" value="PARAGUAY" />
-                  <Picker.Item label="Uruguay" value="URUGUAY" />
-                  <Picker.Item label="Bolivia" value="BOLIVIA" />
-                  <Picker.Item label="Other" value="OTHER" />
-                </Picker>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.inputGroup}>
-            <View style={styles.inputLabel}>
-              <Feather name="phone" size={16} color={Colors[theme].primary} />
-              <BodyMedium style={styles.labelText}>Phone Number</BodyMedium>
+                value={profile.firstName}
+                onChangeText={(text) => setProfile((prev) => ({ ...prev, firstName: text }))}
+                placeholder="Enter your first name"
+                placeholderTextColor={Colors[theme].secondary}
+              />
             </View>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  borderColor: Colors[theme].border,
-                  backgroundColor: Colors[theme].card,
-                  color: Colors[theme].text,
-                },
-              ]}
-              value={profile.phoneNumber}
-              onChangeText={(text) => setProfile((prev) => ({ ...prev, phoneNumber: text }))}
-              placeholder="Enter your phone number"
-              placeholderTextColor={Colors[theme].secondary}
-              keyboardType="phone-pad"
-            />
-          </View>
-        </View>
 
-        <BaseButton onPress={handleUpdateProfile} variant="primary" size="login" style={styles.saveButton}>
-          Save Changes
-        </BaseButton>
-      </View>
-    </ScrollView>
+            <View style={styles.inputGroup}>
+              <View style={styles.inputLabel}>
+                <FontAwesome name="user" size={16} color={Colors[theme].primary} />
+                <BodyMedium style={styles.labelText}>Last name</BodyMedium>
+              </View>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    borderColor: Colors[theme].border,
+                    backgroundColor: Colors[theme].card,
+                    color: Colors[theme].text,
+                  },
+                ]}
+                value={profile.lastName}
+                onChangeText={(text) => setProfile((prev) => ({ ...prev, lastName: text }))}
+                placeholder="Enter your last name"
+                placeholderTextColor={Colors[theme].secondary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputLabel}>
+                <MaterialIcons name="description" size={16} color={Colors[theme].primary} />
+                <BodyMedium style={styles.labelText}>Bio</BodyMedium>
+              </View>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.bioInput,
+                  {
+                    borderColor: Colors[theme].border,
+                    backgroundColor: Colors[theme].card,
+                    color: Colors[theme].text,
+                  },
+                ]}
+                value={profile.bio}
+                onChangeText={(text) => setProfile((prev) => ({ ...prev, bio: text }))}
+                multiline
+                placeholder="Describe yourself in 140 characters or less"
+                placeholderTextColor={Colors[theme].secondary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputLabel}>
+                <MaterialIcons name="location-on" size={16} color={Colors[theme].primary} />
+                <BodyMedium style={styles.labelText}>Country</BodyMedium>
+              </View>
+
+              {Platform.OS === "ios" ? (
+                <TouchableOpacity
+                  style={[
+                    styles.input,
+                    styles.pickerButton,
+                    {
+                      borderColor: Colors[theme].border,
+                      backgroundColor: Colors[theme].card,
+                    },
+                  ]}
+                  onPress={() => setShowPicker(true)}
+                >
+                  <Text style={{ color: profile.country ? Colors[theme].text : Colors[theme].secondary }}>
+                    {profile.country || "Select your country"}
+                  </Text>
+                  <MaterialIcons name="arrow-drop-down" size={24} color={Colors[theme].secondary} />
+                </TouchableOpacity>
+              ) : (
+                <View
+                  style={[
+                    styles.pickerContainer,
+                    {
+                      borderColor: Colors[theme].border,
+                      backgroundColor: Colors[theme].card,
+                    },
+                  ]}
+                >
+                  <Picker
+                    selectedValue={profile.country}
+                    style={{ color: Colors[theme].text }}
+                    dropdownIconColor={Colors[theme].primary}
+                    onValueChange={(itemValue) => setProfile((prev) => ({ ...prev, country: itemValue }))}
+                  >
+                    <Picker.Item label="Select your country" value="" />
+                    <Picker.Item label="USA" value="USA" />
+                    <Picker.Item label="Canada" value="CANADA" />
+                    <Picker.Item label="UK" value="UK" />
+                    <Picker.Item label="Australia" value="AUSTRALIA" />
+                    <Picker.Item label="Germany" value="GERMANY" />
+                    <Picker.Item label="France" value="FRANCE" />
+                    <Picker.Item label="India" value="INDIA" />
+                    <Picker.Item label="Japan" value="JAPAN" />
+                    <Picker.Item label="Tunisia" value="TUNISIA" />
+                    <Picker.Item label="Morocco" value="MOROCCO" />
+                    <Picker.Item label="Algeria" value="ALGERIA" />
+                    <Picker.Item label="Turkey" value="TURKEY" />
+                    <Picker.Item label="Spain" value="SPAIN" />
+                    <Picker.Item label="Italy" value="ITALY" />
+                    <Picker.Item label="Portugal" value="PORTUGAL" />
+                    <Picker.Item label="Netherlands" value="NETHERLANDS" />
+                    <Picker.Item label="Belgium" value="BELGIUM" />
+                    <Picker.Item label="Sweden" value="SWEDEN" />
+                    <Picker.Item label="Norway" value="NORWAY" />
+                    <Picker.Item label="Denmark" value="DENMARK" />
+                    <Picker.Item label="Finland" value="FINLAND" />
+                    <Picker.Item label="Iceland" value="ICELAND" />
+                    <Picker.Item label="Austria" value="AUSTRIA" />
+                    <Picker.Item label="Switzerland" value="SWITZERLAND" />
+                    <Picker.Item label="Belarus" value="BELARUS" />
+                    <Picker.Item label="Russia" value="RUSSIA" />
+                    <Picker.Item label="China" value="CHINA" />
+                    <Picker.Item label="Brazil" value="BRAZIL" />
+                    <Picker.Item label="Argentina" value="ARGENTINA" />
+                    <Picker.Item label="Chile" value="CHILE" />
+                    <Picker.Item label="Mexico" value="MEXICO" />
+                    <Picker.Item label="Colombia" value="COLOMBIA" />
+                    <Picker.Item label="Peru" value="PERU" />
+                    <Picker.Item label="Venezuela" value="VENEZUELA" />
+                    <Picker.Item label="Ecuador" value="ECUADOR" />
+                    <Picker.Item label="Paraguay" value="PARAGUAY" />
+                    <Picker.Item label="Uruguay" value="URUGUAY" />
+                    <Picker.Item label="Bolivia" value="BOLIVIA" />
+                    <Picker.Item label="Other" value="OTHER" />
+                  </Picker>
+                </View>
+              )}
+
+              {showPicker && Platform.OS === "ios" && (
+                <View style={styles.iosPicker}>
+                  <View style={styles.pickerHeader}>
+                    <TouchableOpacity onPress={() => setShowPicker(false)}>
+                      <Text style={{ color: Colors[theme].primary, fontWeight: "bold" }}>Done</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Picker
+                    selectedValue={profile.country}
+                    onValueChange={(itemValue) => {
+                      setProfile((prev) => ({ ...prev, country: itemValue }))
+                    }}
+                  >
+                    <Picker.Item label="Select your country" value="" />
+                    <Picker.Item label="USA" value="USA" />
+                    <Picker.Item label="Canada" value="CANADA" />
+                    <Picker.Item label="UK" value="UK" />
+                    <Picker.Item label="Australia" value="AUSTRALIA" />
+                    <Picker.Item label="Germany" value="GERMANY" />
+                    <Picker.Item label="France" value="FRANCE" />
+                    <Picker.Item label="India" value="INDIA" />
+                    <Picker.Item label="Japan" value="JAPAN" />
+                    <Picker.Item label="Tunisia" value="TUNISIA" />
+                    <Picker.Item label="Morocco" value="MOROCCO" />
+                    <Picker.Item label="Algeria" value="ALGERIA" />
+                    <Picker.Item label="Turkey" value="TURKEY" />
+                    <Picker.Item label="Spain" value="SPAIN" />
+                    <Picker.Item label="Italy" value="ITALY" />
+                    <Picker.Item label="Portugal" value="PORTUGAL" />
+                    <Picker.Item label="Netherlands" value="NETHERLANDS" />
+                    <Picker.Item label="Belgium" value="BELGIUM" />
+                    <Picker.Item label="Sweden" value="SWEDEN" />
+                    <Picker.Item label="Norway" value="NORWAY" />
+                    <Picker.Item label="Denmark" value="DENMARK" />
+                    <Picker.Item label="Finland" value="FINLAND" />
+                    <Picker.Item label="Iceland" value="ICELAND" />
+                    <Picker.Item label="Austria" value="AUSTRIA" />
+                    <Picker.Item label="Switzerland" value="SWITZERLAND" />
+                    <Picker.Item label="Belarus" value="BELARUS" />
+                    <Picker.Item label="Russia" value="RUSSIA" />
+                    <Picker.Item label="China" value="CHINA" />
+                    <Picker.Item label="Brazil" value="BRAZIL" />
+                    <Picker.Item label="Argentina" value="ARGENTINA" />
+                    <Picker.Item label="Chile" value="CHILE" />
+                    <Picker.Item label="Mexico" value="MEXICO" />
+                    <Picker.Item label="Colombia" value="COLOMBIA" />
+                    <Picker.Item label="Peru" value="PERU" />
+                    <Picker.Item label="Venezuela" value="VENEZUELA" />
+                    <Picker.Item label="Ecuador" value="ECUADOR" />
+                    <Picker.Item label="Paraguay" value="PARAGUAY" />
+                    <Picker.Item label="Uruguay" value="URUGUAY" />
+                    <Picker.Item label="Bolivia" value="BOLIVIA" />
+                    <Picker.Item label="Other" value="OTHER" />
+                  </Picker>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputLabel}>
+                <Feather name="phone" size={16} color={Colors[theme].primary} />
+                <BodyMedium style={styles.labelText}>Phone Number</BodyMedium>
+              </View>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    borderColor: Colors[theme].border,
+                    backgroundColor: Colors[theme].card,
+                    color: Colors[theme].text,
+                  },
+                ]}
+                value={profile.phoneNumber}
+                onChangeText={(text) => setProfile((prev) => ({ ...prev, phoneNumber: text }))}
+                placeholder="Enter your phone number"
+                placeholderTextColor={Colors[theme].secondary}
+                keyboardType="phone-pad"
+              />
+            </View>
+          </View>
+
+          <BaseButton onPress={handleUpdateProfile} variant="primary" size="login" style={styles.saveButton}>
+            Save Changes
+          </BaseButton>
+        </View>
+      </ScrollView>
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
+    </SafeAreaView>
   )
 }
 
@@ -482,6 +498,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  scrollContent: {
+    paddingBottom: 80, // Add padding to ensure content isn't hidden behind the TabBar
   },
   header: {
     marginBottom: 24,
@@ -596,5 +615,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginBottom: 40,
+    borderRadius: 25,
+    paddingVertical: 15,
   },
 })

@@ -1,143 +1,159 @@
-import React, { useEffect, useState, useRef } from "react";
+"use client"
+
+import { useEffect, useState, useRef } from "react"
 import {
   Dimensions,
   View,
   StyleSheet,
   ScrollView,
-  LayoutChangeEvent,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-} from "react-native";
-import axiosInstance from "@/config";
-import { TopNavigation } from "@/components/navigation/TopNavigation";
-import { TabBar } from "@/components/navigation/TabBar";
-import { ThemedView } from "@/components/ThemedView";
-import { ThemedText } from "@/components/ThemedText";
-import { Card } from "@/components/Card";
-import UserCard from "@/components/fetchCards";
-import { Plane, ShoppingBag, MapPin, Crown } from "lucide-react-native";
-import { useRouter } from "expo-router";
-import { Traveler } from "@/types/Traveler";
+  type LayoutChangeEvent,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
+  TouchableOpacity,
+  Alert, // Import Alert
+} from "react-native"
+import axiosInstance from "@/config"
+import { TopNavigation } from "@/components/navigation/TopNavigation"
+import { TabBar } from "@/components/navigation/TabBar"
+import { ThemedView } from "@/components/ThemedView"
+import { ThemedText } from "@/components/ThemedText"
+import { Card } from "@/components/Card"
+import UserCard from "@/components/fetchCards"
+import OrderCard from "@/components/cardsForHomePage"
+import { Plane, ShoppingBag, MapPin, Crown } from "lucide-react-native"
+import { useRouter } from "expo-router"
+import type { Traveler } from "@/types/Traveler"
+import type { Order } from "@/types/Sponsorship"
 
 export default function HomeScreen() {
-  const [activeTab, setActiveTab] = useState("Home");
-  const [travelers, setTravelers] = useState<Traveler[]>([]);
-  const [sponsors, setSponsors] = useState<Traveler[]>([]);
-  const router = useRouter();
+  const [activeTab, setActiveTab] = useState("Home")
+  const [travelers, setTravelers] = useState<Traveler[]>([])
+  const [sponsors, setSponsors] = useState<Traveler[]>([])
+  const [requests, setRequests] = useState<Order[]>([])
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const router = useRouter()
+  const travelersScrollRef = useRef<ScrollView>(null)
+  const sponsorsScrollRef = useRef<ScrollView>(null)
+  const scrollAnimationRef = useRef<NodeJS.Timeout | null>(null)
 
-  const travelersScrollRef = useRef<ScrollView>(null);
-  const sponsorsScrollRef = useRef<ScrollView>(null);
-  const scrollAnimationRef = useRef<NodeJS.Timeout | null>(null);
-
-  const [userScrolling, setUserScrolling] = useState(false);
+  const [userScrolling, setUserScrolling] = useState(false)
   const [scrollPositions, setScrollPositions] = useState({
     travelers: 0,
     sponsors: 0,
-  });
+  })
   const [contentWidths, setContentWidths] = useState({
     travelers: 0,
     sponsors: 0,
-  });
+  })
   const [containerWidths, setContainerWidths] = useState({
     travelers: 0,
     sponsors: 0,
-  });
+  })
+
+  const fetchData = async (pageNum: number) => {
+    try {
+      const response = await axiosInstance.get(`/api/requests?page=${pageNum}&limit=3`)
+      const newRequests = response.data.data
+      console.log(`Fetched page ${pageNum}:`, newRequests)
+      setRequests((prev) => [...prev, ...newRequests])
+      setHasMore(newRequests.length > 0 && newRequests.length === 3)
+    } catch (error) {
+      console.log("Error fetching requests:", error)
+      setHasMore(false)
+    }
+  }
 
   useEffect(() => {
-    handleBestTraveler();
+    handleBestTraveler()
+    fetchData(1)
 
     if (travelers.length > 0 && sponsors.length > 0) {
-      startAutoScroll();
+      startAutoScroll()
     }
 
-    return () => stopAutoScroll();
-  }, [travelers.length, sponsors.length]);
+    return () => stopAutoScroll()
+  }, [travelers.length, sponsors.length])
 
   const handleBestTraveler = async () => {
     try {
-      const result = await axiosInstance.get("/api/besttarveler");
-      setTravelers(result.data.traveler);
-      setSponsors(result.data.sponsor);
+      const result = await axiosInstance.get("/api/besttarveler")
+      setTravelers(result.data.traveler)
+      setSponsors(result.data.sponsor)
     } catch (err) {
-      console.log("errrr", err);
+      console.log("Error fetching best travelers:", err)
     }
-  };
+  }
 
   const startAutoScroll = () => {
-    if (userScrolling) return;
+    if (userScrolling) return
 
-    stopAutoScroll();
+    stopAutoScroll()
 
     scrollAnimationRef.current = setInterval(() => {
       if (!userScrolling && travelersScrollRef.current && travelers.length > 0) {
-        const maxScrollX = Math.max(0, contentWidths.travelers - containerWidths.travelers);
-        const newX = scrollPositions.travelers + 1;
-
+        const maxScrollX = Math.max(0, contentWidths.travelers - containerWidths.travelers)
+        const newX = scrollPositions.travelers + 1
         if (newX < maxScrollX) {
-          travelersScrollRef.current.scrollTo({ x: newX, animated: false });
-          setScrollPositions((prev) => ({ ...prev, travelers: newX }));
-        } else {
-          stopAutoScroll();
+          travelersScrollRef.current.scrollTo({ x: newX, animated: false })
+          setScrollPositions((prev) => ({ ...prev, travelers: newX }))
         }
       }
 
       if (!userScrolling && sponsorsScrollRef.current && sponsors.length > 0) {
-        const maxScrollX = Math.max(0, contentWidths.sponsors - containerWidths.sponsors);
-        const newX = scrollPositions.sponsors + 1;
-
+        const maxScrollX = Math.max(0, contentWidths.sponsors - containerWidths.sponsors)
+        const newX = scrollPositions.sponsors + 1
         if (newX < maxScrollX) {
-          sponsorsScrollRef.current.scrollTo({ x: newX, animated: false });
-          setScrollPositions((prev) => ({ ...prev, sponsors: newX }));
-        } else {
-          stopAutoScroll();
+          sponsorsScrollRef.current.scrollTo({ x: newX, animated: false })
+          setScrollPositions((prev) => ({ ...prev, sponsors: newX }))
         }
       }
-    }, 50);
-  };
+    }, 50)
+  }
 
   const stopAutoScroll = () => {
     if (scrollAnimationRef.current) {
-      clearInterval(scrollAnimationRef.current);
-      scrollAnimationRef.current = null;
+      clearInterval(scrollAnimationRef.current)
+      scrollAnimationRef.current = null
     }
-  };
+  }
 
   const handleUserScrollBegin = () => {
-    setUserScrolling(true);
-    stopAutoScroll();
-  };
+    setUserScrolling(true)
+    stopAutoScroll()
+  }
 
   const handleUserScrollEnd = () => {
-    setUserScrolling(false);
-  };
+    setUserScrolling(false)
+  }
 
   const handleTravelersScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { x } = event.nativeEvent.contentOffset;
-    setScrollPositions((prev) => ({ ...prev, travelers: x }));
-  };
+    const { x } = event.nativeEvent.contentOffset
+    setScrollPositions((prev) => ({ ...prev, travelers: x }))
+  }
 
   const handleSponsorsScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { x } = event.nativeEvent.contentOffset;
-    setScrollPositions((prev) => ({ ...prev, sponsors: x }));
-  };
+    const { x } = event.nativeEvent.contentOffset
+    setScrollPositions((prev) => ({ ...prev, sponsors: x }))
+  }
 
   const onTravelersLayout = (event: LayoutChangeEvent) => {
-    const { width } = event.nativeEvent.layout;
-    setContainerWidths((prev) => ({ ...prev, travelers: width }));
-  };
+    const { width } = event.nativeEvent.layout
+    setContainerWidths((prev) => ({ ...prev, travelers: width }))
+  }
 
   const onSponsorsLayout = (event: LayoutChangeEvent) => {
-    const { width } = event.nativeEvent.layout;
-    setContainerWidths((prev) => ({ ...prev, sponsors: width }));
-  };
+    const { width } = event.nativeEvent.layout
+    setContainerWidths((prev) => ({ ...prev, sponsors: width }))
+  }
 
   const onTravelersContentSizeChange = (width: number) => {
-    setContentWidths((prev) => ({ ...prev, travelers: width }));
-  };
+    setContentWidths((prev) => ({ ...prev, travelers: width }))
+  }
 
   const onSponsorsContentSizeChange = (width: number) => {
-    setContentWidths((prev) => ({ ...prev, sponsors: width }));
-  };
+    setContentWidths((prev) => ({ ...prev, sponsors: width }))
+  }
 
   const services = [
     {
@@ -160,24 +176,55 @@ export default function HomeScreen() {
       icon: <Crown size={40} color="#007BFF" />,
       route: "../verification/fetchAll" as const,
     },
-  ];
+  ]
 
   const handleCardPress = (service: (typeof services)[0]) => {
     try {
-      router.push(service.route);
+      router.push(service.route)
     } catch (error) {
-      const err = error as Error;
-      console.error(`❌ Navigation failed:`, err);
+      const err = error as Error
+      console.error(`❌ Navigation failed:`, err)
     }
-  };
+  }
+
+  const handleOrderCardPress = (requestId: number) => {
+    // router.push(`/request/${requestId}`) // Navigate to request details
+  }
+
+  const handleAcceptRequest = (requestId: number) => {
+    console.log(`Accepted request ${requestId}`)
+    // Add your accept logic here (e.g., API call)
+  }
+
+  const handleRejectRequest = (requestId: number) => {
+    console.log(`Rejected request ${requestId}`)
+    // Add your reject logic here (e.g., API call)
+  }
+
+  const handleSeeMoreRequests = () => {
+    const nextPage = page + 1
+    setPage(nextPage)
+    fetchData(nextPage)
+  }
+
+  // New function to handle clicking on a traveler or sponsor card
+  const handleUserCardPress = (name: string, role: "Traveler" | "Sponsor") => {
+    Alert.alert(
+      "Premium Feature",
+      `You need to be a premium member to contact ${role}s like ${name}. Upgrade your account to unlock this feature!`,
+      [
+        {
+          text: "OK",
+          style: "default",
+        },
+      ],
+      { cancelable: true }
+    )
+  }
 
   return (
     <ThemedView style={styles.container}>
-      <TopNavigation
-        title="Wassalha"
-        onMenuPress={() => { }}
-        onNotificationPress={() => { }}
-      />
+      <TopNavigation title="Wassalha" onMenuPress={() => { }} onNotificationPress={() => { }} />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Services Section */}
         <View style={styles.section}>
@@ -188,15 +235,9 @@ export default function HomeScreen() {
                   key={service.title}
                   style={styles.serviceCard}
                   onPress={() => handleCardPress(service)}
-                // Removed accessibilityLabel as it is not part of CardProps
-                >
-                  <View style={styles.serviceContent}>
-                    {service.icon}
-                    <ThemedText style={styles.serviceTitle}>
-                      {service.title}
-                    </ThemedText>
-                  </View>
-                </Card>
+                  icon={service.icon}
+                  title={service.title}
+                />
               ))}
             </View>
           </View>
@@ -231,6 +272,7 @@ export default function HomeScreen() {
                     }
                     isVerified={true}
                     role="Traveler"
+                    onPress={() => handleUserCardPress(traveler.user.profile.firstName, "Traveler")} // Add onPress handler
                   />
                 ))}
               </View>
@@ -267,20 +309,54 @@ export default function HomeScreen() {
                     }
                     isVerified={true}
                     role="Sponsor"
+                    onPress={() => handleUserCardPress(sponsor.user.profile.firstName, "Sponsor")} // Add onPress handler
                   />
                 ))}
               </View>
             </ScrollView>
           </View>
         </View>
+
+        {/* Requests Section */}
+        <View style={styles.section}>
+          <View style={styles.separator}>
+            <ThemedText style={styles.separatorText}>Latest Requests</ThemedText>
+          </View>
+          <View style={styles.requestsSection}>
+            {requests.length > 0 ? (
+              <>
+                {requests.map((request, index) => (
+                  <OrderCard
+                    key={`request-${index}`}
+                    order={request}
+                    onPress={() => handleOrderCardPress(request.id)}
+                    onAccept={() => handleAcceptRequest(request.id)}
+                    onReject={() => handleRejectRequest(request.id)}
+                  />
+                ))}
+                {hasMore && (
+                  <TouchableOpacity onPress={handleSeeMoreRequests}>
+                    <ThemedText style={styles.seeMoreText}>See More</ThemedText>
+                  </TouchableOpacity>
+                )}
+              </>
+            ) : (
+              <View style={styles.emptyState}>
+                <ThemedText style={styles.emptyStateText}>No requests available</ThemedText>
+              </View>
+            )}
+          </View>
+        </View>
       </ScrollView>
 
       <TabBar activeTab={activeTab} onTabPress={setActiveTab} />
     </ThemedView>
-  );
+  )
 }
-const { width } = Dimensions.get('window');
+
+const { width } = Dimensions.get("window")
 const cardSize = (width - 48) / 2
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -311,15 +387,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   servicesGrid: {
-    flexDirection: "row", // Changed from "column" to "row"
-    flexWrap: "wrap", // Added to wrap cards into a 2x2 grid
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
-    justifyContent: "space-between", // Ensures even spacing
+    justifyContent: "space-between",
     width: "100%",
   },
   serviceCard: {
-    width: cardSize, // Set the width dynamically
-    height: cardSize, // Set the height equal to width to make it square
+    width: cardSize,
+    height: cardSize,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#fff",
@@ -333,33 +409,46 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  serviceContent: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    gap: 12,
-  },
-  serviceTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
-    color: "#007BFF",
-  },
   travelersSection: {
     marginTop: 20,
     paddingVertical: 20,
     alignItems: "center",
   },
+  sponsorsSection: {
+    marginTop: 20,
+    paddingVertical: 20,
+    alignItems: "center",
+  },
+  requestsSection: {
+    marginTop: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
   listContainer: {
     flexDirection: "row",
     paddingHorizontal: 16,
     gap: 16,
+    justifyContent: "center",
   },
-  sponsorsSection: {
-    marginTop: 20,
-    paddingVertical: 20,
-    marginBottom: 80,
+  emptyState: {
+    width: "100%",
+    height: 150,
+    justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#f9f9f9",
+    borderRadius: 12,
+    borderColor: "#ddd",
+    borderWidth: 0.5,
   },
-});
+  emptyStateText: {
+    color: "#999",
+    fontSize: 14,
+  },
+  seeMoreText: {
+    color: "#007BFF",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+    marginTop: 10,
+  },
+})
