@@ -45,7 +45,6 @@ import { Picker } from "@react-native-picker/picker";
 import Card from "@/components/cards/ProcessCard";
 import { useNotification } from "@/context/NotificationContext";
 import { io } from "socket.io-client";
-import { useStatus } from '@/context/StatusContext';
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -155,10 +154,27 @@ export default function InitializationSP() {
 
   useEffect(() => {
     fetchRequestDetails();
+    
   }, [params.id]);
 
   useEffect(() => {
+    const socket = io(`${BACKEND_URL}/processTrack`,{
+           transports: ["websocket"],
+         });
     loadUserFromToken();
+    socket.on("connect", () => {
+      console.log("🔌 Orders page socket connected");
+      const room = params.idProcess; // Example; get this from props, context, or params
+      socket.emit("joinProcessRoom", room);
+      console.log("🔌  socket connected room ",room);
+    });
+    socket.on("processStatusChanged", (data) => {
+      console.log("🔄 Status changed to:", data.status);
+      router.replace({
+        pathname: "/processTrack/verificationSP",
+        params: params,
+      });
+    });
   }, []);
 
   const fetchRequestDetails = async () => {
@@ -282,11 +298,6 @@ export default function InitializationSP() {
         
         // Connect to socket and emit event
         const socket = io(`${BACKEND_URL}/processTrack`);
-        // socket.emit("requestCreated", {
-        //   requestId: requestResponse.data.data.id
-        // });
-        // First approach: Use a promise to ensure the event is sent
-   
               socket.emit("offerMadeOrder", {
                 processId: request.userId,
                 requestId: requestId

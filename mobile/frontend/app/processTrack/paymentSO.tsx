@@ -19,7 +19,7 @@ import { BACKEND_URL } from "@/config";
 import { useNotification } from "@/context/NotificationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
-import { useStatus } from '@/context/StatusContext';
+import { io } from "socket.io-client";
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
@@ -29,7 +29,7 @@ export default function PaymentScreen() {
   const { confirmPayment, loading } = useConfirmPayment();
   const [userData, setUserData] = useState<any>(null);
   const { sendNotification } = useNotification();
-  const { show, hide } = useStatus();
+  const socket = io(`${BACKEND_URL}/processTrack`);
 
   const totalPrice =
     parseInt(params.quantity.toString()) * parseInt(params.price.toString());
@@ -145,23 +145,15 @@ export default function PaymentScreen() {
             },
           });
         }
-
-        show({
-          type: 'success',
-          title: 'Payment Successful',
-          message: 'Your payment has been processed successfully.',
-          primaryAction: {
-            label: 'Continue',
-            onPress: () => {
-              hide();
-              router.replace({
-                pathname: "/pickup/pickup",
-                params: params,
-              });
-            }
-          }
-        });
+        socket.emit("confirmProduct", {
+                  processId:params.idProcess,
+                });
+        Alert.alert("Success", "Payment successful!");
         console.log("Payment successful:", paymentIntent);
+        router.replace({
+          pathname: "/pickup/pickup",
+          params: params,
+        });
       }
     } catch (error: Error | any) {
       console.error("Payment error:", error);

@@ -19,7 +19,7 @@ import { useNotification } from '@/context/NotificationContext';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 import Animated from "react-native-reanimated";
-import { useStatus } from '@/context/StatusContext';
+import { io } from "socket.io-client";
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
@@ -29,45 +29,28 @@ export default function VerificationScreen() {
   const orderId = params.idOrder;
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
-  const { show, hide } = useStatus();
-
+  const socket = io(`${BACKEND_URL}/processTrack`,{
+    transports: ["websocket"],
+  });
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
     { id: 2, title: "Verification", icon: "verification" },
     { id: 3, title: "Payment", icon: "payment" },
     { id: 4, title: "Pickup", icon: "pickup" },
   ];
-
+  const fetchOrder = async () => {
+    try {
+      const response = await axiosInstance.get(`/api/orders/${orderId}`);
+      setOrder(response.data.data);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      Alert.alert("Error", "Failed to fetch order details");
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        const response = await axiosInstance.get(`/api/orders/${orderId}`);
-        setOrder(response.data.data);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching order:", error);
-        show({
-          type: 'error',
-          title: 'Loading Error',
-          message: 'Failed to fetch order details. Please try again.',
-          primaryAction: {
-            label: 'Retry',
-            onPress: () => {
-              hide();
-              fetchOrder();
-            }
-          },
-          secondaryAction: {
-            label: 'Go Back',
-            onPress: () => {
-              hide();
-              router.back();
-            }
-          }
-        });
-        setIsLoading(false);
-      }
-    };
+    
 
     fetchOrder();
   }, [orderId]);
@@ -101,6 +84,21 @@ export default function VerificationScreen() {
     };
 
     loadUserData();
+    
+    socket.on("connect", () => {
+      console.log("🔌 Orders page socket connected");
+      const room = params.idProcess; // Example; get this from props, context, or params
+      socket.emit("joinProcessRoom", room);
+      console.log("🔌 Ophoto socket connected, ",room);
+   
+    })
+    socket.on("photo", (data) => {
+      // alert("hi");
+      console.log("🔄 photo updated to:", data);
+      fetchOrder();
+      
+    });
+    
   }, []);
 
   const getImageUrl = () => {
@@ -146,21 +144,13 @@ export default function VerificationScreen() {
             processId: params.idProcess
           }
         });
-        
-        show({
-          type: 'success',
-          title: 'Success',
-          message: 'Product confirmed successfully',
-          primaryAction: {
-            label: 'Continue',
-            onPress: () => {
-              hide();
-              router.replace({
-                pathname: "/processTrack/paymentSO",
-                params: params,
-              });
-            }
-          }
+        socket.emit("confirmProduct", {
+          processId:params.idProcess,
+        });
+        Alert.alert("Success", "Product confirmed successfully");
+        router.replace({
+          pathname: "/processTrack/paymentSO",
+          params: params,
         });
       }
     } catch (error) {

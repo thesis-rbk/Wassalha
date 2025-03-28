@@ -25,7 +25,6 @@ import * as DocumentPicker from "expo-document-picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "@/config";
-import { useStatus } from '@/context/StatusContext';
 
 const AdditionalDetails: React.FC = () => {
   const colorScheme = useColorScheme() ?? "light";
