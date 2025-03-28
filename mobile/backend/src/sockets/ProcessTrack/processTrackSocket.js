@@ -38,10 +38,18 @@ module.exports = (processTrackIO) => {
             processTrackIO.to(`process:${processId}`).emit("offerMadeOrder", offer);
         });
         socket.on("photo", (data) => {
-            const { processId } = data;
+            const  {processId}  = data;
             console.log(`🔄 verification photo${processId}  updated to `);
             
-            processTrackIO.to(`verification:${processId}`).emit("photo", {
+            processTrackIO.to(`process:${processId}`).emit("photo", {
+                processId
+            });
+        });
+        socket.on("confirmProduct", (data) => {
+            const {processId}   = data;
+            console.log(`🔄 verification photo${processId}  updated to `);
+            
+            processTrackIO.to(`process:${processId}`).emit("confirmProduct", {
                 processId
             });
         });

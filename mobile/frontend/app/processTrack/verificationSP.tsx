@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
+import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import ProgressBar from "../../components/ProgressBar";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -27,6 +28,8 @@ export default function VerificationScreen() {
   const [isVerified, setIsVerified] = useState(false);
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
+  const socket = io(`${BACKEND_URL}/processTrack`);
+  const router = useRouter();
 
   console.log(params);
 
@@ -90,6 +93,20 @@ export default function VerificationScreen() {
     };
 
     loadUserData();
+    socket.on("connect", () => {
+      console.log("🔌 Orders page socket connected");
+      const room = params.idProcess; // Example; get this from props, context, or params
+      socket.emit("joinProcessRoom", room);
+      console.log("🔌 Ophoto socket connected, ",room);
+   
+    })
+    socket.on("confirmProduct", (data) => {
+      router.push({
+        pathname: "/processTrack/paymentSP",
+        params: params,
+      });      console.log("🔄 product confirmed updated to:", data);
+      
+    });
   }, []);
 
   // Upload the photo for verification
@@ -133,7 +150,6 @@ export default function VerificationScreen() {
             processId: params.idProcess
           }
         });
-        const socket = io(`${BACKEND_URL}/processTrack`);
         socket.emit("photo", {
           processId:params.idProcess,
         });

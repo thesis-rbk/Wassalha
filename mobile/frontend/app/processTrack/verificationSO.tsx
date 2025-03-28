@@ -29,7 +29,9 @@ export default function VerificationScreen() {
   const orderId = params.idOrder;
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
-
+  const socket = io(`${BACKEND_URL}/processTrack`,{
+    transports: ["websocket"],
+  });
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
     { id: 2, title: "Verification", icon: "verification" },
@@ -82,9 +84,7 @@ export default function VerificationScreen() {
     };
 
     loadUserData();
-    const socket = io(`${BACKEND_URL}/processTrack`,{
-      transports: ["websocket"],
-    });
+    
     socket.on("connect", () => {
       console.log("🔌 Orders page socket connected");
       const room = params.idProcess; // Example; get this from props, context, or params
@@ -93,7 +93,7 @@ export default function VerificationScreen() {
    
     })
     socket.on("photo", (data) => {
-      alert("hi");
+      // alert("hi");
       console.log("🔄 photo updated to:", data);
       fetchOrder();
       
@@ -144,7 +144,9 @@ export default function VerificationScreen() {
             processId: params.idProcess
           }
         });
-        
+        socket.emit("confirmProduct", {
+          processId:params.idProcess,
+        });
         Alert.alert("Success", "Product confirmed successfully");
         router.replace({
           pathname: "/processTrack/paymentSO",

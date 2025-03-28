@@ -19,6 +19,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 import { useIsFocused } from "@react-navigation/native";
 import { useNotification } from '@/context/NotificationContext';
+import { io } from "socket.io-client";
+import { BACKEND_URL } from "@/config";
 
 const PaymentScreen = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -31,6 +33,7 @@ const PaymentScreen = () => {
   const router = useRouter();
   const isFocused = useIsFocused();
   const { sendNotification } = useNotification();
+    const socket = io(`${BACKEND_URL}/processTrack`);
   
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -128,6 +131,7 @@ const PaymentScreen = () => {
           travelerId: user?.id,
           requesterId: orderData?.request?.userId
         }
+        
       });
     } else if (processData?.status === 'PAYMENT_FAILED') {
       sendNotification('payment_failed', {
@@ -140,6 +144,7 @@ const PaymentScreen = () => {
           travelerId: user?.id,
           requesterId: orderData?.request?.userId
         }
+        
       });
     }
   }, [processData?.status]);
@@ -168,6 +173,21 @@ const PaymentScreen = () => {
     };
 
     loadNotificationPreferences();
+    socket.on("connect", () => {
+      console.log("🔌 Orders page socket connected");
+      const room = params.idProcess; // Example; get this from props, context, or params
+      socket.emit("joinProcessRoom", room);
+      console.log("🔌 Ophoto socket connected, ",room);
+   
+    })
+    socket.on("confirmProduct", (data) => {
+      // alert("hi");
+      console.log("🔄 photo updated to:", data);
+      router.push({
+                pathname: "/processTrack/pickupSP",
+                params: params,
+              });
+    });
   }, []);
 
   const onRefresh = () => {
