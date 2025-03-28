@@ -5,8 +5,30 @@ exports.getAllSponsorships = async (req, res) => {
   try {
     const sponsorships = await prisma.sponsorship.findMany({
       include: {
-        users: true, // Correctly include the users relation
-        category: true, // Include category if needed
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        category: {
+          select: {
+            id: true,
+            name: true, 
+            description: true,
+          },
+        },
+        sponsor: {
+          select: {
+            id: true,
+            userId: true,
+            type: true, 
+            isVerified: true,
+            badge: true,
+            subscriptionLevel: true,
+          },
+        },
       },
     });
     res.status(200).json({
