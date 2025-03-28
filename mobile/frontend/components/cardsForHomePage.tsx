@@ -72,18 +72,6 @@ const OrderCard: React.FC<OrderfetchCardProps> = ({ order, onPress, onAccept, on
             {/* Action Buttons for PENDING status */}
             {status === 'PENDING' && (
                 <View style={styles.buttonContainer}>
-                    <TouchableOpacity
-                        style={[styles.button, styles.acceptButton]}
-                        onPress={onAccept}
-                    >
-                        <Text style={styles.buttonText}>Accept</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.button, styles.rejectButton]}
-                        onPress={onReject}
-                    >
-                        <Text style={styles.buttonText}>Reject</Text>
-                    </TouchableOpacity>
                 </View>
             )}
         </TouchableOpacity>

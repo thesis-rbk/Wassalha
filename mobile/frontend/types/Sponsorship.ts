@@ -204,6 +204,4 @@ export interface OrderSpon {
 export interface OrderfetchCardProps {
     order: OrderSpon;
     onPress: () => void;
-    onAccept?: () => void;
-    onReject?: () => void;
 }

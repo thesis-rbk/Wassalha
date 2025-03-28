@@ -496,7 +496,6 @@ model Request {
   CodeSubmission CodeSubmission[]
 }
 
-
 // ========== ORDER ==========
 model Order {
   id        Int     @id @default(autoincrement())
@@ -572,7 +571,7 @@ model Notification {
 
   type    NotificationType
   title   String?
-  message String?
+  message String?            @db.VarChar(1000)
   status  NotificationStatus @default(UNREAD)
 
   requestId Int?

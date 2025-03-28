@@ -53,7 +53,7 @@ export default function HomeScreen() {
 
   const fetchData = async (pageNum: number) => {
     try {
-      const response = await axiosInstance.get(`/api/requests?page=${pageNum}&limit=3`)
+      const response = await axiosInstance.get(`/api/requests/?page=${pageNum}&limit=3`)
       const newRequests = response.data.data
       console.log(`Fetched page ${pageNum}:`, newRequests)
       setRequests((prev) => [...prev, ...newRequests])
@@ -330,8 +330,6 @@ export default function HomeScreen() {
                     key={`request-${index}`}
                     order={request}
                     onPress={() => handleOrderCardPress(request.id)}
-                    onAccept={() => handleAcceptRequest(request.id)}
-                    onReject={() => handleRejectRequest(request.id)}
                   />
                 ))}
                 {hasMore && (

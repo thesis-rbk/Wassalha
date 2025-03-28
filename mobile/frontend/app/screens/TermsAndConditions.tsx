@@ -43,7 +43,7 @@ const TermsAndConditions: React.FC = () => {
             try {
                 console.log('Saving terms acceptance...');
                 // Save that user has accepted the terms
-                await AsyncStorage.setItem('sponsorshipTermsAccepted', 'true');
+                await AsyncStorage.setItem('sponsorshipTermsAccepted', 'true'); // Fixed to 'true'
                 console.log('Terms acceptance saved successfully');
                 router.push('/verification/start');
             } catch (error) {
@@ -81,7 +81,7 @@ const TermsAndConditions: React.FC = () => {
                     style={styles.innerScroll}
                     contentContainerStyle={styles.innerContent}
                     onScroll={handleScroll}
-                    scrollEventThrottle={400}
+                    scrollEventThrottle={16} // Adjusted for smoother detection
                 >
                     <ThemedText style={styles.intro}>
                         Welcome to The Tribe! These Terms and Conditions ("Terms") govern your participation in our global sponsorship community. By joining our community, you agree to these Terms. Please read them carefully.

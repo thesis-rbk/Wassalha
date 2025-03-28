@@ -63,7 +63,6 @@ const SelectCountry = () => {
   };
   return (
     <ThemedView style={styles.container}>
-      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
       <LinearGradient
         colors={['#4F46E5', '#7C3AED']}
         style={styles.header}
@@ -147,6 +146,7 @@ const SelectCountry = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   );
 };
