@@ -17,32 +17,6 @@ if (!fs.existsSync(envPath)) {
 const { PrismaClient } = require("@prisma/client");
 const { faker } = require("@faker-js/faker");
 
-const {
-  Country,
-  Gender,
-  ReferralSource,
-  RequestStatus,
-  OrderStatus,
-  PaymentStatus,
-  PaymentCurrency,
-  PaymentState,
-  PaymentMethod,
-  PickupType,
-  PickupStatus,
-  NotificationType,
-  NotificationStatus,
-  ReviewType,
-  ReviewStatus,
-  SubscriptionType,
-  SponsorshipPlatform,
-  ServiceProviderType,
-  FileExtension,
-  MediaType,
-  ProcessStatus,
-  Role,
-  TicketStatus,
-} = require("@prisma/client");
-
 const prisma = new PrismaClient({
   log: ["error"],
 });
@@ -70,8 +44,8 @@ async function seed() {
       "pickup",
       "order",
       "request",
-      "ticket",
       "ticketMessage",
+      "ticket",
       "sponsorship",
       "subscription",
       "goods",
@@ -81,6 +55,7 @@ async function seed() {
       "traveler",
       "media",
       "user",
+      "codeSubmission",
     ];
 
     for (const table of tables) {
@@ -98,40 +73,148 @@ async function seed() {
 
     console.log("Database cleaned. Starting to seed...");
 
-    // Create Users with correct Role enum
+    // Create Users
     const users = await Promise.all(
       Array.from({ length: 10 }).map(() =>
-        prisma.user.create({
+        prisma.User.create({
           data: {
             name: faker.person.fullName(),
             email: faker.internet.email(),
             phoneNumber: faker.phone.number(),
             googleId: faker.datatype.boolean()
               ? faker.string.alphanumeric(21)
-              : undefined,
+              : null,
             password: faker.datatype.boolean()
               ? faker.internet.password()
-              : undefined,
+              : null,
             hasCompletedOnboarding: faker.datatype.boolean(),
             role: faker.helpers.arrayElement(["USER", "ADMIN", "SUPER_ADMIN"]),
-            resetToken: faker.datatype.boolean()
-              ? faker.string.uuid()
-              : undefined,
+            resetToken: faker.datatype.boolean() ? faker.string.uuid() : null,
             resetTokenExpiry: faker.datatype.boolean()
               ? faker.date.future()
-              : undefined,
+              : null,
           },
         })
       )
     );
     console.log("Created users");
+    const imageUrls = [
+      // Photos of people (reel)
+      "https://images.pexels.com/photos/1239292/pexels-photo-1239292.jpeg",
+      "https://images.pexels.com/photos/1492578/pexels-photo-1492578.jpeg",
+      "https://images.pexels.com/photos/1461748/pexels-photo-1461748.jpeg",
+      "https://images.pexels.com/photos/3073992/pexels-photo-3073992.jpeg",
+      "https://images.pexels.com/photos/1704122/pexels-photo-1704122.jpeg",
+      "https://images.pexels.com/photos/2166797/pexels-photo-2166797.jpeg",
+      "https://images.pexels.com/photos/1422096/pexels-photo-1422096.jpeg",
+      "https://images.pexels.com/photos/1463592/pexels-photo-1463592.jpeg",
+      "https://images.pexels.com/photos/3182782/pexels-photo-3182782.jpeg",
+      "https://images.pexels.com/photos/3807506/pexels-photo-3807506.jpeg",
+      "https://images.pexels.com/photos/1246952/pexels-photo-1246952.jpeg",
+      "https://images.pexels.com/photos/1742387/pexels-photo-1742387.jpeg",
+      "https://images.pexels.com/photos/3231479/pexels-photo-3231479.jpeg",
+      "https://images.pexels.com/photos/3771896/pexels-photo-3771896.jpeg",
+      "https://images.pexels.com/photos/2725245/pexels-photo-2725245.jpeg",
+      "https://images.pexels.com/photos/2504350/pexels-photo-2504350.jpeg",
+      "https://images.pexels.com/photos/1883807/pexels-photo-1883807.jpeg",
+      "https://images.pexels.com/photos/1711776/pexels-photo-1711776.jpeg",
+      "https://images.pexels.com/photos/2105703/pexels-photo-2105703.jpeg",
+      "https://images.pexels.com/photos/1583330/pexels-photo-1583330.jpeg",
 
-    // Create Media with updated enums
+      // Product photos
+      "https://images.pexels.com/photos/1267317/pexels-photo-1267317.jpeg",
+      "https://images.pexels.com/photos/1404561/pexels-photo-1404561.jpeg",
+      "https://images.pexels.com/photos/1704121/pexels-photo-1704121.jpeg",
+      "https://images.pexels.com/photos/1587620/pexels-photo-1587620.jpeg",
+      "https://images.pexels.com/photos/3026802/pexels-photo-3026802.jpeg",
+      "https://images.pexels.com/photos/1195990/pexels-photo-1195990.jpeg",
+      "https://images.pexels.com/photos/1797413/pexels-photo-1797413.jpeg",
+      "https://images.pexels.com/photos/2201398/pexels-photo-2201398.jpeg",
+      "https://images.pexels.com/photos/4075712/pexels-photo-4075712.jpeg",
+      "https://images.pexels.com/photos/1531537/pexels-photo-1531537.jpeg",
+      "https://images.pexels.com/photos/3408744/pexels-photo-3408744.jpeg",
+      "https://images.pexels.com/photos/2265475/pexels-photo-2265475.jpeg",
+      "https://images.pexels.com/photos/1704123/pexels-photo-1704123.jpeg",
+      "https://images.pexels.com/photos/3300162/pexels-photo-3300162.jpeg",
+      "https://images.pexels.com/photos/2912967/pexels-photo-2912967.jpeg",
+      "https://images.pexels.com/photos/1151681/pexels-photo-1151681.jpeg",
+      "https://images.pexels.com/photos/3585595/pexels-photo-3585595.jpeg",
+      "https://images.pexels.com/photos/1193070/pexels-photo-1193070.jpeg",
+      "https://images.pexels.com/photos/1704106/pexels-photo-1704106.jpeg",
+      "https://images.pexels.com/photos/2977554/pexels-photo-2977554.jpeg",
+      "https://images.pexels.com/photos/1679604/pexels-photo-1679604.jpeg",
+
+      // People (Profiles)
+      "https://images.pexels.com/photos/1901144/pexels-photo-1901144.jpeg",
+      "https://images.pexels.com/photos/3455337/pexels-photo-3455337.jpeg",
+      "https://images.pexels.com/photos/2016807/pexels-photo-2016807.jpeg",
+      "https://images.pexels.com/photos/2042494/pexels-photo-2042494.jpeg",
+      "https://images.pexels.com/photos/2657245/pexels-photo-2657245.jpeg",
+      "https://images.pexels.com/photos/1751555/pexels-photo-1751555.jpeg",
+      "https://images.pexels.com/photos/3144689/pexels-photo-3144689.jpeg",
+      "https://images.pexels.com/photos/2362534/pexels-photo-2362534.jpeg",
+      "https://images.pexels.com/photos/3727433/pexels-photo-3727433.jpeg",
+      "https://images.pexels.com/photos/1532358/pexels-photo-1532358.jpeg",
+      "https://images.pexels.com/photos/2816133/pexels-photo-2816133.jpeg",
+      "https://images.pexels.com/photos/1744025/pexels-photo-1744025.jpeg",
+      "https://images.pexels.com/photos/1298600/pexels-photo-1298600.jpeg",
+      "https://images.pexels.com/photos/1793611/pexels-photo-1793611.jpeg",
+      "https://images.pexels.com/photos/3795063/pexels-photo-3795063.jpeg",
+      "https://images.pexels.com/photos/2846216/pexels-photo-2846216.jpeg",
+      "https://images.pexels.com/photos/1555611/pexels-photo-1555611.jpeg",
+      "https://images.pexels.com/photos/1663746/pexels-photo-1663746.jpeg",
+      "https://images.pexels.com/photos/3775829/pexels-photo-3775829.jpeg",
+      "https://images.pexels.com/photos/3442195/pexels-photo-3442195.jpeg",
+
+      // Product photos
+      "https://images.pexels.com/photos/2825301/pexels-photo-2825301.jpeg",
+      "https://images.pexels.com/photos/1053290/pexels-photo-1053290.jpeg",
+      "https://images.pexels.com/photos/2061216/pexels-photo-2061216.jpeg",
+      "https://images.pexels.com/photos/1173239/pexels-photo-1173239.jpeg",
+      "https://images.pexels.com/photos/2995741/pexels-photo-2995741.jpeg",
+      "https://images.pexels.com/photos/3152496/pexels-photo-3152496.jpeg",
+      "https://images.pexels.com/photos/2837435/pexels-photo-2837435.jpeg",
+      "https://images.pexels.com/photos/1296671/pexels-photo-1296671.jpeg",
+      "https://images.pexels.com/photos/1771789/pexels-photo-1771789.jpeg",
+      "https://images.pexels.com/photos/3371293/pexels-photo-3371293.jpeg",
+      "https://images.pexels.com/photos/2061775/pexels-photo-2061775.jpeg",
+      "https://images.pexels.com/photos/2204091/pexels-photo-2204091.jpeg",
+      "https://images.pexels.com/photos/1471530/pexels-photo-1471530.jpeg",
+      "https://images.pexels.com/photos/3184437/pexels-photo-3184437.jpeg",
+      "https://images.pexels.com/photos/3279744/pexels-photo-3279744.jpeg",
+      "https://images.pexels.com/photos/1194734/pexels-photo-1194734.jpeg",
+      "https://images.pexels.com/photos/1958595/pexels-photo-1958595.jpeg",
+      "https://images.pexels.com/photos/1628229/pexels-photo-1628229.jpeg",
+      "https://images.pexels.com/photos/3535062/pexels-photo-3535062.jpeg",
+
+      // More Profile Photos
+      "https://images.pexels.com/photos/2267417/pexels-photo-2267417.jpeg",
+      "https://images.pexels.com/photos/2267412/pexels-photo-2267412.jpeg",
+      "https://images.pexels.com/photos/2641561/pexels-photo-2641561.jpeg",
+      "https://images.pexels.com/photos/2654159/pexels-photo-2654159.jpeg",
+      "https://images.pexels.com/photos/2077582/pexels-photo-2077582.jpeg",
+      "https://images.pexels.com/photos/2377709/pexels-photo-2377709.jpeg",
+      "https://images.pexels.com/photos/1537150/pexels-photo-1537150.jpeg",
+      "https://images.pexels.com/photos/1767666/pexels-photo-1767666.jpeg",
+      "https://images.pexels.com/photos/3172882/pexels-photo-3172882.jpeg",
+      "https://images.pexels.com/photos/2873131/pexels-photo-2873131.jpeg",
+      "https://images.pexels.com/photos/3408745/pexels-photo-3408745.jpeg",
+      "https://images.pexels.com/photos/3106172/pexels-photo-3106172.jpeg",
+      "https://images.pexels.com/photos/2111154/pexels-photo-2111154.jpeg",
+      "https://images.pexels.com/photos/3660439/pexels-photo-3660439.jpeg",
+      "https://images.pexels.com/photos/2960481/pexels-photo-2960481.jpeg",
+      "https://images.pexels.com/photos/1180997/pexels-photo-1180997.jpeg",
+      "https://images.pexels.com/photos/1437984/pexels-photo-1437984.jpeg",
+      "https://images.pexels.com/photos/2687417/pexels-photo-2687417.jpeg",
+      "https://images.pexels.com/photos/2633535/pexels-photo-2633535.jpeg",
+      "https://images.pexels.com/photos/1597401/pexels-photo-1597401.jpeg",
+    ];
+    // Create Media
     const media = await Promise.all(
       Array.from({ length: 20 }).map(() =>
         prisma.media.create({
           data: {
-            url: faker.image.url(),
+            url: faker.image.url(imageUrls),
             type: faker.helpers.arrayElement([
               "IMAGE",
               "VIDEO",
@@ -164,7 +247,7 @@ async function seed() {
             height: faker.number.int({ min: 100, max: 1080 }),
             duration: faker.datatype.boolean()
               ? faker.number.int({ min: 1, max: 300 })
-              : undefined,
+              : null,
           },
         })
       )
@@ -200,8 +283,9 @@ async function seed() {
         })
       )
     );
+    console.log("Created travelers");
+    const usedImageIds = new Set(); // Keeps track of the used imageIds to prevent duplicates
 
-    // Create Profiles with updated Country enum
     const profiles = await Promise.all(
       users.map((user) =>
         prisma.profile.create({
@@ -252,10 +336,18 @@ async function seed() {
               "OTHER",
             ]),
             phoneNumber: faker.phone.number(),
-            gender: faker.helpers.arrayElement(["MALE", "FEMALE"]),
             imageId: faker.datatype.boolean()
-              ? faker.helpers.arrayElement(media).id
-              : undefined,
+              ? (() => {
+                  // Ensure unique imageId selection
+                  let imageId;
+                  do {
+                    imageId = faker.helpers.arrayElement(media).id;
+                  } while (usedImageIds.has(imageId)); // Keep checking until unique
+                  usedImageIds.add(imageId); // Mark the imageId as used
+                  return imageId;
+                })()
+              : null,
+            gender: faker.helpers.arrayElement(["MALE", "FEMALE"]),
             isAnonymous: faker.datatype.boolean(),
             isBanned: faker.datatype.boolean(),
             isVerified: faker.datatype.boolean(),
@@ -263,7 +355,7 @@ async function seed() {
             isSponsor: faker.datatype.boolean(),
             preferredCategories: faker.datatype.boolean()
               ? faker.commerce.department()
-              : undefined,
+              : null,
             referralSource: faker.helpers.arrayElement([
               "SOCIAL_MEDIA",
               "FRIEND_RECOMMENDATION",
@@ -277,7 +369,7 @@ async function seed() {
       )
     );
 
-    // Create Service Providers with updated type
+    // Create Service Providers
     const serviceProviders = await Promise.all(
       users.slice(0, 5).map((user) =>
         prisma.serviceProvider.create({
@@ -291,42 +383,39 @@ async function seed() {
             isVerified: faker.datatype.boolean(),
             badge: faker.datatype.boolean()
               ? faker.string.alphanumeric(8)
-              : undefined,
+              : null,
             idCard: faker.datatype.boolean()
               ? faker.number.int({ min: 100000000, max: 999999999 }).toString()
-              : undefined,
+              : null,
             passport: faker.datatype.boolean()
               ? faker.string.alphanumeric(10)
-              : undefined,
+              : null,
             license: faker.datatype.boolean()
               ? faker.number
                   .int({ min: 1000000000, max: 9999999999 })
                   .toString()
-              : undefined,
+              : null,
             creditCard: faker.datatype.boolean()
               ? faker.finance.creditCardNumber().slice(-4)
-              : undefined,
-            selfie: faker.datatype.boolean() ? faker.image.url() : undefined,
+              : null,
+            selfie: faker.datatype.boolean() ? faker.image.url() : null,
             questionnaireAnswers: faker.datatype.boolean()
               ? { answers: faker.lorem.sentences(3) }
-              : undefined,
-            subscriptionLevel: faker.helpers.arrayElement([
-              "BASIC",
-              "PREMIUM",
-              "PRO",
-            ]),
+              : null,
+            subscriptionLevel: faker.datatype.boolean()
+              ? faker.helpers.arrayElement(["BASIC", "PREMIUM", "PRO"])
+              : null,
           },
         })
       )
     );
+    console.log("Created service providers");
 
-    // Create Sponsorships with updated fields
+    // Create Sponsorships
     const sponsorships = await Promise.all(
       Array.from({ length: 5 }).map(() => {
         const sponsor = faker.helpers.arrayElement(serviceProviders);
-        const category = faker.helpers.arrayElement(categories);
         const creator = faker.helpers.arrayElement(users);
-
         return prisma.sponsorship.create({
           data: {
             description: faker.lorem.sentence(),
@@ -340,38 +429,39 @@ async function seed() {
               "TIKTOK",
               "OTHER",
             ]),
-            category: { connect: { id: category.id } },
-            sponsor: { connect: { id: sponsor.id } },
+            categoryId: faker.helpers.arrayElement(categories).id,
+            sponsorId: sponsor.id,
+            userId: creator.id,
             status: faker.helpers.arrayElement([
               "pending",
               "active",
               "completed",
             ]),
-            User: { connect: { id: creator.id } },
             isActive: faker.datatype.boolean(),
           },
         });
       })
     );
+    console.log("Created sponsorships");
 
-    // Create SponsorCheckouts with updated fields
+    // Create Sponsor Checkouts
     const sponsorCheckouts = await Promise.all(
       sponsorships.map((sponsorship) =>
         prisma.sponsorCheckout.create({
           data: {
             buyerId: faker.helpers.arrayElement(users).id,
             cardNumber: faker.finance.creditCardNumber(),
-            cardExpiryMm: faker.date.month({ format: "MM" }),
-            cardExpiryYyyy: faker.date.future().getFullYear().toString(),
+            cardExpiryMm: String(
+              faker.number.int({ min: 1, max: 12 })
+            ).padStart(2, "0"),
+            cardExpiryYyyy: String(faker.date.future().getFullYear()),
             cardCvc: faker.finance.creditCardCVV(),
             cardholderName: faker.person.fullName(),
             amount: sponsorship.price,
             qrCode: faker.datatype.boolean()
               ? faker.string.alphanumeric(10)
-              : undefined,
-            paymentUrl: faker.datatype.boolean()
-              ? faker.internet.url()
-              : undefined,
+              : null,
+            paymentUrl: faker.datatype.boolean() ? faker.internet.url() : null,
             currency: faker.helpers.arrayElement(["USD", "EUR", "TND"]),
             status: faker.helpers.arrayElement([
               "PENDING",
@@ -389,14 +479,15 @@ async function seed() {
             ]),
             transactionId: faker.datatype.boolean()
               ? faker.string.uuid()
-              : undefined,
-            sponsorship: { connect: { id: sponsorship.id } },
+              : null,
+            sponsorShipId: sponsorship.id,
           },
         })
       )
     );
+    console.log("Created sponsor checkouts");
 
-    // Create OrderSponsors
+    // Create Order Sponsors
     const orderSponsors = await Promise.all(
       Array.from({ length: 5 }).map(() =>
         prisma.orderSponsor.create({
@@ -408,6 +499,7 @@ async function seed() {
             status: faker.helpers.arrayElement([
               "PENDING",
               "CONFIRMED",
+              "REJECTED",
               "IN_TRANSIT",
               "DELIVERED",
             ]),
@@ -415,37 +507,37 @@ async function seed() {
         })
       )
     );
+    console.log("Created order sponsors");
 
-    // Create ReviewSponsors
+    // Create Review Sponsors
     const reviewSponsors = await Promise.all(
-      profiles.map((reviewerProfile) => {
-        const reviewedProfile = faker.helpers.arrayElement(
-          profiles.filter((p) => p.userId !== reviewerProfile.userId)
+      Array.from({ length: 5 }).map(() => {
+        const reviewer = faker.helpers.arrayElement(profiles);
+        const reviewed = faker.helpers.arrayElement(
+          profiles.filter((p) => p.id !== reviewer.id)
         );
-        const sponsorship = faker.helpers.arrayElement(sponsorships);
-        const serviceProvider = faker.helpers.arrayElement(serviceProviders);
-
         return prisma.reviewSponsor.create({
           data: {
-            reviewer: { connect: { id: reviewerProfile.id } },
-            reviewed_user: { connect: { id: reviewedProfile.id } },
+            reviewer_id: reviewer.id,
+            reviewed_user_id: reviewed.id,
             sponsorshipRating: faker.number.int({ min: 1, max: 5 }),
             serviceProviderRating: faker.number.int({ min: 1, max: 5 }),
-            Sponsorship: { connect: { id: sponsorship.id } },
-            serviceProvider: { connect: { id: serviceProvider.id } },
+            sponsorshipId: faker.helpers.arrayElement(sponsorships).id,
+            serviceProviderId: faker.helpers.arrayElement(serviceProviders).id,
             comment: faker.lorem.sentence(),
           },
         });
       })
     );
+    console.log("Created review sponsors");
 
-    // Create Tickets with updated fields
+    // Create Tickets
     const tickets = await Promise.all(
       Array.from({ length: 5 }).map(() =>
         prisma.ticket.create({
           data: {
             title: faker.lorem.sentence(3),
-            description: faker.lorem.paragraph(1),
+            description: faker.lorem.paragraph(),
             userId: faker.helpers.arrayElement(users).id,
             status: faker.helpers.arrayElement([
               "PENDING",
@@ -462,12 +554,16 @@ async function seed() {
               "TRAVELER_NON_COMPLIANCE",
               "OTHER",
             ]),
+            media: faker.datatype.boolean()
+              ? { connect: [{ id: faker.helpers.arrayElement(media).id }] }
+              : undefined,
           },
         })
       )
     );
+    console.log("Created tickets");
 
-    // Create TicketMessages
+    // Create Ticket Messages
     const ticketMessages = await Promise.all(
       tickets.flatMap((ticket) =>
         Array.from({ length: 3 }).map(() =>
@@ -477,18 +573,17 @@ async function seed() {
               senderId: faker.helpers.arrayElement(users).id,
               content: faker.lorem.paragraph(),
               isAdmin: faker.datatype.boolean(),
-              media: {
-                connect: faker.datatype.boolean()
-                  ? [{ id: faker.helpers.arrayElement(media).id }]
-                  : undefined,
-              },
+              media: faker.datatype.boolean()
+                ? { connect: [{ id: faker.helpers.arrayElement(media).id }] }
+                : undefined,
             },
           })
         )
       )
     );
+    console.log("Created ticket messages");
 
-    // Create Goods - Fixed to make image optional
+    // Create Goods
     const goods = await Promise.all(
       Array.from({ length: 15 }).map(() =>
         prisma.goods.create({
@@ -500,16 +595,12 @@ async function seed() {
             weight: faker.number.float({ min: 0.1, max: 50 }),
             price: faker.number.float({ min: 1, max: 1000 }),
             description: faker.commerce.productDescription(),
-            image: faker.datatype.boolean()
-              ? { connect: { id: faker.helpers.arrayElement(media).id } }
-              : undefined, // Made optional
-            goodsUrl: faker.datatype.boolean()
-              ? faker.internet.url()
-              : undefined,
+            imageId: faker.datatype.boolean()
+              ? faker.helpers.arrayElement(media).id
+              : null,
+            goodsUrl: faker.datatype.boolean() ? faker.internet.url() : null,
             isVerified: faker.datatype.boolean(),
-            category: {
-              connect: { id: faker.helpers.arrayElement(categories).id },
-            },
+            categoryId: faker.helpers.arrayElement(categories).id,
           },
         })
       )
@@ -521,13 +612,21 @@ async function seed() {
       Array.from({ length: 10 }).map(() =>
         prisma.request.create({
           data: {
-            user: { connect: { id: faker.helpers.arrayElement(users).id } },
-            goods: { connect: { id: faker.helpers.arrayElement(goods).id } },
+            userId: faker.helpers.arrayElement(users).id,
+            sponsorId: faker.datatype.boolean()
+              ? faker.helpers.arrayElement(users).id
+              : null,
+            goodsId: faker.helpers.arrayElement(goods).id,
             quantity: faker.number.int({ min: 1, max: 5 }),
             goodsLocation: faker.location.city(),
             goodsDestination: faker.location.city(),
             date: faker.date.recent(),
-            status: faker.helpers.enumValue(RequestStatus),
+            status: faker.helpers.arrayElement([
+              "PENDING",
+              "ACCEPTED",
+              "CANCELLED",
+              "REJECTED",
+            ]),
             withBox: faker.datatype.boolean(),
           },
         })
@@ -535,22 +634,31 @@ async function seed() {
     );
     console.log("Created requests");
 
-    // Create Orders - Ensure unique request mapping
+    // Create Orders
     const orders = await Promise.all(
       requests.map((request) =>
         prisma.order.create({
           data: {
-            request: { connect: { id: request.id } },
-            traveler: { connect: { id: faker.helpers.arrayElement(users).id } },
+            requestId: request.id,
+            travelerId: faker.helpers.arrayElement(users).id,
             departureDate: faker.date.soon(),
             arrivalDate: faker.date.future(),
             trackingNumber: faker.string.alphanumeric(10),
             totalAmount: faker.number.float({ min: 10, max: 500 }),
-            paymentStatus: faker.helpers.enumValue(PaymentStatus),
-            orderStatus: faker.helpers.enumValue(OrderStatus),
-            verificationImage: faker.datatype.boolean()
-              ? { connect: { id: faker.helpers.arrayElement(media).id } }
-              : undefined,
+            paymentStatus: faker.helpers.arrayElement([
+              "ON_HOLD",
+              "PAYED",
+              "REFUNDED",
+            ]),
+            orderStatus: faker.helpers.arrayElement([
+              "PENDING",
+              "CONFIRMED",
+              "IN_TRANSIT",
+              "DELIVERED",
+            ]),
+            verificationImageId: faker.datatype.boolean()
+              ? faker.helpers.arrayElement(media).id
+              : null,
           },
         })
       )
@@ -562,43 +670,66 @@ async function seed() {
       orders.map((order) =>
         prisma.payment.create({
           data: {
-            order: { connect: { id: order.id } },
+            orderId: order.id,
             amount:
               order.totalAmount || faker.number.float({ min: 10, max: 500 }),
-            currency: faker.helpers.enumValue(PaymentCurrency),
-            status: faker.helpers.enumValue(PaymentState),
-            paymentMethod: faker.helpers.enumValue(PaymentMethod),
+            currency: faker.helpers.arrayElement(["USD", "EUR", "TND"]),
+            status: faker.helpers.arrayElement([
+              "PENDING",
+              "COMPLETED",
+              "REFUND",
+              "FAILED",
+              "PROCCESSING",
+            ]),
+            paymentMethod: faker.helpers.arrayElement([
+              "CARD",
+              "D17",
+              "STRIPE",
+              "PAYPAL",
+              "BANKTRANSFER",
+            ]),
             transactionId: faker.datatype.boolean()
               ? faker.string.uuid()
-              : undefined,
+              : null,
             qrCode: faker.datatype.boolean()
               ? faker.string.alphanumeric(10)
-              : undefined,
-            paymentUrl: faker.datatype.boolean()
-              ? faker.internet.url()
-              : undefined,
+              : null,
+            paymentUrl: faker.datatype.boolean() ? faker.internet.url() : null,
           },
         })
       )
     );
+    console.log("Created payments");
 
-    // Create Pickups - Ensure unique order mapping
+    // Create Pickups
     const pickups = await Promise.all(
       orders.map((order) =>
         prisma.pickup.create({
           data: {
-            order: { connect: { id: order.id } },
-            pickupType: faker.helpers.enumValue(PickupType),
+            orderId: order.id,
+            pickupType: faker.helpers.arrayElement([
+              "AIRPORT",
+              "IN_PERSON",
+              "PICKUPPOINT",
+              "DELIVERY",
+            ]),
             location: faker.location.city(),
             address: faker.location.streetAddress(),
             qrCode: faker.datatype.boolean()
               ? faker.string.alphanumeric(10)
-              : undefined,
+              : null,
             coordinates: `${faker.location.latitude()},${faker.location.longitude()}`,
             contactPhoneNumber: faker.phone.number(),
             travelerconfirmed: faker.datatype.boolean(),
             userconfirmed: faker.datatype.boolean(),
-            status: faker.helpers.enumValue(PickupStatus),
+            status: faker.helpers.arrayElement([
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "CANCELLED",
+              "DELAYED",
+              "DELIVERED",
+            ]),
             scheduledTime: faker.date.soon(),
           },
         })
@@ -611,28 +742,33 @@ async function seed() {
       requests.map((request, index) =>
         prisma.request.update({
           where: { id: request.id },
-          data: {
-            pickup: { connect: { id: pickups[index].id } },
-          },
+          data: { pickupId: pickups[index].id },
         })
       )
     );
     console.log("Updated requests with pickups");
 
-    // Create Pickup Suggestions - Fixed the typo here (farke -> faker)
+    // Create Pickup Suggestions
     const pickupSuggestions = await Promise.all(
       Array.from({ length: 5 }).map(() =>
         prisma.pickupSuggestion.create({
           data: {
-            pickup: { connect: { id: faker.helpers.arrayElement(pickups).id } },
+            pickupId: faker.datatype.boolean()
+              ? faker.helpers.arrayElement(pickups).id
+              : null,
             orderId: faker.helpers.arrayElement(orders).id,
-            user: { connect: { id: faker.helpers.arrayElement(users).id } },
-            pickupType: faker.helpers.enumValue(PickupType),
+            userId: faker.helpers.arrayElement(users).id,
+            pickupType: faker.helpers.arrayElement([
+              "AIRPORT",
+              "IN_PERSON",
+              "PICKUPPOINT",
+              "DELIVERY",
+            ]),
             location: faker.location.city(),
             address: faker.location.streetAddress(),
             qrCode: faker.datatype.boolean()
               ? faker.string.alphanumeric(10)
-              : undefined, // Fixed typo here
+              : null,
             coordinates: `${faker.location.latitude()},${faker.location.longitude()}`,
             contactPhoneNumber: faker.phone.number(),
             scheduledTime: faker.date.soon(),
@@ -640,27 +776,77 @@ async function seed() {
         })
       )
     );
+    console.log("Created pickup suggestions");
+
+    // Create Notifications
+    const notifications = await Promise.all(
+      Array.from({ length: 10 }).map(() =>
+        prisma.notification.create({
+          data: {
+            userId: faker.helpers.arrayElement(users).id,
+            senderId: faker.datatype.boolean()
+              ? faker.helpers.arrayElement(users).id
+              : null,
+            type: faker.helpers.arrayElement([
+              "REQUEST",
+              "ACCEPTED",
+              "REJECTED",
+              "ORDER_CREATED",
+              "PAYMENT_INITIATED",
+              "PAYMENT_SUCCESS",
+              "PAYMENT_FAILED",
+              "PAYMENT_REFUNDED",
+              "PICKUP_SCHEDULE",
+              "DELIVERY_COMPLETED",
+              "SYSTEM_ALERT",
+            ]),
+            title: faker.lorem.sentence(3),
+            message: faker.lorem.paragraph(1),
+            status: faker.helpers.arrayElement(["READ", "UNREAD"]),
+            requestId: faker.datatype.boolean()
+              ? faker.helpers.arrayElement(requests).id
+              : null,
+            orderId: faker.datatype.boolean()
+              ? faker.helpers.arrayElement(orders).id
+              : null,
+            pickupId: faker.datatype.boolean()
+              ? faker.helpers.arrayElement(pickups).id
+              : null,
+          },
+        })
+      )
+    );
+    console.log("Created notifications");
 
     // Create Reviews
-    // This section was empty in the original, but we can add it based on the schema
     const reviews = await Promise.all(
       Array.from({ length: 10 }).map(() => {
         const reviewer = faker.helpers.arrayElement(users);
         const reviewed = faker.helpers.arrayElement(
           users.filter((u) => u.id !== reviewer.id)
         );
-        const order = faker.helpers.arrayElement(orders);
-
         return prisma.review.create({
           data: {
             reviewerId: reviewer.id,
             reviewedId: reviewed.id,
-            orderId: order.id,
+            orderId: faker.datatype.boolean()
+              ? faker.helpers.arrayElement(orders).id
+              : null,
             rating: faker.number.int({ min: 1, max: 5 }),
-            title: faker.lorem.sentence(),
-            comment: faker.lorem.paragraph(),
-            reviewType: faker.helpers.enumValue(ReviewType),
-            status: faker.helpers.enumValue(ReviewStatus),
+            title: faker.lorem.sentence(3),
+            comment: faker.lorem.paragraph(1),
+            reviewType: faker.helpers.arrayElement([
+              "USER_REVIEW",
+              "EXPERIENCE_REVIEW",
+              "DELIVERYMAN_REVIEW",
+              "PICKUPPOINT_REVIEW",
+            ]),
+            status: faker.helpers.arrayElement([
+              "PENDING",
+              "APPROVED",
+              "REJECTED",
+              "EDITED",
+            ]),
           },
         });
       })
@@ -676,16 +862,21 @@ async function seed() {
             description: faker.lorem.sentence(),
             price: faker.number.float({ min: 5, max: 50 }),
             duration: faker.number.int({ min: 30, max: 365 }),
-            type: faker.helpers.enumValue(SubscriptionType),
-            category: {
-              connect: { id: faker.helpers.arrayElement(categories).id },
-            },
+            type: faker.helpers.arrayElement([
+              "STREAMING",
+              "SOFTWARE",
+              "GAMING",
+              "EDUCATION",
+              "OTHER",
+            ]),
+            categoryId: faker.helpers.arrayElement(categories).id,
             users: { connect: [{ id: faker.helpers.arrayElement(users).id }] },
             isActive: faker.datatype.boolean(),
           },
         })
       )
     );
+    console.log("Created subscriptions");
 
     // Create Chats
     const chats = await Promise.all(
@@ -694,41 +885,44 @@ async function seed() {
         const provider = faker.helpers.arrayElement(
           users.filter((u) => u.id !== requester.id)
         );
-        const product = faker.helpers.arrayElement(goods);
-
         return prisma.chat.create({
           data: {
             requesterId: requester.id,
             providerId: provider.id,
-            productId: product.id,
+            productId: faker.helpers.arrayElement(goods).id,
           },
         });
       })
     );
     console.log("Created chats");
 
-    // Create Messages for each chat
+    // Create Messages
     const messages = await Promise.all(
       chats.flatMap((chat) =>
         Array.from({ length: 5 }).map(() => {
-          const sender = faker.helpers.arrayElement([
+          const senderId = faker.helpers.arrayElement([
             chat.requesterId,
             chat.providerId,
           ]);
-          const receiver =
-            sender === chat.requesterId ? chat.providerId : chat.requesterId;
-
+          const receiverId =
+            senderId === chat.requesterId ? chat.providerId : chat.requesterId;
           return prisma.message.create({
             data: {
               chatId: chat.id,
-              senderId: sender,
-              receiverId: receiver,
-              type: faker.helpers.arrayElement(["TEXT", "IMAGE", "LOCATION"]),
+              senderId: senderId,
+              receiverId: receiverId,
+              type: faker.helpers.arrayElement([
+                "TEXT",
+                "IMAGE",
+                "VIDEO",
+                "AUDIO",
+              ]),
               content: faker.lorem.sentence(),
               mediaId: faker.datatype.boolean()
                 ? faker.helpers.arrayElement(media).id
-                : undefined,
+                : null,
               isRead: faker.datatype.boolean(),
+              time: faker.date.recent(),
             },
           });
         })
@@ -741,29 +935,55 @@ async function seed() {
       orders.map((order) =>
         prisma.goodsProcess.create({
           data: {
-            order: { connect: { id: order.id } },
-            status: faker.helpers.enumValue(ProcessStatus),
+            orderId: order.id,
+            status: faker.helpers.arrayElement([
+              "PREINITIALIZED",
+              "INITIALIZED",
+              "CONFIRMED",
+              "PAID",
+              "IN_TRANSIT",
+              "PICKUP_MEET",
+              "FINALIZED",
+              "CANCELLED",
+            ]),
           },
         })
       )
     );
+    console.log("Created goods processes");
 
     // Create Process Events
     const processEvents = await Promise.all(
       goodsProcesses.flatMap((process) =>
         Array.from({ length: 3 }).map(() => {
-          const fromStatus = faker.helpers.enumValue(ProcessStatus);
-          let toStatus;
-          do {
-            toStatus = faker.helpers.enumValue(ProcessStatus);
-          } while (toStatus === fromStatus);
-
+          const fromStatus = faker.helpers.arrayElement([
+            "PREINITIALIZED",
+            "INITIALIZED",
+            "CONFIRMED",
+            "PAID",
+            "IN_TRANSIT",
+            "PICKUP_MEET",
+            "FINALIZED",
+            "CANCELLED",
+          ]);
+          const toStatus = faker.helpers.arrayElement([
+            "PREINITIALIZED",
+            "INITIALIZED",
+            "CONFIRMED",
+            "PAID",
+            "IN_TRANSIT",
+            "PICKUP_MEET",
+            "FINALIZED",
+            "CANCELLED",
+          ]);
           return prisma.processEvent.create({
             data: {
               goodsProcessId: process.id,
               fromStatus,
               toStatus,
-              changedByUserId: faker.helpers.arrayElement(users).id,
+              changedByUserId: faker.datatype.boolean()
+                ? faker.helpers.arrayElement(users).id
+                : null,
               note: faker.lorem.sentence(),
             },
           });
@@ -801,7 +1021,6 @@ async function seed() {
                 "REVIEW",
                 "FEEDBACK",
                 "ADMIN_ACTION",
-                "COMPLETED_ORDER",
               ]),
               comment: faker.lorem.sentence(),
             },
@@ -818,19 +1037,18 @@ async function seed() {
           data: {
             title: faker.lorem.sentence(3),
             content: faker.lorem.paragraph(1),
-            traveler: { connect: { id: faker.helpers.arrayElement(users).id } },
+            travelerId: faker.helpers.arrayElement(users).id,
             arrivalDate: faker.date.future(),
             availableKg: faker.number.float({ min: 1, max: 50 }),
             phoneNumber: faker.phone.number(),
             airportLocation: faker.location.city(),
-            category: {
-              connect: { id: faker.helpers.arrayElement(categories).id },
-            },
+            categoryId: faker.helpers.arrayElement(categories).id,
             isPublished: faker.datatype.boolean(),
           },
         })
       )
     );
+    console.log("Created goods posts");
 
     // Create Promo Posts
     const promoPosts = await Promise.all(
@@ -838,18 +1056,41 @@ async function seed() {
         prisma.promoPost.create({
           data: {
             title: faker.lorem.sentence(3),
-            content: faker.lorem.paragraph(1).substring(0, 255),
-            publisher: {
-              connect: { id: faker.helpers.arrayElement(users).id },
-            },
-            category: {
-              connect: { id: faker.helpers.arrayElement(categories).id },
-            },
+            content: faker.lorem.paragraph(1),
+            publisherId: faker.helpers.arrayElement(users).id,
+            categoryId: faker.helpers.arrayElement(categories).id,
             isPublished: faker.datatype.boolean(),
           },
         })
       )
     );
+    console.log("Created promo posts");
+
+    // Create Code Submissions
+    const codeSubmissions = await Promise.all(
+      Array.from({ length: 5 }).map(() =>
+        prisma.codeSubmission.create({
+          data: {
+            requestId: faker.helpers.arrayElement(requests).id,
+            sponsorId: faker.helpers.arrayElement(users).id,
+            code: faker.datatype.boolean()
+              ? faker.string.alphanumeric(10)
+              : null,
+            accountDetails: faker.datatype.boolean()
+              ? faker.finance.iban()
+              : null,
+            type: faker.helpers.arrayElement(["CODE", "ACCOUNT"]),
+            status: faker.helpers.arrayElement([
+              "SUBMITTED",
+              "DELIVERED",
+              "PENDING",
+              "REJECTED",
+            ]),
+          },
+        })
+      )
+    );
+    console.log("Created code submissions");
 
     console.log("Seeding completed successfully!");
   } catch (error) {

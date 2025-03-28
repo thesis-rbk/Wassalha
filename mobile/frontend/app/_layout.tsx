@@ -96,7 +96,7 @@ export default function RootLayout() {
                       name="auth/NewPassword"
                       options={{ headerShown: false }}
                     />
-                    
+
                     {/* Rest of the screens with normal headers */}
                     <Stack.Screen
                       name="productDetails"
@@ -138,7 +138,7 @@ export default function RootLayout() {
                     />
                     <Stack.Screen
                       name="test/Terms&&Conditions"
-                      options={{ title: "terms n conditions" , headerShown: false }}
+                      options={{ title: "terms n conditions", headerShown: false }}
                     />
                     <Stack.Screen
                       name="test/Travel"
@@ -258,8 +258,7 @@ export default function RootLayout() {
                     <Stack.Screen
                       name="screens/NotificationsScreen"
                       options={{
-                        title: "Notifications",
-                         headerShown: false
+                        headerShown: false
                       }}
                     />
                     <Stack.Screen

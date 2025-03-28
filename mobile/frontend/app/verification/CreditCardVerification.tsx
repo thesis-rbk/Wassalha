@@ -190,7 +190,7 @@ const CreditCardVerification = () => {
   const handleTabPress = (tabName: string) => {
     setActiveTab(tabName);
     if (tabName !== "verification") {
-      router.push(`/${tabName}`);
+      router.push(`/${tabName}` as any);
     }
   };
 

@@ -1,68 +1,62 @@
-import React from "react";
-import { View, StyleSheet, TouchableOpacity, Text, Animated } from "react-native";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
-import { ChevronRight } from "lucide-react-native";
-import { CardProps } from "@/types/CardProps";
+"use client"
 
-// Use Animated for press animations
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+import React from "react"
+import { View, StyleSheet, TouchableOpacity, Text, Animated } from "react-native"
 
-export function Card({
-  onPress,
-  children,
-  style,
-  icon,
-  title,
-  iconBackgroundColor,
-  showChevron = true,
-}: CardProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const scaleAnim = React.useRef(new Animated.Value(1)).current;
-  const backgroundAnim = React.useRef(new Animated.Value(0)).current; // For background color change on press
+// CardProps type
+type CardProps = {
+  onPress: () => void
+  children?: React.ReactNode
+  style?: any
+  icon?: React.ReactElement
+  title?: string
+  iconBackgroundColor?: string
+  showChevron?: boolean
+}
 
-  // Handle press-in animation (scale down + background change)
+// Card Component
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity)
+
+export function Card({ onPress, children, style, icon, title, iconBackgroundColor, showChevron = false }: CardProps) {
+  const scaleAnim = React.useRef(new Animated.Value(1)).current
+  const backgroundAnim = React.useRef(new Animated.Value(0)).current
+
   const handlePressIn = () => {
     Animated.parallel([
       Animated.spring(scaleAnim, {
-        toValue: 0.95, // Slightly more pronounced scale down
-        friction: 8,
-        tension: 100,
+        toValue: 0.97,
+        friction: 10,
+        tension: 120,
         useNativeDriver: true,
       }),
       Animated.timing(backgroundAnim, {
-        toValue: 1, // Trigger background color change
-        duration: 150,
-        useNativeDriver: false, // Background color animations don't support native driver
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: false,
       }),
-    ]).start();
-  };
+    ]).start()
+  }
 
-  // Handle press-out animation (scale back up + reset background)
   const handlePressOut = () => {
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: 1,
-        friction: 8,
-        tension: 100,
+        friction: 10,
+        tension: 120,
         useNativeDriver: true,
       }),
       Animated.timing(backgroundAnim, {
         toValue: 0,
-        duration: 150,
+        duration: 200,
         useNativeDriver: false,
       }),
-    ]).start();
-  };
+    ]).start()
+  }
 
-  // Interpolate background color for press effect
   const backgroundColor = backgroundAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [
-      colorScheme === "dark" ? "#1C2526" : "#FFFFFF", // Default background
-      colorScheme === "dark" ? "#2A2E32" : "#F0F4F8", // Pressed background
-    ],
-  });
+    outputRange: ["#FFFFFF", "#F5F7FA"],
+  })
 
   return (
     <AnimatedTouchable
@@ -72,98 +66,75 @@ export function Card({
       style={[
         styles.card,
         {
-          backgroundColor, // Animated background color
-          shadowColor: colorScheme === "dark" ? "#000" : "#4A4A4A",
-          shadowOpacity: colorScheme === "dark" ? 0.4 : 0.2,
+          backgroundColor,
           transform: [{ scale: scaleAnim }],
         },
         style,
       ]}
-      accessibilityRole="button" // Improve accessibility
-      accessibilityLabel={title} // Add label for screen readers
+      testID={`card-${title?.toLowerCase()}`}
     >
-      {icon && (
-        <View
-          style={[
-            styles.iconContainer,
-            {
-              backgroundColor: iconBackgroundColor || (colorScheme === "dark" ? "#2A2E32" : "#F0F4F8"),
-              // Add a subtle gradient (you can use a library like `react-native-linear-gradient` for this)
-            },
-          ]}
-        >
-          {React.cloneElement(icon as React.ReactElement, {
-            color: iconBackgroundColor ? "#FFFFFF" : (colorScheme === "dark" ? "#66B2FF" : "#007AFF"),
-            size: 24, // Larger icon for better visibility
-          })}
-        </View>
-      )}
-      <View style={styles.textContainer}>
-        {title && (
-          <Text
-            style={[
-              styles.title,
-              { color: colorScheme === "dark" ? "#E0E0E0" : "#1A1A1A" },
-            ]}
-          >
-            {title}
-          </Text>
-        )}
-        {children}
-      </View>
-      {showChevron && (
-        <View style={styles.chevronContainer}>
-          <ChevronRight
-            color={colorScheme === "dark" ? "#66B2FF" : "#007BFF"}
-            size={24}
-          />
+      {children ? (
+        children
+      ) : (
+        <View style={styles.contentContainer}>
+          {/* Icon */}
+          {icon && (
+            <View
+              style={[
+                styles.iconContainer,
+                {
+                  backgroundColor: iconBackgroundColor || "transparent",
+                },
+              ]}
+            >
+              {React.cloneElement(icon as React.ReactElement, {
+                color: "#007BFF",
+                size: 40,
+              })}
+            </View>
+          )}
+
+          {/* Title */}
+          {title && <Text style={styles.title}>{title}</Text>}
         </View>
       )}
     </AnimatedTouchable>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: "row",
+    flexDirection: "column",
     alignItems: "center",
-    padding: 20, // Increased padding for better touch area
-    borderRadius: 24, // Softer, more modern border radius
-    borderWidth: 1,
-    borderColor: "rgba(0, 0, 0, 0.05)",
+    justifyContent: "center",
+    padding: 15,
+    borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: "#ddd",
     shadowOffset: {
       width: 0,
-      height: 6, // Larger shadow for more depth
+      height: 3,
     },
-    shadowRadius: 8,
-    elevation: 10, // Increased elevation for Android
-    marginVertical: 8, // More spacing between cards
-    minWidth: "100%",
-    height: 80, // Taller card for better readability
+    shadowRadius: 6,
+    shadowOpacity: 0.15,
+    elevation: 4,
+    backgroundColor: "#FFFFFF",
+  },
+  contentContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
   },
   iconContainer: {
-    width: 48, // Larger icon container
-    height: 48,
-    borderRadius: 16, // Softer corners
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 20, // More spacing between icon and text
-  },
-  textContainer: {
-    flex: 1,
-    justifyContent: "center",
+    marginBottom: 10,
   },
   title: {
-    fontSize: 18, // Larger font for better readability
-    fontWeight: "600", // Bolder for better hierarchy
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+    color: "#007BFF",
   },
-  subtitle: {
-    fontSize: 14, // Smaller font for subtitle
-    fontWeight: "400",
-    marginTop: 2, // Spacing between title and subtitle
-  },
-  chevronContainer: {
-    marginLeft: "auto",
-    justifyContent: "center",
-  },
-});
+})
+

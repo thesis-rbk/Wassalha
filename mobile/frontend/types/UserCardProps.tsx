@@ -4,4 +4,5 @@ export interface UserCardProps {
     gender: string;
     img: string;
     role: string;
+    onPress: () => void;
 }

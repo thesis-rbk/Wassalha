@@ -18,8 +18,7 @@ const TermsAndConditions: React.FC = () => {
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
         const paddingToBottom = 20; // Adjust this value as needed
-        const isCloseToBottom = layoutMeasurement.height + contentOffset.y 
-            >= contentSize.height - paddingToBottom;
+        const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
 
         if (isCloseToBottom && !hasReadToBottom) {
             setHasReadToBottom(true);
@@ -44,7 +43,7 @@ const TermsAndConditions: React.FC = () => {
             try {
                 console.log('Saving terms acceptance...');
                 // Save that user has accepted the terms
-                await AsyncStorage.setItem('sponsorshipTermsAccepted', 'false');
+                await AsyncStorage.setItem('sponsorshipTermsAccepted', 'true'); // Fixed to 'true'
                 console.log('Terms acceptance saved successfully');
                 router.push('/verification/start');
             } catch (error) {
@@ -77,12 +76,12 @@ const TermsAndConditions: React.FC = () => {
                 <ThemedText style={styles.updated}>Last Updated: March 04, 2025</ThemedText>
 
                 {/* Inner ScrollView for Terms Content */}
-                <ScrollView 
+                <ScrollView
                     ref={scrollViewRef}
-                    style={styles.innerScroll} 
+                    style={styles.innerScroll}
                     contentContainerStyle={styles.innerContent}
                     onScroll={handleScroll}
-                    scrollEventThrottle={400}
+                    scrollEventThrottle={16} // Adjusted for smoother detection
                 >
                     <ThemedText style={styles.intro}>
                         Welcome to The Tribe! These Terms and Conditions ("Terms") govern your participation in our global sponsorship community. By joining our community, you agree to these Terms. Please read them carefully.
@@ -195,11 +194,11 @@ const TermsAndConditions: React.FC = () => {
                     </View>
                 )}
 
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={[
                         styles.checkboxContainer,
                         !hasReadToBottom && styles.checkboxContainerDisabled
-                    ]} 
+                    ]}
                     onPress={toggleCheckbox}
                     activeOpacity={hasReadToBottom ? 0.7 : 1}
                 >
@@ -218,11 +217,11 @@ const TermsAndConditions: React.FC = () => {
                     </ThemedText>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={[
                         styles.nextButton,
                         (!isAgreed || !hasReadToBottom) && styles.nextButtonDisabled
-                    ]} 
+                    ]}
                     onPress={handleNextPress}
                 >
                     <ThemedText style={styles.nextButtonText}>Continue</ThemedText>
@@ -346,11 +345,6 @@ const styles = StyleSheet.create({
     checkboxChecked: {
         backgroundColor: '#007BFF',
     },
-    checkmark: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
     checkboxLabel: {
         fontSize: 16,
         fontWeight: '500',
@@ -402,4 +396,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default TermsAndConditions; 
+export default TermsAndConditions;
