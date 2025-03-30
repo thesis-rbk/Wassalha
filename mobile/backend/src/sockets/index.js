@@ -62,7 +62,7 @@ const initializeSocket = (server) => {
   const tracking = io.of("/tracking");
   const chat = io.of("/chat");
   const pickup = io.of("/pickup");
-  const processTrack = io.of("/ProcessTrack");
+  const processTrack = io.of("/processTrack");
 
   // Set up processTrack handlers once
   processTrackSocket(processTrack);
