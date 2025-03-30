@@ -105,7 +105,7 @@ const SponsorshipsScreen: React.FC = () => {
             if (view === "all") fetchSponsorships();
         }, [searchQuery, view])
     );
-    console.log("sponsorships", sponsorships)
+
     const handleBuyPress = async (serviceProviderId: number, sponsorshipId: number, amount: number, status: string) => {
         if (!token) {
             show({
@@ -210,7 +210,7 @@ const SponsorshipsScreen: React.FC = () => {
                 onBuyPress={() => handleBuyPress(
                     item.sponsorId, // Fallback to 0 if undefined
                     item.id,
-                    item.price, // Fallback to 0 if undefined
+                    item.price ?? 0, // Fallback to 0 if undefined
                     "PENDING"
                 )}
                 sponsorship={{ description: item.description, amount: item.price }}
@@ -264,12 +264,14 @@ const SponsorshipsScreen: React.FC = () => {
                     values={["Requests", "All"]}
                     selectedIndex={view === "requests" ? 0 : 1}
                     onChange={(index) => setView(index === 0 ? "requests" : "all")}
+                    style={styles.segmentedControl} // Added style to move it down
                 />
             ) : (
                 <SegmentedControl
                     values={["Orders", "All"]}
                     selectedIndex={view === "orders" ? 0 : 1}
                     onChange={(index) => setView(index === 0 ? "orders" : "all")}
+                    style={styles.segmentedControl} // Added style to move it down
                 />
             )}
 
@@ -288,6 +290,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#F5F5F5",
+    },
+    segmentedControl: {
+        marginTop: 40, // Moves the SegmentedControl down
+        marginHorizontal: 20, // Optional: adds horizontal spacing
     },
     searchContainer: {
         flexDirection: "row",

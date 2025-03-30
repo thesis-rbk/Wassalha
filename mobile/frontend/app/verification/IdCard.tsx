@@ -186,8 +186,8 @@ const IdCard = () => {
                 colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.3)']}
                 style={styles.cardOverlay}
               >
-                <TouchableOpacity 
-                  style={styles.retakeButton} 
+                <TouchableOpacity
+                  style={styles.retakeButton}
                   onPress={handleRetakePhoto}
                 >
                   <RefreshCw size={20} color="#FFF" />
@@ -203,7 +203,7 @@ const IdCard = () => {
           )}
         </View>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.submitButton, !image && styles.submitButtonDisabled]}
           onPress={handleDocumentReadable}
           disabled={!image}

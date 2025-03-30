@@ -15,6 +15,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 
 type RootStackParamList = {
     'verification/CreateSponsorPost': { id: number };
+    "verification/CreateSponsorPost";
     'verification/fetchAll': undefined;
     'verification/sponsorPayment': { id: number };
     "verification/reviewSponsor";

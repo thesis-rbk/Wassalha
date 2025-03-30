@@ -109,13 +109,13 @@ export default function OrderPage() {
   const { user, loading: authLoading } = useReliableAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Order");
-  console.log(user,"USER",user?.id,"USER ID");
-  console.log(user?.id,"ROOM");
+  console.log(user, "USER", user?.id, "USER ID");
+  console.log(user?.id, "ROOM");
 
   // const room=user?.id;
   // Animation value for the "Make Offer" button
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  
+
   // Create pulse animation effect
   useEffect(() => {
     const pulsate = Animated.sequence([
@@ -132,9 +132,9 @@ export default function OrderPage() {
         useNativeDriver: true,
       }),
     ]);
-    
+
     Animated.loop(pulsate).start();
-    
+
     return () => {
       pulseAnim.stopAnimation();
     };
@@ -234,7 +234,7 @@ export default function OrderPage() {
       fetchGoodsProcesses();
       fetchRequests();
       console.log("🔄 Setting up socket connection in Orders page");
-      const socket = io(`${BACKEND_URL}/processTrack`,{
+      const socket = io(`${BACKEND_URL}/processTrack`, {
         transports: ["websocket"],
       });
       socket.on("connect", () => {
@@ -247,14 +247,14 @@ export default function OrderPage() {
           console.log(`Joining room: process:${proces}`);
         });
         console.log(`Joining process room: process:${room}`);
-      
+
       });
-  
+
       socket.on("newRequest", (data) => {
         console.log("📦 New request received:", data);
         fetchRequests();
       });
-  
+
       socket.on("processStatusChanged", (data) => {
         console.log("🔄 Status changed to:", data.status);
         // console.log(goodsProcesses);
@@ -269,12 +269,12 @@ export default function OrderPage() {
           prev.map((p) => (p.id === data.requestId ? data : p))
         );
         fetchGoodsProcesses();
-  
+
       });
       socket.on("disconnect", () => {
         console.log("🔌 Socket disconnected");
       });
-  
+
       return () => {
         socket.disconnect();
       };
@@ -285,39 +285,47 @@ export default function OrderPage() {
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
-      const response = await axiosInstance.get("/api/requests/get");
-      
+      const response = await axiosInstance.get("/api/requests");
+
       // Debug log the raw response 
       console.log("Request API response:", response.data);
       console.log("Number of requests received:", response.data.data ? response.data.data.length : 0);
-      
+
       // Store unfiltered requests first to check if we're getting data
       const allRequests = response.data.data || [];
-      console.log("All requests statuses:", allRequests.map((r:any) => r.status));
-      
+      console.log("All requests statuses:", allRequests.map((r: any) => r.status));
+
       if (allRequests.length === 0) {
         console.log("No requests received from API");
         setRequests([]);
         setIsLoading(false);
         return;
       }
-      
+
       // Filter the requests to only show those that are in "PENDING" status
       // AND either don't have an associated order OR have a cancelled order
       const filteredRequests = (response.data.data || []).filter((request: Request) => {
         // Check if the request is in PENDING status
         const isPending = request.status === "PENDING";
-        
+        console.log(`Request ${request.id} status: ${request.status}, isPending: ${isPending}`);
+
         // Check if the request has no order or a cancelled order
         const hasNoActiveOrder = !request.order || request.order.orderStatus === "CANCELLED";
-        
+        console.log(`Request ${request.id} hasOrder: ${!!request.order}, orderStatus: ${request.order?.orderStatus}, hasNoActiveOrder: ${hasNoActiveOrder}`);
+
         // Only include requests that meet both conditions
-        return isPending && hasNoActiveOrder;
+        const shouldInclude = isPending && hasNoActiveOrder;
+        console.log(`Request ${request.id} shouldInclude: ${shouldInclude}`);
+        return shouldInclude;
       });
-      
-      console.log(`Filtered from ${response.data.data?.length || 0} to ${filteredRequests.length} requests`);
-      
-      setRequests(filteredRequests);
+
+      console.log(`Filtered from ${allRequests.length} to ${filteredRequests.length} requests`);
+
+      // TEMPORARY: Set all requests to see if filtering is the issue
+      setRequests(allRequests);
+
+      // Normal functionality
+      // setRequests(filteredRequests);
     } catch (error) {
       console.error("Error fetching requests:", error);
       setRequests([]);
@@ -365,7 +373,7 @@ export default function OrderPage() {
         ? `${BACKEND_URL}${item.goods.goodsUrl}`
         : null,
     };
-    
+
     // Check if this request has any offers
     const hasOffers = false; // You'll need to replace this with actual logic to check if offers exist
 
@@ -383,7 +391,7 @@ export default function OrderPage() {
             style={styles.productImage}
             contentFit="cover"
           />
-          
+
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.7)']}
             style={styles.gradient}
@@ -397,7 +405,7 @@ export default function OrderPage() {
                 </View>
               </View>
             )}
-            
+
             <View style={styles.headerRow}>
               <ThemedText style={styles.title} numberOfLines={1} ellipsizeMode="tail">{parameters.goodsName}</ThemedText>
               <View style={[styles.statusBadge, { backgroundColor: getRequestStatusColor(item.status) }]}>
@@ -410,17 +418,17 @@ export default function OrderPage() {
                 <ThemedText style={styles.fromToLabel}>From:</ThemedText>
                 <ThemedText style={styles.cityText}>{parameters.location}</ThemedText>
               </View>
-              
+
               <View style={styles.routeArrow}>
                 <ArrowRight size={22} color="#fff" />
               </View>
-              
+
               <View style={styles.toSection}>
                 <ThemedText style={styles.fromToLabel}>To:</ThemedText>
                 <ThemedText style={styles.cityText}>{parameters.destination}</ThemedText>
               </View>
             </View>
-            
+
             <View style={styles.priceRow}>
               <ThemedText style={styles.price}>${parameters.price.toFixed(2)}</ThemedText>
               <View style={styles.quantityContainer}>
@@ -429,7 +437,7 @@ export default function OrderPage() {
               </View>
               <ArrowRight size={20} color="#fff" />
             </View>
-            
+
             {!isOwnRequest(item.userId) && (
               <Animated.View style={[
                 styles.makeOfferBtnContainer,
@@ -624,7 +632,7 @@ export default function OrderPage() {
             style={styles.productImage}
             contentFit="cover"
           />
-          
+
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.7)']}
             style={styles.gradient}
@@ -651,11 +659,11 @@ export default function OrderPage() {
                 <ThemedText style={styles.fromToLabel}>From:</ThemedText>
                 <ThemedText style={styles.cityText}>{parameters.location}</ThemedText>
               </View>
-              
+
               <View style={styles.routeArrow}>
                 <ArrowRight size={22} color="#fff" />
               </View>
-              
+
               <View style={styles.toSection}>
                 <ThemedText style={styles.fromToLabel}>To:</ThemedText>
                 <ThemedText style={styles.cityText}>{parameters.destination}</ThemedText>
@@ -684,7 +692,7 @@ export default function OrderPage() {
   const handleNotificationPress = () => {
     router.push("./notifications");
   };
-  
+
   const handleProfilePress = () => {
     router.push("/profile");
   };
@@ -694,12 +702,12 @@ export default function OrderPage() {
 
   return (
     <ThemedView style={styles.container}>
-      <TopNavigation 
-        title="Orders & Requests" 
+      <TopNavigation
+        title="Orders & Requests"
         onNotificationPress={handleNotificationPress}
         onProfilePress={handleProfilePress}
       />
-      
+
       <SegmentedControl
         values={["Requests", "Orders"]}
         selectedIndex={view === "requests" ? 0 : 1}
@@ -743,7 +751,7 @@ export default function OrderPage() {
           onRefresh={fetchRequests}
         />
       )}
-      
+
       {/* Add TabBar at the bottom of the screen */}
       <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
@@ -848,39 +856,39 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 4,
   },
-  
+
   fromSection: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  
+
   toSection: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
     justifyContent: 'flex-end',
   },
-  
+
   fromToLabel: {
     color: 'rgba(255,255,255,0.7)',
     fontSize: 13,
     fontWeight: '600',
     marginRight: 4,
   },
-  
+
   cityText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '800',
   },
-  
+
   routeArrow: {
     paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
+
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',

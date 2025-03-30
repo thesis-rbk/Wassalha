@@ -4,6 +4,8 @@ import OrderCard from '../../components/fetchOrdersSponsors';
 import axiosInstance from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Order } from "../../types/ServiceProvider";
+import { AccountDetailsModalProps } from "../../types/Sponsorship";
+
 import { AccountDetailsModalProps } from "../../types/Sponsorship"
 import { TabBar } from "@/components/navigation/TabBar";
 import { useStatus } from '@/context/StatusContext';
@@ -58,7 +60,6 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ visible, onCl
             transparent={true}
             animationType="slide"
         >
-            
             <View style={styles.modalContainer}>
                 <View style={styles.modalContent}>
                     <View style={styles.typeSelector}>
@@ -121,7 +122,6 @@ const OrdersScreen: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [token, setToken] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState("Home");
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
@@ -165,6 +165,7 @@ const OrdersScreen: React.FC = () => {
                 const dateB = new Date(b.createdAt);
                 return dateB.getTime() - dateA.getTime(); // Newest first
             });
+            console.log("Sorted Orders:", sortedOrders.map((order: Order) => ({ id: order.id, createdAt: order.createdAt })));
             setOrders(sortedOrders);
         } catch (err) {
             console.error('Error fetching orders:', err);
@@ -353,6 +354,9 @@ const OrdersScreen: React.FC = () => {
         try {
             console.log("Rejecting order with ID:", orderId);
             await axiosInstance.put("/api/confirmedUpdate", { orderId, status: "REJECTED" });
+            Alert.alert("Success", "Order rejected successfully");
+            console.log("Order rejected:");
+            await fetchOrders(token); // Refresh orders after rejection
             show({
                 type: 'success',
                 title: 'Order Rejected',
@@ -465,7 +469,7 @@ const styles = StyleSheet.create({
     modalContent: {
         backgroundColor: 'white',
         padding: 20,
-        borderRadius: 12, // Softer corners
+        borderRadius: 12,
         width: '80%',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -519,7 +523,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     submitButton: {
-        backgroundColor: '#28A745', // Updated to match the "Accept" button color
+        backgroundColor: '#28A745',
     },
     buttonText: {
         color: '#333',
@@ -535,11 +539,11 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     sendButton: {
-        backgroundColor: '#28A745', // Match the "Accept" button color
-        paddingVertical: 12, // Taller button
-        borderRadius: 8, // Rounded corners
+        backgroundColor: '#28A745',
+        paddingVertical: 12,
+        borderRadius: 8,
         alignItems: 'center',
-        marginTop: 8, // Increased spacing
+        marginTop: 8,
         marginHorizontal: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },

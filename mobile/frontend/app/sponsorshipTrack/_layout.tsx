@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import { SponsorshipProcessProvider } from '@/context/SponsorshipProcessContext';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { STRIPE_PUBLISHABLE_KEY } from '@/config';
-
+import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 
 export default function SponsorshipTrackLayout() {
   return (
@@ -12,38 +12,38 @@ export default function SponsorshipTrackLayout() {
         <Stack>
           <Stack.Screen
             name="initializationBuyer"
-            options={{ title: 'Sponsorship Details' , headerShown: false }}
+            options={{ headerShown: false } as NativeStackNavigationOptions}
           />
           <Stack.Screen
             name="initializationSponsor"
-            options={{ title: 'Sponsorship Request' , headerShown: false}}
+            options={{ headerShown: false } as NativeStackNavigationOptions}
           />
           <Stack.Screen
             name="verificationBuyer"
-            options={{ title: 'Verification', headerShown: false }}
+            options={{ headerShown: false } as NativeStackNavigationOptions}
           />
           <Stack.Screen
             name="verificationSponsor"
-            options={{ title: 'Verification', headerShown: false }}
+            options={{ headerShown: false } as NativeStackNavigationOptions}
           />
           <Stack.Screen
             name="paymentBuyer"
-            options={{ title: 'Payment' , headerShown: false}}
+            options={{ headerShown: false } as NativeStackNavigationOptions}
           />
           <Stack.Screen
             name="paymentSponsor"
-            options={{ title: 'Payment' , headerShown: false}}
+            options={{ headerShown: false } as NativeStackNavigationOptions}
           />
           <Stack.Screen
             name="deliveryBuyer"
-            options={{ title: 'Delivery', headerShown: false }}
+            options={{ headerShown: false } as NativeStackNavigationOptions}
           />
           <Stack.Screen
             name="deliverySponsor"
-            options={{ title: 'Delivery' , headerShown: false}}
+            options={{ headerShown: false } as NativeStackNavigationOptions}
           />
         </Stack>
       </SponsorshipProcessProvider>
     </StripeProvider>
   );
-} 
+}

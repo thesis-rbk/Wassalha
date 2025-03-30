@@ -28,6 +28,7 @@ export interface Traveler {
   user: {
     profile: TravelerProfile
     name: string
+    onPress: () => void
   }
   score: number
 } 

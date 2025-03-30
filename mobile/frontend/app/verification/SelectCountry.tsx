@@ -63,7 +63,6 @@ const SelectCountry = () => {
   };
   return (
     <ThemedView style={styles.container}>
-      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
       <LinearGradient
         colors={['#4F46E5', '#7C3AED']}
         style={styles.header}
@@ -81,13 +80,13 @@ const SelectCountry = () => {
             <Globe2 size={24} color={Colors.light.primary} />
           </View>
           <ThemedText style={styles.sectionTitle}>Country of Issue</ThemedText>
-          
+
           <View style={styles.pickerContainer}>
             <RNPickerSelect
               onValueChange={(value) => setSelectedCountry(value)}
-              items={Object.entries(countries).map(([name, id]) => ({ 
-                label: name, 
-                value: id 
+              items={Object.entries(countries).map(([name, id]) => ({
+                label: name,
+                value: id
               }))}
               style={pickerSelectStyles}
               placeholder={{ label: 'Select your country...', value: null }}
@@ -97,8 +96,8 @@ const SelectCountry = () => {
 
         <View style={styles.documentsSection}>
           <ThemedText style={styles.sectionTitle}>Choose Document Type</ThemedText>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.documentCard}
             onPress={() => router.push('/verification/IdCard')}
           >
@@ -114,7 +113,7 @@ const SelectCountry = () => {
             <ChevronRight size={20} color="#94A3B8" />
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.documentCard}
             onPress={() => router.push('/verification/IdCard')}
           >
@@ -130,7 +129,7 @@ const SelectCountry = () => {
             <ChevronRight size={20} color="#94A3B8" />
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.documentCard}
             onPress={() => router.push('/verification/IdCard')}
           >
@@ -147,6 +146,7 @@ const SelectCountry = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   );
 };

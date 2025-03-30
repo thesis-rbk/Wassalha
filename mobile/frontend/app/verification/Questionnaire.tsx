@@ -53,7 +53,7 @@ const Questionnaire = () => {
     if (question.multiple) {
       setAnswers(prev => ({
         ...prev,
-        [question.id]: prev[question.id] 
+        [question.id]: prev[question.id]
           ? prev[question.id].includes(option)
             ? prev[question.id].filter(item => item !== option)
             : [...prev[question.id], option]
@@ -73,10 +73,10 @@ const Questionnaire = () => {
       if (!token) throw new Error('No token found');
 
       const decoded: any = jwtDecode(token);
-      
+
       const response = await axiosInstance.post(
         `/api/users/submit-questionnaire/${decoded.id}`,
-        { 
+        {
           answers,
           userType: 'SPONSOR',
           subscriptionLevel: 'BASIC'
@@ -101,10 +101,10 @@ const Questionnaire = () => {
     return answers[questionId] && answers[questionId].length > 0;
   };
 
-  const canProceed = currentQuestion < questions.length - 1 && 
+  const canProceed = currentQuestion < questions.length - 1 &&
     isQuestionAnswered(questions[currentQuestion].id);
 
-  const canSubmit = currentQuestion === questions.length - 1 && 
+  const canSubmit = currentQuestion === questions.length - 1 &&
     isQuestionAnswered(questions[currentQuestion].id);
 
   const handleTabPress = (tabName: string) => {

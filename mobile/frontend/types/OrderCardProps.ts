@@ -4,31 +4,20 @@ export interface OrderCardProps {
         status: string;
         createdAt: string;
         updatedAt: string;
-        client: {
-            id: number;
-            name: string;
-            email: string;
-            phone: string;
-            address: string;
-        };
-        delivery: {
-            id: number;
-            name: string;
-            email: string;
-            phone: string;
-            address: string;
-        };
-        // ... other order properties
     };
     sponsorship: {
         id: number;
-        price: number;
+        description?: string;  // Made optional to match actual type
+        duration: number;     // Added from actual type
         platform: string;
-        description: string;
-        image: string;
-        createdAt: string;
-        updatedAt: string;  
-        // ... other sponsorship properties
+        price: number;
+        sponsorId: number;    // Added from actual type
+        status: string;       // Added from actual type
+        isActive: boolean;    // Added from actual type
+        categoryId: number;   // Added from actual type
+        updatedAt: string;
+        userId: number | null; // Added from actual type
+        // Removed image and createdAt since they're not in actual data
     };
     onPress: () => void;
     onPayment: () => void;

@@ -58,9 +58,16 @@ class ServiceProviderController {
                 include: {
                     user: {
                         include: {
-                            profile: true,
+                            profile: {
+                                include: {
+                                    image: true
+                                }
+                            },
                         },
                     },
+                    // Include any media/document references
+                    sponsorships: true,
+                    reviews: true
                 },
                 orderBy: {
                     createdAt: "desc",
@@ -113,6 +120,14 @@ class ServiceProviderController {
                             },
                         },
                     },
+                    // Include related sponsorships
+                    sponsorships: {
+                        include: {
+                            category: true
+                        }
+                    },
+                    // Include related reviews
+                    reviews: true
                 },
             });
 
