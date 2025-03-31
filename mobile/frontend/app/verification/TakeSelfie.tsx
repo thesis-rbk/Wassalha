@@ -11,6 +11,7 @@ import { jwtDecode } from 'jwt-decode';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CameraType } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
+import { useStatus } from '@/context/StatusContext';
 
 const FRAME_SIZE = 250;
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -20,6 +21,7 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 const TakeSelfie = () => {
   const router = useRouter();
+  const { show, hide } = useStatus();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [faceDetected, setFaceDetected] = useState(false);
@@ -73,13 +75,36 @@ const TakeSelfie = () => {
       setImage(photo.uri);
     } catch (error) {
       console.error('Error taking picture:', error);
-      Alert.alert('Error', 'Failed to take picture');
+      show({
+        type: 'error',
+        title: 'Camera Error',
+        message: 'Failed to take picture',
+        primaryAction: {
+          label: 'Retry',
+          onPress: () => {
+            hide();
+            takePicture();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     }
   };
 
   const handleSubmit = async () => {
     if (!image) {
-      Alert.alert('Error', 'Please take a selfie first');
+      show({
+        type: 'error',
+        title: 'Missing Photo',
+        message: 'Please take a selfie first',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => hide()
+        }
+      });
       return;
     }
 
@@ -112,16 +137,40 @@ const TakeSelfie = () => {
       );
 
       if (response.data.success) {
-        Alert.alert('Success', 'Selfie verified successfully', [
-          { text: 'OK', onPress: () => router.push('/verification/CreditCardVerification') }
-        ]);
+        show({
+          type: 'success',
+          title: 'Success',
+          message: 'Selfie verified successfully',
+          primaryAction: {
+            label: 'Continue',
+            onPress: () => {
+              hide();
+              router.push('/verification/CreditCardVerification');
+            }
+          }
+        });
       }
     } catch (error: any) {
       console.error('Error submitting selfie:', error);
-      Alert.alert(
-        'Error', 
-        error.response?.data?.message || 'Failed to verify selfie. Please try again.'
-      );
+      show({
+        type: 'error',
+        title: 'Verification Failed',
+        message: error.response?.data?.message || 'Failed to verify selfie. Please try again.',
+        primaryAction: {
+          label: 'Retry',
+          onPress: () => {
+            hide();
+            handleSubmit();
+          }
+        },
+        secondaryAction: {
+          label: 'Take New Photo',
+          onPress: () => {
+            hide();
+            setImage(null);
+          }
+        }
+      });
     }
   };
 
@@ -129,6 +178,26 @@ const TakeSelfie = () => {
     return <ThemedView><ThemedText>Requesting camera permission...</ThemedText></ThemedView>;
   }
   if (hasPermission === false) {
+    show({
+      type: 'error',
+      title: 'Camera Access Denied',
+      message: 'We need camera access to take your selfie. Please enable it in your device settings.',
+      primaryAction: {
+        label: 'Open Settings',
+        onPress: () => {
+          hide();
+          // Note: You might want to add logic here to open device settings
+          router.back();
+        }
+      },
+      secondaryAction: {
+        label: 'Go Back',
+        onPress: () => {
+          hide();
+          router.back();
+        }
+      }
+    });
     return <ThemedView><ThemedText>No access to camera</ThemedText></ThemedView>;
   }
 

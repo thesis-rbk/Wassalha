@@ -166,11 +166,11 @@ export default function MessagesScreen() {
   };
 
   const handleNotificationPress = () => {
-    router.push("/notifications");
+    router.push("./notifications");
   };
 
   const handleProfilePress = () => {
-    router.push("/profile");
+    router.push("./profile");
   };
 
   const handleTabPress = (tabName: string) => {

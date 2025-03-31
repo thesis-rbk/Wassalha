@@ -23,6 +23,7 @@ import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { TitleLarge, BodyMedium } from "@/components/Typography";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import { useStatus } from '@/context/StatusContext';
 
 const SCRAPE_URL = `${process.env.EXPO_PUBLIC_API_URL}${process.env.EXPO_PUBLIC_SCRAPE_ENDPOINT}`;
 
@@ -33,6 +34,7 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
   const [entryMethod, setEntryMethod] = useState<"manual" | "url">("manual");
   const router = useRouter();
+  const { show, hide } = useStatus();
 
   const handleCreateOrder = async () => {
     console.log('🎯 Starting order creation process...');
@@ -45,22 +47,22 @@ export default function Page() {
     }
 
     if (entryMethod === "url" && !productUrl) {
-      Alert.alert(
-        "No URL Provided",
-        "Would you like to proceed with manual entry?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel"
-          },
-          {
-            text: "Yes, proceed manually",
-            onPress: () => {
-              router.push('/productDetails');
-            }
+      show({
+        type: 'error',
+        title: 'No URL Provided',
+        message: 'Would you like to proceed with manual entry?',
+        primaryAction: {
+          label: 'Yes, proceed manually',
+          onPress: () => {
+            hide();
+            router.push('/productDetails');
           }
-        ]
-      );
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
       return;
     }
 

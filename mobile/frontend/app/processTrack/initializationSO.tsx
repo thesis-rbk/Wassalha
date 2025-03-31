@@ -28,6 +28,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useNotification } from "@/context/NotificationContext";
+import { useStatus } from '@/context/StatusContext';
 import { io } from "socket.io-client";
 
 export default function InitializationSO() {
@@ -42,6 +43,8 @@ export default function InitializationSO() {
   const [processing, setProcessing] = useState(false);
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
+  const { show, hide } = useStatus();
+  
   console.log(user?.id, "user data");
   // Progress steps
   const progressSteps = [
@@ -96,7 +99,25 @@ export default function InitializationSO() {
       setOrder(response.data.data);
     } catch (error) {
       console.error("Error fetching order details:", error);
-      Alert.alert("Error", "Failed to load order details");
+      show({
+        type: 'error',
+        title: 'Loading Error',
+        message: 'Failed to load order details',
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => {
+            hide();
+            fetchOrderDetails();
+          }
+        },
+        secondaryAction: {
+          label: 'Go Back',
+          onPress: () => {
+            hide();
+            router.back();
+          }
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -158,12 +179,35 @@ export default function InitializationSO() {
       } catch (apiError) {
         console.error("=== API ERROR ===");
         console.error("Error object:", apiError);
-        Alert.alert("Error", "Failed to accept offer. Please try again.");
+        show({
+          type: 'error',
+          title: 'Process Error',
+          message: 'Failed to accept offer. Please try again.',
+          primaryAction: {
+            label: 'Try Again',
+            onPress: () => {
+              hide();
+              handleAcceptOffer();
+            }
+          },
+          secondaryAction: {
+            label: 'Cancel',
+            onPress: hide
+          }
+        });
       }
     } catch (error) {
       console.error("=== GENERAL ERROR ===");
       console.error("Error object:", error);
-      Alert.alert("Error", "Failed to prepare order data");
+      show({
+        type: 'error',
+        title: 'Data Error',
+        message: 'Failed to prepare order data',
+        primaryAction: {
+          label: 'OK',
+          onPress: hide
+        }
+      });
     } finally {
       console.log("Setting processing to false");
       setProcessing(false);
@@ -196,28 +240,28 @@ export default function InitializationSO() {
                 }
               );
 
-              if (orderResponse.status === 200) {
-                // Then, update the associated request directly (not using the status endpoint)
-                const requestId = params.idRequest;
-                if (requestId) {
-                  await axiosInstance.put(
-                    `/api/requests/${requestId}`,
-                    {
-                      status: "PENDING"
-                    }
-                  );
-                }
+            if (orderResponse.status === 200) {
+              // Then, update the associated request directly (not using the status endpoint)
+              const requestId = params.idRequest;
+              if (requestId) {
+                await axiosInstance.put(
+                  `/api/requests/${requestId}`,
+                  {
+                    status: "PENDING"
+                  }
+                );
+              }
 
-                // Send notification about cancellation
-                sendNotification('order_cancelled', {
-                  travelerId: params.travelerId,
-                  requestDetails: {
-                    requesterId: user?.id,
-                    goodsName: params.goodsName || "this item",
-                    requestId: params.idRequest,
-                    orderId: order.id,
-                  },
-                });
+              // Send notification about cancellation
+              sendNotification('order_cancelled', {
+                travelerId: params.travelerId,
+                requestDetails: {
+                  requesterId: user?.id,
+                  goodsName: params.goodsName || "this item",
+                  requestId: params.idRequest,
+                  orderId: order.id,
+                },
+              });
 
                 Alert.alert(
                   "Order Cancelled",

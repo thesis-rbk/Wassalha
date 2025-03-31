@@ -5,8 +5,11 @@ import axiosInstance from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Order } from "../../types/ServiceProvider";
 import { AccountDetailsModalProps } from "../../types/Sponsorship";
+import { TabBar } from "@/components/navigation/TabBar";
+import { useStatus } from '@/context/StatusContext';
 
 const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ visible, onClose, onSubmit }) => {
+    const { show, hide } = useStatus();
     const [detailType, setDetailType] = useState('code');
     const [code, setCode] = useState('');
     const [email, setEmail] = useState('');
@@ -15,13 +18,29 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ visible, onCl
     const handleSubmit = () => {
         if (detailType === 'code') {
             if (!code) {
-                Alert.alert('Error', 'Please enter the code');
+                show({
+                    type: 'error',
+                    title: 'Missing Code',
+                    message: 'Please enter the code',
+                    primaryAction: {
+                        label: 'OK',
+                        onPress: () => hide()
+                    }
+                });
                 return;
             }
             onSubmit({ type: 'code', details: code });
         } else {
             if (!email || !password) {
-                Alert.alert('Error', 'Please enter both email and password');
+                show({
+                    type: 'error',
+                    title: 'Missing Information',
+                    message: 'Please enter both email and password',
+                    primaryAction: {
+                        label: 'OK',
+                        onPress: () => hide()
+                    }
+                });
                 return;
             }
             onSubmit({ type: 'account', details: { email, password } });
@@ -97,6 +116,7 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ visible, onCl
 };
 
 const OrdersScreen: React.FC = () => {
+    const { show, hide } = useStatus();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [token, setToken] = useState<string | null>(null);
@@ -119,7 +139,15 @@ const OrdersScreen: React.FC = () => {
     // Fetch orders after the token is fetched
     const fetchOrders = async (token: string | null) => {
         if (!token) {
-            Alert.alert("Error", "Please log in to view orders");
+            show({
+                type: 'error',
+                title: 'Authentication Required',
+                message: 'Please log in to view orders',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             return;
         }
         setLoading(true);
@@ -139,7 +167,22 @@ const OrdersScreen: React.FC = () => {
             setOrders(sortedOrders);
         } catch (err) {
             console.error('Error fetching orders:', err);
-            Alert.alert("Error", "Failed to fetch orders");
+            show({
+                type: 'error',
+                title: 'Loading Failed',
+                message: 'Failed to fetch orders',
+                primaryAction: {
+                    label: 'Retry',
+                    onPress: () => {
+                        hide();
+                        fetchOrders(token);
+                    }
+                },
+                secondaryAction: {
+                    label: 'Cancel',
+                    onPress: () => hide()
+                }
+            });
         } finally {
             setLoading(false);
         }
@@ -148,7 +191,15 @@ const OrdersScreen: React.FC = () => {
     // Accept an order - updates status to CONFIRMED
     const acceptOrder = async (orderId: number) => {
         if (!orderId || orderId <= 0) {
-            Alert.alert("Error", "Invalid order ID");
+            show({
+                type: 'error',
+                title: 'Invalid Order',
+                message: 'Invalid order ID',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             console.error("Invalid orderId:", orderId);
             return;
         }
@@ -156,12 +207,37 @@ const OrdersScreen: React.FC = () => {
         try {
             console.log("Accepting order with ID:", orderId);
             const response = await axiosInstance.put("/api/confirmedUpdate", { orderId, status: "CONFIRMED" });
-            Alert.alert("Success", "Order confirmed successfully");
-            await fetchOrders(token);
+            show({
+                type: 'success',
+                title: 'Order Confirmed',
+                message: 'Order confirmed successfully',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: async () => {
+                        hide();
+                        await fetchOrders(token);
+                    }
+                }
+            });
             console.log("Order confirmed:", response.data);
         } catch (err) {
             console.error("Error accepting order:", err);
-            Alert.alert("Error", `Failed to confirm order: ${err}`);
+            show({
+                type: 'error',
+                title: 'Confirmation Failed',
+                message: `Failed to confirm order: ${err}`,
+                primaryAction: {
+                    label: 'Retry',
+                    onPress: () => {
+                        hide();
+                        acceptOrder(orderId);
+                    }
+                },
+                secondaryAction: {
+                    label: 'Cancel',
+                    onPress: () => hide()
+                }
+            });
         }
     };
 
@@ -178,11 +254,34 @@ const OrdersScreen: React.FC = () => {
                 await sendAccountDetails(selectedOrderId, details);
             } else {
                 console.error('Error: selectedOrderId is null');
-                Alert.alert('Error', 'No order selected');
+                show({
+                    type: 'error',
+                    title: 'Selection Error',
+                    message: 'No order selected',
+                    primaryAction: {
+                        label: 'OK',
+                        onPress: () => hide()
+                    }
+                });
             }
         } catch (err) {
             console.error('Error submitting details:', err);
-            Alert.alert('Error', 'Failed to submit details');
+            show({
+                type: 'error',
+                title: 'Submission Failed',
+                message: 'Failed to submit details',
+                primaryAction: {
+                    label: 'Retry',
+                    onPress: () => {
+                        hide();
+                        handleSubmitDetails(details);
+                    }
+                },
+                secondaryAction: {
+                    label: 'Cancel',
+                    onPress: () => hide()
+                }
+            });
         }
     };
 
@@ -201,18 +300,51 @@ const OrdersScreen: React.FC = () => {
             );
 
             console.log('Response:', response.data);
-            Alert.alert("Success", "Order accepted and account details sent!");
-            await fetchOrders(token);
+            show({
+                type: 'success',
+                title: 'Order Accepted',
+                message: 'Order accepted and account details sent!',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: async () => {
+                        hide();
+                        await fetchOrders(token);
+                    }
+                }
+            });
         } catch (err) {
             console.error('Error accepting order:', err);
-            Alert.alert("Error", "Failed to accept order");
+            show({
+                type: 'error',
+                title: 'Acceptance Failed',
+                message: 'Failed to accept order',
+                primaryAction: {
+                    label: 'Retry',
+                    onPress: () => {
+                        hide();
+                        sendAccountDetails(orderId, details);
+                    }
+                },
+                secondaryAction: {
+                    label: 'Cancel',
+                    onPress: () => hide()
+                }
+            });
         }
     };
 
     // Reject an order
     const rejectOrder = async (orderId: number) => {
         if (!orderId || orderId <= 0) {
-            Alert.alert("Error", "Invalid order ID");
+            show({
+                type: 'error',
+                title: 'Invalid Order',
+                message: 'Invalid order ID',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             console.error("Invalid orderId:", orderId);
             return;
         }
@@ -223,9 +355,33 @@ const OrdersScreen: React.FC = () => {
             Alert.alert("Success", "Order rejected successfully");
             console.log("Order rejected:");
             await fetchOrders(token); // Refresh orders after rejection
+            show({
+                type: 'success',
+                title: 'Order Rejected',
+                message: 'Order rejected successfully',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
         } catch (err) {
             console.error("Error rejecting order:", err);
-            Alert.alert("Error", `Failed to reject order: ${err}`);
+            show({
+                type: 'error',
+                title: 'Rejection Failed',
+                message: `Failed to reject order: ${err}`,
+                primaryAction: {
+                    label: 'Retry',
+                    onPress: () => {
+                        hide();
+                        rejectOrder(orderId);
+                    }
+                },
+                secondaryAction: {
+                    label: 'Cancel',
+                    onPress: () => hide()
+                }
+            });
         }
     };
 
