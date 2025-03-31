@@ -266,7 +266,7 @@ export default function HomeScreen() {
         <View style={styles.welcomeSection}>
           <ThemedText style={styles.welcomeTitle}>Hi {user?.name || 'there'},</ThemedText>
           <ThemedText style={styles.welcomeSubtitle}>
-            100K+ shoppers around the world have saved 40% or more by shopping with Grabr. 2 weeks approximate delivery time.
+            100K+ shoppers around the world have saved 40% or more by shopping with wassalha. 2 weeks approximate delivery time.
           </ThemedText>
           <View style={styles.avatarRow}>
             {recentUsers.slice(0, 10).map((user, index) => (
@@ -461,13 +461,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   section: {
-    marginBottom: 10,
+    marginBottom: 5,
   },
   separator: {
     flexDirection: "row",
     alignItems: "center",
     marginHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   separatorText: {
     fontSize: 16,
@@ -533,18 +533,18 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   travelersSection: {
-    marginTop: 20,
-    paddingVertical: 20,
+    marginTop: 5,
+    paddingVertical: 10,
     alignItems: "center",
   },
   sponsorsSection: {
-    marginTop: 20,
-    paddingVertical: 20,
+    marginTop: 5,
+    paddingVertical: 10,
     alignItems: "center",
   },
   requestsSection: {
-    marginTop: 20,
-    paddingVertical: 20,
+    marginTop: 5,
+    paddingVertical: 10,
     paddingHorizontal: 16,
   },
   listContainer: {

@@ -258,8 +258,7 @@ export default function RootLayout() {
                     <Stack.Screen
                       name="screens/NotificationsScreen"
                       options={{
-                        headerShown: false,
-                        presentation: 'modal'
+                        headerShown: false
                       }}
                     />
                     <Stack.Screen
