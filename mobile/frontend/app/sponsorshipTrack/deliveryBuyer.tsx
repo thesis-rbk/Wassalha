@@ -66,122 +66,119 @@ export default function DeliveryBuyer() {
     // Add navigation logic if needed
   };
   return (
-    <view>
-      <ScrollView style={styles.scrollView}>
-        <ThemedView style={styles.container}>
+    <ScrollView style={styles.scrollView}>
+      <ThemedView style={styles.container}>
 
-          <View style={styles.statusContainer}>
-            {!detailsReceived ? (
-              <>
-                <Clock color="#f59e0b" size={64} />
-                <ThemedText style={styles.statusTitle}>
-                  Waiting for Sponsorship Details
-                </ThemedText>
-                <ThemedText style={styles.statusText}>
-                  The sponsor will send your account details shortly. Please check your email.
-                </ThemedText>
-              </>
-            ) : (
-              <>
-                <Mail color="#28a745" size={64} />
-                <ThemedText style={styles.statusTitle}>
-                  Details Received!
-                </ThemedText>
-                <ThemedText style={styles.statusText}>
-                  You can now access your sponsored account
-                </ThemedText>
-              </>
+        <View style={styles.statusContainer}>
+          {!detailsReceived ? (
+            <>
+              <Clock color="#f59e0b" size={64} />
+              <ThemedText style={styles.statusTitle}>
+                Waiting for Sponsorship Details
+              </ThemedText>
+              <ThemedText style={styles.statusText}>
+                The sponsor will send your account details shortly. Please check your email.
+              </ThemedText>
+            </>
+          ) : (
+            <>
+              <Mail color="#28a745" size={64} />
+              <ThemedText style={styles.statusTitle}>
+                Details Received!
+              </ThemedText>
+              <ThemedText style={styles.statusText}>
+                You can now access your sponsored account
+              </ThemedText>
+            </>
+          )}
+        </View>
+
+        {/* Email Check Section */}
+        <View style={styles.cardContainer}>
+          <View style={styles.card}>
+            <RefreshCw color="#0061ff" size={32} />
+            <ThemedText style={styles.cardTitle}>Check Your Email</ThemedText>
+            <ThemedText style={styles.cardText}>
+              {!detailsReceived
+                ? "Please check your email regularly. The sponsor will send your details soon."
+                : "Your sponsorship details have been delivered to your email"}
+            </ThemedText>
+            <BaseButton
+              variant="primary"
+              size="medium"
+              style={styles.emailButton}
+              onPress={handleOpenGmail}
+            >
+              <View style={styles.buttonContent}>
+                <ThemedText style={styles.buttonText}>Open Gmail</ThemedText>
+                <ExternalLink size={20} color="white" />
+              </View>
+            </BaseButton>
+
+            {!detailsReceived && (
+              <BaseButton
+                variant="secondary"
+                size="medium"
+                style={styles.confirmButton}
+                onPress={confirmDetailsReceived}
+              >
+                <ThemedText>I've Received the Details</ThemedText>
+              </BaseButton>
             )}
           </View>
+        </View>
 
-          {/* Email Check Section */}
-          <View style={styles.cardContainer}>
-            <View style={styles.card}>
-              <RefreshCw color="#0061ff" size={32} />
-              <ThemedText style={styles.cardTitle}>Check Your Email</ThemedText>
-              <ThemedText style={styles.cardText}>
-                {!detailsReceived
-                  ? "Please check your email regularly. The sponsor will send your details soon."
-                  : "Your sponsorship details have been delivered to your email"}
-              </ThemedText>
-              <BaseButton
-                variant="primary"
-                size="medium"
-                style={styles.emailButton}
-                onPress={handleOpenGmail}
-              >
-                <View style={styles.buttonContent}>
-                  <ThemedText style={styles.buttonText}>Open Gmail</ThemedText>
-                  <ExternalLink size={20} color="white" />
-                </View>
-              </BaseButton>
-
-              {!detailsReceived && (
-                <BaseButton
-                  variant="secondary"
-                  size="medium"
-                  style={styles.confirmButton}
-                  onPress={confirmDetailsReceived}
+        {/* Rating Section - Only show after details are received */}
+        {detailsReceived && !hasReviewed && (
+          <View style={styles.ratingContainer}>
+            <ThemedText style={styles.ratingTitle}>
+              Rate Your Experience
+            </ThemedText>
+            <View style={styles.starsContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity
+                  key={star}
+                  onPress={() => handleRating(star)}
                 >
-                  <ThemedText>I've Received the Details</ThemedText>
-                </BaseButton>
-              )}
+                  <Star
+                    size={32}
+                    color={star <= rating ? "#ffc107" : "#e4e5e7"}
+                    fill={star <= rating ? "#ffc107" : "none"}
+                  />
+                </TouchableOpacity>
+              ))}
             </View>
+            <BaseButton
+              variant="primary"
+              size="medium"
+              style={styles.submitButton}
+              onPress={submitReview}
+            >
+              Submit Review
+            </BaseButton>
           </View>
+        )}
 
-          {/* Rating Section - Only show after details are received */}
-          {detailsReceived && !hasReviewed && (
-            <View style={styles.ratingContainer}>
-              <ThemedText style={styles.ratingTitle}>
-                Rate Your Experience
-              </ThemedText>
-              <View style={styles.starsContainer}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <TouchableOpacity
-                    key={star}
-                    onPress={() => handleRating(star)}
-                  >
-                    <Star
-                      size={32}
-                      color={star <= rating ? "#ffc107" : "#e4e5e7"}
-                      fill={star <= rating ? "#ffc107" : "none"}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <BaseButton
-                variant="primary"
-                size="medium"
-                style={styles.submitButton}
-                onPress={submitReview}
-              >
-                Submit Review
-              </BaseButton>
-            </View>
-          )}
+        {/* Thank You Message (shows after review) */}
+        {hasReviewed && (
+          <View style={styles.thankYouContainer}>
+            <ThemedText style={styles.thankYouText}>
+              Thank you for your feedback! Your review helps improve our service.
+            </ThemedText>
+          </View>
+        )}
 
-          {/* Thank You Message (shows after review) */}
-          {hasReviewed && (
-            <View style={styles.thankYouContainer}>
-              <ThemedText style={styles.thankYouText}>
-                Thank you for your feedback! Your review helps improve our service.
-              </ThemedText>
-            </View>
-          )}
-
-          {/* Return to Home Button */}
-          <BaseButton
-            variant="secondary"
-            size="medium"
-            style={styles.homeButton}
-            onPress={() => router.push("/home")}
-          >
-            Return to Home
-          </BaseButton>
-        </ThemedView>
-      </ScrollView>
-      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
-    </view>
+        {/* Return to Home Button */}
+        <BaseButton
+          variant="secondary"
+          size="medium"
+          style={styles.homeButton}
+          onPress={() => router.push("/home")}
+        >
+          Return to Home
+        </BaseButton>
+      </ThemedView>
+    </ScrollView>
   );
 }
 
