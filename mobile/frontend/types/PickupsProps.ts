@@ -4,4 +4,6 @@ export interface PickupProps {
   orderId?: number; // Keeping your original prop
   pickups?: PickupType[]; // Optional
   setPickups?: (pickups: PickupType[]) => void; // Optional
+  showPickup?: boolean;
+  setShowPickup?: React.Dispatch<React.SetStateAction<boolean>>;
 }

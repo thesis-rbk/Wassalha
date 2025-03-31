@@ -11,7 +11,7 @@ import {
   setLoading,
   setError
 } from '@/store/chatSlice';
-import { getSocket } from '@/services/SocketService';
+import { getSocket } from '@/services/socketService';
 import { BACKEND_URL } from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Socket } from 'socket.io-client';

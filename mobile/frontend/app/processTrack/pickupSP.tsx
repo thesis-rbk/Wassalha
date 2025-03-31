@@ -500,7 +500,7 @@ export default function PickupTraveler() {
       {showSuggestions ? (
         renderSuggestions()
       ) : showPickup ? (
-        <Pickups pickupId={pickupId} pickups={pickups} setPickups={setPickups} />
+        <Pickups pickupId={pickupId} pickups={pickups} setPickups={setPickups} showPickup={showPickup} setShowPickup={setShowPickup} />
       ) : (
         <>
           <View style={styles.content}>
