@@ -3,20 +3,18 @@ import { View, StyleSheet, Pressable, Text } from "react-native";
 import {
   Home,
   ShoppingBag,
+  Plane,
   Crown,
-  MessageCircle,
-  Plus,
+  User,
 } from "lucide-react-native";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { TabItem } from "@/types/TabItem";
 import { useRouter } from "expo-router";
 import { Route } from "expo-router";
+import { TabBarProps } from "@/types/TabBarProps";
 
-interface TabBarProps {
-  activeTab: string;
-  onTabPress: (tabName: string) => void;
-}
+
 
 export function TabBar({ activeTab, onTabPress }: TabBarProps) {
   const colorScheme = useColorScheme() ?? "light";
@@ -42,14 +40,12 @@ export function TabBar({ activeTab, onTabPress }: TabBarProps) {
       route: "/orders&requests/order" as Route,
     },
     {
-      name: "create",
-      label: "",
+      name: "travel",
+      label: "Travel",
       icon: (isActive: boolean) => (
-        <View style={styles.plusIconContainer}>
-          <Plus size={28} color="white" />
-        </View>
+        <Plane size={24} color={isActive ? activeTabColor : iconColor} />
       ),
-      route: "/productDetails/create-order" as Route,
+      route: "/goodPost/goodpostpage" as Route,
     },
     {
       name: "sponsor",
@@ -57,15 +53,15 @@ export function TabBar({ activeTab, onTabPress }: TabBarProps) {
       icon: (isActive: boolean) => (
         <Crown size={24} color={isActive ? activeTabColor : iconColor} />
       ),
-      route: "/verification/fetchAll" as Route,
+      route: "/screens/SponsorshipScreen" as Route,
     },
     {
-      name: "messages",
-      label: "Messages",
+      name: "more",
+      label: "See More",
       icon: (isActive: boolean) => (
-        <MessageCircle size={24} color={isActive ? activeTabColor : iconColor} />
+        <User size={24} color={isActive ? activeTabColor : iconColor} />
       ),
-      route: "/messages/messages" as Route,
+      route: "/more" as Route,
     },
   ];
 
@@ -90,10 +86,7 @@ export function TabBar({ activeTab, onTabPress }: TabBarProps) {
         return (
           <Pressable
             key={tab.name || `tab-${index}`}
-            style={[
-              styles.tab,
-              tab.name === "create" && styles.createTab
-            ]}
+            style={styles.tab}
             onPress={() => handleRoutes(tab)}
             android_ripple={{
               color: Colors[colorScheme].primary,
@@ -101,10 +94,7 @@ export function TabBar({ activeTab, onTabPress }: TabBarProps) {
               radius: 24
             }}
           >
-            {/* Render the icon */}
             {typeof tab.icon === "function" ? tab.icon(isActive) : tab.icon}
-
-            {/* Only render label if tab has a label */}
             {tab.label && tab.label.length > 0 ? (
               <View style={styles.labelContainer}>
                 <Text
@@ -135,7 +125,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#E5E5E5",
     elevation: 8,
-    // Android-specific styling
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
   },
@@ -144,9 +133,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flex: 1,
     paddingVertical: 6,
-  },
-  createTab: {
-    marginTop: -30,
   },
   labelContainer: {
     alignItems: "center",
@@ -165,14 +151,5 @@ const styles = StyleSheet.create({
     height: 3,
     borderRadius: 1.5,
     marginTop: 3,
-  },
-  plusIconContainer: {
-    backgroundColor: Colors.light.primary,
-    borderRadius: 30,
-    width: 56,
-    height: 56,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 6,
-  },
+  }
 });
