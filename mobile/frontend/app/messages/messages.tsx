@@ -171,6 +171,18 @@ export default function MessagesScreen() {
     );
   };
 
+  const handleNotificationPress = () => {
+    router.push("./notifications");
+  };
+
+  const handleProfilePress = () => {
+    router.push("./profile");
+  };
+
+  const handleTabPress = (tabName: string) => {
+    setActiveTab(tabName);
+  };
+
   if (loading) {
     return (
       <ThemedView style={styles.loadingContainer}>
