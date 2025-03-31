@@ -179,10 +179,6 @@ export default function MessagesScreen() {
     router.push("./profile");
   };
 
-  const handleTabPress = (tabName: string) => {
-    setActiveTab(tabName);
-  };
-
   if (loading) {
     return (
       <ThemedView style={styles.loadingContainer}>
