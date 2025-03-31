@@ -12,6 +12,7 @@ import { TabBar } from "@/components/navigation/TabBar"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { RouteProp } from "@react-navigation/native"
 import { SponsorshipDetailsRouteParams } from "../../types/Subscription"
+import { useStatus } from '@/context/StatusContext'
 // Define the route params type
 
 const SponsorshipDetails: React.FC = () => {
@@ -24,6 +25,7 @@ const SponsorshipDetails: React.FC = () => {
     const [averageRating, setAverageRating] = useState<number | null>(null)
     const [reviewCount, setReviewCount] = useState<number>(0)
     const [token, setToken] = useState<string | null>(null)
+    const { show, hide } = useStatus()
     console.log("ifddddd from details", id)
     // Fetch token from AsyncStorage
     const fetchToken = async () => {
@@ -69,14 +71,30 @@ const SponsorshipDetails: React.FC = () => {
     // Handle "Buy Now" action
     const buyNow = async () => {
         if (!token) {
-            Alert.alert("Error", "Please log in to make a purchase")
-            return
+            show({
+                type: 'error',
+                title: 'Authentication Required',
+                message: 'Please log in to make a purchase',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
+            return;
         }
 
         if (!sponsorship || !sponsorship.sponsorId || !sponsorship.price) {
-            Alert.alert("Error", "Invalid sponsorship data")
-            console.error("Invalid sponsorship data:", sponsorship)
-            return
+            show({
+                type: 'error',
+                title: 'Invalid Data',
+                message: 'Unable to process sponsorship data',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
+            console.error("Invalid sponsorship data:", sponsorship);
+            return;
         }
 
         const payload = {
@@ -84,7 +102,7 @@ const SponsorshipDetails: React.FC = () => {
             sponsorshipId: id,
             amount: sponsorship.price,
             status: "PENDING"
-        }
+        };
 
         try {
             const response = await axiosInstance.post("/api/createOrderSponsor", payload, {
@@ -92,14 +110,43 @@ const SponsorshipDetails: React.FC = () => {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 }
-            })
-            Alert.alert("Success", "Order created successfully")
-            navigation.navigate("verification/ClientsOrders")
+            });
+            show({
+                type: 'success',
+                title: 'Order Created',
+                message: 'Your order has been created successfully',
+                primaryAction: {
+                    label: 'View Orders',
+                    onPress: () => {
+                        hide();
+                        navigation.navigate("verification/ClientsOrders");
+                    }
+                },
+                secondaryAction: {
+                    label: 'Stay Here',
+                    onPress: () => hide()
+                }
+            });
         } catch (error) {
-            console.error("Error creating order:", error)
-            Alert.alert("Error", "Failed to create order")
+            console.error("Error creating order:", error);
+            show({
+                type: 'error',
+                title: 'Order Creation Failed',
+                message: 'Unable to create your order. Please try again.',
+                primaryAction: {
+                    label: 'Retry',
+                    onPress: () => {
+                        hide();
+                        buyNow();
+                    }
+                },
+                secondaryAction: {
+                    label: 'Cancel',
+                    onPress: () => hide()
+                }
+            });
         }
-    }
+    };
 
     useEffect(() => {
         fetchSponsorshipDetails()

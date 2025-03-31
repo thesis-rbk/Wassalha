@@ -267,7 +267,8 @@ export default function OrderPage() {
           prev.map((p) => (p.id === data.requestId ? data : p))
         );
         fetchGoodsProcesses();
-        fetchRequests()
+        fetchRequests();
+
       });
       socket.on("disconnect", () => {
         console.log("🔌 Socket disconnected");

@@ -4,6 +4,9 @@ const prisma = require("../../prisma/index");
 const getAllOrders = async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
+      orderBy: {
+        createdAt: "desc", //added this to sort the orders by createdAt in descending order
+      },
       include: {
         request: {
           include: {

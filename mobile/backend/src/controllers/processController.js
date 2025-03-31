@@ -5,6 +5,9 @@ const getAllProcessDetails = async (req, res) => {
   try {
     // Fetch all processes with related data
     const processes = await prisma.goodsProcess.findMany({
+      orderBy: {
+        createdAt: "desc"  // Add this to sort processes by newest first
+      },
       include: {
         events: {
           orderBy: {

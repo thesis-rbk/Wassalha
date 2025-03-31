@@ -24,6 +24,7 @@ import { ProductDetailsProps } from "@/types/ProductDetails";
 import { useRouter } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
+import { useStatus } from '@/context/StatusContext';
 
 console.log("API URL:", process.env.EXPO_PUBLIC_API_URL);
 console.log("Upload URL:", process.env.EXPO_PUBLIC_MEDIA_UPLOAD_URL);
@@ -31,6 +32,7 @@ console.log("Upload URL:", process.env.EXPO_PUBLIC_MEDIA_UPLOAD_URL);
 const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
+  const { show, hide } = useStatus();
 
   // Retrieve scrapedData from the query parameters (if available)
   const { scrapedData } = useLocalSearchParams();
@@ -87,7 +89,22 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
       }
     } catch (error) {
       console.error("❌ Error picking document:", error);
-      Alert.alert("Error", "Failed to pick document");
+      show({
+        type: 'error',
+        title: 'Document Error',
+        message: 'Failed to pick document. Please try again.',
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => {
+            hide();
+            pickImage();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     }
   };
 
@@ -126,7 +143,22 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
       navigateToNextStep();
     } catch (error) {
       console.error("Navigation error:", error);
-      Alert.alert("Error", "Failed to proceed to next step. Please try again.");
+      show({
+        type: 'error',
+        title: 'Navigation Error',
+        message: 'Failed to proceed to next step. Please try again.',
+        primaryAction: {
+          label: 'Try Again',
+          onPress: () => {
+            hide();
+            handleNext();
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: () => hide()
+        }
+      });
     }
   };
 
@@ -251,11 +283,25 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
                 style={styles.productImage}
                 onError={(e) => {
                   console.error("Image loading error:", e.nativeEvent.error);
-                  Alert.alert(
-                    "Error",
-                    "Failed to load image. Please try selecting another image."
-                  );
-                  setProductImage("");
+                  show({
+                    type: 'error',
+                    title: 'Image Error',
+                    message: 'Failed to load image. Please try selecting another image.',
+                    primaryAction: {
+                      label: 'Select New Image',
+                      onPress: () => {
+                        hide();
+                        pickImage();
+                      }
+                    },
+                    secondaryAction: {
+                      label: 'Cancel',
+                      onPress: () => {
+                        hide();
+                        setProductImage("");
+                      }
+                    }
+                  });
                 }}
               />
               <TouchableOpacity
