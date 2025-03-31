@@ -27,7 +27,7 @@ import { PickupProps } from "@/types/PickupsProps";
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 
-export default function Pickups({ pickupId, orderId: initialOrderId, pickups, setPickups }: PickupProps) {  const router = useRouter();
+export default function Pickups({ pickupId, orderId: initialOrderId, pickups, setPickups,setShowPickup }: PickupProps) {  const router = useRouter();
   const params=useLocalSearchParams();
   console.log("paraams",params);
   const colorScheme = useColorScheme() ?? "light";
@@ -278,7 +278,14 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       setContact("");
       setScheduledTime("");
       setCoordinates(null);
-      router.back();
+      if (setShowPickup) {
+        setShowPickup(false);
+      }
+      else {
+        router.push({
+          pathname: "/pickup/PickupDashboard",
+          params: params,
+        });      }
     } catch (error) {
       console.error("Pickup error:", error);
       Alert.alert("Error", pickupId ? "Failed to update pickup" : "Failed to schedule pickup");

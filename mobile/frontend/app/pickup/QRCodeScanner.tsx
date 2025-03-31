@@ -7,7 +7,7 @@ import {
   Modal,
   Alert,
 } from "react-native";
-import { Camera, useCameraPermissions } from "expo-camera";
+import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { XCircle } from "lucide-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -107,7 +107,7 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
             </BaseButton>
           </View>
         ) : (
-          <Camera
+          <CameraView
             style={styles.camera}
             type="back" 
             onBarCodeScanned={scanned ? undefined : handleScan}

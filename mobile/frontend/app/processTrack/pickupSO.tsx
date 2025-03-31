@@ -422,6 +422,8 @@ export default function PickupOwner() {
           pickupId={pickupId}
           pickups={pickups}
           setPickups={setPickups}
+          showPickup={showPickup} 
+          setShowPickup={setShowPickup}
         />
       ) : (
         <>

@@ -10,6 +10,7 @@ import { Colors } from '@/constants/Colors';
 import { FontFamily } from '@/assets/fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { TabBar } from "@/components/navigation/TabBar";
+import { useStatus } from '@/context/StatusContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -40,6 +41,7 @@ const CreateRequestForm: React.FC = () => {
     const [isPlatformOpen, setIsPlatformOpen] = useState(false);
     const categoryRef = useRef<View>(null);
     const platformRef = useRef<View>(null);
+    const { show, hide } = useStatus();
 
     const platformOptions = Object.entries(SponsorshipPlatform).map(([key, value]) => ({
         label: value,
@@ -85,7 +87,15 @@ const CreateRequestForm: React.FC = () => {
 
     const handleSubmit = async () => {
         if (!name || !description || !price || !duration || !categoryId || !platform) {
-            Alert.alert('Error', 'Please fill all required fields');
+            show({
+                type: 'error',
+                title: 'Missing Information',
+                message: 'Please fill all required fields',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             return;
         }
 
@@ -111,12 +121,55 @@ const CreateRequestForm: React.FC = () => {
             });
 
             if (response.status === 200) {
-                navigate.navigate("verification/fetchAll");
+                show({
+                    type: 'success',
+                    title: 'Success',
+                    message: 'Sponsor post created successfully',
+                    primaryAction: {
+                        label: 'Continue',
+                        onPress: () => {
+                            hide();
+                            navigate.navigate("verification/fetchAll");
+                        }
+                    }
+                });
             } else {
                 setError(response.data.message || 'Something went wrong');
+                show({
+                    type: 'error',
+                    title: 'Submission Failed',
+                    message: response.data.message || 'Something went wrong',
+                    primaryAction: {
+                        label: 'Try Again',
+                        onPress: () => {
+                            hide();
+                            handleSubmit();
+                        }
+                    },
+                    secondaryAction: {
+                        label: 'Cancel',
+                        onPress: () => hide()
+                    }
+                });
             }
         } catch (err) {
             setError('An error occurred while submitting the request');
+            show({
+                type: 'error',
+                title: 'Submission Error',
+                message: 'An error occurred while submitting the request',
+                primaryAction: {
+                    label: 'Try Again',
+                    onPress: () => {
+                        hide();
+                        handleSubmit();
+                    }
+                },
+                secondaryAction: {
+                    label: 'Cancel',
+                    onPress: () => hide()
+                }
+            });
         } finally {
             setLoading(false);
         }

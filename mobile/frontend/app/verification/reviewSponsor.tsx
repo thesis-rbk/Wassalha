@@ -6,10 +6,12 @@ import axiosInstance from '@/config';
 import { useNavigation } from 'expo-router';
 import NavigationProp from '@/types/navigation.d'
 import { ReviewComponentProps } from "../../types/Review"
+import { useStatus } from '@/context/StatusContext';
 
 const ReviewComponent: React.FC<ReviewComponentProps> = ({ onReviewSubmitted }) => {
     const navigation = useNavigation<NavigationProp>();
     const [rating, setRating] = useState<number | null>(null);
+    const { show, hide } = useStatus();
 
     // Handle star selection
     const handleRating = (value: number) => {
@@ -32,11 +34,37 @@ const ReviewComponent: React.FC<ReviewComponentProps> = ({ onReviewSubmitted }) 
             console.log('Review submitted successfully:', response.data);
             if (onReviewSubmitted) onReviewSubmitted();
             setRating(null);
-            alert('Thank you for your feedback!');
-            navigation.push('home');
+            
+            show({
+                type: 'success',
+                title: 'Thank You',
+                message: 'Your feedback has been submitted successfully!',
+                primaryAction: {
+                    label: 'Continue',
+                    onPress: () => {
+                        hide();
+                        navigation.push('home');
+                    }
+                }
+            });
         } catch (error) {
             console.error('Error submitting review:', error);
-            alert('Failed to submit review. Please try again.');
+            show({
+                type: 'error',
+                title: 'Submission Failed',
+                message: 'Failed to submit review. Please try again.',
+                primaryAction: {
+                    label: 'Try Again',
+                    onPress: () => {
+                        hide();
+                        handleSubmit();
+                    }
+                },
+                secondaryAction: {
+                    label: 'Cancel',
+                    onPress: () => hide()
+                }
+            });
         }
     };
 

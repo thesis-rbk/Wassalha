@@ -184,7 +184,8 @@ const chatHandlers = (socket) => {
       
       // Use the stored io instead of getIO()
       if (io) {
-        io.of("/chat").to(`chat_${chatId}`).emit("receive_message", message);
+        //io.of("/chat").to(`chat_${chatId}`).emit("receive_message", message);
+        io.of("/chat").to(`chat_${chatId}`).except(socket.id).emit("receive_message", message);
       } else {
         console.error("IO instance not available");
       }
