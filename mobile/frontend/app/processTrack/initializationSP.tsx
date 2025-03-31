@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   View,
   StyleSheet,
@@ -45,7 +46,6 @@ import { Picker } from "@react-native-picker/picker";
 import Card from "@/components/cards/ProcessCard";
 import { useNotification } from "@/context/NotificationContext";
 import { io } from "socket.io-client";
-import { useStatus } from '@/context/StatusContext';
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -92,7 +92,6 @@ export default function InitializationSP() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
   const { sendNotification } = useNotification();
-  const { show, hide } = useStatus();
 
   console.log("kjslkdsldslsd", params);
 
@@ -152,6 +151,7 @@ export default function InitializationSP() {
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  
 
   useEffect(() => {
     fetchRequestDetails();
@@ -201,25 +201,7 @@ export default function InitializationSP() {
       setLoading(false);
     } catch (error) {
       console.error("Error fetching request details:", error);
-      show({
-        type: 'error',
-        title: 'Loading Error',
-        message: 'Failed to load request details',
-        primaryAction: {
-          label: 'Try Again',
-          onPress: () => {
-            hide();
-            fetchRequestDetails();
-          }
-        },
-        secondaryAction: {
-          label: 'Go Back',
-          onPress: () => {
-            hide();
-            router.back();
-          }
-        }
-      });
+      Alert.alert("Error", "Failed to load request details");
       setLoading(false);
     }
   };
@@ -329,25 +311,10 @@ export default function InitializationSP() {
       }
     } catch (error: any) {
       console.error("Error submitting offer:", error);
-      show({
-        type: 'error',
-        title: 'Offer Submission Failed',
-        message: 'This request is not available for offers at the moment. Please try another request.',
-        primaryAction: {
-          label: 'Try Again',
-          onPress: () => {
-            hide();
-            handleSubmitOffer();
-          }
-        },
-        secondaryAction: {
-          label: 'Back to Requests',
-          onPress: () => {
-            hide();
-            router.back();
-          }
-        }
-      });
+      Alert.alert(
+        "Error",
+        "This request is not available for offers at the moment. Please try another request."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -431,6 +398,8 @@ export default function InitializationSP() {
     query: string,
     setSuggestions: Function
   ) => {
+    console.log("Fetching airports with query:", query);
+    console.log("Using API key:", GOOGLE_PLACES_API_KEY);
     if (!query || query.length < 2) {
       setSuggestions([]);
       return;
@@ -450,27 +419,24 @@ export default function InitializationSP() {
           "places.displayName,places.types,places.formattedAddress",
       };
 
-      const response = await axiosInstance.post(
+      const response = await axios.post(
         "https://places.googleapis.com/v1/places:searchText",
         requestBody,
         { headers: requestHeaders }
       );
 
       const results = response.data.places
+      
         .filter((place: any) => place.types.includes("airport"))
         .map((place: any) => place.displayName.text || place.formattedAddress);
       setSuggestions(results);
+     
     } catch (error) {
+      console.log("erooooooooooooooor",error);
+      console.log("Error response:", error.response);
+      console.log("API Key being used:", GOOGLE_PLACES_API_KEY);
       console.error("Error fetching airports from Google Places:", error);
-      show({
-        type: 'error',
-        title: 'Airport Search Error',
-        message: 'Failed to fetch airport suggestions',
-        primaryAction: {
-          label: 'OK',
-          onPress: hide
-        }
-      });
+      Alert.alert("Error", "Failed to fetch airport suggestions");
     } finally {
       setIsFetchingAirports(false);
     }

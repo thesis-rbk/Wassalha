@@ -9,8 +9,6 @@ import {
   Animated,
   Easing,
 } from "react-native";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store";
 import SegmentedControl from "@/components/SegmentedControl";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -269,6 +267,7 @@ export default function OrderPage() {
           prev.map((p) => (p.id === data.requestId ? data : p))
         );
         fetchGoodsProcesses();
+        fetchRequests();
 
       });
       socket.on("disconnect", () => {
@@ -286,46 +285,23 @@ export default function OrderPage() {
     try {
       setIsLoading(true);
       const response = await axiosInstance.get("/api/requests");
-
-      // Debug log the raw response 
-      console.log("Request API response:", response.data);
-      console.log("Number of requests received:", response.data.data ? response.data.data.length : 0);
-
-      // Store unfiltered requests first to check if we're getting data
-      const allRequests = response.data.data || [];
-      console.log("All requests statuses:", allRequests.map((r: any) => r.status));
-
-      if (allRequests.length === 0) {
-        console.log("No requests received from API");
-        setRequests([]);
-        setIsLoading(false);
-        return;
-      }
-
+      
       // Filter the requests to only show those that are in "PENDING" status
       // AND either don't have an associated order OR have a cancelled order
       const filteredRequests = (response.data.data || []).filter((request: Request) => {
         // Check if the request is in PENDING status
         const isPending = request.status === "PENDING";
-        console.log(`Request ${request.id} status: ${request.status}, isPending: ${isPending}`);
-
+        
         // Check if the request has no order or a cancelled order
         const hasNoActiveOrder = !request.order || request.order.orderStatus === "CANCELLED";
-        console.log(`Request ${request.id} hasOrder: ${!!request.order}, orderStatus: ${request.order?.orderStatus}, hasNoActiveOrder: ${hasNoActiveOrder}`);
-
+        
         // Only include requests that meet both conditions
-        const shouldInclude = isPending && hasNoActiveOrder;
-        console.log(`Request ${request.id} shouldInclude: ${shouldInclude}`);
-        return shouldInclude;
+        return isPending && hasNoActiveOrder;
       });
-
-      console.log(`Filtered from ${allRequests.length} to ${filteredRequests.length} requests`);
-
-      // TEMPORARY: Set all requests to see if filtering is the issue
-      setRequests(allRequests);
-
-      // Normal functionality
-      // setRequests(filteredRequests);
+      
+      console.log(`Filtered from ${response.data.data?.length || 0} to ${filteredRequests.length} requests`);
+      
+      setRequests(filteredRequests);
     } catch (error) {
       console.error("Error fetching requests:", error);
       setRequests([]);
@@ -333,7 +309,6 @@ export default function OrderPage() {
       setIsLoading(false);
     }
   };
-
   const fetchGoodsProcesses = async () => {
     try {
       setIsLoading(true);

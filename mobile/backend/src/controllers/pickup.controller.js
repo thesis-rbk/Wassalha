@@ -185,6 +185,9 @@ const getPickupsRequesterByUserId = async (userId) => {
           },
         },
       },
+      orderBy: {
+        scheduledTime: 'desc'
+      },
     });
     return pickups;
   } catch (error) {
@@ -235,6 +238,9 @@ const getPickupsTravelerByUserId = async (userId) => {
             travelerId: true,
           },
         },
+      },
+      orderBy: {
+        scheduledTime: 'desc'
       },
     });
     return pickups;

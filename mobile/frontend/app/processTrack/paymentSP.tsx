@@ -21,8 +21,6 @@ import { useIsFocused } from "@react-navigation/native";
 import { useNotification } from '@/context/NotificationContext';
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "@/config";
-import { useStatus } from '@/context/StatusContext';
-
 
 const PaymentScreen = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -35,8 +33,7 @@ const PaymentScreen = () => {
   const router = useRouter();
   const isFocused = useIsFocused();
   const { sendNotification } = useNotification();
-  const { show, hide } = useStatus();
-  const socket = io(`${BACKEND_URL}/processTrack`);
+    const socket = io(`${BACKEND_URL}/processTrack`);
   
   const progressSteps = [
     { id: 1, title: "Initialization", icon: "initialization" },
@@ -86,18 +83,7 @@ const PaymentScreen = () => {
       
       if (!processId && !orderId) {
         console.error("No process ID or order ID provided");
-        show({
-          type: 'error',
-          title: 'Missing Information',
-          message: 'Process or order information is missing.',
-          primaryAction: {
-            label: 'Go Back',
-            onPress: () => {
-              hide();
-              router.back();
-            }
-          }
-        });
+        setLoading(false);
         return;
       }
       
@@ -118,25 +104,6 @@ const PaymentScreen = () => {
       
     } catch (error) {
       console.error("Error fetching process data:", error);
-      show({
-        type: 'error',
-        title: 'Loading Error',
-        message: 'Failed to load payment information. Please try again.',
-        primaryAction: {
-          label: 'Retry',
-          onPress: () => {
-            hide();
-            fetchProcessData();
-          }
-        },
-        secondaryAction: {
-          label: 'Go Back',
-          onPress: () => {
-            hide();
-            router.back();
-          }
-        }
-      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -214,10 +181,9 @@ const PaymentScreen = () => {
    
     })
     socket.on("confirmPayment", (data) => {
-      // alert("hi");
-      console.log("🔄  payment updated to:", data);
+      console.log("🔄 payment updated to:", data);
       router.push({
-                pathname: "/processTrack/pickupSP",
+                pathname: "/pickup/PickupDashboard",
                 params: params,
               });
     });

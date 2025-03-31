@@ -5,8 +5,6 @@ import axiosInstance from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Order } from "../../types/ServiceProvider";
 import { AccountDetailsModalProps } from "../../types/Sponsorship";
-
-import { AccountDetailsModalProps } from "../../types/Sponsorship"
 import { TabBar } from "@/components/navigation/TabBar";
 import { useStatus } from '@/context/StatusContext';
 

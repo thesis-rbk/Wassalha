@@ -29,7 +29,6 @@ import { usePickupActions } from "../../hooks/usePickupActions";
 import { QRCodeModal } from "../pickup/QRCodeModal";
 import io, { Socket } from "socket.io-client";
 import { navigateToChat } from "@/services/chatService";
-import { useStatus } from '@/context/StatusContext';
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -54,7 +53,6 @@ export default function PickupOwner() {
   );
 
   const socketRef = useRef<Socket | null>(null);
-  const { show, hide } = useStatus();
 
   useEffect(() => {
     if (!socketRef.current) {
@@ -121,15 +119,7 @@ export default function PickupOwner() {
 
   const openChat = async () => {
     if (!user?.id) {
-      show({
-        type: 'error',
-        title: 'Authentication Required',
-        message: 'You need to be logged in to chat',
-        primaryAction: {
-          label: 'OK',
-          onPress: () => hide()
-        }
-      });
+      Alert.alert("Error", "You need to be logged in to chat");
       return;
     }
 
@@ -150,22 +140,11 @@ export default function PickupOwner() {
       });
     } catch (error) {
       console.error("Error opening chat:", error);
-      show({
-        type: 'error',
-        title: 'Chat Error',
-        message: 'Failed to open chat. ' + (error instanceof Error ? error.message : String(error)),
-        primaryAction: {
-          label: 'Try Again',
-          onPress: () => {
-            hide();
-            openChat();
-          }
-        },
-        secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
-      });
+      Alert.alert(
+        "Chat Error",
+        "Failed to open chat. Error: " +
+          (error instanceof Error ? error.message : String(error))
+      );
     }
   };
 
@@ -187,22 +166,7 @@ export default function PickupOwner() {
       console.log("Pickups fetched:", response.data.data);
     } catch (error) {
       console.error("Error fetching pickups:", error);
-      show({
-        type: 'error',
-        title: 'Loading Error',
-        message: 'Failed to fetch pickups. Please try again.',
-        primaryAction: {
-          label: 'Retry',
-          onPress: () => {
-            hide();
-            fetchPickups();
-          }
-        },
-        secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
-      });
+      Alert.alert("Error", "Failed to fetch pickups. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -236,22 +200,7 @@ export default function PickupOwner() {
       }
     } catch (error) {
       console.error("Error fetching suggestions:", error);
-      show({
-        type: 'error',
-        title: 'Loading Error',
-        message: 'Failed to fetch suggestions. Please try again.',
-        primaryAction: {
-          label: 'Retry',
-          onPress: () => {
-            hide();
-            fetchSuggestions(pickupId);
-          }
-        },
-        secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
-      });
+      Alert.alert("Error", "Failed to fetch suggestions. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -473,6 +422,8 @@ export default function PickupOwner() {
           pickupId={pickupId}
           pickups={pickups}
           setPickups={setPickups}
+          showPickup={showPickup} 
+          setShowPickup={setShowPickup}
         />
       ) : (
         <>
