@@ -9,6 +9,7 @@ import { logout } from '@/store/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNotification } from '@/context/NotificationContext';
 import axiosInstance from '@/config';
+import { TabBar } from '@/components/navigation/TabBar';
 
 export default function MorePage() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -89,64 +90,72 @@ export default function MorePage() {
 
   return (
     <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
-      {/* Profile Section */}
-      <View style={styles.profileSection}>
-        <View style={styles.profileImage}>
-          <Text style={styles.profileInitial}>{user?.name?.charAt(0) || 'U'}</Text>
+      <View style={styles.contentContainer}>
+        {/* Profile Section */}
+        <View style={styles.profileSection}>
+          <View style={styles.profileImage}>
+            <Text style={styles.profileInitial}>{user?.name?.charAt(0) || 'U'}</Text>
+          </View>
+          <View style={styles.profileInfo}>
+            <Text style={[styles.profileName, { color: Colors[colorScheme].text }]}>
+              {user?.name || 'User'}
+            </Text>
+            <TouchableOpacity
+              style={styles.viewProfile}
+              onPress={() => router.push('/profile')}
+            >
+              <Text style={styles.viewProfileText}>View and edit profile</Text>
+              <ChevronRight size={16} color={Colors[colorScheme].text} />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.profileInfo}>
-          <Text style={[styles.profileName, { color: Colors[colorScheme].text }]}>
-            {user?.name || 'User'}
-          </Text>
-          <TouchableOpacity
-            style={styles.viewProfile}
-            onPress={() => router.push('/profile')}
-          >
-            <Text style={styles.viewProfileText}>View and edit profile</Text>
-            <ChevronRight size={16} color={Colors[colorScheme].text} />
-          </TouchableOpacity>
-        </View>
+
+        {/* Menu Items */}
+        <ScrollView style={styles.menuContainer}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.menuItem}
+              onPress={() => handleNavigation(item.route)}
+            >
+              <View style={styles.menuItemLeft}>
+                {item.icon}
+                <Text style={[styles.menuItemText, { color: Colors[colorScheme].text }]}>
+                  {item.label}
+                </Text>
+              </View>
+              <View style={styles.menuItemRight}>
+                {item.badge && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </Text>
+                  </View>
+                )}
+                <ChevronRight size={16} color={Colors[colorScheme].text} />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Logout Button */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <LogOut size={24} color="#ef4444" />
+          <Text style={styles.logoutText}>Log Out</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Menu Items */}
-      <ScrollView style={styles.menuContainer}>
-        {menuItems.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.menuItem}
-            onPress={() => handleNavigation(item.route)}
-          >
-            <View style={styles.menuItemLeft}>
-              {item.icon}
-              <Text style={[styles.menuItemText, { color: Colors[colorScheme].text }]}>
-                {item.label}
-              </Text>
-            </View>
-            <View style={styles.menuItemRight}>
-              {item.badge && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {item.badge > 99 ? '99+' : item.badge}
-                  </Text>
-                </View>
-              )}
-              <ChevronRight size={16} color={Colors[colorScheme].text} />
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <LogOut size={24} color="#ef4444" />
-        <Text style={styles.logoutText}>Log Out</Text>
-      </TouchableOpacity>
+      {/* Bottom Tab Bar */}
+      <TabBar activeTab="more" onTabPress={(tab) => router.push(tab as any)} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  contentContainer: {
     flex: 1,
   },
   profileSection: {
@@ -232,6 +241,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E5E5E5',
     gap: 16,
+    backgroundColor: Colors.light.background,
   },
   logoutText: {
     fontSize: 16,
