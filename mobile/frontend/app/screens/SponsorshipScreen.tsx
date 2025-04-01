@@ -6,12 +6,14 @@ import { ThemedText } from '@/components/ThemedText';
 import { TopNavigation } from '@/components/navigation/TopNavigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Users, ChevronRight, Globe, Award, Shield, FileText, RefreshCw } from 'lucide-react-native';
+import { TabBar } from '@/components/navigation/TabBar';
 
 const { width } = Dimensions.get('window');
 
 export default function SponsorshipScreen() {
   const router = useRouter();
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState("sponsor");
   
   useEffect(() => {
     checkTermsAcceptance();
@@ -47,6 +49,15 @@ export default function SponsorshipScreen() {
       Alert.alert('Reset', 'Terms acceptance has been reset for testing.');
     } catch (error) {
       console.error('Error resetting terms acceptance:', error);
+    }
+  };
+
+  const handleTabPress = (tabName: string) => {
+    setActiveTab(tabName);
+    if (tabName === "create") {
+      router.push("/verification/CreateSponsorPost");
+    } else {
+      router.push(tabName as any);
     }
   };
 
@@ -204,6 +215,8 @@ export default function SponsorshipScreen() {
             : 'You must accept our terms and conditions to proceed.'}
         </ThemedText>
       </ScrollView>
+
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   );
 }
@@ -215,6 +228,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
+    paddingBottom: 80,
   },
   header: {
     alignItems: 'center',

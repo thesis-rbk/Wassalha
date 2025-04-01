@@ -22,12 +22,16 @@ const {
   submitQuestionnaire,
   verifyUserProfile,
   getUserDemographics,
+  getProfileImage,
+  updateProfilePicture,
 } = require("../controllers/user.controller");
 const upload = require('../middleware/multerMiddleware');
 const { getMessages } = require("../controllers/message.controller");
 const { authenticateUser, authenticateAdmin, authenticateUserOrAdmin } = require("../middleware/middleware");
 
+
 const router = express.Router();
+
 
 // Public routes
 router.post("/register",upload.single('image'), signup);
@@ -69,6 +73,9 @@ router.post(
   submitQuestionnaire
 );
 
+// Add profile picture upload route
+router.post('/:id/profile-picture', upload.single('image'), updateProfilePicture);
+
 // User CRUD routes
 router.get("/", getUsers); // Get all users
 router.get("/demographics", authenticateAdmin, getUserDemographics); // Get user demographics
@@ -78,5 +85,8 @@ router.put("/:id/ban", authenticateAdmin, banUser); // Ban/Unban a user
 router.put("/:id/unban", authenticateAdmin, unbanUser); // Unban a user
 router.delete("/:id", authenticateAdmin, deleteUser); // Only admins can delete users
 router.put("/:id/verify-profile", authenticateAdmin, verifyUserProfile);
+
+// Add new route for getting user profile image
+router.get("/:id/profile-image", getProfileImage);
 
 module.exports = router;

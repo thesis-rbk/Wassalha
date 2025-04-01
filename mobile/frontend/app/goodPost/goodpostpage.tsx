@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
+  SafeAreaView,
 } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -20,6 +21,8 @@ import { Plus, Search, Filter, Calendar, X, Weight, User } from "lucide-react-na
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Category } from '@/types/Category';
+import { TabBar } from "@/components/navigation/TabBar";
+import { TopNavigation } from "@/components/navigation/TopNavigation";
 
 const { width } = Dimensions.get("window");
 
@@ -33,6 +36,7 @@ export default function GoodPostPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeTab, setActiveTab] = useState("travel");
   
   // New filter states
   const [minKg, setMinKg] = useState("");
@@ -206,6 +210,15 @@ export default function GoodPostPage() {
     router.push("/goodPost/createGoodsPost");
   };
 
+  const handleTabPress = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === "create") {
+      router.push("/verification/CreateSponsorPost");
+    } else {
+      router.push(tab as any);
+    }
+  };
+
   const renderGoodsPostItem = ({ item }: { item: any }) => {
     console.log("Rendering item:", item.id);
     console.log("Traveler data:", item.traveler);
@@ -312,238 +325,244 @@ export default function GoodPostPage() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      {/* Search and filter bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Search size={20} color="#666" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search by title, content or traveler"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor="#999"
-          />
-          {searchQuery ? (
-            <TouchableOpacity onPress={() => setSearchQuery("")}>
-              <X size={20} color="#666" />
-            </TouchableOpacity>
-          ) : null}
-        </View>
-        <TouchableOpacity 
-          style={styles.filterButton}
-          onPress={() => setShowFilterModal(true)}
-        >
-          <Filter size={20} color="#fff" />
-        </TouchableOpacity>
-      </View>
-      
-      {/* Active filters display */}
-      {(selectedCategory || selectedDate || minKg || maxKg || selectedGender) && (
-        <View style={styles.activeFiltersContainer}>
-          <ThemedText style={styles.activeFiltersTitle}>Active filters:</ThemedText>
-          <View style={styles.activeFiltersRow}>
-            {selectedCategory && (
-              <View style={styles.activeFilterTag}>
-                <ThemedText style={styles.activeFilterText}>
-                  {categories.find(c => c.id.toString() === selectedCategory)?.name || 'Category'}
-                </ThemedText>
-                <TouchableOpacity onPress={() => setSelectedCategory("")}>
-                  <X size={16} color="#666" />
-                </TouchableOpacity>
-              </View>
-            )}
-            {selectedDate && (
-              <View style={styles.activeFilterTag}>
-                <ThemedText style={styles.activeFilterText}>
-                  {selectedDate.toLocaleDateString()}
-                </ThemedText>
-                <TouchableOpacity onPress={() => setSelectedDate(null)}>
-                  <X size={16} color="#666" />
-                </TouchableOpacity>
-              </View>
-            )}
-            {(minKg || maxKg) && (
-              <View style={styles.activeFilterTag}>
-                <ThemedText style={styles.activeFilterText}>
-                  {minKg && maxKg ? `${minKg}-${maxKg} kg` : 
-                   minKg ? `Min ${minKg} kg` : `Max ${maxKg} kg`}
-                </ThemedText>
-                <TouchableOpacity onPress={() => { setMinKg(""); setMaxKg(""); }}>
-                  <X size={16} color="#666" />
-                </TouchableOpacity>
-              </View>
-            )}
-            {selectedGender && (
-              <View style={styles.activeFilterTag}>
-                <ThemedText style={styles.activeFilterText}>
-                  {selectedGender}
-                </ThemedText>
-                <TouchableOpacity onPress={() => setSelectedGender("")}>
-                  <X size={16} color="#666" />
-                </TouchableOpacity>
-              </View>
-            )}
-            <TouchableOpacity onPress={resetFilters} style={styles.resetFiltersButton}>
-              <ThemedText style={styles.resetFiltersText}>Reset all</ThemedText>
-            </TouchableOpacity>
+    <SafeAreaView style={{ flex: 1 }}>
+      <ThemedView style={styles.container}>
+        <TopNavigation title="Travel Posts" />
+        
+        {/* Search and filter bar */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <Search size={20} color="#666" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by title, content or traveler"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor="#999"
+            />
+            {searchQuery ? (
+              <TouchableOpacity onPress={() => setSearchQuery("")}>
+                <X size={20} color="#666" />
+              </TouchableOpacity>
+            ) : null}
           </View>
+          <TouchableOpacity 
+            style={styles.filterButton}
+            onPress={() => setShowFilterModal(true)}
+          >
+            <Filter size={20} color="#fff" />
+          </TouchableOpacity>
         </View>
-      )}
-
-      {isLoading ? (
-        <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
-      ) : (
-        <FlatList
-          data={filteredPosts}
-          renderItem={renderGoodsPostItem}
-          keyExtractor={(item) => item.id.toString()}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <ThemedText style={styles.emptyText}>
-                {searchQuery || selectedCategory || selectedDate || minKg || maxKg || selectedGender
-                  ? "No posts match your search criteria" 
-                  : "No goods posts available"}
-              </ThemedText>
-            </View>
-          }
-          contentContainerStyle={styles.listContainer}
-        />
-      )}
-      
-      {/* Filter Modal */}
-      <Modal
-        visible={showFilterModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowFilterModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>Filter Posts</ThemedText>
-              <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                <X size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.filterSection}>
-              <ThemedText style={styles.filterLabel}>Category</ThemedText>
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={selectedCategory}
-                  onValueChange={(itemValue) => setSelectedCategory(itemValue)}
-                  style={styles.picker}
-                >
-                  <Picker.Item label="All Categories" value="" />
-                  {categories.map((category) => (
-                    <Picker.Item
-                      key={category.id}
-                      label={category.name}
-                      value={category.id.toString()}
-                    />
-                  ))}
-                </Picker>
-              </View>
-            </View>
-            
-            <View style={styles.filterSection}>
-              <ThemedText style={styles.filterLabel}>Arrival Date</ThemedText>
-              <TouchableOpacity 
-                style={styles.datePickerButton}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Calendar size={20} color="#3a86ff" style={{marginRight: 10}} />
-                <ThemedText style={styles.dateText}>
-                  {selectedDate ? selectedDate.toLocaleDateString() : 'Select a date'}
-                </ThemedText>
-              </TouchableOpacity>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={selectedDate || new Date()}
-                  mode="date"
-                  display="default"
-                  onChange={handleDateChange}
-                />
+        
+        {/* Active filters display */}
+        {(selectedCategory || selectedDate || minKg || maxKg || selectedGender) && (
+          <View style={styles.activeFiltersContainer}>
+            <ThemedText style={styles.activeFiltersTitle}>Active filters:</ThemedText>
+            <View style={styles.activeFiltersRow}>
+              {selectedCategory && (
+                <View style={styles.activeFilterTag}>
+                  <ThemedText style={styles.activeFilterText}>
+                    {categories.find(c => c.id.toString() === selectedCategory)?.name || 'Category'}
+                  </ThemedText>
+                  <TouchableOpacity onPress={() => setSelectedCategory("")}>
+                    <X size={16} color="#666" />
+                  </TouchableOpacity>
+                </View>
               )}
-            </View>
-            
-            {/* Weight Range Filter */}
-            <View style={styles.filterSection}>
-              <ThemedText style={styles.filterLabel}>Available Weight (kg)</ThemedText>
-              <View style={styles.weightRangeContainer}>
-                <View style={styles.weightInputContainer}>
-                  <Weight size={18} color="#3a86ff" />
-                  <TextInput
-                    style={styles.weightInput}
-                    placeholder="Min"
-                    value={minKg}
-                    onChangeText={setMinKg}
-                    keyboardType="numeric"
-                    placeholderTextColor="#999"
-                  />
+              {selectedDate && (
+                <View style={styles.activeFilterTag}>
+                  <ThemedText style={styles.activeFilterText}>
+                    {selectedDate.toLocaleDateString()}
+                  </ThemedText>
+                  <TouchableOpacity onPress={() => setSelectedDate(null)}>
+                    <X size={16} color="#666" />
+                  </TouchableOpacity>
                 </View>
-                <ThemedText style={styles.weightRangeSeparator}>to</ThemedText>
-                <View style={styles.weightInputContainer}>
-                  <Weight size={18} color="#3a86ff" />
-                  <TextInput
-                    style={styles.weightInput}
-                    placeholder="Max"
-                    value={maxKg}
-                    onChangeText={setMaxKg}
-                    keyboardType="numeric"
-                    placeholderTextColor="#999"
-                  />
+              )}
+              {(minKg || maxKg) && (
+                <View style={styles.activeFilterTag}>
+                  <ThemedText style={styles.activeFilterText}>
+                    {minKg && maxKg ? `${minKg}-${maxKg} kg` : 
+                     minKg ? `Min ${minKg} kg` : `Max ${maxKg} kg`}
+                  </ThemedText>
+                  <TouchableOpacity onPress={() => { setMinKg(""); setMaxKg(""); }}>
+                    <X size={16} color="#666" />
+                  </TouchableOpacity>
                 </View>
-              </View>
-            </View>
-            
-            {/* Gender Filter */}
-            <View style={styles.filterSection}>
-              <ThemedText style={styles.filterLabel}>Traveler Gender</ThemedText>
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={selectedGender}
-                  onValueChange={(itemValue) => setSelectedGender(itemValue)}
-                  style={styles.picker}
-                >
-                  <Picker.Item label="Any Gender" value="" />
-                  <Picker.Item label="Male" value="MALE" />
-                  <Picker.Item label="Female" value="FEMALE" />
-                </Picker>
-              </View>
-            </View>
-            
-            <View style={styles.modalButtonsContainer}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.resetButton]}
-                onPress={resetFilters}
-              >
-                <ThemedText style={styles.resetButtonText}>Reset</ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.applyButton]}
-                onPress={() => {
-                  applyFilters();
-                  setShowFilterModal(false);
-                }}
-              >
-                <ThemedText style={styles.applyButtonText}>Apply Filters</ThemedText>
+              )}
+              {selectedGender && (
+                <View style={styles.activeFilterTag}>
+                  <ThemedText style={styles.activeFilterText}>
+                    {selectedGender}
+                  </ThemedText>
+                  <TouchableOpacity onPress={() => setSelectedGender("")}>
+                    <X size={16} color="#666" />
+                  </TouchableOpacity>
+                </View>
+              )}
+              <TouchableOpacity onPress={resetFilters} style={styles.resetFiltersButton}>
+                <ThemedText style={styles.resetFiltersText}>Reset all</ThemedText>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </Modal>
-      
-      {/* Floating Action Button with Lucide icon */}
-      <TouchableOpacity 
-        style={styles.fab}
-        onPress={handleCreatePost}
-        activeOpacity={0.8}
-      >
-        <Plus size={24} color="white" strokeWidth={2.5} />
-      </TouchableOpacity>
-    </ThemedView>
+        )}
+
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
+        ) : (
+          <FlatList
+            data={filteredPosts}
+            renderItem={renderGoodsPostItem}
+            keyExtractor={(item) => item.id.toString()}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <ThemedText style={styles.emptyText}>
+                  {searchQuery || selectedCategory || selectedDate || minKg || maxKg || selectedGender
+                    ? "No posts match your search criteria" 
+                    : "No goods posts available"}
+                </ThemedText>
+              </View>
+            }
+            contentContainerStyle={styles.listContainer}
+          />
+        )}
+        
+        {/* Filter Modal */}
+        <Modal
+          visible={showFilterModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowFilterModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <ThemedText style={styles.modalTitle}>Filter Posts</ThemedText>
+                <TouchableOpacity onPress={() => setShowFilterModal(false)}>
+                  <X size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.filterSection}>
+                <ThemedText style={styles.filterLabel}>Category</ThemedText>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={selectedCategory}
+                    onValueChange={(itemValue) => setSelectedCategory(itemValue)}
+                    style={styles.picker}
+                  >
+                    <Picker.Item label="All Categories" value="" />
+                    {categories.map((category) => (
+                      <Picker.Item
+                        key={category.id}
+                        label={category.name}
+                        value={category.id.toString()}
+                      />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+              
+              <View style={styles.filterSection}>
+                <ThemedText style={styles.filterLabel}>Arrival Date</ThemedText>
+                <TouchableOpacity 
+                  style={styles.datePickerButton}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Calendar size={20} color="#3a86ff" style={{marginRight: 10}} />
+                  <ThemedText style={styles.dateText}>
+                    {selectedDate ? selectedDate.toLocaleDateString() : 'Select a date'}
+                  </ThemedText>
+                </TouchableOpacity>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={selectedDate || new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={handleDateChange}
+                  />
+                )}
+              </View>
+              
+              {/* Weight Range Filter */}
+              <View style={styles.filterSection}>
+                <ThemedText style={styles.filterLabel}>Available Weight (kg)</ThemedText>
+                <View style={styles.weightRangeContainer}>
+                  <View style={styles.weightInputContainer}>
+                    <Weight size={18} color="#3a86ff" />
+                    <TextInput
+                      style={styles.weightInput}
+                      placeholder="Min"
+                      value={minKg}
+                      onChangeText={setMinKg}
+                      keyboardType="numeric"
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+                  <ThemedText style={styles.weightRangeSeparator}>to</ThemedText>
+                  <View style={styles.weightInputContainer}>
+                    <Weight size={18} color="#3a86ff" />
+                    <TextInput
+                      style={styles.weightInput}
+                      placeholder="Max"
+                      value={maxKg}
+                      onChangeText={setMaxKg}
+                      keyboardType="numeric"
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+                </View>
+              </View>
+              
+              {/* Gender Filter */}
+              <View style={styles.filterSection}>
+                <ThemedText style={styles.filterLabel}>Traveler Gender</ThemedText>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={selectedGender}
+                    onValueChange={(itemValue) => setSelectedGender(itemValue)}
+                    style={styles.picker}
+                  >
+                    <Picker.Item label="Any Gender" value="" />
+                    <Picker.Item label="Male" value="MALE" />
+                    <Picker.Item label="Female" value="FEMALE" />
+                  </Picker>
+                </View>
+              </View>
+              
+              <View style={styles.modalButtonsContainer}>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.resetButton]}
+                  onPress={resetFilters}
+                >
+                  <ThemedText style={styles.resetButtonText}>Reset</ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.applyButton]}
+                  onPress={() => {
+                    applyFilters();
+                    setShowFilterModal(false);
+                  }}
+                >
+                  <ThemedText style={styles.applyButtonText}>Apply Filters</ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+        
+        {/* Floating Action Button with Lucide icon */}
+        <TouchableOpacity 
+          style={styles.fab}
+          onPress={handleCreatePost}
+          activeOpacity={0.8}
+        >
+          <Plus size={24} color="white" strokeWidth={2.5} />
+        </TouchableOpacity>
+
+        <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
+      </ThemedView>
+    </SafeAreaView>
   );
 }
 
@@ -627,6 +646,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     padding: 16,
+    paddingBottom: 80, // Add padding to account for TabBar
   },
   cardContainer: {
     marginBottom: 24,
@@ -821,8 +841,8 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: "absolute",
-    bottom: 24,
-    right: 24,
+    bottom: 95, // Adjust to be above TabBar
+    right: 20,
     width: 56,
     height: 56,
     borderRadius: 28,

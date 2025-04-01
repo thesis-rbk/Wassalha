@@ -659,9 +659,14 @@ export default function OrderPage() {
     );
   };
 
-  // Add this function to handle tab press
+  // Update the handleTabPress function
   const handleTabPress = (tabName: string) => {
     setActiveTab(tabName);
+    if (tabName === "create") {
+      router.push("/verification/CreateSponsorPost");
+    } else {
+      router.push(tabName as any);
+    }
   };
 
   const handleNotificationPress = () => {

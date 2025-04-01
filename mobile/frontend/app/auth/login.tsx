@@ -78,8 +78,23 @@ export default function Login() {
       const data = res.data;
 
       if (res.status === 200) {
+        // Clear any existing data
+        await AsyncStorage.multiRemove(["jwtToken", "userId", "hasCompletedOnboarding"]);
+        
         // Save token and user data
         await AsyncStorage.setItem("jwtToken", data.token);
+        await AsyncStorage.setItem("userId", data.user.id.toString());
+        
+        console.log("Login successful");
+        console.log("Token stored:", data.token.substring(0, 10) + "...");
+        console.log("User ID stored:", data.user.id);
+        
+        // Store onboarding status if provided
+        if (data.user.hasCompletedOnboarding !== undefined) {
+          await AsyncStorage.setItem("hasCompletedOnboarding", String(!!data.user.hasCompletedOnboarding));
+          console.log("Onboarding status stored:", !!data.user.hasCompletedOnboarding);
+        }
+        
         dispatch(
           loginSuccess({
             token: data.token,
