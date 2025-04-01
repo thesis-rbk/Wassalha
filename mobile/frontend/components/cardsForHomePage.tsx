@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { OrderfetchCardProps } from "../types/Sponsorship";
 
-const OrderCard: React.FC<OrderfetchCardProps> = ({ order, onPress, onAccept, onReject }) => {
+const OrderCard: React.FC<OrderfetchCardProps> = ({ order, onPress }) => {
     const {
         status,
         goods,

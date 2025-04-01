@@ -151,23 +151,23 @@ export default function InitializationSP() {
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
-  
+
 
   useEffect(() => {
     fetchRequestDetails();
-    
+
   }, [params.id]);
 
   useEffect(() => {
-    const socket = io(`${BACKEND_URL}/processTrack`,{
-           transports: ["websocket"],
-         });
+    const socket = io(`${BACKEND_URL}/processTrack`, {
+      transports: ["websocket"],
+    });
     loadUserFromToken();
     socket.on("connect", () => {
       console.log("🔌 Orders page socket connected");
       const room = params.idProcess; // Example; get this from props, context, or params
       socket.emit("joinProcessRoom", room);
-      console.log("🔌  socket connected room ",room);
+      console.log("🔌  socket connected room ", room);
     });
     socket.on("processStatusChanged", (data) => {
       console.log("🔄 Status changed to:", data.status);
@@ -278,14 +278,14 @@ export default function InitializationSP() {
 
       if (response.status === 201) {
         console.log("✅ Order created:", response.data.data.id);
-        
+
         // Connect to socket and emit event
         const socket = io(`${BACKEND_URL}/processTrack`);
-              socket.emit("offerMadeOrder", {
-                processId: request.userId,
-                requestId: requestId
-              });
-              console.log("📤 Emitted offerMade Order event immediately",request.userId,requestId);
+        socket.emit("offerMadeOrder", {
+          processId: request.userId,
+          requestId: requestId
+        });
+        console.log("📤 Emitted offerMade Order event immediately", request.userId, requestId);
 
         // Wait for the event to be sent before navigating
 
@@ -426,13 +426,13 @@ export default function InitializationSP() {
       );
 
       const results = response.data.places
-      
+
         .filter((place: any) => place.types.includes("airport"))
         .map((place: any) => place.displayName.text || place.formattedAddress);
       setSuggestions(results);
-     
+
     } catch (error) {
-      console.log("erooooooooooooooor",error);
+      console.log("erooooooooooooooor", error);
       console.log("Error response:", error.response);
       console.log("API Key being used:", GOOGLE_PLACES_API_KEY);
       console.error("Error fetching airports from Google Places:", error);
@@ -704,9 +704,8 @@ export default function InitializationSP() {
                         setOfferDetails((prev) => ({
                           ...prev,
                           flightNumber: value,
-                          departureFlightCode: `${
-                            AIRLINE_CODES[prev.airline]
-                          }${value}`,
+                          departureFlightCode: `${AIRLINE_CODES[prev.airline]
+                            }${value}`,
                         }));
                       }}
                     >
