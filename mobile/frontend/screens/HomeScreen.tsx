@@ -29,13 +29,8 @@ import type { Order } from "@/types/Sponsorship"
 import { useSelector } from 'react-redux'
 import { LinearGradient } from 'expo-linear-gradient'
 import { UserData } from '@/types/UserData'
+import { UserProfile } from '@/types/UserProfile'
 
-// Define our local UserProfile interface
-interface UserProfile {
-  id: number;
-  name: string;
-  imageUrl: string | null;
-}
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home")

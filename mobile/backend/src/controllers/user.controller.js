@@ -1410,12 +1410,13 @@ const updateProfilePicture = async (req, res) => {
     console.log(`File details:`, {
       originalname: file.originalname,
       mimetype: file.mimetype,
-      size: file.size
+      size: file.size,
+      path: file.path
     });
 
     // Create media record for the uploaded image
     const mediaData = {
-      url: file.path, 
+      url: file.path,
       type: 'IMAGE',
       filename: file.originalname,
       size: file.size,
@@ -1423,33 +1424,71 @@ const updateProfilePicture = async (req, res) => {
       height: 150
     };
 
-    const media = await prisma.media.create({
-      data: mediaData,
-    });
+    // Start a transaction to ensure both operations succeed or fail together
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the media record
+      const media = await tx.media.create({
+        data: mediaData,
+      });
 
-    console.log(`Created media record with ID: ${media.id}`);
+      // Find the user's profile or create one if it doesn't exist
+      const existingProfile = await tx.profile.findUnique({
+        where: { userId: userId }
+      });
 
-    // Update user profile with the new image
-    const updatedProfile = await prisma.profile.update({
-      where: { 
-        userId: userId 
-      },
-      data: { 
-        imageId: media.id 
-      },
-      include: {
-        image: true // Include the image in response
+      let profile;
+      if (existingProfile) {
+        // Update existing profile with new image
+        profile = await tx.profile.update({
+          where: { userId: userId },
+          data: { 
+            imageId: media.id 
+          },
+          include: {
+            image: true
+          }
+        });
+      } else {
+        // Get user details to create profile if needed
+        const user = await tx.user.findUnique({
+          where: { id: userId }
+        });
+
+        if (!user) {
+          throw new Error("User not found");
+        }
+
+        // Create new profile with image
+        profile = await tx.profile.create({
+          data: {
+            userId: userId,
+            firstName: user.name.split(' ')[0] || user.name,
+            lastName: user.name.split(' ').slice(1).join(' ') || '',
+            country: "OTHER",
+            imageId: media.id,
+            isAnonymous: false,
+            isBanned: false,
+            isVerified: false,
+            isOnline: false
+          },
+          include: {
+            image: true
+          }
+        });
       }
+
+      return { media, profile };
     });
 
+    // Return success response
     return res.status(200).json({
       success: true,
       message: "Profile picture uploaded successfully",
       data: {
-        profile: updatedProfile,
+        profile: result.profile,
         image: {
-          id: media.id,
-          url: media.url
+          id: result.media.id,
+          url: result.media.url
         }
       }
     });
