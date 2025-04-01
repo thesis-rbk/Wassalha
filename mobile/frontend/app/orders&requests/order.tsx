@@ -295,7 +295,8 @@ export default function OrderPage() {
       const filteredRequests = (response.data.data || []).filter(
         (request: Request) => {
           // Check if the request is in PENDING status
-          const isPending = !request.order && request.status === "PENDING";
+          const isPending =
+            request.order === null && request.status === "PENDING";
 
           // Check if the request has no order or a cancelled order
           const hasNoActiveOrder =
