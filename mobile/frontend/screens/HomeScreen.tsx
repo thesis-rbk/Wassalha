@@ -1,5 +1,6 @@
 "use client"
 
+import React from 'react'
 import { useEffect, useState, useRef } from "react"
 import {
   Dimensions,
@@ -10,7 +11,8 @@ import {
   type NativeSyntheticEvent,
   type NativeScrollEvent,
   TouchableOpacity,
-  Alert, // Import Alert
+  Alert,
+  Image,
 } from "react-native"
 import axiosInstance from "@/config"
 import { TopNavigation } from "@/components/navigation/TopNavigation"
@@ -20,10 +22,15 @@ import { ThemedText } from "@/components/ThemedText"
 import { Card } from "@/components/Card"
 import UserCard from "@/components/fetchCards"
 import OrderCard from "@/components/cardsForHomePage"
-import { Plane, ShoppingBag, MapPin, Crown } from "lucide-react-native"
+import { Plane, ShoppingBag, MapPin, Crown, ChevronRight } from "lucide-react-native"
 import { useRouter } from "expo-router"
 import type { Traveler } from "@/types/Traveler"
 import type { Order } from "@/types/Sponsorship"
+import { useSelector } from 'react-redux'
+import { LinearGradient } from 'expo-linear-gradient'
+import { UserData } from '@/types/UserData'
+import { UserProfile } from '@/types/UserProfile'
+
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home")
@@ -32,7 +39,9 @@ export default function HomeScreen() {
   const [requests, setRequests] = useState<Order[]>([])
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
+  const [recentUsers, setRecentUsers] = useState<UserProfile[]>([])
   const router = useRouter()
+  const { user, token } = useSelector((state: any) => state.auth)
   const travelersScrollRef = useRef<ScrollView>(null)
   const sponsorsScrollRef = useRef<ScrollView>(null)
   const scrollAnimationRef = useRef<NodeJS.Timeout | null>(null)
@@ -51,6 +60,8 @@ export default function HomeScreen() {
     sponsors: 0,
   })
 
+  const [currentUser, setUser] = useState(user)
+
   const fetchData = async (pageNum: number) => {
     try {
       const response = await axiosInstance.get(`/api/requests/?page=${pageNum}&limit=3`)
@@ -64,9 +75,80 @@ export default function HomeScreen() {
     }
   }
 
+  // Update fetchRecentUsers function
+  const fetchRecentUsers = async () => {
+    try {
+      const usersResponse = await axiosInstance.get('/api/users');
+      const users = (usersResponse.data.data || []) as UserData[];
+      
+      // Create initial profiles
+      const profiles: UserProfile[] = users.map((user: UserData): UserProfile => ({
+        id: user.id,
+        name: user.profile?.firstName || user.name,
+        imageUrl: user.profile?.image?.url || null
+      }));
+      
+      setRecentUsers(profiles);
+      
+      // After setting initial data, fetch images for users that need them
+      users.forEach(async (user) => {
+        if (user.id) {
+          try {
+            const imageResponse = await axiosInstance.get(`/api/users/${user.id}/profile-image`);
+            if (imageResponse.data.success && imageResponse.data.data?.imageUrl) {
+              // Update the specific user's image URL
+              setRecentUsers(prevUsers => 
+                prevUsers.map(prevUser => 
+                  prevUser.id === user.id 
+                    ? { ...prevUser, imageUrl: imageResponse.data.data.imageUrl } 
+                    : prevUser
+                )
+              );
+            }
+          } catch (error: any) {
+            // Silently ignore 404 errors (no image found)
+            if (!(error.response && error.response.status === 404)) {
+              console.error(`Error fetching image for user ${user.id}:`, error);
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching recent users:', error);
+    }
+  };
+
+  // New function to fetch current user profile
+  const fetchCurrentUser = async () => {
+    try {
+      if (!user || !user.id) return;
+      
+      const response = await axiosInstance.get(`/api/users/${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.data) {
+        console.log("Fetched current user data:", response.data);
+        // Update local state with fresh user data
+        setUser({
+          ...user,
+          profile: response.data.profile,
+          firstName: response.data.profile?.firstName,
+          lastName: response.data.profile?.lastName
+        });
+      }
+    } catch (err) {
+      console.log('Error fetching current user data:', err);
+    }
+  };
+
   useEffect(() => {
-    handleBestTraveler()
-    fetchData(1)
+    fetchRecentUsers();
+    fetchCurrentUser();
+    handleBestTraveler();
+    fetchData(1);
 
     if (travelers.length > 0 && sponsors.length > 0) {
       startAutoScroll()
@@ -158,21 +240,25 @@ export default function HomeScreen() {
   const services = [
     {
       title: "Travel",
+      description: "Turn your travels into earnings. Get paid to deliver items while exploring new destinations.",
       icon: <Plane size={40} color="#007BFF" />,
       route: "../goodPost/goodpostpage" as const,
     },
     {
       title: "Order",
+      description: "Shop globally, save locally. Get up to 40% off on international products with trusted travelers.",
       icon: <ShoppingBag size={40} color="#007BFF" />,
       route: "../orders&requests/order" as const,
     },
     {
       title: "Pickup",
+      description: "Choose your convenient pickup spot. Flexible delivery locations that work around your schedule.",
       icon: <MapPin size={40} color="#007BFF" />,
       route: "../pickup/PickupDashboard" as const,
     },
     {
       title: "Subscription",
+      description: "Unlock premium benefits. Get priority access, reduced fees, and exclusive shopping deals.",
       icon: <Crown size={40} color="#007BFF" />,
       route: "../verification/fetchAll" as const,
     },
@@ -222,22 +308,95 @@ export default function HomeScreen() {
     )
   }
 
+  const handleTabPress = (tabName: string) => {
+    setActiveTab(tabName);
+    if (tabName === "create") {
+      router.push("/verification/CreateSponsorPost");
+    } else {
+      router.push(tabName as any);
+    }
+  };
+
   return (
     <ThemedView style={styles.container}>
-      <TopNavigation title="Wassalha" onMenuPress={() => { }} onNotificationPress={() => { }} />
+      <TopNavigation title="Wassalha" onNotificationPress={() => { }} />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Welcome Section */}
+        <View style={styles.welcomeSection}>
+          <ThemedText style={styles.welcomeTitle}>
+            Hi {user?.profile?.firstName || user?.name || 'there'},
+          </ThemedText>
+          <ThemedText style={styles.welcomeSubtitle}>
+            100K+ shoppers around the world have saved 40% or more by shopping with wassalha. 2 weeks approximate delivery time.
+          </ThemedText>
+          <View style={styles.avatarRow}>
+            {recentUsers.slice(0, 10).map((user, index) => (
+              <View 
+                key={index} 
+                style={[
+                  styles.avatarContainer,
+                  { marginLeft: index > 0 ? -15 : 0, zIndex: 10 - index }
+                ]}
+              >
+                {user.imageUrl ? (
+                  <Image
+                    source={{ uri: user.imageUrl }}
+                    style={styles.avatar}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.avatarFallback}>
+                    <ThemedText style={styles.avatarInitial}>
+                      {user.name?.charAt(0) || '?'}
+                    </ThemedText>
+                  </View>
+                )}
+              </View>
+            ))}
+            <View>
+              <ThemedText style={styles.avatarMoreText}>+100K</ThemedText>
+            </View>
+          </View>
+          <TouchableOpacity 
+            style={styles.orderButton}
+            onPress={() => router.push("/productDetails/create-order")}
+          >
+            <ThemedText style={styles.orderButtonText}>I'm ready to start my order</ThemedText>
+            <ChevronRight size={24} color="#1a1a1a" />
+          </TouchableOpacity>
+        </View>
+
         {/* Services Section */}
         <View style={styles.section}>
           <View style={styles.servicesSection}>
+            <ThemedText style={styles.servicesTitle}>Our Services</ThemedText>
+            <ThemedText style={styles.servicesDescription}>
+              Discover how we make global shopping and travel rewards work for you
+            </ThemedText>
             <View style={styles.servicesGrid}>
               {services.map((service) => (
-                <Card
+                <TouchableOpacity
                   key={service.title}
                   style={styles.serviceCard}
                   onPress={() => handleCardPress(service)}
-                  icon={service.icon}
-                  title={service.title}
-                />
+                >
+                  <View style={styles.serviceContent}>
+                    <LinearGradient
+                      colors={['#007BFF', '#00A3FF']}
+                      style={styles.serviceIconContainer}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      {React.cloneElement(service.icon, { size: 24, color: '#fff' })}
+                    </LinearGradient>
+                    <View style={styles.serviceTextContainer}>
+                      <ThemedText style={styles.serviceTitle}>{service.title}</ThemedText>
+                      <ThemedText style={styles.serviceDescription}>
+                        {service.description}
+                      </ThemedText>
+                    </View>
+                  </View>
+                </TouchableOpacity>
               ))}
             </View>
           </View>
@@ -328,7 +487,7 @@ export default function HomeScreen() {
                 {requests.map((request, index) => (
                   <OrderCard
                     key={`request-${index}`}
-                    order={request}
+                    order={request as any}
                     onPress={() => handleOrderCardPress(request.id)}
                   />
                 ))}
@@ -347,7 +506,7 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      <TabBar activeTab={activeTab} onTabPress={setActiveTab} />
+      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   )
 }
@@ -364,13 +523,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   section: {
-    marginBottom: 10,
+    marginBottom: 5,
   },
   separator: {
     flexDirection: "row",
     alignItems: "center",
     marginHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   separatorText: {
     fontSize: 16,
@@ -381,45 +540,73 @@ const styles = StyleSheet.create({
   },
   servicesSection: {
     paddingHorizontal: 16,
-    paddingVertical: 20,
-    alignItems: "center",
+    paddingVertical: 16,
+  },
+  servicesTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    marginBottom: 8,
+  },
+  servicesDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 20,
+    lineHeight: 20,
   },
   servicesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    justifyContent: "space-between",
     width: "100%",
   },
   serviceCard: {
-    width: cardSize,
-    height: cardSize,
-    alignItems: "center",
-    justifyContent: "center",
     backgroundColor: "#fff",
-    padding: 16,
     borderRadius: 12,
-    borderColor: "#ddd",
-    borderWidth: 0.5,
+    marginBottom: 12,
+    padding: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
+  serviceContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  serviceIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 16,
+  },
+  serviceTextContainer: {
+    flex: 1,
+  },
+  serviceTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1a1a1a",
+    marginBottom: 4,
+  },
+  serviceDescription: {
+    fontSize: 13,
+    color: "#666",
+    lineHeight: 18,
+  },
   travelersSection: {
-    marginTop: 20,
-    paddingVertical: 20,
+    marginTop: 5,
+    paddingVertical: 10,
     alignItems: "center",
   },
   sponsorsSection: {
-    marginTop: 20,
-    paddingVertical: 20,
+    marginTop: 5,
+    paddingVertical: 10,
     alignItems: "center",
   },
   requestsSection: {
-    marginTop: 20,
-    paddingVertical: 20,
+    marginTop: 5,
+    paddingVertical: 10,
     paddingHorizontal: 16,
   },
   listContainer: {
@@ -448,5 +635,84 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
     marginTop: 10,
+  },
+  welcomeSection: {
+    backgroundColor: "#007BFF",
+    padding: 20,
+    paddingTop: 10,
+    paddingBottom: 24,
+  },
+  welcomeTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#fff",
+    marginBottom: 5,
+  },
+  welcomeSubtitle: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: "rgba(255, 255, 255, 0.9)",
+    marginBottom: 20,
+  },
+  avatarRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  avatarContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  avatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+  },
+  avatarFallback: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 16,
+  },
+  avatarInitial: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#007BFF",
+  },
+  avatarMore: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  avatarMoreText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#fff",
+    paddingLeft: 5,
+  },
+  orderButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 10,
+    marginTop: 4,
+  },
+  orderButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#007BFF",
   },
 })

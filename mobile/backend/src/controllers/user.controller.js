@@ -75,7 +75,6 @@ const signup = async (req, res) => {
         url: req.file.path, // Path saved by Multer
         type: 'IMAGE',
         filename: req.file.filename,
-        extension: "PNG", 
         size: req.file.size,
         width: 100, // Static (could be dynamic with image processing)
         height: 100, // Static
@@ -116,6 +115,13 @@ const signup = async (req, res) => {
       return { newUser, profile };
     });
 
+    // Generate JWT token for the new user
+    const token = jwt.sign(
+      { id: result.newUser.id, email: result.newUser.email },
+      process.env.JWT_SECRET || "secretkey",
+      { expiresIn: "1h" }
+    );
+
     res.status(201).json({
       message: "User registered successfully",
       user: {
@@ -123,6 +129,7 @@ const signup = async (req, res) => {
         name: result.newUser.name,
         email: result.newUser.email,
       },
+      token: token // Include the token in the response
     });
   } catch (error) {
     console.error("Signup error:", error);
@@ -1386,6 +1393,184 @@ const getUserDemographics = async (req, res) => {
   }
 };
 
+// Add profile picture upload functionality
+const updateProfilePicture = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        message: "No profile picture uploaded"
+      });
+    }
+
+    console.log(`Processing profile picture for user: ${userId}`);
+    console.log(`File details:`, {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      path: file.path
+    });
+
+    // Create media record for the uploaded image
+    const mediaData = {
+      url: file.path,
+      type: 'IMAGE',
+      filename: file.originalname,
+      size: file.size,
+      width: 150, // Default dimensions for profile pictures
+      height: 150
+    };
+
+    // Start a transaction to ensure both operations succeed or fail together
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the media record
+      const media = await tx.media.create({
+        data: mediaData,
+      });
+
+      // Find the user's profile or create one if it doesn't exist
+      const existingProfile = await tx.profile.findUnique({
+        where: { userId: userId }
+      });
+
+      let profile;
+      if (existingProfile) {
+        // Update existing profile with new image
+        profile = await tx.profile.update({
+          where: { userId: userId },
+          data: { 
+            imageId: media.id 
+          },
+          include: {
+            image: true
+          }
+        });
+      } else {
+        // Get user details to create profile if needed
+        const user = await tx.user.findUnique({
+          where: { id: userId }
+        });
+
+        if (!user) {
+          throw new Error("User not found");
+        }
+
+        // Create new profile with image
+        profile = await tx.profile.create({
+          data: {
+            userId: userId,
+            firstName: user.name.split(' ')[0] || user.name,
+            lastName: user.name.split(' ').slice(1).join(' ') || '',
+            country: "OTHER",
+            imageId: media.id,
+            isAnonymous: false,
+            isBanned: false,
+            isVerified: false,
+            isOnline: false
+          },
+          include: {
+            image: true
+          }
+        });
+      }
+
+      return { media, profile };
+    });
+
+    // Return success response
+    return res.status(200).json({
+      success: true,
+      message: "Profile picture uploaded successfully",
+      data: {
+        profile: result.profile,
+        image: {
+          id: result.media.id,
+          url: result.media.url
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error uploading profile picture:', error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload profile picture",
+      error: error.message
+    });
+  }
+};
+
+// Add after the last controller function
+const getProfileImage = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    
+    // Find the user's profile with image
+    const userProfile = await prisma.profile.findUnique({
+      where: { userId },
+      include: {
+        image: true
+      }
+    });
+
+    if (!userProfile) {
+      return res.status(404).json({
+        success: false,
+        message: "User profile not found"
+      });
+    }
+
+    // If no image exists, return a default or error
+    if (!userProfile.image) {
+      return res.status(404).json({
+        success: false,
+        message: "Profile image not found"
+      });
+    }
+
+    // Process the image URL
+    let imageUrl = userProfile.image.url;
+    
+    // If the image path is a local file path, convert it to a proper API URL
+    if (imageUrl && !imageUrl.startsWith('http')) {
+      // Remove any leading slashes
+      imageUrl = imageUrl.replace(/^\//, '');
+      
+      // If the path includes 'uploads', extract just the uploads part
+      if (imageUrl.includes('uploads/')) {
+        imageUrl = imageUrl.substring(imageUrl.indexOf('uploads/'));
+      }
+      
+      // Create a proper URL that the client can use
+      imageUrl = `${req.protocol}://${req.get('host')}/api/${imageUrl}`;
+    }
+
+    // Return the image data with the processed URL
+    return res.status(200).json({
+      success: true,
+      message: "Profile image retrieved successfully",
+      data: {
+        imageId: userProfile.image.id,
+        imageUrl: imageUrl,
+        type: userProfile.image.type,
+        mimeType: userProfile.image.mimeType,
+        extension: userProfile.image.extension,
+        filename: userProfile.image.filename
+      }
+    });
+  } catch (error) {
+    console.error('Error retrieving profile image:', error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve profile image",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   signup,
   loginUser,
@@ -1408,5 +1593,7 @@ module.exports = {
   verifyCreditCard,
   submitQuestionnaire,
   verifyUserProfile,
-  getUserDemographics
+  getUserDemographics,
+  updateProfilePicture,
+  getProfileImage
 };

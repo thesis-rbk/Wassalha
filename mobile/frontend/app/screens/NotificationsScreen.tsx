@@ -7,12 +7,14 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  SafeAreaView,
 } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useNotification } from "@/context/NotificationContext";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { TabBar } from "@/components/navigation/TabBar";
+import { TopNavigation } from "@/components/navigation/TopNavigation";
 import {
   NotificationType,
   NotificationStatus,
@@ -264,67 +266,59 @@ export default function NotificationsScreen() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemedView style={styles.container}>
-        <ThemedText type="title" style={styles.headerTitle}>
-          Notifications
-        </ThemedText>
-        {/* Error Handling UI */}
-        {error && (
-          <View style={styles.errorContainer}>
-            <ThemedText style={styles.errorText}>{error}</ThemedText>
-            <TouchableOpacity
-              style={[styles.retryButton, { backgroundColor: TINT_COLOR }]}
-              onPress={loadNotifications}
-            >
-              <ThemedText style={styles.retryButtonText}>Retry</ThemedText>
-            </TouchableOpacity>
-          </View>
-        )}
+      <SafeAreaView style={{ flex: 1 }}>
+        <ThemedView style={styles.container}>
+          <TopNavigation title="Notifications" />
 
-        {/* Loading State */}
-        {isLoading && !refreshing && notifications.length === 0 ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={TINT_COLOR} />
-            <ThemedText style={styles.loadingText}>
-              Loading notifications...
-            </ThemedText>
-          </View>
-        ) : // Show List or Empty State
-        notifications.length > 0 ? (
-          <FlatList
-            data={notifications}
-            renderItem={renderNotification}
-            keyExtractor={(item) => item.id.toString()}
-            contentContainerStyle={styles.listContent}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={TINT_COLOR}
-                colors={[TINT_COLOR]}
-              />
-            }
-          />
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Bell color={Colors[colorScheme].text} size={48} />
-            <ThemedText style={styles.emptyText}>
-              You have no notifications yet.
-            </ThemedText>
-            {/* Optional: Add refresh button here too if desired */}
-            <TouchableOpacity
-              style={[styles.refreshButton, { backgroundColor: TINT_COLOR }]} // Use TINT_COLOR
-              onPress={onRefresh}
-              disabled={refreshing} // Disable while refreshing
-            >
-              <ThemedText style={styles.refreshButtonText}>
-                {refreshing ? "Refreshing..." : "Check for Notifications"}
+          {error && (
+            <View style={styles.errorContainer}>
+              <ThemedText style={styles.errorText}>{error}</ThemedText>
+              <TouchableOpacity
+                style={[styles.retryButton, { backgroundColor: TINT_COLOR }]}
+                onPress={loadNotifications}
+              >
+                <ThemedText style={styles.retryButtonText}>Retry</ThemedText>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {isLoading && !refreshing && notifications.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={TINT_COLOR} />
+              <ThemedText style={styles.loadingText}>
+                Loading notifications...
               </ThemedText>
-            </TouchableOpacity>
-          </View>
-        )}
-      </ThemedView>
-      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
+            </View>
+          ) : notifications.length > 0 ? (
+            <FlatList
+              data={notifications}
+              renderItem={renderNotification}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={styles.listContent}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+            />
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Bell color={Colors[colorScheme].text} size={48} />
+              <ThemedText style={styles.emptyText}>
+                No notifications yet
+              </ThemedText>
+              <TouchableOpacity
+                style={[styles.refreshButton, { backgroundColor: "#007BFF" }]}
+                onPress={onRefresh}
+              >
+                <ThemedText style={styles.refreshButtonText}>
+                  Refresh
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
+        </ThemedView>
+      </SafeAreaView>
     </GestureHandlerRootView>
   );
 }

@@ -333,13 +333,13 @@ import {
   ActivityIndicator,
 } from "react-native";
 import axiosInstance from "@/config";
-import { ThemedView } from "@/components/ThemedView"; // Adjust the import path as needed
-import { Message, User, Profile } from "../../types";
+import { ThemedView } from "@/components/ThemedView";
+import { Message, User } from "../../types";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
 import { TabBar } from "@/components/navigation/TabBar";
-import { router } from "expo-router";
+import { router, useRouter } from "expo-router";
 import { navigateToChatFromMessages } from "@/services/chatService";
 export default function MessagesScreen() {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -348,25 +348,23 @@ export default function MessagesScreen() {
   >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("Messages");
   const [chatId, setChatId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState("home");
+  const router = useRouter();
 
   const currentUserId = user?.id;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch users and their profiles
         const usersResponse = await axiosInstance.get("/api/users");
         const users: User[] = usersResponse.data.data;
 
-        // Fetch messages for the current user
         const messagesResponse = await axiosInstance.get(
           `/api/users/messages?userId=${currentUserId}`
         );
         const messages: Message[] = messagesResponse.data.data;
 
-        // Group messages by conversation (user)
         const conversationMap = new Map<
           number,
           { user: User; lastMessage: Message; unreadCount: number }
@@ -382,7 +380,7 @@ export default function MessagesScreen() {
           } else if (message.receiverId === currentUserId) {
             otherUserId = message.senderId;
           } else {
-            return; // Skip messages not related to current user
+            return;
           }
 
           const otherUser = users.find((user) => user.id === otherUserId);
@@ -420,11 +418,19 @@ export default function MessagesScreen() {
     fetchData();
   }, [currentUserId]);
 
+  const handleTabPress = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === "create") {
+      router.push("/verification/CreateSponsorPost");
+    } else {
+      router.push(tab as any);
+    }
+  };
+
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
 
-    // If today, show time
     if (date.toDateString() === now.toDateString()) {
       return date.toLocaleTimeString([], {
         hour: "2-digit",
@@ -432,12 +438,10 @@ export default function MessagesScreen() {
       });
     }
 
-    // If this year, show month and day
     if (date.getFullYear() === now.getFullYear()) {
       return date.toLocaleDateString([], { month: "short", day: "numeric" });
     }
 
-    // Otherwise show full date
     return date.toLocaleDateString([], {
       year: "numeric",
       month: "short",
@@ -508,10 +512,6 @@ export default function MessagesScreen() {
     router.push("/profile");
   };
 
-  const handleTabPress = (tabName: string) => {
-    setActiveTab(tabName);
-  };
-
   if (loading) {
     return (
       <ThemedView style={styles.loadingContainer}>
@@ -530,11 +530,7 @@ export default function MessagesScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <TopNavigation
-        title="Messages"
-        onNotificationPress={handleNotificationPress}
-        onProfilePress={handleProfilePress}
-      />
+      <TopNavigation title="Messages" />
 
       <FlatList
         data={conversations}
