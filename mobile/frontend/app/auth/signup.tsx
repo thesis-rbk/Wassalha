@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Image, Alert, Platform, KeyboardAvoidingView } from "react-native";
+import { View, StyleSheet, ScrollView, Alert, Platform, KeyboardAvoidingView } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { InputField } from "@/components/InputField";
@@ -11,9 +11,8 @@ import { Colors } from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { InputFieldPassword } from "@/components/InputFieldPassword";
-import * as ImagePicker from "expo-image-picker";
-import { Feather } from "@expo/vector-icons";
 import axiosInstance from "../../config";
+
 const Signup = () => {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
@@ -22,12 +21,13 @@ const Signup = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [image, setImage] = useState<any>(null);
   const [passwordStrength, setPasswordStrength] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [registrationStep, setRegistrationStep] = useState<string>("signup"); // signup, login, or complete
 
   // Password strength checker function
   const checkPasswordStrength = (pwd: string) => {
@@ -95,36 +95,120 @@ const Signup = () => {
     setConfirmPasswordError(text && text !== password ? "Passwords do not match" : null);
   };
 
-  // Image upload handler
-  const handleImageUpload = async () => {
+  // Handle login after registration
+  const handleLoginAfterRegistration = async (email: string, password: string) => {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const selectedImage = result.assets[0];
-        const imageUri = selectedImage.uri;
-
-        const imageFile = {
-          uri: imageUri,
-          type: "image/jpeg",
-          name: "profile-image.jpg",
-        } as const;
-
-        console.log("Selected image file:", imageFile);
-        setImage(imageFile);
+      setRegistrationStep("login");
+      console.log("Logging in after registration...");
+      
+      // Try login with a few retries if needed
+      let loginAttempts = 0;
+      const maxLoginAttempts = 3;
+      let loginSuccess = false;
+      let userId = null;
+      let authToken = null;
+      let onboardingStatus = false;
+      
+      while (loginAttempts < maxLoginAttempts && !loginSuccess) {
+        loginAttempts++;
+        console.log(`Login attempt ${loginAttempts}/${maxLoginAttempts}`);
+        
+        try {
+          const response = await axiosInstance.post("/api/users/login", {
+            email,
+            password
+          });
+          
+          console.log(`Login response (attempt ${loginAttempts}):`, JSON.stringify(response.data));
+          
+          if (response.status === 200) {
+            const { token, user } = response.data;
+            
+            if (!token) {
+              console.error("Login successful but no token received on attempt", loginAttempts);
+              // Wait a bit before next retry
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              continue;
+            }
+            
+            if (!user || !user.id) {
+              console.error("Login successful but no user ID received on attempt", loginAttempts);
+              // Wait a bit before next retry
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              continue;
+            }
+            
+            // Login successful with token and user ID
+            console.log("Login successful on attempt", loginAttempts);
+            console.log("User ID:", user.id);
+            console.log("Token received:", token ? token.substring(0, 10) + "..." : "No");
+            
+            // Store onboarding status if available
+            onboardingStatus = user.hasCompletedOnboarding || false;
+            console.log("Onboarding status:", onboardingStatus);
+            
+            // Store token, user ID, and onboarding status
+            await AsyncStorage.setItem("jwtToken", token);
+            await AsyncStorage.setItem("userId", user.id.toString());
+            await AsyncStorage.setItem("hasCompletedOnboarding", String(onboardingStatus));
+            
+            // Verify token and user ID were stored correctly
+            authToken = await AsyncStorage.getItem("jwtToken");
+            userId = await AsyncStorage.getItem("userId");
+            
+            console.log("Stored token:", authToken ? authToken.substring(0, 10) + "..." : "No");
+            console.log("Stored user ID:", userId);
+            
+            if (authToken && userId) {
+              // Verify token works by making a simple auth-required API call
+              try {
+                const verifyResponse = await axiosInstance.get(`/api/users/${userId}`, {
+                  headers: {
+                    Authorization: `Bearer ${authToken}`
+                  }
+                });
+                
+                if (verifyResponse.status === 200) {
+                  console.log("Token verification successful");
+                  loginSuccess = true;
+                  break;
+                } else {
+                  console.error("Token verification failed:", verifyResponse.status);
+                }
+              } catch (verifyError) {
+                console.error("Token verification request failed:", verifyError);
+                // Still continue even if verification fails - token might still work for other requests
+                loginSuccess = true;
+                break;
+              }
+            } else {
+              console.error("Failed to store token or user ID");
+            }
+          } else {
+            console.error("Login response not OK:", response.status);
+          }
+        } catch (loginError: any) {
+          console.error("Login error on attempt", loginAttempts, ":", loginError.message);
+          if (loginError.response) {
+            console.error("Error status:", loginError.response.status);
+            console.error("Error data:", JSON.stringify(loginError.response.data));
+          }
+        }
+        
+        // Wait before retrying
+        if (!loginSuccess && loginAttempts < maxLoginAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
-    } catch (error) {
-      console.error("Error selecting image:", error);
-      Alert.alert("Error", "Failed to select image");
+      
+      return loginSuccess;
+    } catch (error: any) {
+      console.error("Auto-login error:", error.message);
+      return false;
     }
   };
 
-  // Updated signup handler with FormData and React Native Alert
+  // Updated signup handler
   const handleEmailSignup = async () => {
     if (!name || !email || !password || !confirmPassword) {
       if (!name) setNameError("Name is required");
@@ -152,48 +236,71 @@ const Signup = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("email", email);
-      formData.append("password", password);
-
-      if (image && image.uri) {
-        formData.append("image", image as any);
-        console.log("Appending image:", image);
-      }
-
-      console.log("Signup payload:", Object.fromEntries(formData as any));
-
-      const config = {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          "Accept": "application/json",
-        },
+      setRegistrationStep("signup");
+      const userData = {
+        name,
+        email,
+        password
       };
 
-      const res = await axiosInstance.post("/api/users/register", formData, config);
-      const data = res.data;
+      console.log("Signing up with data:", userData);
 
+      const res = await axiosInstance.post("/api/users/register", userData);
+      
       if (res.status === 201 || res.status === 200) {
-        await AsyncStorage.setItem("jwtToken", data.token || "");
-        Alert.alert(
-          "Success",
-          "Signup successful!",
-          [
-            {
-              text: "OK",
-              onPress: () => router.push("/auth/login"),
-            },
-          ],
-          { cancelable: false }
-        );
+        console.log("Registration successful");
+        console.log("Registration response:", JSON.stringify(res.data));
+        
+        // Check if registration response contains user data and token
+        if (res.data && res.data.user && res.data.user.id) {
+          const userId = res.data.user.id.toString();
+          
+          // Clear all previous data to ensure clean state
+          await AsyncStorage.multiRemove(["jwtToken", "userId", "hasCompletedOnboarding"]);
+          
+          // Store user ID
+          await AsyncStorage.setItem("userId", userId);
+          console.log("Stored user ID:", userId);
+          
+          // Store token if provided in response
+          if (res.data.token) {
+            await AsyncStorage.setItem("jwtToken", res.data.token);
+            console.log("Stored token from registration response");
+          }
+          
+          // Navigate to profile picture page
+          console.log("Navigating to profile picture setup");
+          router.push({
+            pathname: "/auth/profile-picture" as any,
+            params: {
+              userId,
+              userName: name
+            }
+          });
+        } else {
+          setEmailError("Registration successful but user data not found. Please try logging in manually.");
+          setIsLoading(false);
+        }
       } else {
-        setEmailError(data.error || "Signup failed");
+        setEmailError(res.data?.error || "Signup failed");
+        setIsLoading(false);
       }
     } catch (error: any) {
       console.error("Signup error:", error);
-      setEmailError(error.response?.data?.error || "Something went wrong");
+      
+      // Handle 409 conflict (email already exists)
+      if (error.response && error.response.status === 409) {
+        setEmailError("This email is already registered. Please try logging in or use a different email.");
+      } else if (error.response && error.response.data && error.response.data.error) {
+        // Show specific error from server
+        setEmailError(error.response.data.error);
+      } else {
+        // Generic error message
+        setEmailError("Something went wrong during signup. Please try again.");
+      }
+      setIsLoading(false);
     }
   };
 
@@ -220,29 +327,6 @@ const Signup = () => {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <ThemedText style={styles.welcomeText}>Join Us!</ThemedText>
           <ThemedText style={styles.subText}>Sign up to get started</ThemedText>
-
-          <View style={styles.photoSection}>
-            <View style={styles.avatarContainer}>
-              {image ? (
-                <Image source={{ uri: image.uri }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatarPlaceholder, { backgroundColor: Colors[colorScheme].primary }]}>
-                  <ThemedText style={styles.avatarText}>{name ? name.charAt(0).toUpperCase() : "U"}</ThemedText>
-                </View>
-              )}
-              <BaseButton
-                variant="primary"
-                size="medium"
-                style={[styles.editButton, { backgroundColor: Colors[colorScheme].primary }]}
-                onPress={handleImageUpload}
-              >
-                <Feather name="edit-2" size={16} color="#FFFFFF" />
-              </BaseButton>
-            </View>
-            <ThemedText style={[styles.photoLimit, { color: Colors[colorScheme].primary }]}>
-              Tap to upload a profile picture
-            </ThemedText>
-          </View>
 
           {/* Name Input */}
           <InputField
@@ -295,8 +379,16 @@ const Signup = () => {
             size="login"
             style={styles.signupButton}
             onPress={handleEmailSignup}
+            loading={isLoading}
           >
-            Sign Up
+            {isLoading 
+              ? registrationStep === "signup" 
+                ? "Signing Up..." 
+                : registrationStep === "login" 
+                  ? "Logging In..." 
+                  : "Completing..." 
+              : "Sign Up"
+            }
           </BaseButton>
 
           {/* Login Link */}
@@ -352,51 +444,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 10,
     textAlign: "center",
-  },
-  photoSection: {
-    alignItems: "center",
-    marginBottom: 32,
-  },
-  avatarContainer: {
-    position: "relative",
-    marginBottom: 8,
-  },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  avatarPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarText: {
-    color: "white",
-    fontSize: 40,
-    fontWeight: "bold",
-  },
-  editButton: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  photoLimit: {
-    fontSize: 12,
-    marginTop: 8,
-  },
+  }
 });
 
 export default Signup;
