@@ -175,3 +175,40 @@ export const navigateToChat = async (
     return false;
   }
 };
+
+/**
+ * Navigate to a chat from the pickup screen
+ * This creates the chat if needed and then navigates to it
+ * @param chatId - ID of the chat
+ */
+export const navigateToChatFromMessages = async (chatId: number) => {
+  try {
+    console.log("🔄 Opening chat from messages screen...");
+
+    const token = await AsyncStorage.getItem("jwtToken");
+
+    if (!token) {
+      console.error("❌ No authentication token available");
+      return null;
+    }
+
+    const chat = await axiosInstance.get(`/api/chats/${chatId}/messages`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // Navigate to chat screen with the chat ID and order info
+    router.push({
+      pathname: "/messages/chat",
+      params: {
+        chatId,
+      },
+    });
+
+    return true;
+  } catch (error) {
+    console.error("❌ Error navigating to chat:", error);
+    return false;
+  }
+};
