@@ -1464,6 +1464,74 @@ const updateProfilePicture = async (req, res) => {
   }
 };
 
+// Add after the last controller function
+const getProfileImage = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    
+    // Find the user's profile with image
+    const userProfile = await prisma.profile.findUnique({
+      where: { userId },
+      include: {
+        image: true
+      }
+    });
+
+    if (!userProfile) {
+      return res.status(404).json({
+        success: false,
+        message: "User profile not found"
+      });
+    }
+
+    // If no image exists, return a default or error
+    if (!userProfile.image) {
+      return res.status(404).json({
+        success: false,
+        message: "Profile image not found"
+      });
+    }
+
+    // Process the image URL
+    let imageUrl = userProfile.image.url;
+    
+    // If the image path is a local file path, convert it to a proper API URL
+    if (imageUrl && !imageUrl.startsWith('http')) {
+      // Remove any leading slashes
+      imageUrl = imageUrl.replace(/^\//, '');
+      
+      // If the path includes 'uploads', extract just the uploads part
+      if (imageUrl.includes('uploads/')) {
+        imageUrl = imageUrl.substring(imageUrl.indexOf('uploads/'));
+      }
+      
+      // Create a proper URL that the client can use
+      imageUrl = `${req.protocol}://${req.get('host')}/api/${imageUrl}`;
+    }
+
+    // Return the image data with the processed URL
+    return res.status(200).json({
+      success: true,
+      message: "Profile image retrieved successfully",
+      data: {
+        imageId: userProfile.image.id,
+        imageUrl: imageUrl,
+        type: userProfile.image.type,
+        mimeType: userProfile.image.mimeType,
+        extension: userProfile.image.extension,
+        filename: userProfile.image.filename
+      }
+    });
+  } catch (error) {
+    console.error('Error retrieving profile image:', error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve profile image",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   signup,
   loginUser,
@@ -1487,5 +1555,6 @@ module.exports = {
   submitQuestionnaire,
   verifyUserProfile,
   getUserDemographics,
-  updateProfilePicture
+  updateProfilePicture,
+  getProfileImage
 };

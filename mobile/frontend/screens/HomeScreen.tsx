@@ -29,7 +29,13 @@ import type { Order } from "@/types/Sponsorship"
 import { useSelector } from 'react-redux'
 import { LinearGradient } from 'expo-linear-gradient'
 import { UserData } from '@/types/UserData'
-import { UserProfile } from '@/types/UserProfile'
+
+// Define our local UserProfile interface
+interface UserProfile {
+  id: number;
+  name: string;
+  imageUrl: string | null;
+}
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home")
@@ -74,15 +80,44 @@ export default function HomeScreen() {
     }
   }
 
+  // Update fetchRecentUsers function
   const fetchRecentUsers = async () => {
     try {
       const usersResponse = await axiosInstance.get('/api/users');
       const users = (usersResponse.data.data || []) as UserData[];
-      setRecentUsers(users.map((user: UserData): UserProfile => ({
+      
+      // Create initial profiles
+      const profiles: UserProfile[] = users.map((user: UserData): UserProfile => ({
         id: user.id,
         name: user.profile?.firstName || user.name,
         imageUrl: user.profile?.image?.url || null
-      })));
+      }));
+      
+      setRecentUsers(profiles);
+      
+      // After setting initial data, fetch images for users that need them
+      users.forEach(async (user) => {
+        if (user.id) {
+          try {
+            const imageResponse = await axiosInstance.get(`/api/users/${user.id}/profile-image`);
+            if (imageResponse.data.success && imageResponse.data.data?.imageUrl) {
+              // Update the specific user's image URL
+              setRecentUsers(prevUsers => 
+                prevUsers.map(prevUser => 
+                  prevUser.id === user.id 
+                    ? { ...prevUser, imageUrl: imageResponse.data.data.imageUrl } 
+                    : prevUser
+                )
+              );
+            }
+          } catch (error: any) {
+            // Silently ignore 404 errors (no image found)
+            if (!(error.response && error.response.status === 404)) {
+              console.error(`Error fetching image for user ${user.id}:`, error);
+            }
+          }
+        }
+      });
     } catch (error) {
       console.error('Error fetching recent users:', error);
     }
@@ -312,6 +347,7 @@ export default function HomeScreen() {
                   <Image
                     source={{ uri: user.imageUrl }}
                     style={styles.avatar}
+                    resizeMode="cover"
                   />
                 ) : (
                   <View style={styles.avatarFallback}>
