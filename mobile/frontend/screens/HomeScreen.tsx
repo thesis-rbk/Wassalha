@@ -40,7 +40,7 @@ export default function HomeScreen() {
   const [hasMore, setHasMore] = useState(true)
   const [recentUsers, setRecentUsers] = useState<UserProfile[]>([])
   const router = useRouter()
-  const { user } = useSelector((state: any) => state.auth)
+  const { user, token } = useSelector((state: any) => state.auth)
   const travelersScrollRef = useRef<ScrollView>(null)
   const sponsorsScrollRef = useRef<ScrollView>(null)
   const scrollAnimationRef = useRef<NodeJS.Timeout | null>(null)
@@ -58,6 +58,8 @@ export default function HomeScreen() {
     travelers: 0,
     sponsors: 0,
   })
+
+  const [currentUser, setUser] = useState(user)
 
   const fetchData = async (pageNum: number) => {
     try {
@@ -86,8 +88,35 @@ export default function HomeScreen() {
     }
   };
 
+  // New function to fetch current user profile
+  const fetchCurrentUser = async () => {
+    try {
+      if (!user || !user.id) return;
+      
+      const response = await axiosInstance.get(`/api/users/${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.data) {
+        console.log("Fetched current user data:", response.data);
+        // Update local state with fresh user data
+        setUser({
+          ...user,
+          profile: response.data.profile,
+          firstName: response.data.profile?.firstName,
+          lastName: response.data.profile?.lastName
+        });
+      }
+    } catch (err) {
+      console.log('Error fetching current user data:', err);
+    }
+  };
+
   useEffect(() => {
     fetchRecentUsers();
+    fetchCurrentUser();
     handleBestTraveler();
     fetchData(1);
 
@@ -264,7 +293,9 @@ export default function HomeScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Welcome Section */}
         <View style={styles.welcomeSection}>
-          <ThemedText style={styles.welcomeTitle}>Hi {user?.name || 'there'},</ThemedText>
+          <ThemedText style={styles.welcomeTitle}>
+            Hi {user?.profile?.firstName || user?.name || 'there'},
+          </ThemedText>
           <ThemedText style={styles.welcomeSubtitle}>
             100K+ shoppers around the world have saved 40% or more by shopping with wassalha. 2 weeks approximate delivery time.
           </ThemedText>
@@ -291,7 +322,7 @@ export default function HomeScreen() {
                 )}
               </View>
             ))}
-            <View style={[styles.avatarMore, { marginLeft: -15, zIndex: 0 }]}>
+            <View>
               <ThemedText style={styles.avatarMoreText}>+100K</ThemedText>
             </View>
           </View>
@@ -634,9 +665,10 @@ const styles = StyleSheet.create({
     borderColor: "#fff",
   },
   avatarMoreText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "600",
     color: "#fff",
+    paddingLeft: 5,
   },
   orderButton: {
     flexDirection: "row",

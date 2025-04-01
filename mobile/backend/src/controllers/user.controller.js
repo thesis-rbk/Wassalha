@@ -75,7 +75,6 @@ const signup = async (req, res) => {
         url: req.file.path, // Path saved by Multer
         type: 'IMAGE',
         filename: req.file.filename,
-        extension: "PNG", 
         size: req.file.size,
         width: 100, // Static (could be dynamic with image processing)
         height: 100, // Static
@@ -116,6 +115,13 @@ const signup = async (req, res) => {
       return { newUser, profile };
     });
 
+    // Generate JWT token for the new user
+    const token = jwt.sign(
+      { id: result.newUser.id, email: result.newUser.email },
+      process.env.JWT_SECRET || "secretkey",
+      { expiresIn: "1h" }
+    );
+
     res.status(201).json({
       message: "User registered successfully",
       user: {
@@ -123,6 +129,7 @@ const signup = async (req, res) => {
         name: result.newUser.name,
         email: result.newUser.email,
       },
+      token: token // Include the token in the response
     });
   } catch (error) {
     console.error("Signup error:", error);
@@ -1386,6 +1393,77 @@ const getUserDemographics = async (req, res) => {
   }
 };
 
+// Add profile picture upload functionality
+const updateProfilePicture = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        message: "No profile picture uploaded"
+      });
+    }
+
+    console.log(`Processing profile picture for user: ${userId}`);
+    console.log(`File details:`, {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size
+    });
+
+    // Create media record for the uploaded image
+    const mediaData = {
+      url: file.path, 
+      type: 'IMAGE',
+      filename: file.originalname,
+      size: file.size,
+      width: 150, // Default dimensions for profile pictures
+      height: 150
+    };
+
+    const media = await prisma.media.create({
+      data: mediaData,
+    });
+
+    console.log(`Created media record with ID: ${media.id}`);
+
+    // Update user profile with the new image
+    const updatedProfile = await prisma.profile.update({
+      where: { 
+        userId: userId 
+      },
+      data: { 
+        imageId: media.id 
+      },
+      include: {
+        image: true // Include the image in response
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile picture uploaded successfully",
+      data: {
+        profile: updatedProfile,
+        image: {
+          id: media.id,
+          url: media.url
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error uploading profile picture:', error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload profile picture",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   signup,
   loginUser,
@@ -1408,5 +1486,6 @@ module.exports = {
   verifyCreditCard,
   submitQuestionnaire,
   verifyUserProfile,
-  getUserDemographics
+  getUserDemographics,
+  updateProfilePicture
 };

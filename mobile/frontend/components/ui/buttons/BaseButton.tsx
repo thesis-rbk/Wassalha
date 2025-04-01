@@ -1,19 +1,27 @@
-import { TouchableOpacity, Text, StyleSheet, TouchableOpacityProps } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, TouchableOpacityProps, ActivityIndicator } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { FontFamily } from '@/assets/fonts';
 import { BaseButtonProps } from '@/types/BaseButtonProps';
-
+import React from 'react';
 
 export function BaseButton({ 
   children, 
   variant = 'primary',
   size = 'medium',
   style,
+  loading = false,
   ...props 
 }: BaseButtonProps) {
   const colorScheme = useColorScheme() ?? 'light';
-  const backgroundColor = Colors[colorScheme].primary; // This will give us #008098
+  
+  // Set background color based on variant
+  let backgroundColor;
+  if (variant === 'primary') {
+    backgroundColor = Colors[colorScheme].primary;
+  } else if (variant === 'secondary') {
+    backgroundColor = '#F0F0F0'; // Default light gray for secondary buttons
+  }
 
   return (
     <TouchableOpacity
@@ -22,10 +30,29 @@ export function BaseButton({
         styles.button,
         styles[size],
         { backgroundColor },
+        variant === 'secondary' && styles.secondaryButton,
         style
       ]}
+      disabled={loading || props.disabled}
     >
-      <Text style={styles.text}>{children}</Text>
+      {loading ? (
+        <ActivityIndicator color={variant === 'primary' ? "#ffffff" : Colors[colorScheme].primary} size="small" />
+      ) : (
+        // If children is a string, wrap it in a Text component with the right style
+        typeof children === 'string' ? (
+          <Text 
+            style={[
+              styles.text, 
+              variant === 'secondary' && { color: Colors[colorScheme].primary }
+            ]}
+          >
+            {children}
+          </Text>
+        ) : (
+          // Otherwise, just render the children directly (might be a custom component)
+          children
+        )
+      )}
     </TouchableOpacity>
   );
 }
@@ -41,6 +68,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+  secondaryButton: {
+    borderWidth: 1,
+    borderColor: Colors.light.primary,
   },
   small: {
     width: 90,

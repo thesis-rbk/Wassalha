@@ -18,6 +18,7 @@ export default function MorePage() {
   const dispatch = useDispatch();
   const { unreadCount } = useNotification();
   const [isSponsor, setIsSponsor] = useState<boolean>(false);
+  const [userData, setUserData] = useState<any>(user);
 
   const checkSponsorStatus = async () => {
     try {
@@ -36,8 +37,28 @@ export default function MorePage() {
   useEffect(() => {
     if (token) {
       checkSponsorStatus();
+      fetchUserData();
     }
   }, [token]);
+
+  const fetchUserData = async () => {
+    try {
+      if (!user || !user.id) return;
+      
+      const response = await axiosInstance.get(`/api/users/${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.data) {
+        console.log("Fetched user data:", response.data);
+        setUserData(response.data);
+      }
+    } catch (err) {
+      console.log('Error fetching user data:', err);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -94,11 +115,15 @@ export default function MorePage() {
         {/* Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.profileImage}>
-            <Text style={styles.profileInitial}>{user?.name?.charAt(0) || 'U'}</Text>
+            <Text style={styles.profileInitial}>
+              {userData?.profile?.firstName?.charAt(0) || userData?.name?.charAt(0) || 'U'}
+            </Text>
           </View>
           <View style={styles.profileInfo}>
             <Text style={[styles.profileName, { color: Colors[colorScheme].text }]}>
-              {user?.name || 'User'}
+              {userData?.profile?.firstName 
+                ? `${userData.profile.firstName} ${userData.profile.lastName || ''}`
+                : userData?.name || 'User'}
             </Text>
             <TouchableOpacity
               style={styles.viewProfile}
