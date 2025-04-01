@@ -293,18 +293,16 @@ export default function OrderPage() {
       // Filter the requests to only show those that are in "PENDING" status
       // AND either don't have an associated order OR have a cancelled order
       const filteredRequests = (response.data.data || []).filter(
-        (request: Request, index: number) => {
+        (request: Request) => {
           // Check if the request is in PENDING status
-          const isPending = request.status === "PENDING";
-
-          console.log("dsqsq", index, "===", request);
+          const isPending = !request.order && request.status === "PENDING";
 
           // Check if the request has no order or a cancelled order
           const hasNoActiveOrder =
-            !request.order || request.order.orderStatus === "CANCELLED";
+            request.order && request.order.orderStatus === "CANCELLED";
 
           // Only include requests that meet both conditions
-          return isPending && hasNoActiveOrder;
+          return isPending || hasNoActiveOrder;
         }
       );
 
