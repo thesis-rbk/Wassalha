@@ -3,35 +3,51 @@ const prisma = require("../../prisma/index");
 // Get all process details
 const getAllProcessDetails = async (req, res) => {
   try {
-    // Fetch all processes with related data
+    const userId = req.user.id; // Get the authenticated user's ID
+
     const processes = await prisma.goodsProcess.findMany({
+      where: {
+        OR: [
+          {
+            order: {
+              request: {
+                userId: userId, // User is the requester
+              },
+            },
+          },
+          {
+            order: {
+              travelerId: userId, // User is the traveler
+            },
+          },
+        ],
+      },
       orderBy: {
-        createdAt: "desc"  // Add this to sort processes by newest first
+        createdAt: "desc",
       },
       include: {
         events: {
           orderBy: {
-            createdAt: "desc", // Order events by creation date (newest first)
+            createdAt: "desc",
           },
           include: {
-            changedByUser: true, // Include user who made the change
+            changedByUser: true,
           },
         },
         order: {
           include: {
             request: {
               include: {
-                goods: true, // Include goods data
-                user: true, // Include user who made the request
+                goods: true,
+                user: true,
               },
             },
-            traveler: true, // Include traveler data
+            traveler: true,
           },
         },
       },
     });
 
-    // Return the list of processes (empty array is fine)
     res.json({ success: true, data: processes || [] });
   } catch (error) {
     console.error("Error fetching processes:", error);

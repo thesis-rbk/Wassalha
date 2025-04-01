@@ -15,6 +15,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
 import { TabBar } from "@/components/navigation/TabBar";
+import { router } from "expo-router";
 export default function MessagesScreen() {
   const { user } = useSelector((state: RootState) => state.auth);
   const [conversations, setConversations] = useState<
@@ -64,7 +65,7 @@ export default function MessagesScreen() {
           if (
             !existingConversation ||
             new Date(message.time) >
-            new Date(existingConversation.lastMessage.time)
+              new Date(existingConversation.lastMessage.time)
           ) {
             const unreadCount =
               !message.isRead && message.senderId !== currentUserId
