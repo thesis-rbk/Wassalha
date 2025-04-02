@@ -9,6 +9,7 @@ import {
   Alert,
   TouchableOpacity,
   Modal,
+  Animated,
 } from "react-native";
 import axiosInstance from "../../config";
 import Pickups from "../pickup/pickup";
@@ -130,6 +131,26 @@ export default function PickupTraveler() {
       socketRef.current = null;
     };
   }, [pickups]);
+
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const pulse = () => {
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]).start(() => pulse());
+    };
+    pulse();
+  }, []);
 
   useEffect(() => {
     fetchPickups();
@@ -700,9 +721,13 @@ export default function PickupTraveler() {
         setPickups={setPickups}
       />
 
-      <TouchableOpacity style={styles.messageBubble} onPress={openChat}>
-        <MessageCircle size={24} color="#ffffff" />
-      </TouchableOpacity>
+      <Animated.View
+        style={[styles.messageBubble, { transform: [{ scale: pulseAnim }] }]}
+      >
+        <TouchableOpacity onPress={openChat}>
+          <MessageCircle size={24} color="#ffffff" />
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 }
@@ -1034,6 +1059,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
+    transform: [{ scale: 1 }],
   },
   content: {
     padding: 16,
