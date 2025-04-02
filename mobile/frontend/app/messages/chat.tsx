@@ -199,6 +199,33 @@ export default function ChatScreen() {
     loadData();
   }, [getChatAndPartner, fetchMessages]);
 
+  // To mark messages as read when opening the chat
+  useEffect(() => {
+    const markMessagesAsRead = async () => {
+      try {
+        const token = await AsyncStorage.getItem("jwtToken");
+        await axiosInstance.patch(
+          `/api/chats/${chatId}/messages/read`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // Optionally refresh messages to update read status
+        fetchMessages();
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+      }
+    };
+
+    if (chatId && userId) {
+      markMessagesAsRead();
+    }
+  }, [chatId, userId, fetchMessages]);
+
   const handleSend = async () => {
     if (!newMessage.trim() || !chatId) return;
 
