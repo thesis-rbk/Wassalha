@@ -504,14 +504,6 @@ export default function MessagesScreen() {
     );
   };
 
-  const handleNotificationPress = () => {
-    router.push("./notifications");
-  };
-
-  const handleProfilePress = () => {
-    router.push("/profile");
-  };
-
   if (loading) {
     return (
       <ThemedView style={styles.loadingContainer}>

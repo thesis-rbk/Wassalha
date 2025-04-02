@@ -159,50 +159,46 @@ export default function ChatScreen() {
     }
   }, [chatId]);
 
-  const getChat = async () => {
+  const getChatAndPartner = useCallback(async () => {
     try {
       const token = await AsyncStorage.getItem("jwtToken");
-      const response = await axiosInstance.get(`/api/chats/${chatId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      // Get chat data
+      const chatResponse = await axiosInstance.get(`/api/chats/${chatId}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("chat data:", response?.data);
-      setChat(response.data);
-    } catch (error) {
-      console.error("Error fetching chat:", error);
-    }
-  };
+      setChat(chatResponse.data);
 
-  const getPartnerName = async () => {
-    try {
-      const token = await AsyncStorage.getItem("jwtToken");
+      // Get partner data
       const partnerId =
-        user?.id === chat?.providerId ? chat?.requesterId : chat?.providerId;
+        user?.id === chatResponse.data.providerId
+          ? chatResponse.data.requesterId
+          : chatResponse.data.providerId;
+
       if (!partnerId) {
         console.error("Partner ID is missing");
         return;
       }
-      const partner = await axiosInstance.get(`/api/users/${partnerId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("partner data:", partner?.data?.name);
-      setPartnerName(partner.data.name);
+
+      const partnerResponse = await axiosInstance.get(
+        `/api/users/${partnerId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setPartnerName(partnerResponse.data.name || "Chat");
     } catch (error) {
-      console.error("Error fetching partner:", error);
+      console.error("Error fetching chat or partner:", error);
     }
-  };
+  }, [chatId, user?.id]);
 
-  // Load messages when component mounts
   useEffect(() => {
-    getChat();
-    getPartnerName();
-    fetchMessages();
-  }, [fetchMessages]);
+    const loadData = async () => {
+      await getChatAndPartner();
+      await fetchMessages();
+    };
+    loadData();
+  }, [getChatAndPartner, fetchMessages]);
 
-  // Send a text message
   const handleSend = async () => {
     if (!newMessage.trim() || !chatId) return;
 
