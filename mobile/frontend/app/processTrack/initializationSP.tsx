@@ -13,18 +13,12 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import {
   MapPin,
-  Calendar,
   Package,
-  DollarSign,
   Box,
   Info,
-  User,
   Star,
   Shield,
-  MessageCircle,
   Award,
-  Users,
-  Bell,
   Wallet,
   Clock,
 } from "lucide-react-native";
@@ -33,7 +27,6 @@ import axiosInstance from "@/config";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import { useAuth } from "@/hooks/useAuth";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { TitleLarge, BodyMedium } from "@/components/Typography";
@@ -42,7 +35,6 @@ import ProgressBar from "../../components/ProgressBar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 import { Picker } from "@react-native-picker/picker";
-// import { useRoleDetection } from "@/hooks/useRoleDetection";
 import Card from "@/components/cards/ProcessCard";
 import { useNotification } from "@/context/NotificationContext";
 import { io } from "socket.io-client";
@@ -63,29 +55,6 @@ const AIRLINE_CODES: { [key: string]: string } = {
 const FLIGHT_NUMBERS = Array.from({ length: 100 }, (_, i) =>
   (i + 100).toString()
 );
-
-const COUNTRIES = {
-  USA: "US",
-  FRANCE: "FR",
-  SPAIN: "ES",
-  GERMANY: "DE",
-  ITALY: "IT",
-  UK: "GB",
-  CANADA: "CA",
-  AUSTRALIA: "AU",
-  JAPAN: "JP",
-  CHINA: "CN",
-  BRAZIL: "BR",
-  INDIA: "IN",
-  RUSSIA: "RU",
-  MEXICO: "MX",
-  BOLIVIA: "BO",
-  MOROCCO: "MA",
-  TUNISIA: "TN",
-  ALGERIA: "DZ",
-  TURKEY: "TR",
-  PORTUGAL: "PT",
-};
 
 export default function InitializationSP() {
   const params = useLocalSearchParams();
@@ -163,7 +132,7 @@ export default function InitializationSP() {
     loadUserFromToken();
     socket.on("connect", () => {
       console.log("🔌 Orders page socket connected");
-      const room = params.idProcess; // Example; get this from props, context, or params
+      const room = params.idProcess;
       socket.emit("joinProcessRoom", room);
       console.log("🔌  socket connected room ", room);
     });
@@ -268,8 +237,8 @@ export default function InitializationSP() {
         trackingNumber: trackingNumber,
         orderStatus: "PENDING",
         paymentStatus: "ON_HOLD",
-        departureAirport: offerDetails.departureAirport, // New field
-        arrivalAirport: offerDetails.arrivalAirport, // New field
+        departureAirport: offerDetails.departureAirport,
+        arrivalAirport: offerDetails.arrivalAirport,
       };
 
       const response = await axiosInstance.post("/api/orders", orderData);
@@ -290,7 +259,6 @@ export default function InitializationSP() {
         );
 
         // Wait for the event to be sent before navigating
-
         sendNotification("offer_made", {
           requesterId: params.requesterId,
           travelerId: currentUser?.id,

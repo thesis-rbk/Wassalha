@@ -1,9 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { BACKEND_URL } from "@/config";
 import { Chat } from "@/types/Chat";
 import { store } from "@/store";
 import { addChat } from "@/store/chatSlice";
-import { getSocket } from "@/services/socketService";
 import axiosInstance from "@/config";
 import { router } from "expo-router";
 
@@ -177,8 +175,8 @@ export const navigateToChat = async (
 };
 
 /**
- * Navigate to a chat from the pickup screen
- * This creates the chat if needed and then navigates to it
+ * Navigate to a chat from the messages screen
+ * This navigates directly to the chat
  * @param chatId - ID of the chat
  */
 export const navigateToChatFromMessages = async (chatId: number) => {

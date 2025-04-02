@@ -50,7 +50,7 @@ export default function NotificationsScreen() {
 
   // Get notifications from Redux
   const notifications = useSelector(
-    (state: RootState) => state.notifications.items as Notification[] // Cast to your specific type
+    (state: RootState) => state.notifications.items as Notification[]
   );
 
   const { fetchNotifications, markAsRead, deleteNotification } =
@@ -71,7 +71,7 @@ export default function NotificationsScreen() {
       // router.push('/notifications'); // Already here
     } else {
       // Navigate to other main tabs like home, profile etc.
-      router.push(`./${tab}`); // Assumes tab names match route paths like '/home', '/profile'
+      router.push(`./${tab}`);
     }
   };
 
@@ -109,7 +109,7 @@ export default function NotificationsScreen() {
 
       // 2. Determine navigation based on notification data
       let type = item.type;
-      type = type || ""; // Ensure type is a string="";
+      type = type || "";
 
       // Check if navigation data is present
       if (type) {
@@ -161,8 +161,7 @@ export default function NotificationsScreen() {
 
         if (targetPath) {
           console.log(`Navigating to: ${targetPath}`);
-          // Perform navigation using expo-router
-          router.push(targetPath as any); // Using 'as any' for flexibility, ensure path is valid
+          router.push(targetPath as any);
         } else {
           console.log(
             `Notification ${item.id} is actionable but no target path defined for message ${type}.`
@@ -173,15 +172,11 @@ export default function NotificationsScreen() {
         console.log(
           `Notification ${item.id} has no specific navigation action.`
         );
-        // Optional: You could navigate to a general 'details' screen if applicable,
-        // or just stay on the notifications list.
       }
     } catch (err) {
       console.error("Error handling notification press:", err);
-      // Handle error (e.g., show a toast message)
     }
   };
-  // --- End Modification ---
 
   const handleDelete = async (id: number) => {
     Alert.alert(
@@ -218,7 +213,6 @@ export default function NotificationsScreen() {
 
   // Render a notification item
   const renderNotification = ({ item }: { item: Notification }) => {
-    // Use the defined interface
     const isUnread = item.status === NotificationStatus.UNREAD;
 
     let Icon = Bell;
@@ -260,9 +254,6 @@ export default function NotificationsScreen() {
       </Swipeable>
     );
   };
-
-  // Debug log
-  // console.log("Notifications data:", notifications);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -342,41 +333,37 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee", // Consider using theme color: Colors[colorScheme].separator
-    backgroundColor: "white", // Or Colors[colorScheme].card
+    borderBottomColor: "#eee",
+    backgroundColor: "white",
   },
   unreadItem: {
-    backgroundColor: "rgba(0, 122, 255, 0.08)", // Subtle highlight for unread
-    // Or use your primary color with low opacity: `${TINT_COLOR}14` (approx 8% opacity hex)
+    backgroundColor: "rgba(0, 122, 255, 0.08)",
   },
   iconContainer: {
     marginRight: 16,
-    alignItems: "center", // Center icon vertically
+    alignItems: "center",
     justifyContent: "center",
   },
   contentContainer: {
     flex: 1,
-    justifyContent: "center", // Vertically center text content
+    justifyContent: "center",
   },
   title: {
     fontSize: 16,
-    fontWeight: "500", // Medium weight
-    marginBottom: 2, // Smaller gap
-    // color: Colors.light.text, // Example text color
+    fontWeight: "500",
+    marginBottom: 2,
   },
   unreadText: {
-    fontWeight: "bold", // Bold for unread titles
+    fontWeight: "bold",
   },
   message: {
     fontSize: 14,
-    marginBottom: 4, // Smaller gap
+    marginBottom: 4,
     opacity: 0.8,
-    // color: Colors.light.text, // Example text color
   },
   timestamp: {
     fontSize: 12,
     opacity: 0.6,
-    // color: Colors.light.text, // Example text color
   },
   loadingContainer: {
     flex: 1,
@@ -393,7 +380,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
-    paddingBottom: 100, // Extra padding if needed above tab bar
+    paddingBottom: 100,
   },
   emptyText: {
     fontSize: 16,
@@ -405,7 +392,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
-    marginTop: 10, // Add some margin
+    marginTop: 10,
   },
   refreshButtonText: {
     color: "white",
@@ -415,12 +402,12 @@ const styles = StyleSheet.create({
   errorContainer: {
     padding: 16,
     alignItems: "center",
-    backgroundColor: `${ERROR_COLOR}20`, // Light red background for error
+    backgroundColor: `${ERROR_COLOR}20`,
     margin: 16,
     borderRadius: 8,
   },
   errorText: {
-    color: ERROR_COLOR, // Use the constant
+    color: ERROR_COLOR,
     marginBottom: 12,
     fontWeight: "500",
     textAlign: "center",
@@ -435,10 +422,9 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   deleteAction: {
-    backgroundColor: ERROR_COLOR, // Use the constant
+    backgroundColor: ERROR_COLOR,
     justifyContent: "center",
     alignItems: "center",
-    width: 80, // Standard width for swipe action
-    // flex: 1, // Make it fill height if needed, often automatic
+    width: 80,
   },
 });

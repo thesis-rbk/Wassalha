@@ -52,7 +52,7 @@ export default function PickupTraveler() {
   const [selectedPickupId, setSelectedPickupId] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [showScanner, setShowScanner] = useState(false); // Only controls visibility now
+  const [showScanner, setShowScanner] = useState(false);
 
   const {
     handleAccept,
@@ -291,8 +291,6 @@ export default function PickupTraveler() {
   const isRequester = (pickup: Pickup) => console.log("pickup", pickup);
 
   const renderItem = ({ item }: { item: Pickup }) => {
-    const userIsRequester = isRequester(item);
-
     return (
       <View style={styles.card}>
         <LinearGradient
@@ -702,7 +700,6 @@ export default function PickupTraveler() {
               style={styles.statusList}
             />
             <BaseButton
-              // variant="danger"
               size="small"
               style={styles.cancelModalButton}
               onPress={() => setStatusModalVisible(false)}
@@ -1171,7 +1168,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 20,
   },
-  // Button Styles
   button: {
     flexDirection: "row",
     alignItems: "center",

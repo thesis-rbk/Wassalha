@@ -562,10 +562,7 @@ export default function ChatScreen() {
               <ArrowLeft size={24} color="#ffffff" />
             </TouchableOpacity>
             <View style={styles.headerInfo}>
-              <ThemedText style={styles.headerName}>
-                {/* {getPartnerName()} */}
-                {partnerName}
-              </ThemedText>
+              <ThemedText style={styles.headerName}>{partnerName}</ThemedText>
               {orderId && goodsName && (
                 <ThemedText style={styles.headerSubtitle}>
                   Order #{orderId} - {goodsName}

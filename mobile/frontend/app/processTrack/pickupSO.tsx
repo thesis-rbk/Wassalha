@@ -27,7 +27,6 @@ import {
   Clock,
   Calendar,
 } from "lucide-react-native";
-import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { usePickupActions } from "../../hooks/usePickupActions";
 import { QRCodeModal } from "../pickup/QRCodeModal";
 import io, { Socket } from "socket.io-client";
@@ -231,14 +230,7 @@ export default function PickupOwner() {
     }
   };
 
-  const isTraveler = (pickup: Pickup) => {
-    console.log("pickup", pickup);
-    return false; // Placeholder logic; replace with actual check if needed
-  };
-
   const renderItem = ({ item }: { item: Pickup }) => {
-    const userIsTraveler = isTraveler(item);
-
     return (
       <View style={styles.card}>
         <LinearGradient
@@ -922,7 +914,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 20,
   },
-  // Button Styles
   button: {
     flexDirection: "row",
     alignItems: "center",

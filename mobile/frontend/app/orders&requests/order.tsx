@@ -17,13 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Request, RequestStatus, Goods } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
-import {
-  MapPin,
-  DollarSign,
-  Package,
-  Activity,
-  ArrowRight,
-} from "lucide-react-native";
+import { Package, ArrowRight } from "lucide-react-native";
 import { BACKEND_URL } from "@/config";
 import { useRouter } from "expo-router";
 import { decode as atob } from "base-64";
@@ -33,12 +27,10 @@ import { io } from "socket.io-client";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
-const CARD_SPACING = 12;
 import { TabBar } from "@/components/navigation/TabBar";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
-import { AsyncLocalStorage } from "async_hooks";
 
-// Custom hook to ensure we have user data
+// Custom hook to ensure having user data
 const useReliableAuth = () => {
   const { user: authUser, loading: authLoading } = useAuth();
   const [tokenUser, setTokenUser] = useState<{
@@ -116,7 +108,6 @@ export default function OrderPage() {
   console.log(user, "USER", user?.id, "USER ID");
   console.log(user?.id, "ROOM");
 
-  // const room=user?.id;
   // Animation value for the "Make Offer" button
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -243,7 +234,7 @@ export default function OrderPage() {
       });
       socket.on("connect", () => {
         console.log("🔌 Orders page socket connected");
-        const room = user?.id; // Example; get this from props, context, or params
+        const room = user?.id;
         socket.emit("joinProcessRoom", room);
         goodsProcesses.forEach((process) => {
           const proces = process.id;
@@ -260,7 +251,6 @@ export default function OrderPage() {
 
       socket.on("processStatusChanged", (data) => {
         console.log("🔄 Status changed to:", data.status);
-        // console.log(goodsProcesses);
         setGoodsProcesses((prev) =>
           prev.map((p) => (p.id === data.processId ? data : p))
         );
@@ -294,15 +284,15 @@ export default function OrderPage() {
       // AND either don't have an associated order OR have a cancelled order
       const filteredRequests = (response.data.data || []).filter(
         (request: Request) => {
-          // Check if the request is in PENDING status
+          // Check if the request is in PENDING status and has no order
           const isPending =
             request.order === null && request.status === "PENDING";
 
-          // Check if the request has no order or a cancelled order
+          // Check if the request has an order and this order is cancelled
           const hasNoActiveOrder =
             request.order && request.order.orderStatus === "CANCELLED";
 
-          // Only include requests that meet both conditions
+          // Only include requests that meet one of these two conditions
           return isPending || hasNoActiveOrder;
         }
       );
@@ -368,7 +358,7 @@ export default function OrderPage() {
     };
 
     // Check if this request has any offers
-    const hasOffers = false; // You'll need to replace this with actual logic to check if offers exist
+    const hasOffers = false;
 
     return (
       <TouchableOpacity
@@ -575,6 +565,7 @@ export default function OrderPage() {
               pathname: "/processTrack/pickupSO",
               params: parameters,
             });
+          // THESE CASES ARE NOT HANDLED FOR NOW AND NEED TO BE CHANGED WHEN ADDED
           case "IN_TRANSIT":
             return router.push({
               pathname: "/home", // TO BE CHANGED
@@ -750,9 +741,6 @@ export default function OrderPage() {
   const handleProfilePress = () => {
     router.push("/profile");
   };
-
-  // Inside OrderPage component, add this useEffect
-  const socketRef = useRef<any>(null);
 
   return (
     <ThemedView style={styles.container}>

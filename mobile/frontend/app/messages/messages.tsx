@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
 import { TabBar } from "@/components/navigation/TabBar";
-import { router, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { navigateToChatFromMessages } from "@/services/chatService";
 import { useFocusEffect } from "@react-navigation/native";
 export default function MessagesScreen() {
@@ -31,16 +31,6 @@ export default function MessagesScreen() {
 
   const currentUserId = user?.id;
 
-  // useEffect(() => {
-  //   const unsubscribe = router.addListener("focus", () => {
-  //     // Refresh conversations when screen comes into focus
-  //     fetchData();
-  //   });
-
-  //   return unsubscribe;
-  // }, [router]);
-
-  // Update your fetchData function to be available in the scope
   const fetchData = useCallback(async () => {
     try {
       const usersResponse = await axiosInstance.get("/api/users");
@@ -100,70 +90,6 @@ export default function MessagesScreen() {
       setLoading(false);
     }
   }, [currentUserId]);
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const usersResponse = await axiosInstance.get("/api/users");
-  //       const users: User[] = usersResponse.data.data;
-
-  //       const messagesResponse = await axiosInstance.get(
-  //         `/api/users/messages?userId=${currentUserId}`
-  //       );
-  //       const messages: Message[] = messagesResponse.data.data;
-
-  //       const conversationMap = new Map<
-  //         number,
-  //         { user: User; lastMessage: Message; unreadCount: number }
-  //       >();
-
-  //       messages.forEach((message: Message) => {
-  //         let otherUserId: number;
-
-  //         setChatId(parseInt(message.chatId));
-
-  //         if (message.senderId === currentUserId) {
-  //           otherUserId = message.receiverId;
-  //         } else if (message.receiverId === currentUserId) {
-  //           otherUserId = message.senderId;
-  //         } else {
-  //           return;
-  //         }
-
-  //         const otherUser = users.find((user) => user.id === otherUserId);
-  //         if (!otherUser) return;
-
-  //         const existingConversation = conversationMap.get(otherUserId);
-
-  //         if (
-  //           !existingConversation ||
-  //           new Date(message.time) >
-  //             new Date(existingConversation.lastMessage.time)
-  //         ) {
-  //           const unreadCount =
-  //             !message.isRead && message.senderId !== currentUserId
-  //               ? (existingConversation?.unreadCount || 0) + 1
-  //               : existingConversation?.unreadCount || 0;
-
-  //           conversationMap.set(otherUserId, {
-  //             user: otherUser,
-  //             lastMessage: message,
-  //             unreadCount,
-  //           });
-  //         }
-  //       });
-
-  //       setConversations(Array.from(conversationMap.values()));
-  //     } catch (err) {
-  //       console.error("Error fetching data:", err);
-  //       setError("Failed to load messages. Please try again.");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [currentUserId]);
 
   useFocusEffect(
     useCallback(() => {
