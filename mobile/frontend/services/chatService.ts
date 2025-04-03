@@ -1,9 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { BACKEND_URL } from "@/config";
 import { Chat } from "@/types/Chat";
 import { store } from "@/store";
 import { addChat } from "@/store/chatSlice";
-import { getSocket } from "@/services/socketService";
 import axiosInstance from "@/config";
 import { router } from "expo-router";
 
@@ -166,6 +164,43 @@ export const navigateToChat = async (
         orderId: orderInfo?.orderId,
         goodsName: orderInfo?.goodsName,
         context: "pickup", // Tells the chat screen this is about pickup
+      },
+    });
+
+    return true;
+  } catch (error) {
+    console.error("❌ Error navigating to chat:", error);
+    return false;
+  }
+};
+
+/**
+ * Navigate to a chat from the messages screen
+ * This navigates directly to the chat
+ * @param chatId - ID of the chat
+ */
+export const navigateToChatFromMessages = async (chatId: number) => {
+  try {
+    console.log("🔄 Opening chat from messages screen...");
+
+    const token = await AsyncStorage.getItem("jwtToken");
+
+    if (!token) {
+      console.error("❌ No authentication token available");
+      return null;
+    }
+
+    const chat = await axiosInstance.get(`/api/chats/${chatId}/messages`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // Navigate to chat screen with the chat ID and order info
+    router.push({
+      pathname: "/messages/chat",
+      params: {
+        chatId,
       },
     });
 
