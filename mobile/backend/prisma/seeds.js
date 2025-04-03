@@ -24,6 +24,7 @@ async function seed() {
     console.log('Cleaning existing data...');
 
     const tables = [
+      'codeSubmission',
       'reputationTransaction',
       'reputation',
       'processEvent',
@@ -53,7 +54,6 @@ async function seed() {
       'traveler',
       'media',
       'user',
-      'codeSubmission',
     ];
 
     for (const table of tables) {
@@ -367,84 +367,6 @@ async function seed() {
     );
     console.log('Created sponsor checkouts');
 
-    // Create Order Sponsors
-    const orderSponsors = await Promise.all(
-      Array.from({ length: 5 }).map(() =>
-        prisma.orderSponsor.create({
-          data: {
-            serviceProviderId: faker.helpers.arrayElement(serviceProviders).id,
-            sponsorshipId: faker.helpers.arrayElement(sponsorships).id,
-            recipientId: faker.helpers.arrayElement(users).id,
-            amount: faker.number.float({ min: 100, max: 1000 }),
-            status: faker.helpers.arrayElement(['PENDING', 'CONFIRMED', 'REJECTED', 'IN_TRANSIT', 'DELIVERED']),
-          },
-        })
-      )
-    );
-    console.log('Created order sponsors');
-
-    // Create Review Sponsors
-    const reviewSponsors = await Promise.all(
-      Array.from({ length: 5 }).map(() => {
-        const reviewer = faker.helpers.arrayElement(profiles);
-        const reviewed = faker.helpers.arrayElement(profiles.filter((p) => p.id !== reviewer.id));
-        return prisma.reviewSponsor.create({
-          data: {
-            reviewer_id: reviewer.id,
-            reviewed_user_id: reviewed.id,
-            sponsorshipRating: faker.number.int({ min: 1, max: 5 }),
-            serviceProviderRating: faker.number.int({ min: 1, max: 5 }),
-            sponsorshipId: faker.helpers.arrayElement(sponsorships).id,
-            serviceProviderId: faker.helpers.arrayElement(serviceProviders).id,
-            comment: faker.lorem.sentence(),
-          },
-        });
-      })
-    );
-    console.log('Created review sponsors');
-
-    // Create Tickets
-    const tickets = await Promise.all(
-      Array.from({ length: 5 }).map(() =>
-        prisma.ticket.create({
-          data: {
-            title: faker.lorem.sentence(3),
-            description: faker.lorem.paragraph(),
-            userId: faker.helpers.arrayElement(users).id,
-            status: faker.helpers.arrayElement(['PENDING', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']),
-            category: faker.helpers.arrayElement([
-              'REQUEST_ISSUE', 'OFFER_ISSUE', 'PAYMENT_ISSUE', 'PICKUP_ISSUE',
-              'DELIVERY_ISSUE', 'TRAVELER_NON_COMPLIANCE', 'OTHER',
-            ]),
-            media: faker.datatype.boolean()
-              ? { connect: [{ id: faker.helpers.arrayElement(media).id }] }
-              : undefined,
-          },
-        })
-      )
-    );
-    console.log('Created tickets');
-
-    // Create Ticket Messages
-    const ticketMessages = await Promise.all(
-      tickets.flatMap((ticket) =>
-        Array.from({ length: 3 }).map(() =>
-          prisma.ticketMessage.create({
-            data: {
-              ticketId: ticket.id,
-              senderId: faker.helpers.arrayElement(users).id,
-              content: faker.lorem.paragraph(),
-              isAdmin: faker.datatype.boolean(),
-              media: faker.datatype.boolean()
-                ? { connect: [{ id: faker.helpers.arrayElement(media).id }] }
-                : undefined,
-            },
-          })
-        )
-      )
-    );
-    console.log('Created ticket messages');
-
     // Create Goods
     const goods = await Promise.all(
       Array.from({ length: 15 }).map(() =>
@@ -465,13 +387,12 @@ async function seed() {
     );
     console.log('Created goods');
 
-    // Create Requests
+    // Create Requests BEFORE Orders
     const requests = await Promise.all(
       Array.from({ length: 10 }).map(() =>
         prisma.request.create({
           data: {
             userId: faker.helpers.arrayElement(users).id,
-            sponsorId: faker.datatype.boolean() ? faker.helpers.arrayElement(users).id : null,
             goodsId: faker.helpers.arrayElement(goods).id,
             quantity: faker.number.int({ min: 1, max: 5 }),
             goodsLocation: faker.location.city(),
@@ -479,13 +400,14 @@ async function seed() {
             date: faker.date.recent(),
             status: faker.helpers.arrayElement(['PENDING', 'ACCEPTED', 'CANCELLED', 'REJECTED']),
             withBox: faker.datatype.boolean(),
+            sponsorId: faker.datatype.boolean() ? faker.helpers.arrayElement(users).id : null,
           },
         })
       )
     );
     console.log('Created requests');
 
-    // Create Orders
+    // Now create Orders (after requests exist)
     const orders = await Promise.all(
       requests.map((request) =>
         prisma.order.create({
@@ -504,6 +426,24 @@ async function seed() {
       )
     );
     console.log('Created orders');
+
+    // Create ReviewSponsors
+    const reviewSponsors = await Promise.all(
+      Array.from({ length: 5 }).map(() =>
+        prisma.reviewSponsor.create({
+          data: {
+            reviewer_id: faker.helpers.arrayElement(profiles).id,
+            reviewed_user_id: faker.helpers.arrayElement(profiles).id,
+            sponsorshipRating: faker.number.int({ min: 1, max: 5 }),
+            serviceProviderRating: faker.number.int({ min: 1, max: 5 }),
+            sponsorshipId: faker.helpers.arrayElement(sponsorships).id,
+            serviceProviderId: faker.helpers.arrayElement(serviceProviders).id,
+            comment: faker.lorem.sentence(),
+          },
+        })
+      )
+    );
+    console.log('Created review sponsors');
 
     // Create Payments
     const payments = await Promise.all(
@@ -793,15 +733,21 @@ async function seed() {
     );
     console.log('Created promo posts');
 
-    // Create Code Submissions
+    // Create CodeSubmissions (after requests exist)
     const codeSubmissions = await Promise.all(
-      Array.from({ length: 5 }).map(() =>
+      requests.map((request) =>
         prisma.codeSubmission.create({
           data: {
-            requestId: faker.helpers.arrayElement(requests).id,
+            requestId: request.id,
             sponsorId: faker.helpers.arrayElement(users).id,
-            code: faker.datatype.boolean() ? faker.string.alphanumeric(10) : null,
-            accountDetails: faker.datatype.boolean() ? faker.finance.iban() : null,
+            code: faker.datatype.boolean() ? faker.string.alphanumeric(8) : null,
+            accountDetails: faker.datatype.boolean() 
+              ? JSON.stringify({
+                  username: faker.internet.userName(),
+                  password: faker.internet.password(),
+                  platform: faker.company.name(),
+                }) 
+              : null,
             type: faker.helpers.arrayElement(['CODE', 'ACCOUNT']),
             status: faker.helpers.arrayElement(['SUBMITTED', 'DELIVERED', 'PENDING', 'REJECTED']),
           },
@@ -809,6 +755,71 @@ async function seed() {
       )
     );
     console.log('Created code submissions');
+
+    // Update the OrderSponsor creation to include all required fields
+    const orderSponsors = await Promise.all(
+      Array.from({ length: 5 }).map(() =>
+        prisma.orderSponsor.create({
+          data: {
+            serviceProviderId: faker.helpers.arrayElement(serviceProviders).id,
+            sponsorshipId: faker.helpers.arrayElement(sponsorships).id,
+            recipientId: faker.helpers.arrayElement(users).id,
+            amount: faker.number.float({ min: 100, max: 1000 }),
+            status: faker.helpers.arrayElement(['PENDING', 'CONFIRMED', 'REJECTED', 'IN_TRANSIT', 'DELIVERED']),
+          },
+        })
+      )
+    );
+    console.log('Created order sponsors');
+
+    // Update the Ticket creation to include category
+    const tickets = await Promise.all(
+      Array.from({ length: 5 }).map(() =>
+        prisma.ticket.create({
+          data: {
+            title: faker.lorem.sentence(3),
+            description: faker.lorem.paragraph(1),
+            userId: faker.helpers.arrayElement(users).id,
+            status: faker.helpers.arrayElement(['PENDING', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']),
+            category: faker.helpers.arrayElement([
+              'REQUEST_ISSUE',
+              'OFFER_ISSUE',
+              'PAYMENT_ISSUE',
+              'PICKUP_ISSUE',
+              'DELIVERY_ISSUE',
+              'TRAVELER_NON_COMPLIANCE',
+              'OTHER'
+            ]),
+            media: {
+              connect: faker.datatype.boolean()
+                ? [{ id: faker.helpers.arrayElement(media).id }]
+                : undefined,
+            },
+          },
+        })
+      )
+    );
+
+    // Update TicketMessage creation to include isAdmin field
+    const ticketMessages = await Promise.all(
+      tickets.flatMap((ticket) =>
+        Array.from({ length: 3 }).map(() =>
+          prisma.ticketMessage.create({
+            data: {
+              ticketId: ticket.id,
+              senderId: faker.helpers.arrayElement(users).id,
+              content: faker.lorem.paragraph(),
+              isAdmin: faker.datatype.boolean(),
+              media: {
+                connect: faker.datatype.boolean()
+                  ? [{ id: faker.helpers.arrayElement(media).id }]
+                  : undefined,
+              },
+            },
+          })
+        )
+      )
+    );
 
     console.log('Seeding completed successfully!');
   } catch (error) {

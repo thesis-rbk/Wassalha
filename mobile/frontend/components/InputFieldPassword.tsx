@@ -1,13 +1,14 @@
-import React from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, StyleSheet, Pressable } from 'react-native';
 import { FontFamily } from '@/assets/fonts';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { InputFieldProps } from '@/types/InputField';
+import { Eye, EyeOff } from 'lucide-react-native';
 
-
-export function InputFieldPassword({ label, error, placeholder, value, onChangeText, secureTextEntry }: InputFieldProps & { secureTextEntry?: boolean }) {
+export function InputFieldPassword({ label, error, placeholder, value, onChangeText }: InputFieldProps) {
   const colorScheme = useColorScheme() ?? 'light';
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -17,21 +18,37 @@ export function InputFieldPassword({ label, error, placeholder, value, onChangeT
       ]}>
         {label}
       </Text>
-      <TextInput
-        placeholder={placeholder}
-        value={value}
-        onChangeText={onChangeText}
-        style={[
-          styles.input,
-          { 
-            color: Colors[colorScheme].text,
-            borderColor: Colors[colorScheme].primary,
-            backgroundColor: Colors[colorScheme].background,
-          }
-        ]}
-        placeholderTextColor={Colors[colorScheme].text + '80'}
-        secureTextEntry={secureTextEntry}
-      />
+      <View style={[
+        styles.inputContainer,
+        { 
+          borderColor: Colors[colorScheme].primary,
+          backgroundColor: Colors[colorScheme].background,
+        }
+      ]}>
+        <TextInput
+          placeholder={placeholder}
+          value={value}
+          onChangeText={onChangeText}
+          style={[
+            styles.input,
+            { 
+              color: Colors[colorScheme].text,
+            }
+          ]}
+          placeholderTextColor={Colors[colorScheme].text + '80'}
+          secureTextEntry={!showPassword}
+        />
+        <Pressable
+          onPress={() => setShowPassword(!showPassword)}
+          style={styles.eyeIcon}
+        >
+          {showPassword ? (
+            <EyeOff size={20} color={Colors[colorScheme].primary} />
+          ) : (
+            <Eye size={20} color={Colors[colorScheme].primary} />
+          )}
+        </Pressable>
+      </View>
       {error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
@@ -46,13 +63,12 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.medium,
     fontSize: 16,
   },
-  input: {
+  inputContainer: {
     width: '100%',
-    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 2,
     borderRadius: 12,
-    fontFamily: FontFamily.regular,
-    fontSize: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -61,6 +77,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+  input: {
+    flex: 1,
+    padding: 10,
+    fontFamily: FontFamily.regular,
+    fontSize: 16,
+  },
+  eyeIcon: {
+    padding: 10,
   },
   error: {
     fontFamily: FontFamily.regular,
