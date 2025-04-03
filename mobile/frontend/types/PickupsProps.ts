@@ -6,4 +6,5 @@ export interface PickupProps {
   setPickups?: (pickups: PickupType[]) => void; // Optional
   showPickup?: boolean;
   setShowPickup?: (showPickup: boolean) => void;
+  paramsData: Record<string, any>; 
 }

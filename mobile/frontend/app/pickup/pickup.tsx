@@ -27,7 +27,10 @@ import { PickupProps } from "@/types/PickupsProps";
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 
-export default function Pickups({ pickupId, orderId: initialOrderId, pickups, setPickups,setShowPickup }: PickupProps) {  const router = useRouter();
+export default function Pickups({ pickupId, orderId: initialOrderId, pickups, setPickups,setShowPickup,paramsData }: PickupProps)
+ {  
+  console.log("paramsDataaaaaaaaaaaaaaaaaaaaaaa" ,paramsData)
+  const router = useRouter();
   const params=useLocalSearchParams();
   console.log("paraams",params);
   const colorScheme = useColorScheme() ?? "light";

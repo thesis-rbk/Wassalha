@@ -15,16 +15,11 @@ import axiosInstance from "../../config";
 import { QRCodeScannerProps } from "@/types/QRCodeScannerProps";
 
 
-export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
-  visible,
-  onClose,
-  pickups,
-  setPickups,
-}) => {
+export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ visible, onClose, pickups,setPickups,}) => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-
+  console.log("pickupssssssssssssss",pickups)
   useEffect(() => {
     const checkAndRequestPermission = async () => {
       if (permission === null) return; // Wait for hook to initialize

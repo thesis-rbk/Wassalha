@@ -615,6 +615,7 @@ export default function PickupTraveler() {
           setPickups={setPickups}
           showPickup={showPickup}
           setShowPickup={setShowPickup}
+          paramsData={params}
         />
       ) : (
         <>
@@ -666,6 +667,7 @@ export default function PickupTraveler() {
         visible={showQRCode}
         qrCodeData={qrCodeData}
         onClose={() => setShowQRCode(false)}
+        paramsData={params}
       />
 
       <Modal

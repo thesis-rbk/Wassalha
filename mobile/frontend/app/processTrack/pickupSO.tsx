@@ -492,6 +492,7 @@ export default function PickupOwner() {
           setPickups={setPickups}
           showPickup={showPickup}
           setShowPickup={setShowPickup}
+          paramsData={params}
         />
       ) : (
         <>
@@ -542,6 +543,7 @@ export default function PickupOwner() {
         visible={showQRCode}
         qrCodeData={qrCodeData}
         onClose={() => setShowQRCode(false)}
+        paramsData={params} 
       />
       <Animated.View
         style={[styles.messageBubble, { transform: [{ scale: pulseAnim }] }]}
