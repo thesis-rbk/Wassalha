@@ -433,7 +433,6 @@ export default function InitializationSP() {
      
     } catch (error) {
       console.log("erooooooooooooooor",error);
-      console.log("Error response:", error.response);
       console.log("API Key being used:", GOOGLE_PLACES_API_KEY);
       console.error("Error fetching airports from Google Places:", error);
       Alert.alert("Error", "Failed to fetch airport suggestions");
