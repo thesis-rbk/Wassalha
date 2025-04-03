@@ -1,5 +1,4 @@
-// PickupTraveler.tsx
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -7,10 +6,10 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
-  ScrollView,
   Alert,
   TouchableOpacity,
   Modal,
+  Animated,
 } from "react-native";
 import axiosInstance from "../../config";
 import Pickups from "../pickup/pickup";
@@ -24,13 +23,17 @@ import {
   XCircle,
   AlertCircle,
   MessageCircle,
+  ChevronRight,
+  Clock,
+  Calendar,
 } from "lucide-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { usePickupActions } from "../../hooks/usePickupActions";
 import { QRCodeModal } from "../pickup/QRCodeModal";
-import { QRCodeScanner } from "../pickup/QRCodeScanner"; // Import the new component
+import { QRCodeScanner } from "../pickup/QRCodeScanner";
 import io, { Socket } from "socket.io-client";
 import { navigateToChat } from "@/services/chatService";
+import { LinearGradient } from "expo-linear-gradient";
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -49,13 +52,16 @@ export default function PickupTraveler() {
   const [selectedPickupId, setSelectedPickupId] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [showScanner, setShowScanner] = useState(false); // Only controls visibility now
+  const [showScanner, setShowScanner] = useState(false);
 
-  const { handleAccept, showStoredQRCode, showQRCode, setShowQRCode, qrCodeData, handleCancel } = usePickupActions(
-    pickups,
-    setPickups,
-    userId
-  );
+  const {
+    handleAccept,
+    showStoredQRCode,
+    showQRCode,
+    setShowQRCode,
+    qrCodeData,
+    handleCancel,
+  } = usePickupActions(pickups, setPickups, userId);
 
   const socketRef = useRef<Socket | null>(null);
 
@@ -79,7 +85,10 @@ export default function PickupTraveler() {
       });
 
       socketRef.current.on("pickupAccepted", (updatedPickup: Pickup) => {
-        console.log("✅ Received pickupAccepted (PickupTraveler):", updatedPickup);
+        console.log(
+          "✅ Received pickupAccepted (PickupTraveler):",
+          updatedPickup
+        );
         setPickups((prev) =>
           prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
         );
@@ -95,7 +104,10 @@ export default function PickupTraveler() {
       });
 
       socketRef.current.on("statusUpdate", (updatedPickup: Pickup) => {
-        console.log("🔄 Received statusUpdate (PickupTraveler):", updatedPickup);
+        console.log(
+          "🔄 Received statusUpdate (PickupTraveler):",
+          updatedPickup
+        );
         setPickups((prev) =>
           prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
         );
@@ -119,6 +131,26 @@ export default function PickupTraveler() {
       socketRef.current = null;
     };
   }, [pickups]);
+
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const pulse = () => {
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]).start(() => pulse());
+    };
+    pulse();
+  }, []);
 
   useEffect(() => {
     fetchPickups();
@@ -259,183 +291,260 @@ export default function PickupTraveler() {
   const isRequester = (pickup: Pickup) => console.log("pickup", pickup);
 
   const renderItem = ({ item }: { item: Pickup }) => {
-    const userIsRequester = isRequester(item);
-
     return (
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.sectionTitle}>
-            Order #{item.orderId} - {item.pickupType}
-          </Text>
-          <TouchableOpacity
-            style={styles.suggestionsLink}
-            onPress={() => fetchSuggestions(item.id)}
-          >
-            <Text style={styles.suggestionsText}>See Previous</Text>
-            <Text style={styles.suggestionsText}>Suggestions</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.orderRow}>
-          <View style={styles.iconContainer}>
-            <MapPin size={20} color="#64748b" />
-          </View>
-          <View style={styles.detailContent}>
-            <Text style={styles.orderLabel}>Location</Text>
-            <Text style={styles.orderValue}>
-              {item.location}, {item.address}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.orderRow}>
-          <View style={styles.iconContainer}>
-            <CheckCircle size={20} color="#64748b" />
-          </View>
-          <View style={styles.detailContent}>
-            <Text style={styles.orderLabel}>Scheduled</Text>
-            <Text style={styles.orderValue}>
-              {new Date(item.scheduledTime).toLocaleString()}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.orderRow}>
-          <View style={styles.iconContainer}>
-            <AlertCircle size={20} color="#64748b" />
-          </View>
-          <View style={styles.detailContent}>
-            <Text style={styles.orderLabel}>Status</Text>
-            <View
-              style={[
-                styles.statusBadge,
-                { backgroundColor: getStatusColor(item.status) },
-              ]}
+        <LinearGradient
+          colors={["#f8fafc", "#ffffff"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.cardGradient}
+        >
+          <View style={styles.cardHeader}>
+            <View style={styles.orderTitleContainer}>
+              <Text style={styles.sectionTitle}>
+                {params.goodsName || "Your Order"}
+              </Text>
+              <Text style={styles.requesterName}>
+                with {params.requesterName || "Requester"}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.suggestionsLink}
+              onPress={() => fetchSuggestions(item.id)}
             >
-              <Text style={styles.badgeText}>{item.status}</Text>
-            </View>
+              <Text style={styles.suggestionsText}>History</Text>
+              <ChevronRight size={16} color="#007AFF" />
+            </TouchableOpacity>
           </View>
-        </View>
 
-        {item.userconfirmed && !item.travelerconfirmed && (
-          <View style={styles.note}>
-            <Text style={styles.waitingText}>
-              Waiting for your confirmation as traveler
-            </Text>
-          </View>
-        )}
-
-        {!item.userconfirmed && item.travelerconfirmed && (
-          <View style={styles.note}>
-            <Text style={styles.waitingText}>
-              Waiting for requester to confirm
-            </Text>
-          </View>
-        )}
-
-        {item.userconfirmed && item.travelerconfirmed && (
-          <View style={styles.note}>
-            <Text style={styles.successText}>
-              Pickup Accepted! Package on the way.
-            </Text>
-            <View style={styles.buttonContainer}>
-              <View style={styles.topRow}>
-                <BaseButton
-                  variant="primary"
-                  size="small"
-                  style={styles.actionButton}
-                  onPress={() => openStatusModal(item.id)}
-                >
-                  <CheckCircle size={14} color="#fff" />
-                  <Text style={styles.buttonText}>Update</Text>
-                </BaseButton>
-                <BaseButton
-                  variant="primary"
-                  size="small"
-                  style={styles.actionButton}
-                  onPress={() => showStoredQRCode(item)}
-                >
-                  <CheckCircle size={14} color="#fff" />
-                  <Text style={styles.buttonText}>Show QR</Text>
-                </BaseButton>
+          <View style={styles.detailsContainer}>
+            {/* Location */}
+            <View style={styles.detailRow}>
+              <View style={styles.iconWrapper}>
+                <MapPin size={18} color="#3b82f6" />
               </View>
-              <BaseButton
-                variant="primary"
-                size="small"
-                style={styles.actionButton}
-                onPress={() => setShowScanner(true)} // Simply open the scanner
-              >
-                <MapPin size={14} color="#fff" />
-                <Text style={styles.buttonText}>Scan QR</Text>
-              </BaseButton>
-            </View>
-          </View>
-        )}
-
-        {!item.userconfirmed && !item.travelerconfirmed && (
-          <View style={styles.note}>
-            <Text style={styles.waitingText}>
-              Waiting for requester to suggest a pickup
-            </Text>
-          </View>
-        )}
-
-        {item.userconfirmed && !item.travelerconfirmed && (
-          <View style={styles.note}>
-            {item.status === "CANCELLED" ? (
-              <>
-                <Text style={styles.cancelledText}>Pickup Cancelled</Text>
-                <Text style={styles.warningText}>
-                  This pickup was cancelled. Please suggest a new pickup method
-                  to proceed.
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Pickup Location</Text>
+                <Text style={styles.detailValue}>
+                  {item.location}, {item.address}
                 </Text>
-                <View style={styles.buttonContainer}>
-                  <BaseButton
-                    variant="primary"
-                    size="small"
-                    style={styles.actionButton}
-                    onPress={() => handleSuggest(item.id)}
-                  >
-                    <MapPin size={14} color="#fff" />
-                    <Text style={styles.buttonText}>Suggest</Text>
-                  </BaseButton>
-                </View>
-              </>
-            ) : (
-              <View style={styles.buttonContainer}>
-                <View style={styles.topRow}>
-                  <BaseButton
-                    variant="primary"
-                    size="small"
-                    style={styles.actionButton}
-                    onPress={() => handleAccept(item.id)}
-                  >
-                    <CheckCircle size={14} color="#fff" />
-                    <Text style={styles.buttonText}>Accept</Text>
-                  </BaseButton>
-                  <BaseButton
-                    variant="primary"
-                    size="small"
-                    style={styles.actionButton}
-                    onPress={() => handleSuggest(item.id)}
-                  >
-                    <MapPin size={14} color="#fff" />
-                    <Text style={styles.buttonText}>Suggest</Text>
-                  </BaseButton>
-                </View>
-                <BaseButton
-                  variant="primary"
-                  size="small"
-                  style={styles.actionButton}
-                  onPress={() => handleCancel(item.id)}
-                >
-                  <XCircle size={14} color="#fff" />
-                  <Text style={styles.buttonText}>Cancel</Text>
-                </BaseButton>
               </View>
+            </View>
+
+            {/* Scheduled Time */}
+            <View style={styles.detailRow}>
+              <View style={styles.iconWrapper}>
+                <Clock size={18} color="#3b82f6" />
+              </View>
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Scheduled Time</Text>
+                <Text style={styles.detailValue}>
+                  {new Date(item.scheduledTime).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              </View>
+            </View>
+
+            {/* Scheduled Date */}
+            <View style={styles.detailRow}>
+              <View style={styles.iconWrapper}>
+                <Calendar size={18} color="#3b82f6" />
+              </View>
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Scheduled Date</Text>
+                <Text style={styles.detailValue}>
+                  {new Date(item.scheduledTime).toLocaleDateString([], {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </Text>
+              </View>
+            </View>
+
+            {/* Status */}
+            <View style={styles.detailRow}>
+              <View style={styles.iconWrapper}>
+                <AlertCircle size={18} color="#3b82f6" />
+              </View>
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Status</Text>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    { backgroundColor: getStatusColor(item.status) },
+                  ]}
+                >
+                  <Text style={styles.badgeText}>
+                    {item.status.replace("_", " ")}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Status Messages */}
+          {item.userconfirmed && !item.travelerconfirmed && (
+            <View style={styles.statusMessage}>
+              <Text style={styles.waitingText}>
+                Waiting for your confirmation as traveler
+              </Text>
+            </View>
+          )}
+
+          {!item.userconfirmed && item.travelerconfirmed && (
+            <View style={styles.statusMessage}>
+              <Text style={styles.waitingText}>
+                Waiting for requester confirmation
+              </Text>
+            </View>
+          )}
+
+          {item.userconfirmed && item.travelerconfirmed && (
+            <View style={[styles.statusMessage, styles.successMessage]}>
+              <CheckCircle size={16} color="#10b981" />
+              <Text style={styles.successText}>
+                Pickup confirmed! Ready for delivery.
+              </Text>
+            </View>
+          )}
+
+          {!item.userconfirmed && !item.travelerconfirmed && (
+            <View style={styles.statusMessage}>
+              <Text style={styles.waitingText}>
+                Waiting for requester to suggest pickup
+              </Text>
+            </View>
+          )}
+
+          {/* Action Buttons */}
+          <View style={styles.actionContainer}>
+            {!item.userconfirmed && !item.travelerconfirmed && (
+              <Text style={styles.infoText}>
+                You'll be able to take actions once the requester suggests a
+                pickup
+              </Text>
+            )}
+
+            {item.userconfirmed && !item.travelerconfirmed && (
+              <>
+                {item.status === "CANCELLED" ? (
+                  <>
+                    <View style={[styles.statusMessage, styles.errorMessage]}>
+                      <XCircle size={16} color="#ef4444" />
+                      <Text style={styles.cancelledText}>
+                        This pickup was cancelled
+                      </Text>
+                    </View>
+                    <BaseButton
+                      variant="primary"
+                      size="small"
+                      style={[styles.actionButton, styles.fullWidthButton]}
+                      onPress={() => handleSuggest(item.id)}
+                    >
+                      <MapPin size={16} color="#fff" />
+                      <Text style={styles.buttonText}>Suggest New Pickup</Text>
+                    </BaseButton>
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.buttonRow}>
+                      <TouchableOpacity
+                        style={[styles.button, styles.primaryButton]}
+                        onPress={() => handleAccept(item.id)}
+                      >
+                        <CheckCircle
+                          size={18}
+                          color="#fff"
+                          style={styles.buttonIcon}
+                        />
+                        <Text style={styles.buttonText}>Accept</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.button, styles.secondaryButton]}
+                        onPress={() => handleSuggest(item.id)}
+                      >
+                        <MapPin
+                          size={18}
+                          color="#3b82f6"
+                          style={styles.buttonIcon}
+                        />
+                        <Text
+                          style={[
+                            styles.buttonText,
+                            styles.secondaryButtonText,
+                          ]}
+                        >
+                          Suggest
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.button, styles.dangerButton]}
+                      onPress={() => handleCancel(item.id)}
+                    >
+                      <XCircle
+                        size={18}
+                        color="#fff"
+                        style={styles.buttonIcon}
+                      />
+                      <Text style={styles.buttonText}>Cancel</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </>
+            )}
+
+            {item.userconfirmed && item.travelerconfirmed && (
+              <>
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity
+                    style={[styles.button, styles.primaryButton]}
+                    onPress={() => openStatusModal(item.id)}
+                  >
+                    <CheckCircle
+                      size={18}
+                      color="#fff"
+                      style={styles.buttonIcon}
+                    />
+                    <Text style={styles.buttonText}>Update Status</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.button, styles.secondaryButton]}
+                    onPress={() => showStoredQRCode(item)}
+                  >
+                    <CheckCircle
+                      size={18}
+                      color="#3b82f6"
+                      style={styles.buttonIcon}
+                    />
+                    <Text
+                      style={[styles.buttonText, styles.secondaryButtonText]}
+                    >
+                      Show QR
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.primaryButton,
+                    styles.fullWidthButton,
+                  ]}
+                  onPress={() => setShowScanner(true)}
+                >
+                  <MapPin size={18} color="#fff" style={styles.buttonIcon} />
+                  <Text style={styles.buttonText}>Scan QR Code</Text>
+                </TouchableOpacity>
+              </>
             )}
           </View>
-        )}
+        </LinearGradient>
       </View>
     );
   };
@@ -496,37 +605,57 @@ export default function PickupTraveler() {
   ];
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       {showSuggestions ? (
         renderSuggestions()
       ) : showPickup ? (
-        <Pickups pickupId={pickupId} pickups={pickups} setPickups={setPickups} showPickup={showPickup} setShowPickup={setShowPickup} />
+        <Pickups
+          pickupId={pickupId}
+          pickups={pickups}
+          setPickups={setPickups}
+          showPickup={showPickup}
+          setShowPickup={setShowPickup}
+        />
       ) : (
         <>
-          <View style={styles.content}>
-            <Text style={styles.title}>Pickup Options</Text>
+          <View style={styles.header}>
+            <Text style={styles.title}>Your Pickup Requests</Text>
             <Text style={styles.subtitle}>
-              Choose how you'd like to receive your item.
+              Manage your delivery assignments and pickup status
             </Text>
           </View>
 
           {isLoading && pickups.length === 0 ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" />
-              <Text style={styles.loadingText}>Loading...</Text>
+              <ActivityIndicator size="large" color="#3b82f6" />
+              <Text style={styles.loadingText}>
+                Loading your assignments...
+              </Text>
             </View>
           ) : (
             <FlatList
               data={pickups}
               renderItem={renderItem}
-              keyExtractor={(item: any) => item.id.toString()}
+              keyExtractor={(item) => item.id.toString()}
               refreshing={isLoading}
               onRefresh={fetchPickups}
               contentContainerStyle={styles.listContainer}
               ListEmptyComponent={
-                <Text style={styles.noImageText}>
-                  No pickup requests found.
-                </Text>
+                <View style={styles.emptyState}>
+                  <MapPin size={48} color="#cbd5e1" />
+                  <Text style={styles.emptyTitle}>No Assignments Found</Text>
+                  <Text style={styles.emptyText}>
+                    You don't have any active pickup assignments yet
+                  </Text>
+                  <BaseButton
+                    variant="primary"
+                    size="small"
+                    style={styles.refreshButton}
+                    onPress={fetchPickups}
+                  >
+                    <Text style={styles.buttonText}>Refresh</Text>
+                  </BaseButton>
+                </View>
               }
             />
           )}
@@ -535,7 +664,7 @@ export default function PickupTraveler() {
 
       <QRCodeModal
         visible={showQRCode}
-        qrCodeData={qrCodeData || ""}
+        qrCodeData={qrCodeData}
         onClose={() => setShowQRCode(false)}
       />
 
@@ -547,11 +676,12 @@ export default function PickupTraveler() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select New Status</Text>
-            <ScrollView style={styles.statusList}>
-              {statusOptions.map((status) => (
+            <Text style={styles.modalTitle}>Update Delivery Status</Text>
+            <FlatList
+              data={statusOptions}
+              keyExtractor={(item) => item}
+              renderItem={({ item: status }) => (
                 <TouchableOpacity
-                  key={status}
                   style={[
                     styles.statusOption,
                     pickups.find((p) => p.id === selectedPickupId)?.status ===
@@ -562,17 +692,19 @@ export default function PickupTraveler() {
                     handleUpdateStatus(selectedPickupId, status)
                   }
                 >
-                  <Text style={styles.statusText}>{status}</Text>
+                  <Text style={styles.statusText}>
+                    {status.replace("_", " ")}
+                  </Text>
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
+              )}
+              style={styles.statusList}
+            />
             <BaseButton
-              variant="primary"
               size="small"
               style={styles.cancelModalButton}
               onPress={() => setStatusModalVisible(false)}
             >
-              <XCircle size={14} color="#fff" />
+              <XCircle size={16} color="#fff" />
               <Text style={styles.buttonText}>Cancel</Text>
             </BaseButton>
           </View>
@@ -586,10 +718,14 @@ export default function PickupTraveler() {
         setPickups={setPickups}
       />
 
-      <TouchableOpacity style={styles.messageBubble} onPress={openChat}>
-        <MessageCircle size={24} color="#ffffff" />
-      </TouchableOpacity>
-    </ScrollView>
+      <Animated.View
+        style={[styles.messageBubble, { transform: [{ scale: pulseAnim }] }]}
+      >
+        <TouchableOpacity onPress={openChat}>
+          <MessageCircle size={24} color="#ffffff" />
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -613,69 +749,318 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f8fafc",
   },
-  content: {
-    padding: 16,
-    paddingBottom: 40,
+  header: {
+    padding: 24,
+    paddingBottom: 16,
   },
   title: {
     fontFamily: "Poppins-Bold",
-    fontSize: 24,
+    fontSize: 28,
     color: "#1e293b",
     marginBottom: 4,
   },
   subtitle: {
     fontFamily: "Inter-Regular",
-    fontSize: 14,
+    fontSize: 16,
     color: "#64748b",
-    marginBottom: 20,
+    lineHeight: 24,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 24,
   },
   loadingText: {
     fontFamily: "Inter-Medium",
     fontSize: 16,
     color: "#64748b",
+    marginTop: 16,
   },
   listContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
   card: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
     marginBottom: 16,
+    overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
   },
+  cardGradient: {
+    padding: 20,
+  },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 16,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  orderTitleContainer: {
+    flex: 1,
   },
   sectionTitle: {
     fontFamily: "Poppins-SemiBold",
     fontSize: 18,
     color: "#1e293b",
-    flexShrink: 1,
+    marginBottom: 4,
+  },
+  requesterName: {
+    fontFamily: "Inter-Medium",
+    fontSize: 14,
+    color: "#64748b",
+  },
+  pickupType: {
+    fontFamily: "Inter-Medium",
+    fontSize: 14,
+    color: "#64748b",
   },
   suggestionsLink: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    alignItems: "flex-end",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 8,
   },
   suggestionsText: {
-    fontFamily: "Poppins-SemiBold",
-    fontSize: 12,
+    fontFamily: "Inter-Medium",
+    fontSize: 14,
     color: "#007AFF",
-    textDecorationLine: "underline",
-    lineHeight: 14,
+    marginRight: 4,
+  },
+  detailsContainer: {
+    marginBottom: 16,
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 12,
+  },
+  iconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#e0e7ff",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  detailContent: {
+    flex: 1,
+  },
+  detailLabel: {
+    fontFamily: "Inter-Medium",
+    fontSize: 13,
+    color: "#64748b",
+    marginBottom: 2,
+  },
+  detailValue: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 15,
+    color: "#1e293b",
+    lineHeight: 22,
+  },
+  statusBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  badgeText: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 12,
+    color: "white",
+    textTransform: "capitalize",
+  },
+  statusMessage: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f1f5f9",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  successMessage: {
+    backgroundColor: "#ecfdf5",
+  },
+  errorMessage: {
+    backgroundColor: "#fee2e2",
+  },
+  waitingText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 14,
+    color: "#3b82f6",
+    marginLeft: 8,
+  },
+  successText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 14,
+    color: "#10b981",
+    marginLeft: 8,
+  },
+  cancelledText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 14,
+    color: "#ef4444",
+    marginLeft: 8,
+  },
+  infoText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "#64748b",
+    textAlign: "center",
+    marginBottom: 16,
+    fontStyle: "italic",
+  },
+  actionContainer: {
+    marginTop: 16,
+    width: "100%",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 12,
+    width: "100%",
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  acceptButton: {
+    backgroundColor: "#10b981",
+  },
+  suggestButton: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#3b82f6",
+  },
+  updateButton: {
+    backgroundColor: "#3b82f6",
+  },
+  qrButton: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#3b82f6",
+  },
+  cancelButton: {
+    backgroundColor: "#ef4444",
+  },
+
+  fullWidthButton: {
+    width: "100%",
+  },
+  buttonText: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 15,
+    color: "#fff",
+    marginLeft: 8,
+  },
+  outlineButtonText: {
+    color: "#3b82f6",
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+    marginTop: 40,
+  },
+  emptyTitle: {
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 18,
+    color: "#1e293b",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "#64748b",
+    textAlign: "center",
+    marginBottom: 24,
+    maxWidth: 300,
+  },
+  refreshButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    maxHeight: "70%",
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 20,
+    color: "#1e293b",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  statusList: {
+    maxHeight: 300,
+    marginBottom: 16,
+  },
+  statusOption: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e2e8f0",
+  },
+  selectedStatusOption: {
+    backgroundColor: "#eff6ff",
+    borderRadius: 8,
+  },
+  statusText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 16,
+    color: "#1e293b",
+    textTransform: "capitalize",
+  },
+  cancelModalButton: {
+    backgroundColor: "#ef4444",
+    borderWidth: 1,
+    borderColor: "#dc2626",
+  },
+  messageBubble: {
+    position: "absolute",
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#3b82f6",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    transform: [{ scale: 1 }],
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 40,
   },
   orderRow: {
     flexDirection: "row",
@@ -685,10 +1070,6 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 24,
     alignItems: "center",
-  },
-  detailContent: {
-    marginLeft: 12,
-    flex: 1,
   },
   orderLabel: {
     fontFamily: "Inter-Medium",
@@ -700,39 +1081,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#1e293b",
   },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  badgeText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 12,
-    color: "white",
-    fontWeight: "500",
-  },
   note: {
     marginTop: 8,
     marginBottom: 16,
-  },
-  waitingText: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#666",
-    fontStyle: "italic",
-  },
-  successText: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#10b981",
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  cancelledText: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#ef4444",
-    fontWeight: "600",
   },
   warningText: {
     fontFamily: "Inter-Regular",
@@ -755,80 +1106,11 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  actionButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    minWidth: 80,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-  },
-  buttonText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 12,
-    color: "#fff",
-  },
   noImageText: {
     fontFamily: "Inter-Regular",
     fontSize: 12,
     textAlign: "center",
     color: "#666",
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    width: "80%",
-    maxHeight: "60%",
-    backgroundColor: "white",
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontFamily: "Poppins-SemiBold",
-    fontSize: 18,
-    color: "#1e293b",
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  statusList: {
-    maxHeight: 200,
-  },
-  statusOption: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
-  },
-  selectedStatusOption: {
-    backgroundColor: "#eff6ff",
-  },
-  statusText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#1e293b",
-  },
-  cancelModalButton: {
-    backgroundColor: "#FF4444",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    minWidth: 80,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    marginTop: 10,
   },
   suggestionsContainer: {
     flex: 1,
@@ -886,20 +1168,45 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 20,
   },
-  messageBubble: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#3b82f6",
-    justifyContent: "center",
+  button: {
+    flexDirection: "row",
     alignItems: "center",
-    elevation: 4,
+    justifyContent: "center",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
+    elevation: 3,
+    minWidth: 100,
+  },
+  primaryButton: {
+    backgroundColor: "#3b82f6",
+    borderWidth: 1,
+    borderColor: "#2563eb",
+  },
+  secondaryButton: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#3b82f6",
+  },
+  dangerButton: {
+    backgroundColor: "#ef4444",
+    borderWidth: 1,
+    borderColor: "#dc2626",
+  },
+  secondaryButtonText: {
+    color: "#3b82f6",
+  },
+  buttonIcon: {
+    marginRight: 6,
+  },
+  modalButton: {
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginTop: 10,
   },
 });
