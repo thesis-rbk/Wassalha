@@ -1,4 +1,3 @@
-// QRCodeScanner.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -7,7 +6,7 @@ import {
   Modal,
   Alert,
 } from "react-native";
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { CameraView, useCameraPermissions } from "expo-camera"; // No need for BarCodeScanner import unless using constants
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { XCircle } from "lucide-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -32,7 +31,7 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
 
   useEffect(() => {
     const checkAndRequestPermission = async () => {
-      if (permission === null) return; // Wait for hook to initialize
+      if (!permission) return; // Wait for hook to initialize
       if (permission.granted) {
         setHasPermission(true);
       } else if (permission.canAskAgain) {
@@ -47,7 +46,9 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   }, [permission, requestPermission]);
 
   const handleScan = async ({ type, data }: { type: string; data: string }) => {
+    if (scanned) return; // Prevent multiple scans while processing
     setScanned(true);
+
     try {
       const scannedData = JSON.parse(data);
       const pickup = pickups.find((p) => p.id === scannedData.pickupNumber);
@@ -85,9 +86,11 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
       Alert.alert("Error", "Failed to complete pickup. Please try again.");
       onClose();
     } finally {
-      setScanned(false);
+      setTimeout(() => setScanned(false), 1000); // Reset after 1s
     }
   };
+
+  if (!visible) return null;
 
   return (
     <Modal
@@ -114,10 +117,10 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         ) : (
           <CameraView
             style={styles.camera}
-            type="back" 
-            onBarCodeScanned={scanned ? undefined : handleScan}
-            barCodeScannerSettings={{
-              barCodeTypes: ["qr"],
+            facing="back"
+            onBarcodeScanned={handleScan} // Updated prop name (case-sensitive)
+            barcodeScannerSettings={{
+              barcodeTypes: ["qr"], // Simplified, "qr" works in newer versions
             }}
           />
         )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,7 +16,8 @@ import { RootState } from "@/store";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
 import { TabBar } from "@/components/navigation/TabBar";
 import { useRouter } from "expo-router";
-
+import { navigateToChatFromMessages } from "@/services/chatService";
+import { useFocusEffect } from "@react-navigation/native";
 export default function MessagesScreen() {
   const { user } = useSelector((state: RootState) => state.auth);
   const [conversations, setConversations] = useState<
@@ -24,72 +25,77 @@ export default function MessagesScreen() {
   >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [chatId, setChatId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("home");
   const router = useRouter();
 
   const currentUserId = user?.id;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const usersResponse = await axiosInstance.get("/api/users");
-        const users: User[] = usersResponse.data.data;
+  const fetchData = useCallback(async () => {
+    try {
+      const usersResponse = await axiosInstance.get("/api/users");
+      const users: User[] = usersResponse.data.data;
 
-        const messagesResponse = await axiosInstance.get(
-          `/api/users/messages?userId=${currentUserId}`
-        );
-        const messages: Message[] = messagesResponse.data.data;
+      const messagesResponse = await axiosInstance.get(
+        `/api/users/messages?userId=${currentUserId}`
+      );
+      const messages: Message[] = messagesResponse.data.data;
 
-        const conversationMap = new Map<
-          number,
-          { user: User; lastMessage: Message; unreadCount: number }
-        >();
+      const conversationMap = new Map<
+        number,
+        { user: User; lastMessage: Message; unreadCount: number }
+      >();
 
-        messages.forEach((message: Message) => {
-          let otherUserId: number;
+      messages.forEach((message: Message) => {
+        let otherUserId: number;
 
-          if (message.senderId === currentUserId) {
-            otherUserId = message.receiverId;
-          } else if (message.receiverId === currentUserId) {
-            otherUserId = message.senderId;
-          } else {
-            return;
-          }
+        setChatId(parseInt(message.chatId));
 
-          const otherUser = users.find((user) => user.id === otherUserId);
-          if (!otherUser) return;
+        if (message.senderId === currentUserId) {
+          otherUserId = message.receiverId;
+        } else if (message.receiverId === currentUserId) {
+          otherUserId = message.senderId;
+        } else {
+          return;
+        }
 
-          const existingConversation = conversationMap.get(otherUserId);
+        const otherUser = users.find((user) => user.id === otherUserId);
+        if (!otherUser) return;
 
-          if (
-            !existingConversation ||
-            new Date(message.time) >
+        const existingConversation = conversationMap.get(otherUserId);
+
+        if (
+          !existingConversation ||
+          new Date(message.time) >
             new Date(existingConversation.lastMessage.time)
-          ) {
-            const unreadCount =
-              !message.isRead && message.senderId !== currentUserId
-                ? (existingConversation?.unreadCount || 0) + 1
-                : existingConversation?.unreadCount || 0;
+        ) {
+          const unreadCount =
+            !message.isRead && message.senderId !== currentUserId
+              ? (existingConversation?.unreadCount || 0) + 1
+              : existingConversation?.unreadCount || 0;
 
-            conversationMap.set(otherUserId, {
-              user: otherUser,
-              lastMessage: message,
-              unreadCount,
-            });
-          }
-        });
+          conversationMap.set(otherUserId, {
+            user: otherUser,
+            lastMessage: message,
+            unreadCount,
+          });
+        }
+      });
 
-        setConversations(Array.from(conversationMap.values()));
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Failed to load messages. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+      setConversations(Array.from(conversationMap.values()));
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Failed to load messages. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }, [currentUserId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
 
   const handleTabPress = (tab: string) => {
     setActiveTab(tab);
@@ -130,7 +136,13 @@ export default function MessagesScreen() {
     const { user, lastMessage, unreadCount } = item;
 
     return (
-      <TouchableOpacity style={styles.conversationItem}>
+      <TouchableOpacity
+        style={styles.conversationItem}
+        onPress={() => {
+          // Navigate to the chat screen
+          navigateToChatFromMessages(parseInt(chatId?.toString() || "0"));
+        }}
+      >
         <View style={styles.avatarContainer}>
           <Image
             source={{
@@ -171,14 +183,6 @@ export default function MessagesScreen() {
     );
   };
 
-  const handleNotificationPress = () => {
-    router.push("./notifications");
-  };
-
-  const handleProfilePress = () => {
-    router.push("./profile");
-  };
-
   if (loading) {
     return (
       <ThemedView style={styles.loadingContainer}>
@@ -198,7 +202,7 @@ export default function MessagesScreen() {
   return (
     <ThemedView style={styles.container}>
       <TopNavigation title="Messages" />
-      
+
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.user.id.toString()}
@@ -211,7 +215,7 @@ export default function MessagesScreen() {
           </View>
         }
       />
-      
+
       <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   );

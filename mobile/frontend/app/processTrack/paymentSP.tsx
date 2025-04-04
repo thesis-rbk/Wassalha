@@ -178,7 +178,7 @@ const PaymentScreen = () => {
       const room = params.idProcess; 
       socket.emit("joinProcessRoom", room);
       console.log("🔌 Ophoto socket connected, ",room);
-   
+      
     })
     socket.on("confirmPayment", (data) => {
       console.log("🔄 payment updated to:", data);
