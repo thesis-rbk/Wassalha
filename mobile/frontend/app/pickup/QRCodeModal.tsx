@@ -1,42 +1,29 @@
-import React,{useEffect} from "react";
+import React from "react";
 import { Modal, View, Text, StyleSheet } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { QRCodeModalProps } from "@/types/QRCodeModalProps";
 import { useRouter } from "expo-router";
-import { useAuth } from "@/context/AuthContext"; 
+import { useAuth } from "@/context/AuthContext";
 
-
-
-
-export const QRCodeModal: React.FC<QRCodeModalProps> = ({ visible, qrCodeData, onClose,paramsData }) => {
+export const QRCodeModal: React.FC<QRCodeModalProps> = ({ visible, qrCodeData, onClose, paramsData }) => {
   const { user } = useAuth();
-  useEffect(() => {
-    console.log("🧾 paramsData inside QRCodeModal:", paramsData);
-  }, [paramsData]);
   const router = useRouter();
 
-const handleClose = () => {
-  const reviewerId = paramsData.travelerId === user?.id.toString()
-    ? paramsData.travelerId
-    : paramsData.requesterId;
-  const reviewedId = paramsData.travelerId === reviewerId
-    ? paramsData.requesterId
-    : paramsData.travelerId;
-
-  router.push({
-    pathname: "/screens/Review",
-    params: {
-      orderId: paramsData.idOrder,
-      reviewerId: reviewerId,
-      reviewedId: reviewedId,
-      reviewType: reviewerId === paramsData.travelerId ? "REQUESTER_REVIEW" : "USER_REVIEW",
-      goodsName: paramsData.goodsName,
-    }
-  });
-
-  onClose(); // still close modal
-};
+  const handleClose = () => {
+    router.push({
+      pathname: "/screens/Review",
+      params: {
+        idOrder: paramsData.idOrder,
+        goodsName: paramsData.goodsName,
+        travelerId: paramsData.travelerId,
+        travelerName: paramsData.travelerName,
+        requesterId: paramsData.requesterId,
+        requesterName: paramsData.requesterName,
+      },
+    });
+    onClose();
+  };
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
