@@ -1,6 +1,5 @@
 require("dotenv").config();
 
-// Import Socket.IO server and our feature handlers
 const { Server } = require("socket.io");
 const notificationHandlers = require("./notifications/notificationSocket");
 const processTrackSocket = require("./processTrack/processTrackSocket");

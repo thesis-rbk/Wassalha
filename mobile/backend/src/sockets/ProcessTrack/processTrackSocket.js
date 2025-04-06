@@ -16,7 +16,7 @@ module.exports = (processTrackIO) => {
         socket.on("requestCreated", (data) => {
             const { requestId } = data;
             console.log(`📝 New request created: ${requestId} (PENDING)`);
-            
+
             socket.broadcast.emit("newRequest", {
                 requestId,
                 status: "PENDING",
@@ -28,33 +28,33 @@ module.exports = (processTrackIO) => {
         socket.on("offerMadeOrder", (data) => {
             const { processId, requestId } = data;
             console.log(`🤝 Offer made order for request ${requestId}, process ${processId} (PREINITIALIZED)`);
-            const offer={
+            const offer = {
                 processId,
                 requestId,
                 status: "PREINITIALIZED",
                 timestamp: new Date()
             }
-            console.log(offer,"offeeeeeeer backend")
+            console.log(offer, "offeeeeeeer backend")
             processTrackIO.to(`process:${processId}`).emit("offerMadeOrder", offer);
         });
         socket.on("photo", (data) => {
-            const  {processId}  = data;
+            const { processId } = data;
             console.log(`🔄 verification photo${processId}  updated to `);
-            
+
             processTrackIO.to(`process:${processId}`).emit("photo", {
                 processId
             });
         });
         socket.on("confirmProduct", (data) => {
-            const {processId}   = data;
+            const { processId } = data;
             console.log(`🔄 verification product${processId}  updated to `);
-            
+
             processTrackIO.to(`process:${processId}`).emit("confirmProduct", {
                 processId
             });
         });
         socket.on("confirmPayment", (data) => {
-            const {processId}   = data;
+            const { processId } = data;
             console.log(`🔄 verification payment${processId}  updated to `);
 
             processTrackIO.to(`process:${processId}`).emit("confirmPayment", {
@@ -65,14 +65,14 @@ module.exports = (processTrackIO) => {
         socket.on("processStatusUpdate", (data) => {
             const { processId, status } = data;
             console.log(`🔄 Process ${processId} status updated to ${status}`);
-            
+
             processTrackIO.to(`process:${processId}`).emit("processStatusChanged", {
                 processId,
                 status,
                 timestamp: new Date()
             });
         });
-    
+
 
         socket.on("disconnect", () => {
             console.log("❌ Client disconnected from processTrack namespace:", socket.id);

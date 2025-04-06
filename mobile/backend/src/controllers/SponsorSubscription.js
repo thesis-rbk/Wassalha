@@ -484,6 +484,53 @@ const sponsor = {
                 message: 'Error generating payment link'
             });
         }
+    },
+    AllPendingRequest: async (req, res) => {
+        try {
+            const response = await prisma.request.findMany({
+                where: { status: "PENDING" }, include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            profile: {
+                                select: {
+                                    imageId: true,
+                                    image: {
+                                        select: {
+                                            id: true,
+                                            url: true, // or whatever fields you want from media
+                                        }
+                                    }
+                                }
+                            },
+                            reputation: {
+                                select: {
+                                    score: true,
+                                    totalRatings: true,
+                                    level: true
+                                }
+                            }
+                        }
+                    },
+                    goods: {
+                        include: {
+                            image: {
+                                select: {
+                                    id: true,
+                                    url: true
+                                }
+                            }
+                        }
+                    },
+                    pickup: true,
+                }
+            })
+            res.status(200).send(response)
+        } catch (err) {
+            console.log("err", err)
+        }
     }
 
 }

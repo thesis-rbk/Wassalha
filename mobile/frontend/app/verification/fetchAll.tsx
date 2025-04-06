@@ -11,6 +11,7 @@ import {
     Alert,
 } from "react-native";
 import Icon from 'react-native-vector-icons/Feather';
+import { Plus } from "lucide-react-native"
 import axiosInstance from "@/config";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Sponsorship } from "@/types/Sponsorship";
@@ -22,7 +23,7 @@ import SegmentedControl from "@/components/SegmentedControl";
 import OrdersScreen from "./SponsorRequests";
 import OrdersSponsor from "./ClientsOrders";
 import { useStatus } from '@/context/StatusContext';
-
+import Header from "@/components/navigation/headers";
 const SponsorshipsScreen: React.FC = () => {
     const [activeTab, setActiveTab] = useState("home");
     const [view, setView] = useState<"requests" | "orders" | "all">("all");
@@ -236,11 +237,6 @@ const SponsorshipsScreen: React.FC = () => {
                         <Icon name="x" size={20} color="#007BFF" />
                     </TouchableOpacity>
                 )}
-                {isSponsor && (
-                    <TouchableOpacity onPress={() => handleAddSponsorshipPress(id)} style={styles.plusButtonContainer}>
-                        <Text style={styles.plusButton}>+</Text>
-                    </TouchableOpacity>
-                )}
             </Animated.View>
 
             {loading ? (
@@ -253,6 +249,15 @@ const SponsorshipsScreen: React.FC = () => {
                     ListEmptyComponent={<Text style={styles.emptyText}>No sponsorships found.</Text>}
                     contentContainerStyle={styles.listContent}
                 />
+            )}
+            {isSponsor && (
+                <TouchableOpacity
+                    style={styles.fab}
+                    onPress={() => handleAddSponsorshipPress(id)}
+                    activeOpacity={0.8}
+                >
+                    <Plus size={24} color="white" strokeWidth={2.5} />
+                </TouchableOpacity>
             )}
         </>
     );
@@ -351,6 +356,22 @@ const styles = StyleSheet.create({
         padding: 20,
         paddingBottom: 80,
     },
+    fab: {
+        position: "absolute",
+        bottom: 95, // Adjust to be above TabBar
+        right: 20,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: "#3a86ff",
+        justifyContent: "center",
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5,
+    }
 });
 
 export default SponsorshipsScreen;

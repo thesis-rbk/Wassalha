@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   Alert,
   Image,
+  SafeAreaView,
 } from "react-native"
 import axiosInstance from "@/config"
 import { TopNavigation } from "@/components/navigation/TopNavigation"
@@ -22,7 +23,7 @@ import { ThemedText } from "@/components/ThemedText"
 import { Card } from "@/components/Card"
 import UserCard from "@/components/fetchCards"
 import OrderCard from "@/components/cardsForHomePage"
-import { Plane, ShoppingBag, MapPin, Crown, ChevronRight } from "lucide-react-native"
+import { Plane, ShoppingBag, MapPin, Crown, ChevronRight, Globe } from "lucide-react-native"
 import { useRouter } from "expo-router"
 import type { Traveler } from "@/types/Traveler"
 import type { Order } from "@/types/Sponsorship"
@@ -30,7 +31,7 @@ import { useSelector } from 'react-redux'
 import { LinearGradient } from 'expo-linear-gradient'
 import { UserData } from '@/types/UserData'
 import { UserProfile } from '@/types/UserProfile'
-
+import CardHome from "@/components/homecard"
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home")
@@ -62,13 +63,12 @@ export default function HomeScreen() {
 
   const [currentUser, setUser] = useState(user)
 
-  const fetchData = async (pageNum: number) => {
+  const fetchData = async () => {
     try {
-      const response = await axiosInstance.get(`/api/requests/?page=${pageNum}&limit=3`)
-      const newRequests = response.data.data
-      console.log(`Fetched page ${pageNum}:`, newRequests)
-      setRequests((prev) => [...prev, ...newRequests])
-      setHasMore(newRequests.length > 0 && newRequests.length === 3)
+      const response = await axiosInstance.get(`/api/allPendingReq`)
+      const newRequests = response.data
+      console.log("Fetched requests:", newRequests)
+      setRequests(newRequests)
     } catch (error) {
       console.log("Error fetching requests:", error)
       setHasMore(false)
@@ -80,16 +80,16 @@ export default function HomeScreen() {
     try {
       const usersResponse = await axiosInstance.get('/api/users');
       const users = (usersResponse.data.data || []) as UserData[];
-      
+
       // Create initial profiles
       const profiles: UserProfile[] = users.map((user: UserData): UserProfile => ({
         id: user.id,
         name: user.profile?.firstName || user.name,
         imageUrl: user.profile?.image?.url || null
       }));
-      
+
       setRecentUsers(profiles);
-      
+
       // After setting initial data, fetch images for users that need them
       users.forEach(async (user) => {
         if (user.id) {
@@ -97,10 +97,10 @@ export default function HomeScreen() {
             const imageResponse = await axiosInstance.get(`/api/users/${user.id}/profile-image`);
             if (imageResponse.data.success && imageResponse.data.data?.imageUrl) {
               // Update the specific user's image URL
-              setRecentUsers(prevUsers => 
-                prevUsers.map(prevUser => 
-                  prevUser.id === user.id 
-                    ? { ...prevUser, imageUrl: imageResponse.data.data.imageUrl } 
+              setRecentUsers(prevUsers =>
+                prevUsers.map(prevUser =>
+                  prevUser.id === user.id
+                    ? { ...prevUser, imageUrl: imageResponse.data.data.imageUrl }
                     : prevUser
                 )
               );
@@ -122,13 +122,13 @@ export default function HomeScreen() {
   const fetchCurrentUser = async () => {
     try {
       if (!user || !user.id) return;
-      
+
       const response = await axiosInstance.get(`/api/users/${user.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      
+
       if (response.data) {
         console.log("Fetched current user data:", response.data);
         // Update local state with fresh user data
@@ -148,8 +148,7 @@ export default function HomeScreen() {
     fetchRecentUsers();
     fetchCurrentUser();
     handleBestTraveler();
-    fetchData(1);
-
+    fetchData()
     if (travelers.length > 0 && sponsors.length > 0) {
       startAutoScroll()
     }
@@ -245,10 +244,10 @@ export default function HomeScreen() {
       route: "../goodPost/goodpostpage" as const,
     },
     {
-      title: "Order",
-      description: "Shop globally, save locally. Get up to 40% off on international products with trusted travelers.",
-      icon: <ShoppingBag size={40} color="#007BFF" />,
-      route: "../orders&requests/order" as const,
+      title: "All",
+      description: "See what people need around the world—turn your vacation into easy cash with just a few clicks..",
+      icon: <Globe size={40} color="#007BFF" />,
+      route: "/orders&requests/allPendingRequests" as const,
     },
     {
       title: "Pickup",
@@ -273,8 +272,8 @@ export default function HomeScreen() {
     }
   }
 
-  const handleOrderCardPress = (requestId: number) => {
-    // router.push(`/request/${requestId}`) // Navigate to request details
+  const handleOrderCardPress = (parameters: any) => {
+    router.push({ pathname: `/processTrack/initializationSP`, params: parameters }) // Navigate to request details
   }
 
   const handleAcceptRequest = (requestId: number) => {
@@ -288,9 +287,7 @@ export default function HomeScreen() {
   }
 
   const handleSeeMoreRequests = () => {
-    const nextPage = page + 1
-    setPage(nextPage)
-    fetchData(nextPage)
+    fetchData()
   }
 
   // New function to handle clicking on a traveler or sponsor card
@@ -331,8 +328,8 @@ export default function HomeScreen() {
           </ThemedText>
           <View style={styles.avatarRow}>
             {recentUsers.slice(0, 10).map((user, index) => (
-              <View 
-                key={index} 
+              <View
+                key={index}
                 style={[
                   styles.avatarContainer,
                   { marginLeft: index > 0 ? -15 : 0, zIndex: 10 - index }
@@ -357,11 +354,11 @@ export default function HomeScreen() {
               <ThemedText style={styles.avatarMoreText}>+100K</ThemedText>
             </View>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.orderButton}
             onPress={() => router.push("/productDetails/create-order")}
           >
-            <ThemedText style={styles.orderButtonText}>I'm ready to start my order</ThemedText>
+            <ThemedText style={styles.orderButtonText}>Are you ready ,click to start...</ThemedText>
             <ChevronRight size={24} color="#1a1a1a" />
           </TouchableOpacity>
         </View>
@@ -403,7 +400,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Best Travelers Section */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <View style={styles.separator}>
             <ThemedText style={styles.separatorText}>Best Travelers</ThemedText>
           </View>
@@ -438,9 +435,9 @@ export default function HomeScreen() {
             </ScrollView>
           </View>
         </View>
-
+        
         {/* Best Sponsors Section */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <View style={styles.separator}>
             <ThemedText style={styles.separatorText}>Best Sponsors</ThemedText>
           </View>
@@ -474,12 +471,26 @@ export default function HomeScreen() {
               </View>
             </ScrollView>
           </View>
-        </View>
+        </View>  */}
 
         {/* Requests Section */}
+        <SafeAreaView style={styles.containerHomeCard}>
+          <CardHome
+            title="Do you want to be a sponsor?"
+            description="Earn a lot of money with only ONE CLICK ..."
+            imageUrl="https://www.chargebee.com/blog/wp-content/uploads/2022/07/Chargebee-Subscription-Box-Industry-trends-opportunities-and-Market-Size.png" // Replace with your image URL
+            onPress={() => router.push("/screens/SponsorshipScreen")}
+          />
+          <CardHome
+            title="Do you want to be a traveler?"
+            description="Gain more money by becoming a sponsor ..."
+            imageUrl="https://media.istockphoto.com/id/487391637/vector/bomber.jpg?s=612x612&w=0&k=20&c=mx6mwMFITuqF_QegfH2CmHg__YGUGVYnYIIbZ6P0Tm4=" // Replace with your image URL
+            onPress={() => router.push("/traveler/becomeTraveler")}
+          />
+        </SafeAreaView>
         <View style={styles.section}>
           <View style={styles.separator}>
-            <ThemedText style={styles.separatorText}>Latest Requests</ThemedText>
+            <ThemedText style={styles.separatorText}>Requests</ThemedText>
           </View>
           <View style={styles.requestsSection}>
             {requests.length > 0 ? (
@@ -488,12 +499,12 @@ export default function HomeScreen() {
                   <OrderCard
                     key={`request-${index}`}
                     order={request as any}
-                    onPress={() => handleOrderCardPress(request.id)}
+                    onPress={() => handleOrderCardPress(request)}
                   />
                 ))}
                 {hasMore && (
                   <TouchableOpacity onPress={handleSeeMoreRequests}>
-                    <ThemedText style={styles.seeMoreText}>See More</ThemedText>
+                    <ThemedText style={styles.seeMoreText}></ThemedText>
                   </TouchableOpacity>
                 )}
               </>
@@ -715,4 +726,8 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#007BFF",
   },
+  containerHomeCard: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  }
 })
