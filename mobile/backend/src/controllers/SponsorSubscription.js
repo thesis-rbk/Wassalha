@@ -294,7 +294,7 @@ const sponsor = {
         console.log("amount", process.env.KONNECT_BASE_URL)
         try {
             // Sending the payment initiation request to Konnect API
-            const response = await axios.post(`https://api.sandbox.konnect.network/api/v2/payments/init-payment`, {
+            const response = await axios.post(`https://sandbox.knct.me/CCKuQCOGx`, {
                 receiverWalletId: "67ddea382f786e7f606a343f", // Your Konnect wallet ID
                 token: 'TND', // Currency (TND, EUR, USD)
                 amount: amount, // Amount in millimes (TND) or cents (EUR, USD)
@@ -302,7 +302,8 @@ const sponsor = {
                 description: description,
                 acceptedPaymentMethods: [
                     "wallet",
-                    "bank_card",
+                    "mastercard",
+                    "visa",
                     "e-DINAR"
                 ],
                 lifespan: 60,
@@ -449,6 +450,84 @@ const sponsor = {
                 where: { id: parseInt(id) },
             });
             res.status(200).send(sponsorOrder);
+        } catch (err) {
+            console.log("err", err)
+        }
+    }, flousiPayment: async (req, res) => {
+        const { amount } = req.body;
+
+        try {
+            const response = await axios.post('https://developers.flouci.com/api/generate_payment', {
+                app_token: process.env.FLOUSY_TOKEN,
+                app_secret: process.env.FOULSY_SECRET_TOKEN,
+                amount: amount * 100,
+                developer_tracking_id: process.env.DEVELOPER_TRACKING_ID,
+                accept_card: true,
+                session_timeout_secs: 1200,
+                success_link: 'https://yourwebsite.com/success', // Add your success URL
+                fail_link: 'https://yourwebsite.com/failure'
+            }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            // Return the payment link
+            const paymentLink = response.data.result.link;
+            res.json({
+                success: true,
+                paymentLink: paymentLink
+            });
+
+        } catch (error) {
+            console.error('Error generating payment:', error.response.data);
+            res.status(500).json({
+                success: false,
+                message: 'Error generating payment link'
+            });
+        }
+    },
+    AllPendingRequest: async (req, res) => {
+        try {
+            const response = await prisma.request.findMany({
+                where: { status: "PENDING" }, include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            profile: {
+                                select: {
+                                    imageId: true,
+                                    image: {
+                                        select: {
+                                            id: true,
+                                            url: true, // or whatever fields you want from media
+                                        }
+                                    }
+                                }
+                            },
+                            reputation: {
+                                select: {
+                                    score: true,
+                                    totalRatings: true,
+                                    level: true
+                                }
+                            }
+                        }
+                    },
+                    goods: {
+                        include: {
+                            image: {
+                                select: {
+                                    id: true,
+                                    url: true
+                                }
+                            }
+                        }
+                    },
+                    pickup: true,
+                }
+            })
+            res.status(200).send(response)
         } catch (err) {
             console.log("err", err)
         }

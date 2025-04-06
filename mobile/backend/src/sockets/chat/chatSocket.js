@@ -6,15 +6,15 @@ const jwt = require("jsonwebtoken");
 const authenticateSocket = async (socket, next) => {
   try {
     console.log("Authenticating chat socket...");
-    
+
     // Try to get token from auth object
     const token = socket.handshake.auth.token;
-    
+
     if (token) {
       try {
         // Verify JWT token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
+
         // Add user ID to socket
         socket.user = { id: decoded.id };
         console.log(`✅ Socket authenticated with token for user: ${decoded.id}`);
@@ -24,22 +24,22 @@ const authenticateSocket = async (socket, next) => {
         // Continue to try other auth methods
       }
     }
-    
+
     // If token auth failed, try query/auth userId
     const userId = socket.handshake.query.userId || socket.handshake.auth.userId;
-    
+
     if (userId) {
       // Cast userId to number
       const userIdNum = parseInt(userId, 10);
       if (isNaN(userIdNum)) {
         return next(new Error("Invalid user ID"));
       }
-      
+
       socket.user = { id: userIdNum };
       console.log(`✅ Socket authenticated with userId: ${userIdNum}`);
       return next();
     }
-    
+
     console.error("❌ No valid authentication method found");
     return next(new Error("Authentication required"));
   } catch (error) {
@@ -73,7 +73,7 @@ const chatHandlers = (socket) => {
         socket.emit("error", { message: "Authentication required" });
         return;
       }
-      
+
       // Ensure chatId is a number
       const chatIdNum = parseInt(chatId, 10);
       if (isNaN(chatIdNum)) {
@@ -100,7 +100,7 @@ const chatHandlers = (socket) => {
       }
 
       console.log(`User ${userId} verified for chat ${chatIdNum}: requester=${chat.requesterId}, provider=${chat.providerId}`);
-      
+
       const roomName = `chat_${chatIdNum}`;
       socket.join(roomName);
       console.log(`👤 User ${userId} joined chat room: ${roomName}`);
@@ -121,7 +121,7 @@ const chatHandlers = (socket) => {
         socket.emit("error", { message: "Authentication required" });
         return;
       }
-      
+
       console.log(`User ${userId} attempting to send message to chat ${data.chatId}`);
 
       // Parse chatId as number
@@ -151,7 +151,7 @@ const chatHandlers = (socket) => {
         chat.requesterId === userId ? chat.providerId : chat.requesterId;
 
       console.log(`Creating message from ${userId} to ${receiverId} in chat ${chatId}`);
-      
+
       // Create the message
       const message = await prisma.message.create({
         data: {
@@ -181,7 +181,7 @@ const chatHandlers = (socket) => {
       });
 
       console.log(`Message created with ID ${message.id}, broadcasting to room chat_${chatId}`);
-      
+
       // Use the stored io instead of getIO()
       if (io) {
         //io.of("/chat").to(`chat_${chatId}`).emit("receive_message", message);

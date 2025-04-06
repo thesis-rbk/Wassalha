@@ -8,7 +8,7 @@ const notificationHandlers = (socket) => {
     const roomName = `user_${userId}`;
     socket.join(roomName);
     console.log(`👤 Authenticated user ${userId} joined room: ${roomName}`);
-    
+
     // Send confirmation back to the client
     socket.emit('joined', { room: roomName, userId });
 
@@ -65,7 +65,7 @@ const notificationHandlers = (socket) => {
             console.log(`⚠️ Security warning: User ${socket.user.id} tried to respond to offer as requester ${requestDetails.requesterId}`);
             return;
         }
-        
+
         const roomName = `user_${travelerId}`;
         console.log(`✉️ Sending response notification to room: ${roomName}`, {
             travelerId,
@@ -109,7 +109,7 @@ const notificationHandlers = (socket) => {
             console.log(`⚠️ Security warning: User ${socket.user.id} tried to cancel order as requester ${requestDetails.requesterId}`);
             return;
         }
-        
+
         const roomName = `user_${travelerId}`;
         console.log(`📝 Sending order cancellation notification to room: ${roomName}`, {
             travelerId,
@@ -151,7 +151,7 @@ const notificationHandlers = (socket) => {
             console.log(`⚠️ Security warning: User ${socket.user.id} tried to cancel offer as traveler ${offerDetails.travelerId}`);
             return;
         }
-        
+
         const roomName = `user_${requesterId}`;
         console.log(`🚫 Sending offer cancellation notification to room: ${roomName}`, {
             requesterId,
@@ -237,7 +237,7 @@ const notificationHandlers = (socket) => {
             console.log(`⚠️ Security warning: User ${socket.user.id} tried to confirm product as requester ${requesterId}`);
             return;
         }
-        
+
         const roomName = `user_${travelerId}`;
         console.log(`✅ Sending product confirmation notification to room: ${roomName}`, {
             travelerId,
@@ -280,7 +280,7 @@ const notificationHandlers = (socket) => {
             console.log(`⚠️ Security warning: User ${socket.user.id} tried to request photo as requester ${requesterId}`);
             return;
         }
-        
+
         const roomName = `user_${travelerId}`;
         console.log(`📷 Sending new photo request notification to room: ${roomName}`, {
             travelerId,
@@ -323,7 +323,7 @@ const notificationHandlers = (socket) => {
             console.log(`⚠️ Security warning: User ${socket.user.id} tried to cancel process as requester ${requesterId}`);
             return;
         }
-        
+
         const roomName = `user_${travelerId}`;
         console.log(`❌ Sending process cancellation notification to room: ${roomName}`, {
             travelerId,
@@ -366,7 +366,7 @@ const notificationHandlers = (socket) => {
             console.log(`⚠️ Security warning: User ${socket.user.id} tried to initiate payment as requester ${requesterId}`);
             return;
         }
-        
+
         const roomName = `user_${travelerId}`;
         console.log(`💰 Sending payment initiated notification to room: ${roomName}`, {
             travelerId,
@@ -409,7 +409,7 @@ const notificationHandlers = (socket) => {
             console.log(`⚠️ Security warning: User ${socket.user.id} tried to complete payment as requester ${requesterId}`);
             return;
         }
-        
+
         const roomName = `user_${travelerId}`;
         console.log(`✅ Sending payment completed notification to room: ${roomName}`, {
             travelerId,
@@ -452,7 +452,7 @@ const notificationHandlers = (socket) => {
             console.log(`⚠️ Security warning: User ${socket.user.id} tried to report payment failure as requester ${requesterId}`);
             return;
         }
-        
+
         const roomName = `user_${travelerId}`;
         console.log(`❌ Sending payment failed notification to room: ${roomName}`, {
             travelerId,
@@ -495,7 +495,7 @@ const notificationHandlers = (socket) => {
             console.log(`⚠️ Security warning: User ${socket.user.id} tried to refund payment as requester ${requesterId}`);
             return;
         }
-        
+
         const roomName = `user_${travelerId}`;
         console.log(`💸 Sending payment refund notification to room: ${roomName}`, {
             travelerId,

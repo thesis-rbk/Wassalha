@@ -673,9 +673,8 @@ export default function InitializationSP() {
                         setOfferDetails((prev) => ({
                           ...prev,
                           flightNumber: value,
-                          departureFlightCode: `${
-                            AIRLINE_CODES[prev.airline]
-                          }${value}`,
+                          departureFlightCode: `${AIRLINE_CODES[prev.airline]
+                            }${value}`,
                         }));
                       }}
                     >

@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-module.exports = (pickupIO) => { 
+module.exports = (pickupIO) => {
   pickupIO.on("connection", (socket) => {
     console.log("✅ Client connected to /pickup namespace via Socket.IO:", socket.id);
 
