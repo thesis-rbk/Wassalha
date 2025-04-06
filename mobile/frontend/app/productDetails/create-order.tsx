@@ -24,7 +24,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { TitleLarge, BodyMedium } from "@/components/Typography";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useStatus } from '@/context/StatusContext';
-
+import Header from '@/components/navigation/headers';
 const SCRAPE_URL = `${process.env.EXPO_PUBLIC_API_URL}${process.env.EXPO_PUBLIC_SCRAPE_ENDPOINT}`;
 
 export default function Page() {
@@ -99,15 +99,6 @@ export default function Page() {
 
   return (
     <View style={styles.container}>
-      {/* <View style={styles.header}>
-        <TitleLarge style={styles.headerTitle}>Create Order</TitleLarge>
-        <View style={styles.headerIcons}>
-          <Bell size={24} color={Colors[colorScheme].primary} />
-          <MessageCircle size={24} color={Colors[colorScheme].primary} />
-          <User size={24} color={Colors[colorScheme].primary} />
-        </View>
-      </View> */}
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -271,7 +262,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, color: Colors.light.primary },
   headerIcons: { flexDirection: "row", gap: 16 },
   scrollView: { flex: 1 },
-  scrollContent: { padding: 16, paddingBottom: 32 , marginTop:20},
+  scrollContent: { padding: 16, paddingBottom: 32, marginTop: 20 },
   inputSection: { marginBottom: 32 },
   label: { marginBottom: 8, fontSize: 16, color: "#333" },
   inputContainer: {
