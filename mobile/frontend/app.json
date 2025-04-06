@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "frontend",
+    "permissions": ["camera"],
     "slug": "wassalha",
     "version": "1.0.0",
     "orientation": "portrait",

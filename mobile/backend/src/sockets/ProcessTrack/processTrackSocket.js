@@ -56,7 +56,6 @@ module.exports = (processTrackIO) => {
         socket.on("confirmPayment", (data) => {
             const { processId } = data;
             console.log(`🔄 verification payment${processId}  updated to `);
-
             processTrackIO.to(`process:${processId}`).emit("confirmPayment", {
                 processId
             });
