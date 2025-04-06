@@ -9,8 +9,11 @@ const MainLoading: React.FC<MainLoadingProps> = ({ onLoadingComplete }) => {
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const percentageAnim = useRef(new Animated.Value(0)).current; // New animated value for percentage
   const [percentage, setPercentage] = useState('0%'); // Local state for percentage text
+  const MIN_LOADING_TIME = 3000; // Minimum loading time in milliseconds
 
   useEffect(() => {
+    const startTime = Date.now();
+    
     const rotate = Animated.loop(
       Animated.timing(rotateAnim, {
         toValue: 1,
@@ -33,8 +36,20 @@ const MainLoading: React.FC<MainLoadingProps> = ({ onLoadingComplete }) => {
     });
 
     percentageAnimation.start(() => {
-      rotate.stop(); // Stop rotation when loading is complete
-      onLoadingComplete(); // Call the completion handler
+      const elapsedTime = Date.now() - startTime;
+      
+      if (elapsedTime < MIN_LOADING_TIME) {
+        // If actual loading was faster than minimum time, wait for the remaining time
+        const remainingTime = MIN_LOADING_TIME - elapsedTime;
+        setTimeout(() => {
+          rotate.stop(); // Stop rotation when loading is complete
+          onLoadingComplete(); // Call the completion handler
+        }, remainingTime);
+      } else {
+        // If loading took longer than minimum time, complete immediately
+        rotate.stop(); // Stop rotation when loading is complete
+        onLoadingComplete(); // Call the completion handler
+      }
     });
 
     return () => {
