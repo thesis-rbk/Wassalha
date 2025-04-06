@@ -33,7 +33,7 @@
     "base-64": "^1.0.0",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
-    "expo": "~52.0.37",
+    "expo": "~52.0.41",
     "expo-auth-session": "^6.0.3",
     "expo-barcode-scanner": "^13.0.1",
     "expo-blur": "~14.0.3",
@@ -96,6 +96,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/date-fns": "^2.5.3",
+    "@types/expo": "^32.0.13",
     "@types/jest": "^29.5.12",
     "@types/node": "^22.13.5",
     "@types/react": "~18.3.12",
@@ -115,4 +116,3 @@
   "private": true,
   "type": "module"
 }
-
