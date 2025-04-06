@@ -358,7 +358,7 @@ export default function HomeScreen() {
             style={styles.orderButton}
             onPress={() => router.push("/productDetails/create-order")}
           >
-            <ThemedText style={styles.orderButtonText}>Are you ready ,click to start...</ThemedText>
+            <ThemedText style={styles.orderButtonText}>Are you ready, click to start...</ThemedText>
             <ChevronRight size={24} color="#1a1a1a" />
           </TouchableOpacity>
         </View>
@@ -478,13 +478,13 @@ export default function HomeScreen() {
           <CardHome
             title="Do you want to be a sponsor?"
             description="Earn a lot of money with only ONE CLICK ..."
-            imageUrl="https://www.chargebee.com/blog/wp-content/uploads/2022/07/Chargebee-Subscription-Box-Industry-trends-opportunities-and-Market-Size.png" // Replace with your image URL
+            imageUrl="https://www.chargebee.com/blog/wp-content/uploads/2022/07/Chargebee-Subscription-Box-Industry-trends-opportunities-and-Market-Size.png"
             onPress={() => router.push("/screens/SponsorshipScreen")}
           />
           <CardHome
             title="Do you want to be a traveler?"
             description="Gain more money by becoming a sponsor ..."
-            imageUrl="https://media.istockphoto.com/id/487391637/vector/bomber.jpg?s=612x612&w=0&k=20&c=mx6mwMFITuqF_QegfH2CmHg__YGUGVYnYIIbZ6P0Tm4=" // Replace with your image URL
+            imageUrl="https://media.istockphoto.com/id/487391637/vector/bomber.jpg?s=612x612&w=0&k=20&c=mx6mwMFITuqF_QegfH2CmHg__YGUGVYnYIIbZ6P0Tm4="
             onPress={() => router.push("/traveler/becomeTraveler")}
           />
         </SafeAreaView>

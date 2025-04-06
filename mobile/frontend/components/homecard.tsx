@@ -2,17 +2,11 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient'; // For gradient background
 import { Ionicons } from '@expo/vector-icons'; // For icons (you can use any icon library)
-
+import { CardProps } from '../types/Sponsorship'; // Assuming you have a type definition for props
 // Get the screen width for responsive design
 const { width } = Dimensions.get('window');
 
-// Define the props interface for the Card component
-interface CardProps {
-    title: string;
-    description: string;
-    imageUrl: string;
-    onPress: () => void; // For handling button press
-}
+
 
 // Card Component with Enhanced UX
 const CardHome: React.FC<CardProps> = ({ title, description, imageUrl, onPress }) => {

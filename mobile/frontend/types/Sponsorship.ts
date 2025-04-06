@@ -1,3 +1,6 @@
+import {
+    GestureResponderEvent,
+} from 'react-native';
 export interface Sponsorship {
     id: number;
     amount: number;
@@ -238,4 +241,22 @@ export interface OrderfetchCardProps {
         };
     };
     onPress: () => void;
+}
+
+export interface CardProps {
+    title: string;
+    description: string;
+    imageUrl: string;
+    onPress: () => void; // For handling button press
+}
+
+export interface HeaderProps {
+    title: string;
+    subtitle: string;
+    onBackPress?: (event: GestureResponderEvent) => void;
+    onNextPress?: (event: GestureResponderEvent) => void; // New prop for next button
+    showBackButton?: boolean;
+    showNextButton?: boolean; // New prop to control next button visibility
+    backButtonTitle?: string;
+    nextButtonTitle?: string; // New prop for next button text
 }

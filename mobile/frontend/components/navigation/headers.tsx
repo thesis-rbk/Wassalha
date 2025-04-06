@@ -4,23 +4,13 @@ import {
     Text,
     TouchableOpacity,
     StyleSheet,
-    GestureResponderEvent,
     Animated,
+    GestureResponderEvent
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-
-interface HeaderProps {
-    title: string;
-    subtitle: string;
-    onBackPress?: (event: GestureResponderEvent) => void;
-    onNextPress?: (event: GestureResponderEvent) => void; // New prop for next button
-    showBackButton?: boolean;
-    showNextButton?: boolean; // New prop to control next button visibility
-    backButtonTitle?: string;
-    nextButtonTitle?: string; // New prop for next button text
-}
+import { HeaderProps } from "../../types/Sponsorship"; // Adjust the import path as necessary
 
 const Header: React.FC<HeaderProps> = ({
     title,
