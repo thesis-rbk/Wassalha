@@ -1,3 +1,6 @@
+import {
+    GestureResponderEvent,
+} from 'react-native';
 export interface Sponsorship {
     id: number;
     amount: number;
@@ -184,24 +187,76 @@ export interface AccountDetailsModalProps {
     onSubmit: (details: { type: string; details: string | { email: string; password: string } }) => void;
 }
 
-export interface OrderSpon {
-    id: number;
-    status: string;
-    goodsLocation: string;
-    goodsDestination: string;
-    date: string;
-    quantity: number;
-    goods: {
-        price: number;
-        image?: {
-            url: string;
-        };
-        // Add other goods properties as needed
-    };
-    // Add other order properties as needed
-}
 
 export interface OrderfetchCardProps {
-    order: OrderSpon;
+    order: {
+        id: number;
+        status: string;
+        sponsorId: number | null;
+        userId: number;
+        goodsId: number;
+        quantity: number;
+        goodsLocation: string;
+        goodsDestination: string;
+        pickupId: number;
+        date: string;
+        withBox: boolean;
+        user: {
+            id: number;
+            name: string;
+            email: string;
+            profile: {
+                image: { url: string }
+            }
+            reputation: number | null;
+        };
+        goods: {
+            id: number;
+            name: string;
+            size: string;
+            weight: number;
+            price: number;
+            description: string;
+            imageId: number | null;
+            goodsUrl: string | null;
+            isVerified: boolean;
+            categoryId: number;
+            image: {
+                url: string;
+            };
+        };
+        pickup: {
+            id: number;
+            orderId: number;
+            pickupType: string;
+            location: string;
+            address: string;
+            qrCode: string | null;
+            coordinates: string;
+            contactPhoneNumber: string;
+            travelerconfirmed: boolean;
+            userconfirmed: boolean;
+            status: string;
+            scheduledTime: string;
+        };
+    };
     onPress: () => void;
+}
+
+export interface CardProps {
+    title: string;
+    description: string;
+    imageUrl: string;
+    onPress: () => void; // For handling button press
+}
+
+export interface HeaderProps {
+    title: string;
+    subtitle: string;
+    onBackPress?: (event: GestureResponderEvent) => void;
+    onNextPress?: (event: GestureResponderEvent) => void; // New prop for next button
+    showBackButton?: boolean;
+    showNextButton?: boolean; // New prop to control next button visibility
+    backButtonTitle?: string;
+    nextButtonTitle?: string; // New prop for next button text
 }

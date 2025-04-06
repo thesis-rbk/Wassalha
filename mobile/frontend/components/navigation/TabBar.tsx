@@ -53,7 +53,7 @@ export function TabBar({ activeTab, onTabPress }: TabBarProps) {
       icon: (isActive: boolean) => (
         <Crown size={24} color={isActive ? activeTabColor : iconColor} />
       ),
-      route: "/screens/SponsorshipScreen" as Route,
+      route: "/verification/fetchAll" as Route,
     },
     {
       name: "more",

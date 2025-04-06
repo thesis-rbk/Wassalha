@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Request, RequestStatus, Goods } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
-import { Package, ArrowRight } from "lucide-react-native";
+import { Package, ArrowRight, Plus } from "lucide-react-native";
 import { BACKEND_URL } from "@/config";
 import { useRouter } from "expo-router";
 import { decode as atob } from "base-64";
@@ -107,7 +107,9 @@ export default function OrderPage() {
   const [activeTab, setActiveTab] = useState("Order");
   console.log(user, "USER", user?.id, "USER ID");
   console.log(user?.id, "ROOM");
-
+  const handleCreatePost = () => {
+    router.push("/productDetails/create-order");
+  };
   // Animation value for the "Make Offer" button
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -298,8 +300,7 @@ export default function OrderPage() {
       );
 
       console.log(
-        `Filtered from ${response.data.data?.length || 0} to ${
-          filteredRequests.length
+        `Filtered from ${response.data.data?.length || 0} to ${filteredRequests.length
         } requests`
       );
 
@@ -794,7 +795,13 @@ export default function OrderPage() {
         />
       )}
 
-      {/* Add TabBar at the bottom of the screen */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={handleCreatePost}
+        activeOpacity={0.8}
+      >
+        <Plus size={24} color="white" strokeWidth={2.5} />
+      </TouchableOpacity>
       <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   );
@@ -810,6 +817,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  fab: {
+    position: "absolute",
+    bottom: 95, // Adjust to be above TabBar
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#3a86ff",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  }
+  ,
   listContainer: {
     padding: 16,
     paddingRight: width - CARD_WIDTH + 16,

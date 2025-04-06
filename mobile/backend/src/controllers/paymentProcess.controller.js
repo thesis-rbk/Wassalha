@@ -7,7 +7,7 @@ const stripeService = require("../services/stripe.service");
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-02-24.acacia",
 });
-
+console.log("Stripe initialized successfully", process.env.STRIPE_SECRET_KEY);
 /**
  * Create a payment intent for regular payments
  */

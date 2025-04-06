@@ -271,7 +271,6 @@ const ProfilePage = () => {
         </View>
       </ScrollView>
 
-      {/* TabBar fixed at the bottom */}
       <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </SafeAreaView>
   );

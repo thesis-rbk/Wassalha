@@ -12,12 +12,6 @@ export const OnboardingService = {
   },
 
   hasSeenOnboarding: async () => {
-    try {
-      const value = await AsyncStorage.getItem(ONBOARDING_KEY);
-      return value === 'true';
-    } catch (error) {
-      console.error('Error getting onboarding status:', error);
-      return false;
-    }
-  },
-}; 
+    return false
+  }
+}
