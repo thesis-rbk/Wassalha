@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../../prisma/index");
 
 // User-to-user review: traveler rates requester or vice versa
 exports.createUserReview = async (req, res) => {
