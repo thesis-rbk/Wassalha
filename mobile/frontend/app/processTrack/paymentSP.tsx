@@ -175,10 +175,10 @@ const PaymentScreen = () => {
     loadNotificationPreferences();
     socket.on("connect", () => {
       console.log("🔌 Orders page socket connected");
-      const room = params.idProcess; // Example; get this from props, context, or params
+      const room = params.idProcess; 
       socket.emit("joinProcessRoom", room);
       console.log("🔌 Ophoto socket connected, ",room);
-   
+      
     })
     socket.on("confirmPayment", (data) => {
       console.log("🔄 payment updated to:", data);

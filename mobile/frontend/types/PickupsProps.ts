@@ -5,6 +5,7 @@ export interface PickupProps {
   pickups?: PickupType[]; // Optional
   setPickups?: (pickups: PickupType[]) => void; // Optional
   showPickup?: boolean;
+  setShowPickup?: React.Dispatch<React.SetStateAction<boolean>>;
   setShowPickup?: (showPickup: boolean) => void;
   paramsData:{
     requesterId: string;

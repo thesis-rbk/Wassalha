@@ -400,9 +400,9 @@ export default function InitializationSP() {
         .filter((place: any) => place.types.includes("airport"))
         .map((place: any) => place.displayName.text || place.formattedAddress);
       setSuggestions(results);
-    } catch (error: any) {
-      console.log("erooooooooooooooor", error);
-      console.log("Error response:", error.response);
+     
+    } catch (error) {
+      console.log("erooooooooooooooor",error);
       console.log("API Key being used:", GOOGLE_PLACES_API_KEY);
       console.error("Error fetching airports from Google Places:", error);
       Alert.alert("Error", "Failed to fetch airport suggestions");
