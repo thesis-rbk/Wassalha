@@ -26,7 +26,7 @@ const MainLoading: React.FC<MainLoadingProps> = ({ onLoadingComplete }) => {
     // Animate percentage from 0 to 100
     const percentageAnimation = Animated.timing(percentageAnim, {
       toValue: 100,
-      duration: 5000, // Duration for loading to reach 100%
+      duration: MIN_LOADING_TIME, // Match the duration to minimum loading time
       useNativeDriver: false,
     });
 
