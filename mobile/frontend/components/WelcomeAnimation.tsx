@@ -20,8 +20,8 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
   const fontsLoaded = useFontLoader();
   
   // Animation values
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.8);
+  const contentOpacity = useSharedValue(0);
+  const contentScale = useSharedValue(0.8);
   const welcomeOpacity = useSharedValue(0);
   const welcomeScale = useSharedValue(0.9);
   const toOpacity = useSharedValue(0);
@@ -33,13 +33,12 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
   const letterRotations = Array(8).fill(0).map(() => useSharedValue(-15));
   const letterY = Array(8).fill(0).map(() => useSharedValue(30));
   const letterX = Array(8).fill(0).map((_, i) => useSharedValue(i % 2 === 0 ? -20 : 20));
-  const letterColors = Array(8).fill(0).map(() => useSharedValue(0));
 
-  // Container animation styles
-  const containerStyle = useAnimatedStyle(() => {
+  // Content container animation styles
+  const contentContainerStyle = useAnimatedStyle(() => {
     return {
-      opacity: opacity.value,
-      transform: [{ scale: scale.value }],
+      opacity: contentOpacity.value,
+      transform: [{ scale: contentScale.value }],
     };
   });
 
@@ -67,13 +66,7 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
 
   // Create animated styles for each letter
   const letterAnimatedStyles = letterOpacities.map((opacity, index) => {
-    return useAnimatedStyle(() => {
-      const shadowColor = interpolateColor(
-        letterColors[index].value,
-        [0, 1],
-        ['rgba(0, 0, 0, 0.3)', 'rgba(255, 255, 255, 0.7)']
-      );
-      
+    return useAnimatedStyle(() => {      
       return {
         opacity: opacity.value,
         transform: [
@@ -82,17 +75,14 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
           { translateY: letterY[index].value },
           { translateX: letterX[index].value }
         ],
-        textShadowColor: shadowColor,
-        textShadowOffset: { width: 3, height: 3 },
-        textShadowRadius: 6,
       };
     });
   });
 
   useEffect(() => {
-    // Start with container fade in
-    opacity.value = withTiming(1, { duration: 800 });
-    scale.value = withTiming(1, { duration: 1000, easing: Easing.bezier(0.25, 0.1, 0.25, 1) });
+    // Start with content fade in
+    contentOpacity.value = withTiming(1, { duration: 800 });
+    contentScale.value = withTiming(1, { duration: 1000, easing: Easing.bezier(0.25, 0.1, 0.25, 1) });
     
     // Animate the "Welcome" text
     welcomeOpacity.value = withDelay(300, withTiming(1, { 
@@ -170,15 +160,6 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
           easing: Easing.bezier(0.34, 1.56, 0.64, 1),
         })
       );
-
-      // Animate letter text shadow color
-      letterColors[index].value = withDelay(
-        delay + 300,
-        withSequence(
-          withTiming(1, { duration: 400 }),
-          withTiming(0, { duration: 400 })
-        )
-      );
     });
 
     // Set a timeout to call onAnimationComplete
@@ -192,14 +173,14 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
   // Split "Wassalha" into individual letters for animation
   const wassalhaLetters = "Wassalha".split("");
 
-  // If fonts aren't loaded yet, return nothing
+  // Return blue background even if fonts aren't loaded yet
   if (!fontsLoaded) {
-    return null;
+    return <View style={styles.container} />;
   }
 
   return (
-    <Animated.View style={styles.container}>
-      <Animated.View style={[styles.contentContainer, containerStyle]}>
+    <View style={styles.container}>
+      <Animated.View style={[styles.contentContainer, contentContainerStyle]}>
         <View style={styles.welcomeContainer}>
           <Animated.Text style={[styles.welcomeText, welcomeTextStyle]}>
             WELCOME
@@ -220,7 +201,7 @@ export default function WelcomeAnimation({ onAnimationComplete }: WelcomeAnimati
           ))}
         </View>
       </Animated.View>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -240,7 +221,7 @@ const styles = StyleSheet.create({
   welcomeContainer: {
     alignItems: 'center',
     width: '90%',
-    marginBottom: 70,
+    marginBottom: 35,
   },
   welcomeText: {
     color: 'white',
@@ -252,7 +233,7 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
-    marginBottom: 20,
+    marginBottom: 15,
   },
   toText: {
     color: 'white',
@@ -271,7 +252,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: 110,
     width: '100%',
-    marginTop: 10,
+    marginTop: 0,
   },
   wassalhaLetter: {
     color: 'white',
@@ -279,6 +260,8 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     fontFamily: 'Inter-Bold',
     letterSpacing: 3,
-    // Text shadow styles are now applied dynamically in the animated style
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 6,
   },
 });
