@@ -32,6 +32,7 @@ export default function EditProfile() {
   const [activeTab, setActiveTab] = useState("home");
   const { theme } = useTheme();
   const [showPicker, setShowPicker] = useState(false);
+  const [showGenderPicker, setShowGenderPicker] = useState(false);
   const [profile, setProfile] = useState<Profile>({
     firstName: '',
     lastName: '',
@@ -140,6 +141,8 @@ export default function EditProfile() {
       formData.append('bio', profile.bio || '');
       formData.append('country', profile.country || '');
       formData.append('phoneNumber', profile.phoneNumber || '');
+      formData.append('gender', profile.gender || '');
+      formData.append('preferredCategories', profile.preferredCategories || '');
 
       if (profile.image && profile.image.uri) {
         const imageFile = {
@@ -227,11 +230,12 @@ export default function EditProfile() {
                 <Image
                   source={{
                     uri:
-                      profile.image?.uri || `${process.env.EXPO_PUBLIC_API_URL}/api/uploads/${profile.image?.filename}`,
+                      profile.image?.uri || `http://192.168.1.16:5000/api/uploads/${profile.image?.filename}`,
                   }}
                   style={styles.avatar}
                   onError={(error) => {
                     console.error("Image preview error:", error.nativeEvent.error)
+                    console.log("Attempted image URL:", `http://192.168.1.16:5000/api/uploads/${profile.image?.filename}`);
                   }}
                 />
               ) : (
@@ -475,6 +479,94 @@ export default function EditProfile() {
                 placeholder="Enter your phone number"
                 placeholderTextColor={Colors[theme].secondary}
                 keyboardType="phone-pad"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputLabel}>
+                <Feather name="user" size={16} color={Colors[theme].primary} />
+                <BodyMedium style={styles.labelText}>Gender</BodyMedium>
+              </View>
+              {Platform.OS === "ios" ? (
+                <TouchableOpacity
+                  style={[
+                    styles.input,
+                    styles.pickerButton,
+                    {
+                      borderColor: Colors[theme].border,
+                      backgroundColor: Colors[theme].card,
+                    },
+                  ]}
+                  onPress={() => setShowGenderPicker(true)}
+                >
+                  <Text style={{ color: profile.gender ? Colors[theme].text : Colors[theme].secondary }}>
+                    {profile.gender || "Select your gender"}
+                  </Text>
+                  <MaterialIcons name="arrow-drop-down" size={24} color={Colors[theme].secondary} />
+                </TouchableOpacity>
+              ) : (
+                <View
+                  style={[
+                    styles.pickerContainer,
+                    {
+                      borderColor: Colors[theme].border,
+                      backgroundColor: Colors[theme].card,
+                    },
+                  ]}
+                >
+                  <Picker
+                    selectedValue={profile.gender}
+                    style={{ color: Colors[theme].text }}
+                    dropdownIconColor={Colors[theme].primary}
+                    onValueChange={(itemValue) => setProfile((prev) => ({ ...prev, gender: itemValue }))}
+                  >
+                    <Picker.Item label="Select your gender" value="" />
+                    <Picker.Item label="Male" value="MALE" />
+                    <Picker.Item label="Female" value="FEMALE" />
+                  </Picker>
+                </View>
+              )}
+
+              {showGenderPicker && Platform.OS === "ios" && (
+                <View style={styles.iosPicker}>
+                  <View style={styles.pickerHeader}>
+                    <TouchableOpacity onPress={() => setShowGenderPicker(false)}>
+                      <Text style={{ color: Colors[theme].primary, fontWeight: "bold" }}>Done</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Picker
+                    selectedValue={profile.gender}
+                    onValueChange={(itemValue) => {
+                      setProfile((prev) => ({ ...prev, gender: itemValue }));
+                      setShowGenderPicker(false);
+                    }}
+                  >
+                    <Picker.Item label="Select your gender" value="" />
+                    <Picker.Item label="Male" value="MALE" />
+                    <Picker.Item label="Female" value="FEMALE" />
+                  </Picker>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputLabel}>
+                <MaterialIcons name="category" size={16} color={Colors[theme].primary} />
+                <BodyMedium style={styles.labelText}>Preferred Categories</BodyMedium>
+              </View>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    borderColor: Colors[theme].border,
+                    backgroundColor: Colors[theme].card,
+                    color: Colors[theme].text,
+                  },
+                ]}
+                value={profile.preferredCategories}
+                onChangeText={(text) => setProfile((prev) => ({ ...prev, preferredCategories: text }))}
+                placeholder="Enter your preferred categories (comma separated)"
+                placeholderTextColor={Colors[theme].secondary}
               />
             </View>
           </View>
