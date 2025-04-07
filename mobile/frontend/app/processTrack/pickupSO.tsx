@@ -33,6 +33,7 @@ import io, { Socket } from "socket.io-client";
 import { navigateToChat } from "@/services/chatService";
 import { LinearGradient } from "expo-linear-gradient";
 import Header from "@/components/navigation/headers";
+import { StatusScreen } from '@/app/screens/StatusScreen';
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -49,6 +50,12 @@ export default function PickupOwner() {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [statusVisible, setStatusVisible] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({
+    type: 'error' as 'success' | 'error',
+    title: '',
+    message: ''
+  });
 
   const {
     handleAccept,
@@ -191,7 +198,12 @@ export default function PickupOwner() {
       console.log("Pickups fetched:", response.data.data);
     } catch (error) {
       console.error("Error fetching pickups:", error);
-      Alert.alert("Error", "Failed to fetch pickups. Please try again.");
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to fetch pickups. Please try again.'
+      });
+      setStatusVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -221,11 +233,21 @@ export default function PickupOwner() {
         setSuggestions(response.data.data);
         setShowSuggestions(true);
       } else {
-        Alert.alert("Info", "No suggestions found for this pickup.");
+        setStatusMessage({
+          type: 'error',
+          title: 'Info',
+          message: 'No suggestions found for this pickup.'
+        });
+        setStatusVisible(true);
       }
     } catch (error) {
       console.error("Error fetching suggestions:", error);
-      Alert.alert("Error", "Failed to fetch suggestions. Please try again.");
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to fetch suggestions. Please try again.'
+      });
+      setStatusVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -493,6 +515,17 @@ export default function PickupOwner() {
           setPickups={setPickups}
           showPickup={showPickup}
           setShowPickup={setShowPickup}
+          paramsData={{
+            requesterId: params.requesterId as string,
+            travelerId: params.travelerId as string,
+            idOrder: params.idOrder as string,
+            requesterName: params.requesterName as string,
+            travelerName: params.travelerName as string,
+            goodsName: params.goodsName as string,
+            status: params.status as string,
+            reviewLabel: params.reviewLabel as string,
+            isTraveler: params.isTraveler as string
+          }}
         />
       ) : (
         <>
@@ -543,6 +576,7 @@ export default function PickupOwner() {
         visible={showQRCode}
         qrCodeData={qrCodeData}
         onClose={() => setShowQRCode(false)}
+        paramsData={params}
       />
       <Animated.View
         style={[styles.messageBubble, { transform: [{ scale: pulseAnim }] }]}
@@ -551,6 +585,17 @@ export default function PickupOwner() {
           <MessageCircle size={24} color="#ffffff" />
         </TouchableOpacity>
       </Animated.View>
+      <StatusScreen
+        visible={statusVisible}
+        type={statusMessage.type}
+        title={statusMessage.title}
+        message={statusMessage.message}
+        primaryAction={{
+          label: "OK",
+          onPress: () => setStatusVisible(false)
+        }}
+        onClose={() => setStatusVisible(false)}
+      />
     </ThemedView>
   );
 }
