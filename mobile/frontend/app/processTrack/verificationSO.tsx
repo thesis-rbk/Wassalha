@@ -15,12 +15,13 @@ import { MaterialIcons } from "@expo/vector-icons";
 import axiosInstance, { BACKEND_URL } from "@/config";
 import { router, useLocalSearchParams } from "expo-router";
 import { Order } from "@/types";
-import { useNotification } from '@/context/NotificationContext';
+import { useNotification } from "@/context/NotificationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 import Animated from "react-native-reanimated";
 import { io } from "socket.io-client";
-import { useStatus } from '@/context/StatusContext';
+import { useStatus } from "@/context/StatusContext";
+import Header from "@/components/navigation/headers";
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
@@ -31,7 +32,7 @@ export default function VerificationScreen() {
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
   const { show, hide } = useStatus();
-  const socket = io(`${BACKEND_URL}/processTrack`,{
+  const socket = io(`${BACKEND_URL}/processTrack`, {
     transports: ["websocket"],
   });
   const progressSteps = [
@@ -48,23 +49,23 @@ export default function VerificationScreen() {
     } catch (error) {
       console.error("Error fetching order:", error);
       show({
-        type: 'error',
-        title: 'Loading Error',
-        message: 'Failed to fetch order details. Please try again.',
+        type: "error",
+        title: "Loading Error",
+        message: "Failed to fetch order details. Please try again.",
         primaryAction: {
-          label: 'Retry',
+          label: "Retry",
           onPress: () => {
             hide();
             fetchOrder();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Go Back',
+          label: "Go Back",
           onPress: () => {
             hide();
             router.back();
-          }
-        }
+          },
+        },
       });
       setIsLoading(false);
     }
@@ -102,21 +103,18 @@ export default function VerificationScreen() {
     };
 
     loadUserData();
-    
+
     socket.on("connect", () => {
       console.log("🔌 Orders page socket connected");
       const room = params.idProcess; // Example; get this from props, context, or params
       socket.emit("joinProcessRoom", room);
-      console.log("🔌 Ophoto socket connected, ",room);
-   
-    })
+      console.log("🔌 Ophoto socket connected, ", room);
+    });
     socket.on("photo", (data) => {
       // alert("hi");
       console.log("🔄 photo updated to:", data);
       fetchOrder();
-      
     });
-    
   }, []);
 
   const getImageUrl = () => {
@@ -152,53 +150,53 @@ export default function VerificationScreen() {
       );
 
       if (response.status === 200) {
-        sendNotification('product_confirmed', {
+        sendNotification("product_confirmed", {
           travelerId: params.travelerId,
           requesterId: user?.id,
           requestDetails: {
-            goodsName: params.goodsName || 'this product',
+            goodsName: params.goodsName || "this product",
             requestId: params.idRequest,
             orderId: params.idOrder,
-            processId: params.idProcess
-          }
+            processId: params.idProcess,
+          },
         });
         socket.emit("confirmProduct", {
-          processId:params.idProcess,
+          processId: params.idProcess,
         });
-        
+
         show({
-          type: 'success',
-          title: 'Product Confirmed',
-          message: 'Product confirmed successfully',
+          type: "success",
+          title: "Product Confirmed",
+          message: "Product confirmed successfully",
           primaryAction: {
-            label: 'Continue to Payment',
+            label: "Continue to Payment",
             onPress: () => {
               hide();
               router.replace({
                 pathname: "/processTrack/paymentSO",
                 params: params,
               });
-            }
-          }
+            },
+          },
         });
       }
     } catch (error) {
       console.error("Error confirming product:", error);
       show({
-        type: 'error',
-        title: 'Confirmation Failed',
-        message: 'Failed to confirm product. Please try again.',
+        type: "error",
+        title: "Confirmation Failed",
+        message: "Failed to confirm product. Please try again.",
         primaryAction: {
-          label: 'Retry',
+          label: "Retry",
           onPress: () => {
             hide();
             confirmProduct();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
+          label: "Cancel",
+          onPress: () => hide(),
+        },
       });
     }
   };
@@ -211,23 +209,23 @@ export default function VerificationScreen() {
       );
 
       if (response.status === 200) {
-        sendNotification('request_new_photo', {
+        sendNotification("request_new_photo", {
           travelerId: params.travelerId,
           requesterId: user?.id,
           requestDetails: {
-            goodsName: params.goodsName || 'this product',
+            goodsName: params.goodsName || "this product",
             requestId: params.idRequest,
             orderId: params.idOrder,
-            processId: params.idProcess
-          }
+            processId: params.idProcess,
+          },
         });
-        
+
         show({
-          type: 'success',
-          title: 'Request Sent',
-          message: 'Another photo has been requested',
+          type: "success",
+          title: "Request Sent",
+          message: "Another photo has been requested",
           primaryAction: {
-            label: 'OK',
+            label: "OK",
             onPress: () => {
               hide();
               if (order) {
@@ -236,27 +234,27 @@ export default function VerificationScreen() {
                   verificationImageId: undefined,
                 });
               }
-            }
-          }
+            },
+          },
         });
       }
     } catch (error) {
       console.error("Error requesting new photo:", error);
       show({
-        type: 'error',
-        title: 'Request Failed',
-        message: 'Failed to request another photo. Please try again.',
+        type: "error",
+        title: "Request Failed",
+        message: "Failed to request another photo. Please try again.",
         primaryAction: {
-          label: 'Retry',
+          label: "Retry",
           onPress: () => {
             hide();
             requestAnotherPhoto();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
+          label: "Cancel",
+          onPress: () => hide(),
+        },
       });
     }
   };
@@ -266,47 +264,47 @@ export default function VerificationScreen() {
       const response = await axiosInstance.delete(`/api/process/${orderId}`);
 
       if (response.status === 200) {
-        sendNotification('process_canceled', {
+        sendNotification("process_canceled", {
           travelerId: params.travelerId,
           requesterId: user?.id,
           requestDetails: {
-            goodsName: params.goodsName || 'this product',
+            goodsName: params.goodsName || "this product",
             requestId: params.idRequest,
             orderId: params.idOrder,
-            processId: params.idProcess
-          }
+            processId: params.idProcess,
+          },
         });
-        
+
         show({
-          type: 'success',
-          title: 'Process Cancelled',
-          message: 'Process has been cancelled successfully',
+          type: "success",
+          title: "Process Cancelled",
+          message: "Process has been cancelled successfully",
           primaryAction: {
-            label: 'Return Home',
+            label: "Return Home",
             onPress: () => {
               hide();
               router.push("/home");
-            }
-          }
+            },
+          },
         });
       }
     } catch (error) {
       console.error("Error cancelling process:", error);
       show({
-        type: 'error',
-        title: 'Cancellation Failed',
-        message: 'Failed to cancel the process. Please try again.',
+        type: "error",
+        title: "Cancellation Failed",
+        message: "Failed to cancel the process. Please try again.",
         primaryAction: {
-          label: 'Retry',
+          label: "Retry",
           onPress: () => {
             hide();
             cancelProcess();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
+          label: "Cancel",
+          onPress: () => hide(),
+        },
       });
     }
   };
@@ -320,100 +318,113 @@ export default function VerificationScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.container}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Verification</Text>
-          <Text style={styles.subtitle}>
-            {order?.verificationImageId
-              ? "Product Image received successfully!"
-              : "Waiting for the service provider to upload the product photo."}
-          </Text>
+    <View style={styles.container}>
+      <Header
+        title="Verification"
+        subtitle="Track your order's process"
+        showBackButton={true}
+      />
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.container}>
+          <View style={styles.content}>
+            <Text style={styles.subtitle}>
+              {order?.verificationImageId
+                ? "Product Image received successfully!"
+                : "Waiting for the service provider to upload the product photo."}
+            </Text>
 
-          <ProgressBar currentStep={2} steps={progressSteps} />
+            <ProgressBar currentStep={2} steps={progressSteps} />
 
-          {!order?.verificationImageId && (
-            <View style={styles.loadingContainer}>
-              <MaterialIcons name="hourglass-empty" size={48} color="#64748b" />
-              <Text style={styles.waitingText}>
-                We are waiting for the service provider to upload the product
-                photo.
-              </Text>
-            </View>
-          )}
-
-          {order?.verificationImageId && (
-            <View style={styles.imageSection}>
-              <Text style={styles.imageTitle}>Uploaded Photo</Text>
-              <TouchableOpacity onPress={() => setIsImageModalVisible(true)}>
-                <Image
-                  source={{
-                    uri: `${BACKEND_URL}/api/uploads/${order.verificationImage?.filename}`,
-                  }}
-                  style={styles.image}
-                  resizeMode="contain"
+            {!order?.verificationImageId && (
+              <View style={styles.loadingContainer}>
+                <MaterialIcons
+                  name="hourglass-empty"
+                  size={48}
+                  color="#64748b"
                 />
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Modal for enlarged image */}
-          <Modal
-            visible={isImageModalVisible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setIsImageModalVisible(false)}
-          >
-            <View style={styles.modalContainer}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => {
-                  setIsImageModalVisible(false);
-                }}
-              >
-                <MaterialIcons name="close" size={24} color="#fff" />
-              </TouchableOpacity>
-
-              <Animated.View style={styles.modalBackground}>
-                <Animated.Image
-                  source={{
-                    uri: `${BACKEND_URL}/api/uploads/${order?.verificationImage?.filename}`,
-                  }}
-                  style={styles.enlargedImage}
-                  resizeMode="contain"
-                />
-              </Animated.View>
-            </View>
-          </Modal>
-
-          {order?.verificationImageId && (
-            <View style={styles.confirmationSection}>
-              <Text style={styles.confirmationText}>
-                Please confirm that the product matches your expectations.
-              </Text>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={confirmProduct}
-              >
-                <Text style={styles.confirmButtonText}>Confirm Product</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.requestButton}
-                onPress={requestAnotherPhoto}
-              >
-                <Text style={styles.requestButtonText}>
-                  Request Another Photo
+                <Text style={styles.waitingText}>
+                  We are waiting for the service provider to upload the product
+                  photo.
                 </Text>
-              </TouchableOpacity>
-            </View>
-          )}
+              </View>
+            )}
 
-          <TouchableOpacity style={styles.cancelButton} onPress={cancelProcess}>
-            <Text style={styles.cancelButtonText}>Cancel Process</Text>
-          </TouchableOpacity>
+            {order?.verificationImageId && (
+              <View style={styles.imageSection}>
+                <Text style={styles.imageTitle}>Uploaded Photo</Text>
+                <TouchableOpacity onPress={() => setIsImageModalVisible(true)}>
+                  <Image
+                    source={{
+                      uri: `${BACKEND_URL}/api/uploads/${order.verificationImage?.filename}`,
+                    }}
+                    style={styles.image}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Modal for enlarged image */}
+            <Modal
+              visible={isImageModalVisible}
+              transparent={true}
+              animationType="fade"
+              onRequestClose={() => setIsImageModalVisible(false)}
+            >
+              <View style={styles.modalContainer}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => {
+                    setIsImageModalVisible(false);
+                  }}
+                >
+                  <MaterialIcons name="close" size={24} color="#fff" />
+                </TouchableOpacity>
+
+                <Animated.View style={styles.modalBackground}>
+                  <Animated.Image
+                    source={{
+                      uri: `${BACKEND_URL}/api/uploads/${order?.verificationImage?.filename}`,
+                    }}
+                    style={styles.enlargedImage}
+                    resizeMode="contain"
+                  />
+                </Animated.View>
+              </View>
+            </Modal>
+
+            {order?.verificationImageId && (
+              <View style={styles.confirmationSection}>
+                <Text style={styles.confirmationText}>
+                  Please confirm that the product matches your expectations.
+                </Text>
+                <TouchableOpacity
+                  style={styles.confirmButton}
+                  onPress={confirmProduct}
+                >
+                  <Text style={styles.confirmButtonText}>Confirm Product</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.requestButton}
+                  onPress={requestAnotherPhoto}
+                >
+                  <Text style={styles.requestButtonText}>
+                    Request Another Photo
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={cancelProcess}
+            >
+              <Text style={styles.cancelButtonText}>Cancel Process</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 

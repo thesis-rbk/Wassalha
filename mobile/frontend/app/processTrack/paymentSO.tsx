@@ -20,6 +20,7 @@ import { useNotification } from "@/context/NotificationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 import { io } from "socket.io-client";
+import Header from "@/components/navigation/headers";
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
@@ -33,10 +34,11 @@ export default function PaymentScreen() {
 
   const totalPrice =
     parseInt(params.quantity.toString()) * parseInt(params.price.toString());
-  const serviceFee = totalPrice * 0.1;
-  const totalAmount = totalPrice + serviceFee;
+  const travelerFee = totalPrice * 0.1;
+  const serviceFee = 1;
+  const totalAmount = totalPrice + travelerFee + serviceFee;
 
-  console.log(params,"paraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaamss");
+  console.log(params, "paraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaamss");
 
   // Add user data loading effect
   useEffect(() => {
@@ -146,8 +148,8 @@ export default function PaymentScreen() {
           });
         }
         socket.emit("confirmPayment", {
-                  processId:params.idProcess,
-                });
+          processId: params.idProcess,
+        });
         Alert.alert("Success", "Payment successful!");
         console.log("Payment successful:", paymentIntent);
         router.replace({
@@ -196,146 +198,174 @@ export default function PaymentScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Secure Payment</Text>
-        <Text style={styles.subtitle}>
-          Your payment will be held in escrow until delivery is confirmed
-        </Text>
+    <View style={styles.container}>
+      <Header
+        title="Payment"
+        subtitle="Track your order's process"
+        showBackButton={true}
+      />
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
+          <Text style={styles.subtitle}>
+            Your payment will be held in escrow until delivery is confirmed
+          </Text>
 
-        <ProgressBar currentStep={3} steps={progressSteps} />
+          <ProgressBar currentStep={3} steps={progressSteps} />
 
-        <Card style={styles.summaryCard}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
+          <Card style={styles.summaryCard}>
+            <Text style={styles.sectionTitle}>Order Summary</Text>
 
-          <View style={styles.orderRow}>
-            <Text style={styles.orderLabel}>Item:</Text>
-            <Text style={styles.orderValue}>{params.goodsName}</Text>
-          </View>
-
-          <View style={styles.orderRow}>
-            <Text style={styles.orderLabel}>Traveler:</Text>
-            <View style={styles.travelerInfo}>
-              <Text style={styles.orderValue}>
-                {getInitials(params.travelerName.toString())}
-              </Text>
+            <View style={styles.orderRow}>
+              <Text style={styles.orderLabel}>Item:</Text>
+              <Text style={styles.orderValue}>{params.goodsName}</Text>
             </View>
-          </View>
 
-          <View style={styles.orderRow}>
-            <Text style={styles.orderLabel}>Price:</Text>
-            <Text style={styles.priceValue}>${totalPrice.toFixed(2)}</Text>
-          </View>
-
-          <View style={styles.orderRow}>
-            <Text style={styles.orderLabel}>Service Fee:</Text>
-            <Text style={styles.orderValue}>${serviceFee.toFixed(2)}</Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.orderRow}>
-            <Text style={styles.totalLabel}>Total:</Text>
-            <Text style={styles.totalValue}>${totalAmount.toFixed(2)}</Text>
-          </View>
-        </Card>
-
-        <Card style={styles.paymentCard}>
-          <Text style={styles.sectionTitle}>Payment Method</Text>
-
-          <View style={styles.paymentOptions}>
-            <TouchableOpacity
-              style={[
-                styles.paymentOption,
-                paymentMethod === "card" && styles.selectedPaymentOption,
-              ]}
-              onPress={() => setPaymentMethod("card")}
-            >
-              <CreditCard
-                size={24}
-                color={paymentMethod === "card" ? "#3b82f6" : "#64748b"}
-              />
-              <Text
-                style={[
-                  styles.paymentOptionText,
-                  paymentMethod === "card" && styles.selectedPaymentOptionText,
-                ]}
-              >
-                Credit Card
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.paymentOption,
-                paymentMethod === "paypal" && styles.selectedPaymentOption,
-              ]}
-              onPress={() => setPaymentMethod("paypal")}
-            >
-              <Text
-                style={[
-                  styles.paypalText,
-                  paymentMethod === "paypal" &&
-                    styles.selectedPaymentOptionText,
-                ]}
-              >
-                PayPal
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {paymentMethod === "card" && (
-            <View style={styles.cardForm}>
-              <CardField
-                postalCodeEnabled={false}
-                placeholders={{
-                  number: "4242 4242 4242 4242",
-                }}
-                cardStyle={styles.card}
-                style={styles.cardContainer}
-              />
+            <View style={styles.orderRow}>
+              <Text style={styles.orderLabel}>Traveler:</Text>
+              <View style={styles.travelerInfo}>
+                <Text style={styles.orderValue}>
+                  {getInitials(params.travelerName.toString())}
+                </Text>
+              </View>
             </View>
-          )}
 
-          {paymentMethod === "paypal" && (
-            <View style={styles.paypalContainer}>
-              <Text style={styles.paypalInstructions}>
-                {/* You will be redirected to PayPal to complete your payment
+            <View style={styles.orderRow}>
+              <Text style={styles.orderLabel}>Price:</Text>
+              <Text style={styles.priceValue}>${totalPrice.toFixed(2)}</Text>
+            </View>
+
+            <View style={styles.orderRow}>
+              <Text style={styles.orderLabel}>Traveler Fee:</Text>
+              <Text style={styles.orderValue}>${travelerFee.toFixed(2)}</Text>
+            </View>
+
+            <View style={styles.orderRow}>
+              <Text style={styles.orderLabel}>Service Fee:</Text>
+              <Text style={styles.orderValue}>${serviceFee.toFixed(2)}</Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.orderRow}>
+              <Text style={styles.totalLabel}>Total:</Text>
+              <Text style={styles.totalValue}>${totalAmount.toFixed(2)}</Text>
+            </View>
+          </Card>
+
+          <View style={styles.feeNote}>
+            <CreditCard size={16} color="#3b82f6" />
+            <Text style={styles.feeText}>
+              A <Text style={{ fontWeight: "bold" }}>10% traveler fee</Text> (
+              <Text style={{ fontStyle: "italic" }}>
+                ${travelerFee.toFixed(2)}
+              </Text>
+              ) and a{" "}
+              <Text style={{ fontWeight: "bold" }}>
+                fixed and non-refundable service fee
+              </Text>{" "}
+              (<Text style={{ fontStyle: "italic" }}>$1.00</Text>) are included
+              in your total.
+            </Text>
+          </View>
+
+          <Card style={styles.paymentCard}>
+            <Text style={styles.sectionTitle}>Payment Method</Text>
+
+            <View style={styles.paymentOptions}>
+              <TouchableOpacity
+                style={[
+                  styles.paymentOption,
+                  paymentMethod === "card" && styles.selectedPaymentOption,
+                ]}
+                onPress={() => setPaymentMethod("card")}
+              >
+                <CreditCard
+                  size={24}
+                  color={paymentMethod === "card" ? "#3b82f6" : "#64748b"}
+                />
+                <Text
+                  style={[
+                    styles.paymentOptionText,
+                    paymentMethod === "card" &&
+                      styles.selectedPaymentOptionText,
+                  ]}
+                >
+                  Credit Card
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.paymentOption,
+                  paymentMethod === "paypal" && styles.selectedPaymentOption,
+                ]}
+                onPress={() => setPaymentMethod("paypal")}
+              >
+                <Text
+                  style={[
+                    styles.paypalText,
+                    paymentMethod === "paypal" &&
+                      styles.selectedPaymentOptionText,
+                  ]}
+                >
+                  PayPal
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {paymentMethod === "card" && (
+              <View style={styles.cardForm}>
+                <CardField
+                  postalCodeEnabled={false}
+                  placeholders={{
+                    number: "4242 4242 4242 4242",
+                  }}
+                  cardStyle={styles.card}
+                  style={styles.cardContainer}
+                />
+              </View>
+            )}
+
+            {paymentMethod === "paypal" && (
+              <View style={styles.paypalContainer}>
+                <Text style={styles.paypalInstructions}>
+                  {/* You will be redirected to PayPal to complete your payment
                 securely. */}
-                Sorry but this feature is not available yet. Hope to add it
-                soon...
-              </Text>
-            </View>
-          )}
-        </Card>
+                  Sorry but this feature is not available yet. Hope to add it
+                  soon...
+                </Text>
+              </View>
+            )}
+          </Card>
 
-        <View style={styles.securityNote}>
-          <Lock size={16} color="#64748b" />
-          <Text style={styles.securityText}>
-            Your payment information is encrypted and secure
-          </Text>
+          <View style={styles.securityNote}>
+            <Lock size={16} color="#64748b" />
+            <Text style={styles.securityText}>
+              Your payment information is encrypted and secure
+            </Text>
+          </View>
+
+          <View style={styles.escrowNote}>
+            <CheckCircle size={16} color="#10b981" />
+            <Text style={styles.escrowText}>
+              Payment will be held in escrow until delivery is confirmed
+            </Text>
+          </View>
+
+          <BaseButton
+            style={styles.payButton}
+            onPress={handlePayment}
+            size="large"
+            variant="primary"
+            disabled={isProcessing || loading}
+          >
+            <Text style={styles.payButtonText}>
+              {isProcessing || loading ? "Processing..." : "Complete Payment"}
+            </Text>
+          </BaseButton>
         </View>
-
-        <View style={styles.escrowNote}>
-          <CheckCircle size={16} color="#10b981" />
-          <Text style={styles.escrowText}>
-            Payment will be held in escrow until delivery is confirmed
-          </Text>
-        </View>
-
-        <BaseButton
-          style={styles.payButton}
-          onPress={handlePayment}
-          size="large"
-          variant="primary"
-          disabled={isProcessing || loading}
-        >
-          <Text style={styles.payButtonText}>
-            {isProcessing || loading ? "Processing..." : "Complete Payment"}
-          </Text>
-        </BaseButton>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -475,6 +505,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#64748b",
     textAlign: "center",
+  },
+  feeNote: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 16,
+    marginBottom: 8,
+    backgroundColor: "#f0f9ff",
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: "#3b82f6",
+  },
+  feeText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "#1e40af",
+    marginLeft: 8,
+    flexShrink: 1,
   },
   securityNote: {
     flexDirection: "row",
