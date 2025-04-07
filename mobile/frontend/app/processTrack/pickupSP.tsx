@@ -39,14 +39,18 @@ import {
   Send,
   Scan,
 } from "lucide-react-native"
-import { usePickupActions } from "../../hooks/usePickupActions"
-import { QRCodeModal } from "../pickup/QRCodeModal"
-import { QRCodeScanner } from "../pickup/QRCodeScanner"
-import io, { type Socket } from "socket.io-client"
-import { navigateToChat } from "@/services/chatService"
-import { LinearGradient } from "expo-linear-gradient"
+
 import { MotiView } from "moti"
 import { ThemedView } from "@/components/ThemedView"
+import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import { usePickupActions } from "../../hooks/usePickupActions";
+import { QRCodeModal } from "../pickup/QRCodeModal";
+import { QRCodeScanner } from "../pickup/QRCodeScanner";
+import io, { Socket } from "socket.io-client";
+import { navigateToChat } from "@/services/chatService";
+import { LinearGradient } from "expo-linear-gradient";
+import Header from "@/components/navigation/headers";
+import { StatusScreen } from '@/app/screens/StatusScreen';
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 const { width } = Dimensions.get("window")
@@ -58,16 +62,23 @@ export default function PickupTraveler() {
 
   console.log("params from pickup sp", params)
 
-  const [pickupId, setPickupId] = useState<number>(0)
-  const [pickups, setPickups] = useState<Pickup[]>([])
-  const [showPickup, setShowPickup] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [statusModalVisible, setStatusModalVisible] = useState(false)
-  const [selectedPickupId, setSelectedPickupId] = useState<number | null>(null)
-  const [suggestions, setSuggestions] = useState<any[]>([])
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [showScanner, setShowScanner] = useState(false)
+ 
   const [refreshing, setRefreshing] = useState(false)
+  const [pickupId, setPickupId] = useState<number>(0);
+  const [pickups, setPickups] = useState<Pickup[]>([]);
+  const [showPickup, setShowPickup] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [selectedPickupId, setSelectedPickupId] = useState<number | null>(null);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [statusVisible, setStatusVisible] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({
+    type: 'error' as 'success' | 'error',
+    title: '',
+    message: ''
+  });
 
   const { handleAccept, showStoredQRCode, showQRCode, setShowQRCode, qrCodeData, handleCancel } = usePickupActions(
     pickups,
@@ -160,8 +171,13 @@ export default function PickupTraveler() {
 
   const openChat = async () => {
     if (!user?.id) {
-      Alert.alert("Error", "You need to be logged in to chat")
-      return
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'You need to be logged in to chat'
+      });
+      setStatusVisible(true);
+      return;
     }
 
     try {
@@ -180,11 +196,13 @@ export default function PickupTraveler() {
         goodsName: params.goodsName?.toString() || "Item",
       })
     } catch (error) {
-      console.error("Error opening chat:", error)
-      Alert.alert(
-        "Chat Error",
-        "Failed to open chat. Error: " + (error instanceof Error ? error.message : String(error)),
-      )
+      console.error("Error opening chat:", error);
+      setStatusMessage({
+        type: 'error',
+        title: 'Chat Error',
+        message: 'Failed to open chat. Error: ' + (error instanceof Error ? error.message : String(error))
+      });
+      setStatusVisible(true);
     }
   }
 
@@ -205,8 +223,13 @@ export default function PickupTraveler() {
       setPickups(response.data.data)
       console.log("Pickups (Traveler):", response.data.data)
     } catch (error) {
-      console.error("Error fetching pickups (Traveler):", error)
-      Alert.alert("Error", "Failed to fetch pickups. Please try again.")
+      console.error("Error fetching pickups (Traveler):", error);
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to fetch pickups. Please try again.'
+      });
+      setStatusVisible(true);
     } finally {
       setIsLoading(false)
       setRefreshing(false)
@@ -247,14 +270,21 @@ export default function PickupTraveler() {
         { headers: { Authorization: `Bearer ${token}` } },
       )
 
-      Alert.alert("Success", `Pickup status updated to ${newStatus} successfully!`)
-      setStatusModalVisible(false)
-
-      // Update local state
-      setPickups((prev) => prev.map((p) => (p.id === pickupId ? { ...p, status: newStatus } : p)))
+      setStatusMessage({
+        type: 'success',
+        title: 'Success',
+        message: `Pickup status updated to ${newStatus} successfully!`
+      });
+      setStatusVisible(true);
+      setStatusModalVisible(false);
     } catch (error) {
-      console.error("Error updating pickup status:", error)
-      Alert.alert("Error", "Failed to update pickup status. Please try again.")
+      console.error("Error updating pickup status:", error);
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to update pickup status. Please try again.'
+      });
+      setStatusVisible(true);
     }
   }
 
@@ -279,11 +309,21 @@ export default function PickupTraveler() {
         setSuggestions(response.data.data)
         setShowSuggestions(true)
       } else {
-        Alert.alert("Info", "No suggestions found for this pickup.")
+        setStatusMessage({
+          type: 'error',
+          title: 'Info',
+          message: 'No suggestions found for this pickup.'
+        });
+        setStatusVisible(true);
       }
     } catch (error) {
-      console.error("Error fetching suggestions:", error)
-      Alert.alert("Error", "Failed to fetch suggestions. Please try again.")
+      console.error("Error fetching suggestions:", error);
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to fetch suggestions. Please try again.'
+      });
+      setStatusVisible(true);
     } finally {
       setIsLoading(false)
     }
@@ -713,6 +753,17 @@ export default function PickupTraveler() {
           setPickups={setPickups}
           showPickup={showPickup}
           setShowPickup={setShowPickup}
+          paramsData={{
+            requesterId: params.requesterId as string,
+            travelerId: params.travelerId as string,
+            idOrder: params.idOrder as string,
+            requesterName: params.requesterName as string,
+            travelerName: params.travelerName as string,
+            goodsName: params.goodsName as string,
+            status: params.status as string,
+            reviewLabel: params.reviewLabel as string,
+            isTraveler: params.isTraveler as string
+          }}
         />
       ) : (
         <>
@@ -758,7 +809,7 @@ export default function PickupTraveler() {
         </>
       )}
 
-      <QRCodeModal visible={showQRCode} qrCodeData={qrCodeData} onClose={() => setShowQRCode(false)} />
+      <QRCodeModal visible={showQRCode} qrCodeData={qrCodeData} onClose={() => setShowQRCode(false)} paramsData={params} />
 
       <Modal
         animationType="slide"
@@ -808,6 +859,17 @@ export default function PickupTraveler() {
         onClose={() => setShowScanner(false)}
         pickups={pickups}
         setPickups={setPickups}
+        paramsData={{
+          requesterId: params.requesterId.toString(),
+          travelerId: params.travelerId.toString(),
+          idOrder: params.idOrder.toString(),
+          requesterName: params.requesterName?.toString() || "Requester",
+          travelerName: params.travelerName?.toString() || "Traveler",
+          goodsName: params.goodsName?.toString() || "Item",
+          status: params.status?.toString() || "PENDING",
+          reviewLabel: "Rate the delivery",
+          isTraveler: "true"
+        }}
       />
 
       <Animated.View style={[styles.chatButton, { transform: [{ scale: pulseAnim }] }]}>

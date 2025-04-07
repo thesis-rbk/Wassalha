@@ -38,12 +38,14 @@ import {
   Navigation,
   Send,
 } from "lucide-react-native"
-import { usePickupActions } from "../../hooks/usePickupActions"
-import { QRCodeModal } from "../pickup/QRCodeModal"
-import io, { type Socket } from "socket.io-client"
-import { navigateToChat } from "@/services/chatService"
-import { LinearGradient } from "expo-linear-gradient"
-import { MotiView } from "moti"
+import { MotiView } from "moti";
+import { usePickupActions } from "../../hooks/usePickupActions";
+import { QRCodeModal } from "../pickup/QRCodeModal";
+import io, { Socket } from "socket.io-client";
+import { navigateToChat } from "@/services/chatService";
+import { LinearGradient } from "expo-linear-gradient";
+import Header from "@/components/navigation/headers";
+import { StatusScreen } from '@/app/screens/StatusScreen';
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 const { width } = Dimensions.get("window")
@@ -66,6 +68,12 @@ export default function PickupOwner() {
     setPickups,
     userId,
   )
+  const [statusVisible, setStatusVisible] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({
+    type: 'error' as 'success' | 'error',
+    title: '',
+    message: ''
+  });
 
   const socketRef = useRef<Socket | null>(null)
   const pulseAnim = useRef(new Animated.Value(1)).current
@@ -194,8 +202,13 @@ export default function PickupOwner() {
       setPickups(response.data.data)
       console.log("Pickups fetched:", response.data.data)
     } catch (error) {
-      console.error("Error fetching pickups:", error)
-      Alert.alert("Error", "Failed to fetch pickups. Please try again.")
+      console.error("Error fetching pickups:", error);
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to fetch pickups. Please try again.'
+      });
+      setStatusVisible(true);
     } finally {
       setIsLoading(false)
       setRefreshing(false)
@@ -228,11 +241,21 @@ export default function PickupOwner() {
         setSuggestions(response.data.data)
         setShowSuggestions(true)
       } else {
-        Alert.alert("Info", "No suggestions found for this pickup.")
+        setStatusMessage({
+          type: 'error',
+          title: 'Info',
+          message: 'No suggestions found for this pickup.'
+        });
+        setStatusVisible(true);
       }
     } catch (error) {
-      console.error("Error fetching suggestions:", error)
-      Alert.alert("Error", "Failed to fetch suggestions. Please try again.")
+      console.error("Error fetching suggestions:", error);
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to fetch suggestions. Please try again.'
+      });
+      setStatusVisible(true);
     } finally {
       setIsLoading(false)
     }
@@ -624,6 +647,17 @@ export default function PickupOwner() {
           setPickups={setPickups}
           showPickup={showPickup}
           setShowPickup={setShowPickup}
+          paramsData={{
+            requesterId: params.requesterId as string,
+            travelerId: params.travelerId as string,
+            idOrder: params.idOrder as string,
+            requesterName: params.requesterName as string,
+            travelerName: params.travelerName as string,
+            goodsName: params.goodsName as string,
+            status: params.status as string,
+            reviewLabel: params.reviewLabel as string,
+            isTraveler: params.isTraveler as string
+          }}
         />
       ) : (
         <>
@@ -669,7 +703,8 @@ export default function PickupOwner() {
         </>
       )}
 
-      <QRCodeModal visible={showQRCode} qrCodeData={qrCodeData} onClose={() => setShowQRCode(false)} />
+      <QRCodeModal visible={showQRCode} qrCodeData={qrCodeData} onClose={() => setShowQRCode(false)}  paramsData={params}
+      />
 
       <Animated.View style={[styles.chatButton, { transform: [{ scale: pulseAnim }] }]}>
         <TouchableOpacity style={styles.chatButtonTouchable} onPress={openChat}>
@@ -678,6 +713,17 @@ export default function PickupOwner() {
           </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
+      <StatusScreen
+        visible={statusVisible}
+        type={statusMessage.type}
+        title={statusMessage.title}
+        message={statusMessage.message}
+        primaryAction={{
+          label: "OK",
+          onPress: () => setStatusVisible(false)
+        }}
+        onClose={() => setStatusVisible(false)}
+      />
     </ThemedView>
   )
 }
