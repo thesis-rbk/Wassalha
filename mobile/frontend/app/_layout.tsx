@@ -249,6 +249,14 @@ export default function RootLayout() {
                           }}
                         />
                         <Stack.Screen
+                          name="verification/fetchAll"
+                          options={{ title: "Fetch Sub" }}
+                        />
+                        <Stack.Screen
+                          name="verification/Wallet"
+                          options={{ title: "Wallet" }}
+                        />
+                        <Stack.Screen
                           name="verification/SponsorshipDetails"
                           options={{ title: "verif details" }}
                         />

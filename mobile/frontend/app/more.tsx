@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, ScrollView, Image } from 'react-native';
-import { Bell, Home, DollarSign, Users, PenSquare, LogOut, ChevronRight } from 'lucide-react-native';
+import { KeyRound, MessageCircleQuestion, LifeBuoy, HelpCircle, Headphones, Coins, PiggyBank, Banknote, Wallet, DollarSign, Users, PenSquare, LogOut, ChevronRight } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
@@ -44,13 +44,13 @@ export default function MorePage() {
   const fetchUserData = async () => {
     try {
       if (!user || !user.id) return;
-      
+
       const response = await axiosInstance.get(`/api/users/${user.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      
+
       if (response.data) {
         console.log("Fetched user data:", response.data);
         setUserData(response.data);
@@ -74,34 +74,44 @@ export default function MorePage() {
 
   const menuItems = [
     {
-      icon: <Home size={24} color={Colors[colorScheme].text} />,
-      label: 'Home',
-      route: '/home',
+      icon: <Wallet size={24} color={Colors[colorScheme].text} />,
+      label: 'wallet',
+      route: '/verification/Wallet',
     },
     {
-      icon: <Bell size={24} color={Colors[colorScheme].text} />,
-      label: 'Notifications',
+      icon: <DollarSign size={24} color={Colors[colorScheme].text} />,
+      label: 'Payouts History',
       route: '/screens/NotificationsScreen',
       badge: unreadCount > 0 ? unreadCount : undefined,
     },
     {
+      icon: <KeyRound size={24} color={Colors[colorScheme].text} />,
+      label: 'Change Password',
+      route: '/profile/change',
+      badge: unreadCount > 0 ? unreadCount : undefined,
+    },
+    {
       icon: isSponsor ? (
-        <DollarSign size={24} color={Colors[colorScheme].text} />
+        <Coins size={24} color={Colors[colorScheme].text} />
       ) : (
         <Users size={24} color={Colors[colorScheme].text} />
       ),
-      label: isSponsor ? 'Create Subscription' : 'Sponsorship',
+      label: isSponsor ? 'Create Subscription' : 'Be Sponsor',
       route: isSponsor ? '/verification/CreateSponsorPost' : '/screens/SponsorshipScreen',
     },
     {
-      icon: <PenSquare size={24} color={Colors[colorScheme].text} />,
-      label: 'Make a report',
-      route: '/reporting-system/create-ticket',
+      icon: !isSponsor ? (
+        <Banknote size={24} color={Colors[colorScheme].text} />
+      ) : (
+        <Users size={24} color={Colors[colorScheme].text} />
+      ),
+      label: !isSponsor ? 'Create Ticket' : 'Be traveler',
+      route: !isSponsor ? '/verification/CreateSponsorPost' : '/traveler/becomeTraveler',
     },
     {
-      icon: <PenSquare size={24} color={Colors[colorScheme].text} />,
-      label: 'Become a traveler',
-      route: '/traveler/becomeTraveler',
+      icon: <MessageCircleQuestion size={24} color={Colors[colorScheme].text} />,
+      label: 'Make a report',
+      route: '/reporting-system/create-ticket',
     },
   ];
 
@@ -121,7 +131,7 @@ export default function MorePage() {
           </View>
           <View style={styles.profileInfo}>
             <Text style={[styles.profileName, { color: Colors[colorScheme].text }]}>
-              {userData?.profile?.firstName 
+              {userData?.profile?.firstName
                 ? `${userData.profile.firstName} ${userData.profile.lastName || ''}`
                 : userData?.name || 'User'}
             </Text>

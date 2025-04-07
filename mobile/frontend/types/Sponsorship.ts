@@ -247,8 +247,9 @@ export interface CardProps {
     title: string;
     description: string;
     imageUrl: string;
-    onPress: () => void; // For handling button press
+    onPress?: () => void; // For handling button press
 }
+
 
 export interface HeaderProps {
     title: string;
@@ -259,4 +260,21 @@ export interface HeaderProps {
     showNextButton?: boolean; // New prop to control next button visibility
     backButtonTitle?: string;
     nextButtonTitle?: string; // New prop for next button text
+}
+
+export interface BonusProps {
+    name: string
+    bonusAmount: number
+    currency?: string
+}
+
+export interface CardInfo {
+    cardNumber: string
+    cardHolder: string
+    expiryDate: string
+    cvv: string
+}
+
+export interface ExtendedCardProps extends CardProps {
+    showButton: boolean; // New prop to control button visibility
 }
