@@ -89,12 +89,47 @@ export default function BecomeTraveler() {
     try {
       setIsLoading(true);
 
-      // In a real app, you would first upload the images to your server
-      // and then use the returned URLs in this request
-      const response = await axiosInstance.post('/api/travelers/apply', {
+      // Create FormData to handle file uploads
+      const formDataToSend = new FormData();
+      formDataToSend.append('userId', user.id.toString());
+
+      // Add ID card image
+      if (idCardImage) {
+        const idCardUri = idCardImage;
+        const idCardName = idCardUri.split('/').pop();
+        const idCardType = 'image/jpeg';
+        formDataToSend.append('idCard', {
+          uri: Platform.OS === 'ios' ? idCardUri.replace('file://', '') : idCardUri,
+          type: idCardType,
+          name: idCardName,
+        } as any);
+      }
+
+      // Add bank card image
+      if (bankCardImage) {
+        const bankCardUri = bankCardImage;
+        const bankCardName = bankCardUri.split('/').pop();
+        const bankCardType = 'image/jpeg';
+        formDataToSend.append('bankCard', {
+          uri: Platform.OS === 'ios' ? bankCardUri.replace('file://', '') : bankCardUri,
+          type: bankCardType,
+          name: bankCardName,
+        } as any);
+      }
+
+      console.log('Submitting form data:', {
         userId: user.id,
-        idCard: formData.idCard,
-        bankCard: formData.bankCard,
+        idCardImage: idCardImage ? 'exists' : 'missing',
+        bankCardImage: bankCardImage ? 'exists' : 'missing',
+      });
+
+      const response = await axiosInstance.post('/api/travelers/apply', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        transformRequest: (data, headers) => {
+          return data; // Don't transform the data
+        },
       });
 
       if (response.data.success) {
