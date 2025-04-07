@@ -254,13 +254,7 @@ export default function GoodPostPage() {
           {/* Ticket header with date info - SMALLER */}
           <View style={styles.ticketHeader}>
             <View style={styles.dateInfo}>
-              <ThemedText style={styles.dateLabel}>DEPARTURE</ThemedText>
-              <ThemedText style={styles.dateValue}>
-                {item.departureDate ? new Date(item.departureDate).toLocaleDateString() : 'TBD'}
-              </ThemedText>
-            </View>
-            <View style={styles.dateInfo}>
-              <ThemedText style={styles.dateLabel}>ARRIVAL</ThemedText>
+              <ThemedText style={styles.dateLabel}>DATE</ThemedText>
               <ThemedText style={styles.dateValue}>
                 {item.arrivalDate ? new Date(item.arrivalDate).toLocaleDateString() : 'TBD'}
               </ThemedText>
@@ -694,25 +688,22 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   ticketHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    padding: 12,
+    paddingBottom: 8,
+    backgroundColor: "#f8f9fa",
   },
-  dateInfo: {
-    alignItems: 'center',
-  },
+  dateInfo: {},
   dateLabel: {
-    fontSize: 10,
-    color: '#666',
-    marginBottom: 2,
+    fontSize: 9,
+    color: "#999",
+    fontWeight: "bold",
   },
   dateValue: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   travelerSection: {
     flexDirection: "row",

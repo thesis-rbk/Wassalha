@@ -33,15 +33,12 @@ export default function CreateGoodsPost() {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    departureDate: new Date(),
     arrivalDate: new Date(),
-    originLocation: '',
-    airportLocation: '',
     availableKg: '',
+    airportLocation: '',
     categoryId: '',
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showDepartureDatePicker, setShowDepartureDatePicker] = useState(false);
 
   // Force reset and recheck whenever the screen comes into focus
   useFocusEffect(
@@ -164,13 +161,6 @@ export default function CreateGoodsPost() {
     setShowDatePicker(false);
     if (selectedDate) {
       handleInputChange('arrivalDate', selectedDate);
-    }
-  };
-
-  const handleDepartureDateChange = (event: any, selectedDate?: Date) => {
-    setShowDepartureDatePicker(false);
-    if (selectedDate) {
-      handleInputChange('departureDate', selectedDate);
     }
   };
 
@@ -347,30 +337,6 @@ export default function CreateGoodsPost() {
             <View style={styles.formGroup}>
               <View style={styles.labelContainer}>
                 <Calendar size={16} color="#3a86ff" />
-                <ThemedText style={styles.label}>Departure Date</ThemedText>
-              </View>
-              <TouchableOpacity 
-                style={styles.datePickerButton}
-                onPress={() => setShowDepartureDatePicker(true)}
-              >
-                <ThemedText style={styles.dateText}>
-                  {formData.departureDate.toLocaleDateString()}
-                </ThemedText>
-              </TouchableOpacity>
-              {showDepartureDatePicker && (
-                <DateTimePicker
-                  value={formData.departureDate}
-                  mode="date"
-                  display="default"
-                  onChange={handleDepartureDateChange}
-                  minimumDate={new Date()}
-                />
-              )}
-            </View>
-
-            <View style={styles.formGroup}>
-              <View style={styles.labelContainer}>
-                <Calendar size={16} color="#3a86ff" />
                 <ThemedText style={styles.label}>Arrival Date</ThemedText>
               </View>
               <TouchableOpacity 
@@ -387,41 +353,11 @@ export default function CreateGoodsPost() {
                   mode="date"
                   display="default"
                   onChange={handleDateChange}
-                  minimumDate={formData.departureDate}
+                  minimumDate={new Date()}
                 />
               )}
             </View>
 
-            <View style={styles.formGroup}>
-              <View style={styles.labelContainer}>
-                <MapPin size={16} color="#3a86ff" />
-                <ThemedText style={styles.label}>Origin Location</ThemedText>
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter origin location"
-                value={formData.originLocation}
-                onChangeText={(text) => handleInputChange('originLocation', text)}
-                placeholderTextColor="#999"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <View style={styles.labelContainer}>
-                <MapPin size={16} color="#3a86ff" />
-                <ThemedText style={styles.label}>Destination Airport</ThemedText>
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter destination airport"
-                value={formData.airportLocation}
-                onChangeText={(text) => handleInputChange('airportLocation', text)}
-                placeholderTextColor="#999"
-              />
-            </View>
-          </View>
-
-          <View style={styles.card}>
             <View style={styles.formGroup}>
               <View style={styles.labelContainer}>
                 <Package size={16} color="#3a86ff" />
@@ -433,6 +369,20 @@ export default function CreateGoodsPost() {
                 value={formData.availableKg}
                 onChangeText={(text) => handleInputChange('availableKg', text)}
                 keyboardType="numeric"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <View style={styles.labelContainer}>
+                <MapPin size={16} color="#3a86ff" />
+                <ThemedText style={styles.label}>Airport Location</ThemedText>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter airport location"
+                value={formData.airportLocation}
+                onChangeText={(text) => handleInputChange('airportLocation', text)}
                 placeholderTextColor="#999"
               />
             </View>

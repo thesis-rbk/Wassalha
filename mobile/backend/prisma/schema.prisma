@@ -732,13 +732,10 @@ model GoodsPost {
   travelerId Int
   traveler   User? @relation(fields: [travelerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  departureDate   DateTime?
   arrivalDate     DateTime?
-  originLocation  String?
-  airportLocation String?
-
   availableKg     Float?
   phoneNumber     String?
+  airportLocation String?
 
   categoryId Int?
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)

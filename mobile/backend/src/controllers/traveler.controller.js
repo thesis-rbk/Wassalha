@@ -2,11 +2,9 @@ const prisma = require('../../prisma/index');
 
 // Submit ID card and bank card to become a traveler
 const submitTravelerApplication = async (req, res) => {
-  try {
-    const userId = req.body.userId;
-    const idCard = req.body.idCard;
-    const bankCard = req.body.bankCard;
+  const { userId, idCard, bankCard } = req.body;
 
+  try {
     // Validate required fields
     if (!userId || !idCard || !bankCard) {
       return res.status(400).json({ 
@@ -43,22 +41,14 @@ const submitTravelerApplication = async (req, res) => {
     const newTraveler = await prisma.traveler.create({
       data: {
         userId: parseInt(userId),
-        idCard: idCard.toString(), // Convert to string to store the image data
-        bankCard: bankCard.toString(), // Convert to string to store the image data
-        isVerified: false,
+        idCard,
+        bankCard,
+        isVerified: false, // Default to not verified
       },
     });
 
-    // Create a notification for admin review
-    await prisma.notification.create({
-      data: {
-        userId: parseInt(userId),
-        type: 'SYSTEM_ALERT',
-        title: 'New Traveler Application',
-        message: `New traveler application submitted by ${user.name || user.email}`,
-        status: 'UNREAD',
-      },
-    });
+    // In a real application, you would send a notification to admins here
+    // to review the new traveler application
 
     res.status(201).json({ 
       success: true, 
