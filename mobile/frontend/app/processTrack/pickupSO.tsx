@@ -661,11 +661,6 @@ export default function PickupOwner() {
         />
       ) : (
         <>
-          <LinearGradient colors={["#1e293b", "#0f172a"]} style={styles.header}>
-            <Text style={styles.title}>Your Pickups</Text>
-            <Text style={styles.subtitle}>Manage your delivery requests and pickup options</Text>
-          </LinearGradient>
-
           {isLoading && pickups.length === 0 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#3b82f6" />

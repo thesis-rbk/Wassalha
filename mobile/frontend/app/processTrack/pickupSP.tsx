@@ -767,11 +767,6 @@ export default function PickupTraveler() {
         />
       ) : (
         <>
-          <LinearGradient colors={["#1e293b", "#0f172a"]} style={styles.header}>
-            <Text style={styles.title}>Your Pickup Requests</Text>
-            <Text style={styles.subtitle}>Manage your delivery assignments and pickup status</Text>
-          </LinearGradient>
-
           {isLoading && pickups.length === 0 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#3b82f6" />
