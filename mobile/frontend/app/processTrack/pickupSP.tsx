@@ -609,7 +609,7 @@ export default function PickupTraveler() {
     <View style={styles.container}>
       <Header
         title="Pickups"
-        subtitle="Track your order's process here"
+        subtitle="Track your order's process"
         showBackButton={true}
       />
       {showSuggestions ? (

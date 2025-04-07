@@ -28,8 +28,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useNotification } from "@/context/NotificationContext";
-import { useStatus } from '@/context/StatusContext';
+import { useStatus } from "@/context/StatusContext";
 import { io } from "socket.io-client";
+import Header from "@/components/navigation/headers";
 
 export default function InitializationSO() {
   const params = useLocalSearchParams();
@@ -44,7 +45,7 @@ export default function InitializationSO() {
   const [user, setUser] = useState<any>(null);
   const { sendNotification } = useNotification();
   const { show, hide } = useStatus();
-  
+
   console.log(user?.id, "user data");
   // Progress steps
   const progressSteps = [
@@ -100,23 +101,23 @@ export default function InitializationSO() {
     } catch (error) {
       console.error("Error fetching order details:", error);
       show({
-        type: 'error',
-        title: 'Loading Error',
-        message: 'Failed to load order details',
+        type: "error",
+        title: "Loading Error",
+        message: "Failed to load order details",
         primaryAction: {
-          label: 'Try Again',
+          label: "Try Again",
           onPress: () => {
             hide();
             fetchOrderDetails();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Go Back',
+          label: "Go Back",
           onPress: () => {
             hide();
             router.back();
-          }
-        }
+          },
+        },
       });
     } finally {
       setLoading(false);
@@ -134,16 +135,19 @@ export default function InitializationSO() {
 
       try {
         console.log("Updating offer status");
-       const response= await axiosInstance.patch(`/api/process/${processId}/status`, {
-          status: "INITIALIZED",
-        });
+        const response = await axiosInstance.patch(
+          `/api/process/${processId}/status`,
+          {
+            status: "INITIALIZED",
+          }
+        );
         console.log("Offer status updated successfully");
         const socket = io(`${BACKEND_URL}/processTrack`);
         socket.emit("processStatusUpdate", {
-          processId:processId,
-          status: "INITIALIZED"
+          processId: processId,
+          status: "INITIALIZED",
         });
-        console.log("📤 Emitted statut Order event immediately",processId);
+        console.log("📤 Emitted statut Order event immediately", processId);
         console.log("Current user ID:", user?.id);
         console.log("Request params:", params);
 
@@ -180,33 +184,33 @@ export default function InitializationSO() {
         console.error("=== API ERROR ===");
         console.error("Error object:", apiError);
         show({
-          type: 'error',
-          title: 'Process Error',
-          message: 'Failed to accept offer. Please try again.',
+          type: "error",
+          title: "Process Error",
+          message: "Failed to accept offer. Please try again.",
           primaryAction: {
-            label: 'Try Again',
+            label: "Try Again",
             onPress: () => {
               hide();
               handleAcceptOffer();
-            }
+            },
           },
           secondaryAction: {
-            label: 'Cancel',
-            onPress: hide
-          }
+            label: "Cancel",
+            onPress: hide,
+          },
         });
       }
     } catch (error) {
       console.error("=== GENERAL ERROR ===");
       console.error("Error object:", error);
       show({
-        type: 'error',
-        title: 'Data Error',
-        message: 'Failed to prepare order data',
+        type: "error",
+        title: "Data Error",
+        message: "Failed to prepare order data",
         primaryAction: {
-          label: 'OK',
-          onPress: hide
-        }
+          label: "OK",
+          onPress: hide,
+        },
       });
     } finally {
       console.log("Setting processing to false");
@@ -230,7 +234,7 @@ export default function InitializationSO() {
           onPress: async () => {
             try {
               setProcessing(true);
-              
+
               // First, update the order status to CANCELLED
               const orderResponse = await axiosInstance.patch(
                 `/api/orders/${order.id}/status`,
@@ -240,28 +244,25 @@ export default function InitializationSO() {
                 }
               );
 
-            if (orderResponse.status === 200) {
-              // Then, update the associated request directly (not using the status endpoint)
-              const requestId = params.idRequest;
-              if (requestId) {
-                await axiosInstance.put(
-                  `/api/requests/${requestId}`,
-                  {
-                    status: "PENDING"
-                  }
-                );
-              }
+              if (orderResponse.status === 200) {
+                // Then, update the associated request directly (not using the status endpoint)
+                const requestId = params.idRequest;
+                if (requestId) {
+                  await axiosInstance.put(`/api/requests/${requestId}`, {
+                    status: "PENDING",
+                  });
+                }
 
-              // Send notification about cancellation
-              sendNotification('order_cancelled', {
-                travelerId: params.travelerId,
-                requestDetails: {
-                  requesterId: user?.id,
-                  goodsName: params.goodsName || "this item",
-                  requestId: params.idRequest,
-                  orderId: order.id,
-                },
-              });
+                // Send notification about cancellation
+                sendNotification("order_cancelled", {
+                  travelerId: params.travelerId,
+                  requestDetails: {
+                    requesterId: user?.id,
+                    goodsName: params.goodsName || "this item",
+                    requestId: params.idRequest,
+                    orderId: order.id,
+                  },
+                });
 
                 Alert.alert(
                   "Order Cancelled",
@@ -311,163 +312,147 @@ export default function InitializationSO() {
   }
 
   return (
-    <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={styles.scrollContent}
-    >
-      <Text style={styles.title}>Initialization</Text>
-      <Text style={styles.subtitle}>
-        This is the first step of the process, check the traveler public details
-        below and you can confirm if you want
-      </Text>
-      <ProgressBar currentStep={1} steps={progressSteps} />
+    <View style={styles.container}>
+      <Header
+        title="Initialization"
+        subtitle="Track your order's process"
+        showBackButton={true}
+      />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <Text style={styles.subtitle}>
+          This is the first step of the process, check the traveler public
+          details below and you can confirm if you want
+        </Text>
+        <ProgressBar currentStep={1} steps={progressSteps} />
 
-      <View style={styles.detailsContainer}>
-        <ThemedText style={styles.productName}>
-          {offer ? offer.request.goods.name : order.request.goods.name}
-        </ThemedText>
+        <View style={styles.detailsContainer}>
+          <ThemedText style={styles.productName}>
+            {offer ? offer.request.goods.name : order.request.goods.name}
+          </ThemedText>
 
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Request Details</ThemedText>
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Request Details</ThemedText>
 
-          <View style={styles.detailRow}>
-            <MapPin size={16} color="#64748b" />
-            <ThemedText style={styles.detailText}>
-              From: {order.request.goodsLocation}
-            </ThemedText>
+            <View style={styles.detailRow}>
+              <MapPin size={16} color="#64748b" />
+              <ThemedText style={styles.detailText}>
+                From: {order.request.goodsLocation}
+              </ThemedText>
+            </View>
+
+            <View style={styles.detailRow}>
+              <MapPin size={16} color="#64748b" />
+              <ThemedText style={styles.detailText}>
+                To: {order.request.goodsDestination}
+              </ThemedText>
+            </View>
+
+            <View style={styles.detailRow}>
+              <Package size={16} color="#64748b" />
+              <ThemedText style={styles.detailText}>
+                Quantity: {order.request.quantity}
+              </ThemedText>
+            </View>
+
+            <View style={styles.detailRow}>
+              <Clock size={16} color="#64748b" />
+              <ThemedText style={styles.detailText}>
+                Estimated Delivery:{" "}
+                {new Date(displayData.arrivalDate).toLocaleDateString()}
+              </ThemedText>
+            </View>
           </View>
 
-          <View style={styles.detailRow}>
-            <MapPin size={16} color="#64748b" />
-            <ThemedText style={styles.detailText}>
-              To: {order.request.goodsDestination}
-            </ThemedText>
-          </View>
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Traveler</ThemedText>
 
-          <View style={styles.detailRow}>
-            <Package size={16} color="#64748b" />
-            <ThemedText style={styles.detailText}>
-              Quantity: {order.request.quantity}
-            </ThemedText>
-          </View>
+            <View style={styles.travelerCard}>
+              <View style={styles.travelerHeader}>
+                <View style={styles.avatarContainer}>
+                  <View style={styles.avatarPlaceholder}>
+                    <ThemedText style={styles.avatarInitials}>
+                      {getInitials(params.travelerName?.toString())}
+                    </ThemedText>
+                  </View>
 
-          <View style={styles.detailRow}>
-            <Clock size={16} color="#64748b" />
-            <ThemedText style={styles.detailText}>
-              Estimated Delivery:{" "}
-              {new Date(displayData.arrivalDate).toLocaleDateString()}
-            </ThemedText>
-          </View>
-        </View>
+                  {params.travelerVerified && (
+                    <View style={styles.verifiedBadge}>
+                      <CheckCircle size={16} color="#10b981" />
+                    </View>
+                  )}
+                </View>
 
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Traveler</ThemedText>
-
-          <View style={styles.travelerCard}>
-            <View style={styles.travelerHeader}>
-              <View style={styles.avatarContainer}>
-                <View style={styles.avatarPlaceholder}>
-                  <ThemedText style={styles.avatarInitials}>
+                <View style={styles.travelerInfo}>
+                  <ThemedText style={styles.travelerName}>
                     {getInitials(params.travelerName?.toString())}
                   </ThemedText>
-                </View>
 
-                {params.travelerVerified && (
-                  <View style={styles.verifiedBadge}>
-                    <CheckCircle size={16} color="#10b981" />
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.travelerInfo}>
-                <ThemedText style={styles.travelerName}>
-                  {getInitials(params.travelerName?.toString())}
-                </ThemedText>
-
-                <View style={styles.reputationRow}>
-                  <View style={styles.reputationContainer}>
-                    <Star size={16} color="#f59e0b" fill="#f59e0b" />
-                    <ThemedText style={styles.reputationText}>
-                      {parseInt(params.travelerRating.toString()).toFixed(1)} (
-                      {params.travelerTotalRatings} ratings)
-                    </ThemedText>
-                  </View>
-
-                  <View style={styles.experienceBadge}>
-                    <Award size={14} color="#7c3aed" />
-                    <ThemedText style={styles.experienceText}>
-                      Level {params.travelerLevel}
-                    </ThemedText>
-                  </View>
-                </View>
-
-                <View style={styles.statsContainer}>
-                  {/* <View style={styles.statItem}>
-                      <Package size={14} color="#64748b" />
-                      <ThemedText style={styles.statText}>
-                        {traveler?.stats?.completedOrders} Deliveries
+                  <View style={styles.reputationRow}>
+                    <View style={styles.reputationContainer}>
+                      <Star size={16} color="#f59e0b" fill="#f59e0b" />
+                      <ThemedText style={styles.reputationText}>
+                        {parseInt(params.travelerRating.toString()).toFixed(1)}{" "}
+                        ({params.travelerTotalRatings} ratings)
                       </ThemedText>
-                    </View> */}
-                  {/* <View style={styles.divider} /> */}
-                  {/* <View style={styles.statItem}>
-                      <CheckCircle size={14} color="#64748b" />
-                      <ThemedText style={styles.statText}>
-                        {traveler?.stats?.successRate}% Success
+                    </View>
+
+                    <View style={styles.experienceBadge}>
+                      <Award size={14} color="#7c3aed" />
+                      <ThemedText style={styles.experienceText}>
+                        Level {params.travelerLevel}
                       </ThemedText>
-                    </View> */}
+                    </View>
+                  </View>
+
+                  <View style={styles.statsContainer}></View>
                 </View>
               </View>
             </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.bottomActions}>
-        {/* Show Accept button when we have an offer */}
-        {processId && order ? (
-          <TouchableOpacity
-            style={[styles.acceptButton, processing && styles.buttonDisabled]}
-            onPress={handleAcceptOffer}
-            disabled={processing}
-          >
-            {processing ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <ThemedText style={styles.buttonText}>
-                Accept and Proceed to Verification
-              </ThemedText>
-            )}
-          </TouchableOpacity>
-        ) : null}
+        <View style={styles.bottomActions}>
+          {/* Show Accept button when we have an offer */}
+          {processId && order ? (
+            <TouchableOpacity
+              style={[styles.acceptButton, processing && styles.buttonDisabled]}
+              onPress={handleAcceptOffer}
+              disabled={processing}
+            >
+              {processing ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <ThemedText style={styles.buttonText}>
+                  Accept and Proceed to Verification
+                </ThemedText>
+              )}
+            </TouchableOpacity>
+          ) : null}
 
-        {/* Show Cancel button for orders */}
-        {orderId && order ? (
-          <TouchableOpacity
-            style={[styles.cancelButton, processing && styles.buttonDisabled]}
-            onPress={handleCancelOrder}
-            disabled={processing}
-          >
-            {processing ? (
-              <ActivityIndicator size="small" color="#ef4444" />
-            ) : (
-              <ThemedText style={styles.cancelButtonText}>
-                Cancel Order
-              </ThemedText>
-            )}
-          </TouchableOpacity>
-        ) : null}
-      </View>
-    </ScrollView>
+          {/* Show Cancel button for orders */}
+          {orderId && order ? (
+            <TouchableOpacity
+              style={[styles.cancelButton, processing && styles.buttonDisabled]}
+              onPress={handleCancelOrder}
+              disabled={processing}
+            >
+              {processing ? (
+                <ActivityIndicator size="small" color="#ef4444" />
+              ) : (
+                <ThemedText style={styles.cancelButtonText}>
+                  Cancel Order
+                </ThemedText>
+              )}
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
-
-// Helper Functions
-const getImageUrl = (data: any) => {
-  if (data.request?.goods?.image?.filename) {
-    return `${BACKEND_URL}/api/uploads/${data.request.goods.image.filename}`;
-  }
-  return "https://via.placeholder.com/400x200?text=No+Image";
-};
 
 const getInitials = (name?: string) => {
   if (!name) return "?";
@@ -478,18 +463,10 @@ const getInitials = (name?: string) => {
   return names[0][0].toUpperCase();
 };
 
-const getObfuscatedName = (name?: string) => {
-  if (!name) return "Anonymous";
-  const names = name.split(" ");
-  if (names.length >= 2) {
-    return `${names[0]} ${names[names.length - 1][0]}.`;
-  }
-  return name;
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff",
   },
   title: {
     fontFamily: "Poppins-Bold",
