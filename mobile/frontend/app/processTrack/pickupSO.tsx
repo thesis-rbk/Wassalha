@@ -1,5 +1,6 @@
-import { useLocalSearchParams } from "expo-router";
-import React, { useState, useEffect, useRef } from "react";
+
+import { useLocalSearchParams } from "expo-router"
+import { useState, useEffect, useRef } from "react"
 import {
   View,
   StyleSheet,
@@ -9,316 +10,362 @@ import {
   TouchableOpacity,
   Alert,
   Animated,
-} from "react-native";
-import { ThemedView } from "@/components/ThemedView";
-import axiosInstance from "../../config";
-import Pickups from "../pickup/pickup";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store";
-import { Pickup } from "../../types/Pickup";
+  Image,
+  Dimensions,
+} from "react-native"
+import { ThemedView } from "@/components/ThemedView"
+import axiosInstance from "../../config"
+import Pickups from "../pickup/pickup"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { useSelector } from "react-redux"
+import type { RootState } from "../../store"
+import type { Pickup } from "../../types/Pickup"
 import {
   MapPin,
   CheckCircle,
   XCircle,
   AlertCircle,
   MessageCircle,
-  ChevronRight,
   Clock,
   Calendar,
-} from "lucide-react-native";
-import { usePickupActions } from "../../hooks/usePickupActions";
-import { QRCodeModal } from "../pickup/QRCodeModal";
-import io, { Socket } from "socket.io-client";
-import { navigateToChat } from "@/services/chatService";
-import { LinearGradient } from "expo-linear-gradient";
+  Package,
+  User,
+  ArrowRight,
+  RefreshCw,
+  History,
+  Info,
+} from "lucide-react-native"
+import { usePickupActions } from "../../hooks/usePickupActions"
+import { QRCodeModal } from "../pickup/QRCodeModal"
+import io, { type Socket } from "socket.io-client"
+import { navigateToChat } from "@/services/chatService"
+import { LinearGradient } from "expo-linear-gradient"
 
-const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
+const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
+const { width } = Dimensions.get("window")
 
 export default function PickupOwner() {
-  const params = useLocalSearchParams();
-  const { user } = useSelector((state: RootState) => state.auth);
-  const userId = user?.id;
+  const params = useLocalSearchParams()
+  const { user } = useSelector((state: RootState) => state.auth)
+  const userId = user?.id
 
-  console.log("params from pickup so", params);
+  const [pickupId, setPickupId] = useState<number>(0)
+  const [pickups, setPickups] = useState<Pickup[]>([])
+  const [showPickup, setShowPickup] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
 
-  const [pickupId, setPickupId] = useState<number>(0);
-  const [pickups, setPickups] = useState<Pickup[]>([]);
-  const [showPickup, setShowPickup] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const { handleAccept, showStoredQRCode, showQRCode, setShowQRCode, qrCodeData, handleCancel } = usePickupActions(
+    pickups,
+    setPickups,
+    userId,
+  )
 
-  const {
-    handleAccept,
-    showStoredQRCode,
-    showQRCode,
-    setShowQRCode,
-    qrCodeData,
-    handleCancel,
-  } = usePickupActions(pickups, setPickups, userId);
+  const socketRef = useRef<Socket | null>(null)
+  const pulseAnim = useRef(new Animated.Value(1)).current
+  const slideAnim = useRef(new Animated.Value(0)).current
 
-  const socketRef = useRef<Socket | null>(null);
-
+  // Animation for cards
   useEffect(() => {
-    if (!socketRef.current) {
-      socketRef.current = io(`${SOCKET_URL}/pickup`, {
-        transports: ["websocket"],
-      });
+    Animated.timing(slideAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start()
+  }, [pickups])
 
-      socketRef.current.on("connect", () => {
-        console.log("✅ Connected to Socket.IO server (PickupOwner)");
-        pickups.forEach((pickup) => {
-          const room = `pickup:${pickup.id}`;
-          socketRef.current?.emit("joinPickupRoom", pickup.id);
-          console.log(`Joined room: ${room}`);
-        });
-      });
-
-      socketRef.current.on("connect_error", (error) => {
-        console.error("❌ Socket.IO connection error:", error.message);
-      });
-
-      socketRef.current.on("pickupAccepted", (updatedPickup: Pickup) => {
-        console.log("✅ Received pickupAccepted (PickupOwner):", updatedPickup);
-        setPickups((prev) =>
-          prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
-        );
-      });
-
-      socketRef.current.on("suggestionUpdate", (data: Pickup) => {
-        console.log("📩 Received suggestionUpdate (PickupOwner):", data);
-        setPickups((prev) => prev.map((p) => (p.id === data.id ? data : p)));
-      });
-
-      socketRef.current.on("statusUpdate", (updatedPickup: Pickup) => {
-        console.log("🔄 Received statusUpdate (PickupOwner):", updatedPickup);
-        setPickups((prev) =>
-          prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p))
-        );
-      });
-
-      socketRef.current.on("disconnect", () => {
-        console.log("❌ Disconnected from Socket.IO server (PickupOwner)");
-      });
-    }
-
-    if (socketRef.current?.connected) {
-      pickups.forEach((pickup) => {
-        const room = `pickup:${pickup.id}`;
-        socketRef.current?.emit("joinPickupRoom", pickup.id);
-        console.log(`Joined room: ${room}`);
-      });
-    }
-
-    return () => {
-      socketRef.current?.disconnect();
-      socketRef.current = null;
-    };
-  }, [pickups]);
-
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
+  // Pulse animation for chat button
   useEffect(() => {
     const pulse = () => {
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.1,
-          duration: 500,
+          duration: 800,
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
-          duration: 500,
+          duration: 800,
           useNativeDriver: true,
         }),
-      ]).start(() => pulse());
-    };
-    pulse();
-  }, []);
+      ]).start(() => pulse())
+    }
+    pulse()
+  }, [])
+
+  // Socket connection
+  useEffect(() => {
+    if (!socketRef.current) {
+      socketRef.current = io(`${SOCKET_URL}/pickup`, {
+        transports: ["websocket"],
+      })
+
+      socketRef.current.on("connect", () => {
+        console.log("✅ Connected to Socket.IO server (PickupOwner)")
+        pickups.forEach((pickup) => {
+          const room = `pickup:${pickup.id}`
+          socketRef.current?.emit("joinPickupRoom", pickup.id)
+          console.log(`Joined room: ${room}`)
+        })
+      })
+
+      socketRef.current.on("connect_error", (error) => {
+        console.error("❌ Socket.IO connection error:", error.message)
+      })
+
+      socketRef.current.on("pickupAccepted", (updatedPickup: Pickup) => {
+        console.log("✅ Received pickupAccepted (PickupOwner):", updatedPickup)
+        setPickups((prev) => prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p)))
+      })
+
+      socketRef.current.on("suggestionUpdate", (data: Pickup) => {
+        console.log("📩 Received suggestionUpdate (PickupOwner):", data)
+        setPickups((prev) => prev.map((p) => (p.id === data.id ? data : p)))
+      })
+
+      socketRef.current.on("statusUpdate", (updatedPickup: Pickup) => {
+        console.log("🔄 Received statusUpdate (PickupOwner):", updatedPickup)
+        setPickups((prev) => prev.map((p) => (p.id === updatedPickup.id ? updatedPickup : p)))
+      })
+
+      socketRef.current.on("disconnect", () => {
+        console.log("❌ Disconnected from Socket.IO server (PickupOwner)")
+      })
+    }
+
+    if (socketRef.current?.connected) {
+      pickups.forEach((pickup) => {
+        const room = `pickup:${pickup.id}`
+        socketRef.current?.emit("joinPickupRoom", pickup.id)
+        console.log(`Joined room: ${room}`)
+      })
+    }
+
+    return () => {
+      socketRef.current?.disconnect()
+      socketRef.current = null
+    }
+  }, [pickups])
 
   useEffect(() => {
-    fetchPickups();
-  }, []);
+    fetchPickups()
+  }, [])
 
   const openChat = async () => {
     if (!user?.id) {
-      Alert.alert("Error", "You need to be logged in to chat");
-      return;
+      Alert.alert("Error", "You need to be logged in to chat")
+      return
     }
 
     try {
-      const requesterId = parseInt(params.requesterId.toString());
-      const providerId = parseInt(params.travelerId.toString());
-      const goodsId = parseInt(params.idGood.toString());
+      const requesterId = Number.parseInt(params.requesterId.toString())
+      const providerId = Number.parseInt(params.travelerId.toString())
+      const goodsId = Number.parseInt(params.idGood.toString())
 
       console.log("Opening chat with:", {
         requesterId: user?.id,
-        providerId: parseInt(params.travelerId.toString()),
-        goodsId: parseInt(params.idGood.toString()),
-      });
+        providerId: Number.parseInt(params.travelerId.toString()),
+        goodsId: Number.parseInt(params.idGood.toString()),
+      })
 
       await navigateToChat(requesterId, providerId, goodsId, {
-        orderId: parseInt(params.idOrder.toString()),
+        orderId: Number.parseInt(params.idOrder.toString()),
         goodsName: params.goodsName?.toString() || "Item",
-      });
+      })
     } catch (error) {
-      console.error("Error opening chat:", error);
+      console.error("Error opening chat:", error)
       Alert.alert(
         "Chat Error",
-        "Failed to open chat. Error: " +
-          (error instanceof Error ? error.message : String(error))
-      );
+        "Failed to open chat. Error: " + (error instanceof Error ? error.message : String(error)),
+      )
     }
-  };
+  }
 
   const fetchPickups = async (): Promise<void> => {
     try {
-      setIsLoading(true);
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) throw new Error("No authentication token found");
+      setIsLoading(true)
+      const token = await AsyncStorage.getItem("jwtToken")
+      if (!token) throw new Error("No authentication token found")
 
       const response = await axiosInstance.get<{
-        success: boolean;
-        data: Pickup[];
+        success: boolean
+        data: Pickup[]
       }>(`/api/pickup/requester`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      });
-      setPickups(response.data.data);
-      console.log("Pickups fetched:", response.data.data);
+      })
+      setPickups(response.data.data)
+      console.log("Pickups fetched:", response.data.data)
     } catch (error) {
-      console.error("Error fetching pickups:", error);
-      Alert.alert("Error", "Failed to fetch pickups. Please try again.");
+      console.error("Error fetching pickups:", error)
+      Alert.alert("Error", "Failed to fetch pickups. Please try again.")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
+      setRefreshing(false)
     }
-  };
+  }
+
+  const handleRefresh = () => {
+    setRefreshing(true)
+    fetchPickups()
+  }
 
   const handleSuggest = async (pickupId: number): Promise<void> => {
-    setPickupId(pickupId);
-    setShowPickup(true);
-  };
+    setPickupId(pickupId)
+    setShowPickup(true)
+  }
 
   const fetchSuggestions = async (pickupId: number) => {
     try {
-      setIsLoading(true);
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) throw new Error("No authentication token found");
+      setIsLoading(true)
+      const token = await AsyncStorage.getItem("jwtToken")
+      if (!token) throw new Error("No authentication token found")
 
-      const response = await axiosInstance.get(
-        `/api/pickup/history/${pickupId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axiosInstance.get(`/api/pickup/history/${pickupId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
 
       if (response.data.success) {
-        setSuggestions(response.data.data);
-        setShowSuggestions(true);
+        setSuggestions(response.data.data)
+        setShowSuggestions(true)
       } else {
-        Alert.alert("Info", "No suggestions found for this pickup.");
+        Alert.alert("Info", "No suggestions found for this pickup.")
       }
     } catch (error) {
-      console.error("Error fetching suggestions:", error);
-      Alert.alert("Error", "Failed to fetch suggestions. Please try again.");
+      console.error("Error fetching suggestions:", error)
+      Alert.alert("Error", "Failed to fetch suggestions. Please try again.")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  const renderItem = ({ item }: { item: Pickup }) => {
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return <Clock size={16} color="#fff" />
+      case "IN_PROGRESS":
+        return <RefreshCw size={16} color="#fff" />
+      case "CANCELLED":
+        return <XCircle size={16} color="#fff" />
+      case "COMPLETED":
+        return <CheckCircle size={16} color="#fff" />
+      default:
+        return <Info size={16} color="#fff" />
+    }
+  }
+
+  const renderItem = ({ item, index }: { item: Pickup; index: number }) => {
+    const isConfirmed = item.userconfirmed && item.travelerconfirmed
+    const needsAction = !item.userconfirmed && item.travelerconfirmed && item.status !== "CANCELLED"
+    const isCancelled = item.status === "CANCELLED"
+    const isWaiting = item.userconfirmed && !item.travelerconfirmed
+
+    // Calculate gradient colors based on status
+    let gradientColors: [string, string, ...string[]]
+    if (isConfirmed) {
+      gradientColors = ["#ecfdf5", "#d1fae5"] as [string, string] // Green gradient for confirmed
+    } else if (isCancelled) {
+      gradientColors = ["#fef2f2", "#fee2e2"] as [string, string] // Red gradient for cancelled
+    } else if (needsAction) {
+      gradientColors = ["#eff6ff", "#dbeafe"] as [string, string] // Blue gradient for action needed
+    } else {
+      gradientColors = ["#f8fafc", "#f1f5f9"] as [string, string] // Default light gradient
+    }
+
     return (
-      <View style={styles.card}>
-        <LinearGradient
-          colors={["#f8fafc", "#ffffff"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.cardGradient}
-        >
+      <Animated.View
+        style={[
+          styles.cardContainer,
+          {
+            opacity: slideAnim,
+            transform: [
+              {
+                translateY: slideAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [50, 0],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardGradient}>
+          {/* Status Badge */}
+          <View style={[styles.statusBadgeContainer, { backgroundColor: getStatusColor(item.status) }]}>
+            {getStatusIcon(item.status)}
+            <Text style={styles.statusBadgeText}>{item.status.replace("_", " ")}</Text>
+          </View>
+
+          {/* Card Header */}
           <View style={styles.cardHeader}>
-            <View style={styles.orderTitleContainer}>
-              <Text style={styles.sectionTitle}>
-                {params.goodsName || "Your Order"}
-              </Text>
-              <Text style={styles.travelerName}>
-                with {params.travelerName || "Traveler"}
-              </Text>
+            <View style={styles.orderInfo}>
+              <Text style={styles.orderTitle}>{params.goodsName || "Your Order"}</Text>
+
+              <View style={styles.travelerContainer}>
+                <User size={14} color="#64748b" style={{ marginRight: 6 }} />
+                <Text style={styles.travelerName}>{params.travelerName || "Traveler"}</Text>
+              </View>
             </View>
-            <TouchableOpacity
-              style={styles.suggestionsLink}
-              onPress={() => fetchSuggestions(item.id)}
-            >
-              <Text style={styles.suggestionsText}>History</Text>
-              <ChevronRight size={16} color="#007AFF" />
+
+            <TouchableOpacity style={styles.historyButton} onPress={() => fetchSuggestions(item.id)}>
+              <History size={16} color="#3b82f6" />
+              <Text style={styles.historyButtonText}>History</Text>
             </TouchableOpacity>
           </View>
 
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* Details Section */}
           <View style={styles.detailsContainer}>
             {/* Location */}
             <View style={styles.detailRow}>
-              <View style={styles.iconWrapper}>
+              <View style={styles.iconContainer}>
                 <MapPin size={18} color="#3b82f6" />
               </View>
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Pickup Location</Text>
                 <Text style={styles.detailValue}>
-                  {item.location}, {item.address}
+                  {item.location || "Not specified"}
+                  {item.address ? `, ${item.address}` : ""}
                 </Text>
               </View>
             </View>
 
-            {/* Scheduled Time */}
-            <View style={styles.detailRow}>
-              <View style={styles.iconWrapper}>
-                <Clock size={18} color="#3b82f6" />
+            {/* Time and Date */}
+            <View style={styles.timeContainer}>
+              <View style={styles.detailRow}>
+                <View style={styles.iconContainer}>
+                  <Clock size={18} color="#3b82f6" />
+                </View>
+                <View style={styles.detailContent}>
+                  <Text style={styles.detailLabel}>Time</Text>
+                  <Text style={styles.detailValue}>
+                    {new Date(item.scheduledTime).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Scheduled Time</Text>
-                <Text style={styles.detailValue}>
-                  {new Date(item.scheduledTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </Text>
-              </View>
-            </View>
 
-            {/* Scheduled Date */}
-            <View style={styles.detailRow}>
-              <View style={styles.iconWrapper}>
-                <Calendar size={18} color="#3b82f6" />
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Scheduled Date</Text>
-                <Text style={styles.detailValue}>
-                  {new Date(item.scheduledTime).toLocaleDateString([], {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </Text>
-              </View>
-            </View>
-
-            {/* Status */}
-            <View style={styles.detailRow}>
-              <View style={styles.iconWrapper}>
-                <AlertCircle size={18} color="#3b82f6" />
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Status</Text>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    { backgroundColor: getStatusColor(item.status) },
-                  ]}
-                >
-                  <Text style={styles.badgeText}>
-                    {item.status.replace("_", " ")}
+              <View style={styles.detailRow}>
+                <View style={styles.iconContainer}>
+                  <Calendar size={18} color="#3b82f6" />
+                </View>
+                <View style={styles.detailContent}>
+                  <Text style={styles.detailLabel}>Date</Text>
+                  <Text style={styles.detailValue}>
+                    {new Date(item.scheduledTime).toLocaleDateString([], {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    })}
                   </Text>
                 </View>
               </View>
@@ -326,160 +373,205 @@ export default function PickupOwner() {
           </View>
 
           {/* Status Messages */}
-          {item.userconfirmed && !item.travelerconfirmed && (
+          {isWaiting && (
             <View style={styles.statusMessage}>
-              <Text style={styles.waitingText}>
-                Waiting for traveler confirmation
-              </Text>
+              <Clock size={18} color="#3b82f6" />
+              <Text style={styles.waitingText}>Waiting for traveler confirmation</Text>
             </View>
           )}
 
-          {item.userconfirmed && item.travelerconfirmed && (
-            <View style={[styles.statusMessage, styles.successMessage]}>
-              <CheckCircle size={16} color="#10b981" />
-              <Text style={styles.successText}>
-                Pickup confirmed! Your package is on the way.
-              </Text>
+          {isConfirmed && (
+            <View style={styles.statusMessage}>
+              <CheckCircle size={18} color="#10b981" />
+              <Text style={styles.successText}>Pickup confirmed! Your package is on the way.</Text>
             </View>
           )}
 
-          {!item.userconfirmed && item.travelerconfirmed && (
+          {needsAction && (
             <View style={styles.statusMessage}>
-              {item.status === "CANCELLED" ? (
-                <>
-                  <XCircle size={16} color="#ef4444" />
-                  <Text style={styles.cancelledText}>
-                    This pickup was cancelled
-                  </Text>
-                </>
-              ) : (
-                <Text style={styles.orderValue}>
-                  Traveler has confirmed. Your action is required.
-                </Text>
-              )}
+              <AlertCircle size={18} color="#3b82f6" />
+              <Text style={styles.actionText}>Traveler has confirmed. Your action is required.</Text>
+            </View>
+          )}
+
+          {isCancelled && (
+            <View style={styles.statusMessage}>
+              <XCircle size={18} color="#ef4444" />
+              <Text style={styles.cancelledText}>This pickup was cancelled</Text>
             </View>
           )}
 
           {/* Action Buttons */}
-          <View style={styles.actionContainer}>
-            {!item.userconfirmed &&
-              item.travelerconfirmed &&
-              item.status !== "CANCELLED" && (
-                <>
-                  <View style={styles.buttonRow}>
-                    <TouchableOpacity
-                      style={[styles.button, styles.primaryButton]}
-                      onPress={() => handleAccept(item.id)}
-                    >
-                      <CheckCircle
-                        size={18}
-                        color="#fff"
-                        style={styles.buttonIcon}
-                      />
-                      <Text style={styles.buttonText}>Accept</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.button, styles.secondaryButton]}
-                      onPress={() => handleSuggest(item.id)}
-                    >
-                      <MapPin
-                        size={18}
-                        color="#3b82f6"
-                        style={styles.buttonIcon}
-                      />
-                      <Text
-                        style={[styles.buttonText, styles.secondaryButtonText]}
-                      >
-                        Suggest
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <TouchableOpacity
-                    style={[styles.button, styles.dangerButton]}
-                    onPress={() => handleCancel(item.id)}
+          {needsAction && (
+            <View style={styles.actionContainer}>
+              <View style={styles.buttonRow}>
+                <TouchableOpacity style={styles.acceptButton} onPress={() => handleAccept(item.id)}>
+                  <LinearGradient
+                    colors={["#3b82f6", "#2563eb"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.buttonGradient}
                   >
-                    <XCircle size={18} color="#fff" style={styles.buttonIcon} />
-                    <Text style={styles.buttonText}>Cancel</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            {item.status === "CANCELLED" && (
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  styles.primaryButton,
-                  styles.fullWidthButton,
-                ]}
-                onPress={() => handleSuggest(item.id)}
+                    <CheckCircle size={18} color="#fff" style={styles.buttonIcon} />
+                    <Text style={styles.buttonText}>Accept</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.suggestButton} onPress={() => handleSuggest(item.id)}>
+                  <MapPin size={18} color="#3b82f6" style={styles.buttonIcon} />
+                  <Text style={styles.suggestButtonText}>Suggest Alternative</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity style={styles.cancelButton} onPress={() => handleCancel(item.id)}>
+                <LinearGradient
+                  colors={["#ef4444", "#dc2626"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.buttonGradient}
+                >
+                  <XCircle size={18} color="#fff" style={styles.buttonIcon} />
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {isCancelled && (
+            <TouchableOpacity style={styles.newSuggestionButton} onPress={() => handleSuggest(item.id)}>
+              <LinearGradient
+                colors={["#3b82f6", "#2563eb"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.buttonGradient}
               >
                 <MapPin size={18} color="#fff" style={styles.buttonIcon} />
                 <Text style={styles.buttonText}>Suggest New Pickup</Text>
-              </TouchableOpacity>
-            )}
-            {item.userconfirmed && item.travelerconfirmed && (
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  styles.primaryButton,
-                  styles.fullWidthButton,
-                ]}
-                onPress={() => showStoredQRCode(item)}
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+
+          {isConfirmed && (
+            <TouchableOpacity style={styles.qrButton} onPress={() => showStoredQRCode(item)}>
+              <LinearGradient
+                colors={["#10b981", "#059669"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.buttonGradient}
               >
-                <CheckCircle size={18} color="#fff" style={styles.buttonIcon} />
+                {/* <Image source={require("../../assets/images/qr-code.png")} style={styles.qrIcon} /> */}
                 <Text style={styles.buttonText}>Show QR Code</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
         </LinearGradient>
-      </View>
-    );
-  };
+      </Animated.View>
+    )
+  }
 
   const renderSuggestions = () => (
     <ThemedView style={styles.suggestionsContainer}>
-      <Text style={styles.suggestionsTitle}>Previous Suggestions</Text>
+      <View style={styles.suggestionsHeader}>
+        <Text style={styles.suggestionsTitle}>Pickup History</Text>
+        <Text style={styles.suggestionsSubtitle}>Previous pickup suggestions and arrangements</Text>
+      </View>
+
       {isLoading ? (
-        <ActivityIndicator size="large" color="#64748b" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#3b82f6" />
+          <Text style={styles.loadingText}>Loading history...</Text>
+        </View>
       ) : suggestions.length === 0 ? (
-        <Text style={styles.noSuggestionsText}>
-          No previous suggestions found.
-        </Text>
+        <View style={styles.emptyHistoryContainer}>
+          <History size={48} color="#cbd5e1" />
+          <Text style={styles.emptyHistoryTitle}>No History Found</Text>
+          <Text style={styles.emptyHistoryText}>There are no previous pickup suggestions for this order</Text>
+        </View>
       ) : (
         <FlatList
           data={suggestions}
-          renderItem={({ item }) => (
-            <View style={styles.suggestionItem}>
-              <Text style={styles.suggestionText}>
-                {item.pickupType} by {item.user?.name || "Unknown"}
-              </Text>
-              <Text style={styles.suggestionDetail}>
-                Location: {item.location || "N/A"}, {item.address || "N/A"}
-              </Text>
-              <Text style={styles.suggestionDetail}>
-                Scheduled:{" "}
-                {item.scheduledTime
-                  ? new Date(item.scheduledTime).toLocaleString()
-                  : "N/A"}
-              </Text>
-              <Text style={styles.suggestionDetail}>
-                Created: {new Date(item.createdAt).toLocaleString()}
-              </Text>
-            </View>
+          renderItem={({ item, index }) => (
+            <Animated.View
+              style={[
+                styles.historyItem,
+                {
+                  opacity: slideAnim,
+                  transform: [
+                    {
+                      translateY: slideAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [30 * index, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              <LinearGradient
+                colors={["#f8fafc", "#f1f5f9"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.historyItemGradient}
+              >
+                <View style={styles.historyItemHeader}>
+                  <View style={styles.historyTypeContainer}>
+                    <View style={[styles.historyTypeIcon, { backgroundColor: getPickupTypeColor(item.pickupType) }]}>
+                      {getPickupTypeIcon(item.pickupType)}
+                    </View>
+                    <Text style={styles.historyType}>{formatPickupType(item.pickupType)}</Text>
+                  </View>
+                  <Text style={styles.historyDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+                </View>
+
+                <View style={styles.historyDetails}>
+                  <View style={styles.historyDetailRow}>
+                    <Text style={styles.historyDetailLabel}>By:</Text>
+                    <Text style={styles.historyDetailValue}>{item.user?.name || "Unknown"}</Text>
+                  </View>
+
+                  <View style={styles.historyDetailRow}>
+                    <Text style={styles.historyDetailLabel}>Location:</Text>
+                    <Text style={styles.historyDetailValue}>
+                      {item.location || "N/A"}
+                      {item.address ? `, ${item.address}` : ""}
+                    </Text>
+                  </View>
+
+                  <View style={styles.historyDetailRow}>
+                    <Text style={styles.historyDetailLabel}>Scheduled:</Text>
+                    <Text style={styles.historyDetailValue}>
+                      {item.scheduledTime
+                        ? new Date(item.scheduledTime).toLocaleString([], {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "N/A"}
+                    </Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </Animated.View>
           )}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.suggestionsList}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
+          contentContainerStyle={styles.historyList}
         />
       )}
-      <TouchableOpacity
-        style={[styles.button, styles.primaryButton, styles.backButton]}
-        onPress={() => setShowSuggestions(false)}
-      >
-        <Text style={styles.buttonText}>Back</Text>
+
+      <TouchableOpacity style={styles.backButton} onPress={() => setShowSuggestions(false)}>
+        <LinearGradient
+          colors={["#3b82f6", "#2563eb"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.buttonGradient}
+        >
+          <ArrowRight size={18} color="#fff" style={[styles.buttonIcon, { transform: [{ rotate: "180deg" }] }]} />
+          <Text style={styles.buttonText}>Back to Pickups</Text>
+        </LinearGradient>
       </TouchableOpacity>
     </ThemedView>
-  );
+  )
 
   return (
     <ThemedView style={styles.container}>
@@ -497,9 +589,7 @@ export default function PickupOwner() {
         <>
           <View style={styles.header}>
             <Text style={styles.title}>Your Pickups</Text>
-            <Text style={styles.subtitle}>
-              Manage your delivery requests and pickup options
-            </Text>
+            <Text style={styles.subtitle}>Manage your delivery requests and pickup options</Text>
           </View>
 
           {isLoading && pickups.length === 0 ? (
@@ -512,25 +602,25 @@ export default function PickupOwner() {
               data={pickups}
               renderItem={renderItem}
               keyExtractor={(item) => item.id.toString()}
-              refreshing={isLoading}
-              onRefresh={fetchPickups}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
               contentContainerStyle={styles.listContainer}
+              showsVerticalScrollIndicator={false}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
-                  <MapPin size={48} color="#cbd5e1" />
+                  <Package size={64} color="#cbd5e1" />
                   <Text style={styles.emptyTitle}>No Pickups Found</Text>
-                  <Text style={styles.emptyText}>
-                    You don't have any active pickup requests yet
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.button,
-                      styles.primaryButton,
-                      styles.refreshButton,
-                    ]}
-                    onPress={fetchPickups}
-                  >
-                    <Text style={styles.buttonText}>Refresh</Text>
+                  <Text style={styles.emptyText}>You don't have any active pickup requests yet</Text>
+                  <TouchableOpacity style={styles.refreshButton} onPress={fetchPickups}>
+                    <LinearGradient
+                      colors={["#3b82f6", "#2563eb"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.buttonGradient}
+                    >
+                      <RefreshCw size={18} color="#fff" style={styles.buttonIcon} />
+                      <Text style={styles.buttonText}>Refresh</Text>
+                    </LinearGradient>
                   </TouchableOpacity>
                 </View>
               }
@@ -538,36 +628,80 @@ export default function PickupOwner() {
           )}
         </>
       )}
-      <QRCodeModal
-        visible={showQRCode}
-        qrCodeData={qrCodeData}
-        onClose={() => setShowQRCode(false)}
-      />
-      <Animated.View
-        style={[styles.messageBubble, { transform: [{ scale: pulseAnim }] }]}
-      >
-        <TouchableOpacity onPress={openChat}>
-          <MessageCircle size={24} color="#ffffff" />
+
+      <QRCodeModal visible={showQRCode} qrCodeData={qrCodeData} onClose={() => setShowQRCode(false)} />
+
+      <Animated.View style={[styles.chatButton, { transform: [{ scale: pulseAnim }] }]}>
+        <TouchableOpacity style={styles.chatButtonTouchable} onPress={openChat}>
+          <LinearGradient colors={["#3b82f6", "#2563eb"]} style={styles.chatButtonGradient}>
+            <MessageCircle size={24} color="#ffffff" />
+          </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
     </ThemedView>
-  );
+  )
 }
 
+// Helper functions
 const getStatusColor = (status: string): string => {
   switch (status) {
     case "PENDING":
-      return "#f59e0b"; // orange
+      return "#f59e0b" // orange
     case "IN_PROGRESS":
-      return "#3b82f6"; // blue
+      return "#3b82f6" // blue
     case "CANCELLED":
-      return "#ef4444"; // red
+      return "#ef4444" // red
     case "COMPLETED":
-      return "#10b981"; // green
+      return "#10b981" // green
     default:
-      return "#6b7280"; // gray
+      return "#6b7280" // gray
   }
-};
+}
+
+const getPickupTypeColor = (type: string): string => {
+  switch (type) {
+    case "AIRPORT":
+      return "#8b5cf6" // purple
+    case "DELIVERY":
+      return "#10b981" // green
+    case "IN_PERSON":
+      return "#3b82f6" // blue
+    case "PICKUPPOINT":
+      return "#f59e0b" // orange
+    default:
+      return "#6b7280" // gray
+  }
+}
+
+const getPickupTypeIcon = (type: string) => {
+  switch (type) {
+    case "AIRPORT":
+      return <MapPin size={14} color="#fff" />
+    case "DELIVERY":
+      return <Package size={14} color="#fff" />
+    case "IN_PERSON":
+      return <User size={14} color="#fff" />
+    case "PICKUPPOINT":
+      return <MapPin size={14} color="#fff" />
+    default:
+      return <Package size={14} color="#fff" />
+  }
+}
+
+const formatPickupType = (type: string): string => {
+  switch (type) {
+    case "AIRPORT":
+      return "Airport Pickup"
+    case "DELIVERY":
+      return "Home Delivery"
+    case "IN_PERSON":
+      return "In-Person Pickup"
+    case "PICKUPPOINT":
+      return "Pickup Point"
+    default:
+      return type.replace("_", " ")
+  }
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -575,14 +709,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
   },
   header: {
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: 24,
     paddingBottom: 16,
   },
   title: {
     fontFamily: "Poppins-Bold",
     fontSize: 28,
     color: "#1e293b",
-    marginBottom: 4,
+    marginBottom: 8,
   },
   subtitle: {
     fontFamily: "Inter-Regular",
@@ -604,51 +739,82 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingBottom: 100,
   },
-  card: {
-    borderRadius: 16,
-    marginBottom: 16,
+  cardContainer: {
+    marginBottom: 20,
+    borderRadius: 20,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 12,
+    elevation: 5,
   },
   cardGradient: {
     padding: 20,
+    position: "relative",
+  },
+  statusBadgeContainer: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    zIndex: 10,
+  },
+  statusBadgeText: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 12,
+    color: "white",
+    textTransform: "capitalize",
+    marginLeft: 6,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
+    alignItems: "flex-start",
+    marginBottom: 16,
+    paddingRight: 80, // Make room for the status badge
   },
-  orderTitleContainer: {
+  orderInfo: {
     flex: 1,
   },
-  sectionTitle: {
+  orderTitle: {
     fontFamily: "Poppins-SemiBold",
     fontSize: 18,
     color: "#1e293b",
-    marginBottom: 4,
+    marginBottom: 6,
+  },
+  travelerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   travelerName: {
     fontFamily: "Inter-Medium",
     fontSize: 14,
     color: "#64748b",
   },
-  suggestionsLink: {
+  historyButton: {
     flexDirection: "row",
     alignItems: "center",
     padding: 8,
+    borderRadius: 8,
+    backgroundColor: "rgba(59, 130, 246, 0.1)",
   },
-  suggestionsText: {
+  historyButtonText: {
     fontFamily: "Inter-Medium",
     fontSize: 14,
-    color: "#007AFF",
-    marginRight: 4,
+    color: "#3b82f6",
+    marginLeft: 6,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "rgba(203, 213, 225, 0.5)",
+    marginVertical: 16,
   },
   detailsContainer: {
     marginBottom: 16,
@@ -658,11 +824,11 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 12,
   },
-  iconWrapper: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#e0e7ff",
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(59, 130, 246, 0.1)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -674,7 +840,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter-Medium",
     fontSize: 13,
     color: "#64748b",
-    marginBottom: 2,
+    marginBottom: 4,
   },
   detailValue: {
     fontFamily: "Inter-SemiBold",
@@ -682,50 +848,44 @@ const styles = StyleSheet.create({
     color: "#1e293b",
     lineHeight: 22,
   },
-  statusBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    marginTop: 4,
-  },
-  badgeText: {
-    fontFamily: "Inter-SemiBold",
-    fontSize: 12,
-    color: "white",
-    textTransform: "capitalize",
+  timeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
   },
   statusMessage: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f1f5f9",
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: "rgba(241, 245, 249, 0.8)",
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 16,
-  },
-  successMessage: {
-    backgroundColor: "#ecfdf5",
   },
   waitingText: {
     fontFamily: "Inter-Medium",
     fontSize: 14,
     color: "#3b82f6",
-    marginLeft: 8,
+    marginLeft: 10,
   },
   successText: {
     fontFamily: "Inter-Medium",
     fontSize: 14,
     color: "#10b981",
-    marginLeft: 8,
+    marginLeft: 10,
+  },
+  actionText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 14,
+    color: "#3b82f6",
+    marginLeft: 10,
   },
   cancelledText: {
     fontFamily: "Inter-Medium",
     fontSize: 14,
     color: "#ef4444",
-    marginLeft: 8,
+    marginLeft: 10,
   },
   actionContainer: {
-    marginTop: 16,
     width: "100%",
   },
   buttonRow: {
@@ -735,219 +895,252 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     width: "100%",
   },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
   acceptButton: {
-    backgroundColor: "#10b981",
-  },
-  suggestButton: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#3b82f6",
-  },
-  cancelButton: {
-    backgroundColor: "#ef4444",
-  },
-  fullWidthButton: {
-    width: "100%",
-  },
-  buttonText: {
-    fontFamily: "Inter-SemiBold",
-    fontSize: 15,
-    color: "#fff",
-    marginLeft: 8,
-  },
-  outlineButtonText: {
-    color: "#3b82f6",
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 40,
-    marginTop: 40,
-  },
-  emptyTitle: {
-    fontFamily: "Poppins-SemiBold",
-    fontSize: 18,
-    color: "#1e293b",
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#64748b",
-    textAlign: "center",
-    marginBottom: 24,
-    maxWidth: 300,
-  },
-  refreshButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-  },
-  messageBubble: {
-    position: "absolute",
-    bottom: 24,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#3b82f6",
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    transform: [{ scale: 1 }],
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  orderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  iconContainer: {
-    width: 24,
-    alignItems: "center",
-  },
-  orderLabel: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#64748b",
-  },
-  orderValue: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#1e293b",
-  },
-  note: {
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  warningText: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#ff9800",
-    fontWeight: "600",
-  },
-  actionRow: {
-    paddingBottom: 16,
-    alignItems: "center",
-  },
-  buttonContainer: {
-    width: "100%",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-  },
-  topRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: 8,
-    marginBottom: 8,
-  },
-  noImageText: {
-    fontFamily: "Inter-Regular",
-    fontSize: 12,
-    textAlign: "center",
-    color: "#666",
-  },
-  suggestionsContainer: {
     flex: 1,
-    padding: 16,
-  },
-  suggestionsTitle: {
-    fontFamily: "Poppins-Bold",
-    fontSize: 20,
-    color: "#1e293b",
-    marginBottom: 16,
-  },
-  suggestionsList: {
-    paddingBottom: 20,
-  },
-  suggestionItem: {
-    backgroundColor: "white",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  suggestionText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 16,
-    color: "#1e293b",
-    marginBottom: 4,
-  },
-  suggestionDetail: {
-    fontFamily: "Inter-Regular",
-    fontSize: 14,
-    color: "#64748b",
-  },
-  backButton: {
-    marginTop: 16,
-    alignSelf: "center",
-    paddingHorizontal: 24,
-  },
-  noSuggestionsText: {
-    fontFamily: "Inter-Regular",
-    fontSize: 16,
-    color: "#64748b",
-    textAlign: "center",
-    marginTop: 20,
-  },
-  button: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    borderRadius: 12,
+    overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    minWidth: 100,
   },
-  primaryButton: {
-    backgroundColor: "#3b82f6",
-    borderWidth: 1,
-    borderColor: "#2563eb",
-  },
-  secondaryButton: {
-    backgroundColor: "#fff",
+  suggestButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: "rgba(59, 130, 246, 0.1)",
     borderWidth: 1,
     borderColor: "#3b82f6",
   },
-  dangerButton: {
-    backgroundColor: "#ef4444",
-    borderWidth: 1,
-    borderColor: "#dc2626",
+  cancelButton: {
+    width: "100%",
+    borderRadius: 12,
+    overflow: "hidden",
+    marginTop: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-
-  secondaryButtonText: {
+  newSuggestionButton: {
+    width: "100%",
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  qrButton: {
+    width: "100%",
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buttonGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  buttonText: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 15,
+    color: "#fff",
+  },
+  suggestButtonText: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 15,
     color: "#3b82f6",
   },
   buttonIcon: {
-    marginRight: 6,
+    marginRight: 8,
   },
-});
+  qrIcon: {
+    width: 18,
+    height: 18,
+    marginRight: 8,
+    tintColor: "#fff",
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+    marginTop: 60,
+  },
+  emptyTitle: {
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 20,
+    color: "#1e293b",
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 16,
+    color: "#64748b",
+    textAlign: "center",
+    marginBottom: 32,
+    maxWidth: 300,
+  },
+  refreshButton: {
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  chatButton: {
+    position: "absolute",
+    bottom: 24,
+    right: 24,
+    zIndex: 100,
+  },
+  chatButtonTouchable: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  chatButtonGradient: {
+    width: 60,
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 30,
+  },
+  suggestionsContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  suggestionsHeader: {
+    marginBottom: 24,
+  },
+  suggestionsTitle: {
+    fontFamily: "Poppins-Bold",
+    fontSize: 24,
+    color: "#1e293b",
+    marginBottom: 8,
+  },
+  suggestionsSubtitle: {
+    fontFamily: "Inter-Regular",
+    fontSize: 16,
+    color: "#64748b",
+  },
+  historyList: {
+    paddingBottom: 100,
+  },
+  historyItem: {
+    borderRadius: 16,
+    marginBottom: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  historyItemGradient: {
+    padding: 16,
+  },
+  historyItemHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  historyTypeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  historyTypeIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  historyType: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 16,
+    color: "#1e293b",
+  },
+  historyDate: {
+    fontFamily: "Inter-Medium",
+    fontSize: 14,
+    color: "#64748b",
+  },
+  historyDetails: {
+    marginTop: 8,
+  },
+  historyDetailRow: {
+    flexDirection: "row",
+    marginBottom: 6,
+  },
+  historyDetailLabel: {
+    fontFamily: "Inter-Medium",
+    fontSize: 14,
+    color: "#64748b",
+    width: 80,
+  },
+  historyDetailValue: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "#1e293b",
+    flex: 1,
+  },
+  backButton: {
+    position: "absolute",
+    bottom: 24,
+    left: 20,
+    right: 20,
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  emptyHistoryContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
+  emptyHistoryTitle: {
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 20,
+    color: "#1e293b",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyHistoryText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 16,
+    color: "#64748b",
+    textAlign: "center",
+    maxWidth: 300,
+  },
+})
+
