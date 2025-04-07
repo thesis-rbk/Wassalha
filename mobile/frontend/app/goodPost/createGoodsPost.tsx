@@ -19,6 +19,7 @@ import { Picker } from '@react-native-picker/picker';
 import { Category } from '@/types/Category';
 import { ArrowLeft, Calendar, Package, MapPin, AlertTriangle, Plane } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
+import Header from '@/components/navigation/headers';
 
 export default function CreateGoodsPost() {
   const router = useRouter();
@@ -96,48 +97,48 @@ export default function CreateGoodsPost() {
     console.log(`Checking traveler status for user ID: ${user.id}`);
     
     try {
-      // Force a completely new request with random parameter
-      const random = Math.random().toString(36).substring(7);
+      // Add timestamp to prevent caching
       const timestamp = new Date().getTime();
-      
-      const response = await axiosInstance.get(
-        `/api/travelers/check/${user.id}?t=${timestamp}&r=${random}`, 
-        {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
-          }
-        }
-      );
+      const response = await axiosInstance.get(`/api/travelers/check/${user.id}?t=${timestamp}`);
       
       console.log(`Traveler status response for user ${user.id}:`, response.data);
       
-      // Explicitly set state based on response
-      if (response.data.isTraveler === true) {
-        setIsTraveler(true);
-        setIsVerified(response.data.isVerified === true);
-        setTravelerId(response.data.travelerId || null);
+      if (response.data.success) {
+        setIsTraveler(response.data.isTraveler);
+        setIsVerified(response.data.isVerified);
+        setTravelerId(response.data.travelerId);
+        
+        if (!response.data.isTraveler) {
+          Alert.alert(
+            'Traveler Required',
+            'You need to be a registered traveler to create a goods post.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Become a Traveler', onPress: navigateToBecomeTraveler }
+            ]
+          );
+        } else if (!response.data.isVerified) {
+          Alert.alert(
+            'Verification Required',
+            'Your traveler account needs to be verified before you can create goods posts.',
+            [{ text: 'OK', style: 'cancel' }]
+          );
+        }
       } else {
         setIsTraveler(false);
         setIsVerified(false);
         setTravelerId(null);
+        Alert.alert('Error', response.data.message || 'Failed to check traveler status');
       }
-      
-      console.log(`Updated state - isTraveler: ${response.data.isTraveler}, isVerified: ${response.data.isVerified}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error checking traveler status for user ${user.id}:`, error);
       
-      // Reset state on error
       setIsTraveler(false);
       setIsVerified(false);
       setTravelerId(null);
       
-      Alert.alert(
-        'Error',
-        'Failed to check traveler status. Please try again.',
-        [{ text: 'OK' }]
-      );
+      const errorMessage = error.response?.data?.message || 'Failed to check traveler status';
+      Alert.alert('Error', errorMessage);
     } finally {
       setIsCheckingStatus(false);
     }
@@ -226,9 +227,7 @@ export default function CreateGoodsPost() {
       Alert.alert(
         'Verification Required',
         'Your traveler account needs to be verified before you can create goods posts.',
-        [
-          { text: 'OK', style: 'cancel' }
-        ]
+        [{ text: 'OK', style: 'cancel' }]
       );
       return;
     }
@@ -236,9 +235,19 @@ export default function CreateGoodsPost() {
     try {
       setIsLoading(true);
       
+      // First, verify traveler status again before creating the post
+      const timestamp = new Date().getTime();
+      const statusResponse = await axiosInstance.get(`/api/travelers/check/${user.id}?t=${timestamp}`);
+      
+      console.log('Final traveler status check:', statusResponse.data);
+      
+      if (!statusResponse.data.success || !statusResponse.data.isTraveler || !statusResponse.data.isVerified) {
+        throw new Error(statusResponse.data.message || 'Invalid traveler status');
+      }
+
       const payload = {
         ...formData,
-        travelerId: travelerId,
+        travelerId: user.id,
         availableKg: parseFloat(formData.availableKg),
         categoryId: formData.categoryId ? parseInt(formData.categoryId) : undefined,
       };
@@ -269,13 +278,12 @@ export default function CreateGoodsPost() {
       style={{ flex: 1 }}
     >
       <ThemedView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={24} color="#333" />
-          </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>Create Goods Post</ThemedText>
-          <View style={{ width: 24 }} />
-        </View>
+        <Header 
+          title="Create Goods Post"
+          subtitle="Fill in the details about your travel journey"
+          onBackPress={() => router.back()}
+          showBackButton={true}
+        />
 
         {/* Status indicators */}
         {isCheckingStatus ? (
@@ -448,13 +456,17 @@ export default function CreateGoodsPost() {
                   selectedValue={formData.categoryId}
                   onValueChange={(itemValue) => handleInputChange('categoryId', itemValue)}
                   style={styles.picker}
+                  itemStyle={{ fontSize: 16, height: 120, color: "#000" }}
+                  dropdownIconColor="#3a86ff"
+                  mode="dropdown"
                 >
-                  <Picker.Item label="Select a category" value="" />
+                  <Picker.Item label="Select a category" value="" color="#000" />
                   {categories.map((category) => (
                     <Picker.Item
                       key={category.id}
                       label={category.name}
                       value={category.id.toString()}
+                      color="#000"
                     />
                   ))}
                 </Picker>
@@ -485,28 +497,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+  formContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  card: {
     backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowRadius: 4,
     elevation: 2,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
   },
   warningBanner: {
     backgroundColor: '#fff3e0',
@@ -559,21 +563,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  formContainer: {
-    flex: 1,
-    padding: 16,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
   formGroup: {
     marginBottom: 16,
   },
@@ -624,10 +613,16 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     borderRadius: 8,
     overflow: 'hidden',
+    paddingVertical: Platform.OS === 'android' ? 4 : 0,
+    elevation: 2,
   },
   picker: {
-    height: 50,
-    color: '#333',
+    height: Platform.OS === 'ios' ? 150 : 55,
+    color: '#000',
+    backgroundColor: '#f9f9f9',
+    width: '100%',
+    fontSize: 16,
+    fontWeight: Platform.OS === 'android' ? 'bold' : 'normal',
   },
   buttonContainer: {
     marginTop: 8,

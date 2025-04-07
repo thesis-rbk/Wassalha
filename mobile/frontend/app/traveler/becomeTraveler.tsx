@@ -9,15 +9,13 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Image,
 } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useRouter } from 'expo-router';
 import axiosInstance from '@/config';
-import { ArrowLeft, Upload, CreditCard, IdCard, Shield, CheckCircle } from 'lucide-react-native';
+import { ArrowLeft, CreditCard, IdCard, Shield, CheckCircle } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import * as ImagePicker from 'expo-image-picker';
 
 export default function BecomeTraveler() {
   const router = useRouter();
@@ -25,55 +23,26 @@ export default function BecomeTraveler() {
   const [isLoading, setIsLoading] = useState(false);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const [formData, setFormData] = useState({
-    idCard: '',
-    bankCard: '',
+    idCardNumber: '',
+    bankCardNumber: '',
   });
-  const [idCardImage, setIdCardImage] = useState<string | null>(null);
-  const [bankCardImage, setBankCardImage] = useState<string | null>(null);
-
-  const pickIdCardImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      setIdCardImage(result.assets[0].uri);
-      // In a real app, you would upload this to your server and get a URL back
-      setFormData({
-        ...formData,
-        idCard: result.assets[0].uri,
-      });
-    }
-  };
-
-  const pickBankCardImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      setBankCardImage(result.assets[0].uri);
-      // In a real app, you would upload this to your server and get a URL back
-      setFormData({
-        ...formData,
-        bankCard: result.assets[0].uri,
-      });
-    }
-  };
 
   const validateForm = () => {
-    if (!formData.idCard) {
-      Alert.alert('Error', 'Please upload your ID card');
+    if (!formData.idCardNumber) {
+      Alert.alert('Error', 'Please enter your ID card number');
       return false;
     }
-    if (!formData.bankCard) {
-      Alert.alert('Error', 'Please upload your bank card');
+    if (!formData.bankCardNumber) {
+      Alert.alert('Error', 'Please enter your bank card number');
+      return false;
+    }
+    // Basic validation for card numbers
+    if (formData.idCardNumber.length < 8) {
+      Alert.alert('Error', 'Please enter a valid ID card number');
+      return false;
+    }
+    if (formData.bankCardNumber.length < 16) {
+      Alert.alert('Error', 'Please enter a valid bank card number');
       return false;
     }
     return true;
@@ -89,12 +58,10 @@ export default function BecomeTraveler() {
     try {
       setIsLoading(true);
 
-      // In a real app, you would first upload the images to your server
-      // and then use the returned URLs in this request
       const response = await axiosInstance.post('/api/travelers/apply', {
         userId: user.id,
-        idCard: formData.idCard,
-        bankCard: formData.bankCard,
+        idCard: formData.idCardNumber,
+        bankCard: formData.bankCardNumber,
       });
 
       if (response.data.success) {
@@ -125,7 +92,7 @@ export default function BecomeTraveler() {
           <CheckCircle size={80} color="#4CAF50" />
           <ThemedText style={styles.successTitle}>Thank You!</ThemedText>
           <ThemedText style={styles.successMessage}>
-            Your traveler application has been submitted successfully. Our admin team will review your documents and verify your account soon.
+            Your traveler application has been submitted successfully. Our admin team will review your information and verify your account soon.
           </ThemedText>
           <ThemedText style={styles.successSubMessage}>
             You will receive a notification once your application is approved.
@@ -171,19 +138,20 @@ export default function BecomeTraveler() {
                 <ThemedText style={styles.cardTitle}>Identity Verification</ThemedText>
               </View>
               
-              <ThemedText style={styles.label}>Upload ID Card</ThemedText>
-              <ThemedText style={styles.sublabel}>Please upload a clear photo of your government-issued ID</ThemedText>
+              <ThemedText style={styles.label}>ID Card Number</ThemedText>
+              <ThemedText style={styles.sublabel}>Please enter your government-issued ID card number</ThemedText>
               
-              <TouchableOpacity style={styles.uploadButton} onPress={pickIdCardImage}>
-                {idCardImage ? (
-                  <Image source={{ uri: idCardImage }} style={styles.previewImage} />
-                ) : (
-                  <>
-                    <Upload size={24} color="#3a86ff" />
-                    <ThemedText style={styles.uploadText}>Tap to upload ID</ThemedText>
-                  </>
-                )}
-              </TouchableOpacity>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter ID card number"
+                  value={formData.idCardNumber}
+                  onChangeText={(text) => setFormData({ ...formData, idCardNumber: text })}
+                  keyboardType="numeric"
+                  maxLength={20}
+                  placeholderTextColor="#999"
+                />
+              </View>
             </View>
 
             <View style={styles.card}>
@@ -192,19 +160,20 @@ export default function BecomeTraveler() {
                 <ThemedText style={styles.cardTitle}>Payment Information</ThemedText>
               </View>
               
-              <ThemedText style={styles.label}>Upload Bank Card</ThemedText>
-              <ThemedText style={styles.sublabel}>Please upload a photo of your bank card (cover the middle digits)</ThemedText>
+              <ThemedText style={styles.label}>Bank Card Number</ThemedText>
+              <ThemedText style={styles.sublabel}>Please enter your bank card number (last 16 digits)</ThemedText>
               
-              <TouchableOpacity style={styles.uploadButton} onPress={pickBankCardImage}>
-                {bankCardImage ? (
-                  <Image source={{ uri: bankCardImage }} style={styles.previewImage} />
-                ) : (
-                  <>
-                    <Upload size={24} color="#3a86ff" />
-                    <ThemedText style={styles.uploadText}>Tap to upload bank card</ThemedText>
-                  </>
-                )}
-              </TouchableOpacity>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter bank card number"
+                  value={formData.bankCardNumber}
+                  onChangeText={(text) => setFormData({ ...formData, bankCardNumber: text })}
+                  keyboardType="numeric"
+                  maxLength={16}
+                  placeholderTextColor="#999"
+                />
+              </View>
             </View>
 
             <TouchableOpacity
@@ -309,27 +278,16 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 12,
   },
-  uploadButton: {
-    backgroundColor: '#f5f5f5',
+  inputContainer: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    borderStyle: 'dashed',
     borderRadius: 8,
-    height: 160,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
+    paddingHorizontal: 12,
   },
-  uploadText: {
-    marginTop: 8,
-    color: '#666',
-    fontSize: 14,
-  },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-    resizeMode: 'cover',
+  input: {
+    height: 50,
+    fontSize: 16,
+    color: '#333',
   },
   submitButton: {
     backgroundColor: '#3a86ff',

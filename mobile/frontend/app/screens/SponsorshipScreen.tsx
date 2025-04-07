@@ -3,17 +3,15 @@ import { View, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Alert } fro
 import { useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { TopNavigation } from '@/components/navigation/TopNavigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Users, ChevronRight, Globe, Award, Shield, FileText, RefreshCw } from 'lucide-react-native';
-import { TabBar } from '@/components/navigation/TabBar';
+import Header from '@/components/navigation/headers';
 
 const { width } = Dimensions.get('window');
 
 export default function SponsorshipScreen() {
   const router = useRouter();
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState("sponsor");
   
   useEffect(() => {
     checkTermsAcceptance();
@@ -52,18 +50,14 @@ export default function SponsorshipScreen() {
     }
   };
 
-  const handleTabPress = (tabName: string) => {
-    setActiveTab(tabName);
-    if (tabName === "create") {
-      router.push("/verification/CreateSponsorPost");
-    } else {
-      router.push(tabName as any);
-    }
-  };
-
   return (
     <ThemedView style={styles.container}>
-      <TopNavigation title="Sponsorship" />
+      <Header 
+        title="Sponsorship" 
+        subtitle="Join our global community and make a difference"
+        onBackPress={() => router.back()}
+        showBackButton={true}
+      />
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
@@ -215,8 +209,6 @@ export default function SponsorshipScreen() {
             : 'You must accept our terms and conditions to proceed.'}
         </ThemedText>
       </ScrollView>
-
-      <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   );
 }
@@ -228,7 +220,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 80,
+    paddingBottom: 24,
   },
   header: {
     alignItems: 'center',

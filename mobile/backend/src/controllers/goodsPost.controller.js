@@ -60,6 +60,83 @@ exports.getGoodsPosts = async (req, res) => {
   }
 };
 
+// Fetch goods posts for a specific user
+exports.getUserGoodsPosts = async (req, res) => {
+  const { userId } = req.params;
+  
+  try {
+    console.log(`Fetching goods posts for user ID: ${userId}`); 
+    
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+    
+    const goodsPosts = await prisma.goodsPost.findMany({
+      where: {
+        travelerId: parseInt(userId),
+      },
+      include: {
+        traveler: {
+          include: {
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true,
+                gender: true,
+                image: {
+                  select: {
+                    url: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        category: true,
+      },
+      orderBy: {
+        createdAt: 'desc', // Most recent posts first
+      },
+    });
+
+    // Map the results to include scalar fields directly
+    const formattedGoodsPosts = goodsPosts.map(post => ({
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      departureDate: post.departureDate,
+      arrivalDate: post.arrivalDate,
+      originLocation: post.originLocation,
+      airportLocation: post.airportLocation,
+      availableKg: post.availableKg,
+      traveler: {
+        firstName: post.traveler.profile.firstName,
+        lastName: post.traveler.profile.lastName,
+        gender: post.traveler.profile.gender,
+        imageUrl: post.traveler.profile.image?.url,
+      },
+      category: post.category,
+    }));
+
+    console.log(`Fetched ${formattedGoodsPosts.length} goods posts for user ${userId}`); 
+    
+    res.status(200).json({
+      success: true,
+      data: formattedGoodsPosts,
+    });
+  } catch (error) {
+    console.error(`Error fetching goods posts for user ${userId}:`, error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user's goods posts",
+      error: error.message,
+    });
+  }
+};
+
 // Create a new goods post
 exports.createGoodsPost = async (req, res) => {
   const { 
@@ -85,21 +162,34 @@ exports.createGoodsPost = async (req, res) => {
       });
     }
 
-    // Check if the traveler exists
-    const traveler = await prisma.traveler.findUnique({
-      where: { userId: parseInt(travelerId) },
+    // IMPORTANT: In this schema, travelerId directly refers to a User ID
+    // First check if the user exists
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(travelerId) },
+      include: {
+        traveler: true
+      }
     });
 
-    if (!traveler) {
+    if (!user) {
       return res.status(404).json({
         success: false,
-        message: "Traveler not found",
-        errorCode: "TRAVELER_NOT_FOUND"
+        message: "User not found",
+        errorCode: "USER_NOT_FOUND"
+      });
+    }
+
+    // Check if the user is a traveler
+    if (!user.traveler) {
+      return res.status(403).json({
+        success: false,
+        message: "User is not a registered traveler",
+        errorCode: "NOT_A_TRAVELER"
       });
     }
 
     // Check if traveler is verified
-    if (!traveler.isVerified) {
+    if (!user.traveler.isVerified) {
       return res.status(403).json({
         success: false,
         message: "Only verified travelers can create goods posts",
@@ -107,7 +197,7 @@ exports.createGoodsPost = async (req, res) => {
       });
     }
 
-    // Check if the category exists
+    // Check if the category exists when provided
     if (categoryId) {
       const categoryExists = await prisma.category.findUnique({
         where: { id: parseInt(categoryId) },
@@ -121,11 +211,12 @@ exports.createGoodsPost = async (req, res) => {
       }
     }
 
+    // Create the goods post - travelerId refers to the userId directly
     const newGoodsPost = await prisma.goodsPost.create({
       data: {
         title,
         content,
-        travelerId: parseInt(travelerId),
+        travelerId: parseInt(travelerId), // This is the User ID
         departureDate: departureDate ? new Date(departureDate) : undefined,
         arrivalDate: arrivalDate ? new Date(arrivalDate) : undefined,
         originLocation,
@@ -143,6 +234,11 @@ exports.createGoodsPost = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating goods post:", error);
+    console.error("Error details:", error.message);
+    if (error.code) {
+      console.error("Error code:", error.code);
+    }
+    
     res.status(500).json({
       success: false,
       message: "Failed to create goods post",
