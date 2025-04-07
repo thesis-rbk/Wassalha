@@ -274,3 +274,7 @@ export interface CardInfo {
     expiryDate: string
     cvv: string
 }
+
+export interface ExtendedCardProps extends CardProps {
+    showButton: boolean; // New prop to control button visibility
+}

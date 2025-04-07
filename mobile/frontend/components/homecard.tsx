@@ -2,12 +2,8 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { CardProps } from '../types/Sponsorship'; // Assuming this is your type file
+import { CardProps, ExtendedCardProps } from '../types/Sponsorship'; // Assuming this is your type file
 
-// Extend CardProps to include showButton
-interface ExtendedCardProps extends CardProps {
-    showButton: boolean; // New prop to control button visibility
-}
 
 // Get the screen width for responsive design
 const { width } = Dimensions.get('window');
