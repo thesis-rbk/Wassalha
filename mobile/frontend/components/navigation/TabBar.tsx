@@ -10,17 +10,24 @@ import {
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { TabItem } from "@/types/TabItem";
-import { useRouter } from "expo-router";
+import { useRouter, usePathname } from "expo-router";
 import { Route } from "expo-router";
 import { TabBarProps } from "@/types/TabBarProps";
-
-
 
 export function TabBar({ activeTab, onTabPress }: TabBarProps) {
   const colorScheme = useColorScheme() ?? "light";
   const iconColor = Colors[colorScheme].text;
   const activeTabColor = Colors[colorScheme].primary;
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Function to determine if a tab is active based on the current pathname
+  const isTabActive = (tabRoute: string) => {
+    if (tabRoute === "/screens/HomeScreen") {
+      return pathname === "/screens/HomeScreen" || pathname === "/" || pathname === "/home";
+    }
+    return pathname.startsWith(tabRoute);
+  };
 
   const tabs: TabItem[] = [
     {
@@ -29,7 +36,7 @@ export function TabBar({ activeTab, onTabPress }: TabBarProps) {
       icon: (isActive: boolean) => (
         <Home size={24} color={isActive ? activeTabColor : iconColor} />
       ),
-      route: "/home" as Route,
+      route: "/screens/HomeScreen" as Route,
     },
     {
       name: "orders",
@@ -68,7 +75,11 @@ export function TabBar({ activeTab, onTabPress }: TabBarProps) {
   const handleRoutes = (tab: (typeof tabs)[number]) => {
     try {
       onTabPress(tab.name);
-      router.push(tab.route as any);
+      if (tab.route === "/screens/HomeScreen") {
+        router.push("/home");
+      } else {
+        router.push(tab.route as any);
+      }
     } catch (err) {
       console.error("Error navigating from tab:", err);
     }
@@ -82,7 +93,7 @@ export function TabBar({ activeTab, onTabPress }: TabBarProps) {
       ]}
     >
       {tabs.map((tab, index) => {
-        const isActive = activeTab === tab.name;
+        const isActive = isTabActive(tab.route);
         return (
           <Pressable
             key={tab.name || `tab-${index}`}

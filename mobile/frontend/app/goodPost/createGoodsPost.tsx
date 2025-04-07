@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -17,8 +16,10 @@ import axiosInstance from '@/config';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Category } from '@/types/Category';
-import { ArrowLeft, Calendar, Package, MapPin, AlertTriangle } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Package, MapPin, AlertTriangle, Plane } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
+import Header from '@/components/navigation/headers';
+import { StatusScreen } from '@/app/screens/StatusScreen';
 
 export default function CreateGoodsPost() {
   const router = useRouter();
@@ -33,12 +34,23 @@ export default function CreateGoodsPost() {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
+    departureDate: new Date(),
     arrivalDate: new Date(),
     availableKg: '',
+    originLocation: '',
     airportLocation: '',
     categoryId: '',
   });
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  // Status screen state
+  const [statusVisible, setStatusVisible] = useState(false);
+  const [statusType, setStatusType] = useState<'success' | 'error'>('success');
+  const [statusTitle, setStatusTitle] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [primaryAction, setPrimaryAction] = useState<{ label: string, onPress: () => void } | undefined>(undefined);
+  const [secondaryAction, setSecondaryAction] = useState<{ label: string, onPress: () => void } | undefined>(undefined);
+  
+  const [showDepartureDatePicker, setShowDepartureDatePicker] = useState(false);
+  const [showArrivalDatePicker, setShowArrivalDatePicker] = useState(false);
 
   // Force reset and recheck whenever the screen comes into focus
   useFocusEffect(
@@ -81,6 +93,25 @@ export default function CreateGoodsPost() {
     setTravelerId(null);
   };
 
+  const closeStatusScreen = () => {
+    setStatusVisible(false);
+  };
+
+  const showStatusScreen = (
+    type: 'success' | 'error',
+    title: string,
+    message: string,
+    primary?: { label: string; onPress: () => void },
+    secondary?: { label: string; onPress: () => void }
+  ) => {
+    setStatusType(type);
+    setStatusTitle(title);
+    setStatusMessage(message);
+    setPrimaryAction(primary);
+    setSecondaryAction(secondary);
+    setStatusVisible(true);
+  };
+
   const checkTravelerStatus = async () => {
     if (!user?.id) {
       console.log('No user ID available, skipping traveler status check');
@@ -93,47 +124,57 @@ export default function CreateGoodsPost() {
     console.log(`Checking traveler status for user ID: ${user.id}`);
     
     try {
-      // Force a completely new request with random parameter
-      const random = Math.random().toString(36).substring(7);
+      // Add timestamp to prevent caching
       const timestamp = new Date().getTime();
-      
-      const response = await axiosInstance.get(
-        `/api/travelers/check/${user.id}?t=${timestamp}&r=${random}`, 
-        {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
-          }
-        }
-      );
+      const response = await axiosInstance.get(`/api/travelers/check/${user.id}?t=${timestamp}`);
       
       console.log(`Traveler status response for user ${user.id}:`, response.data);
       
-      // Explicitly set state based on response
-      if (response.data.isTraveler === true) {
-        setIsTraveler(true);
-        setIsVerified(response.data.isVerified === true);
-        setTravelerId(response.data.travelerId || null);
+      if (response.data.success) {
+        setIsTraveler(response.data.isTraveler);
+        setIsVerified(response.data.isVerified);
+        setTravelerId(response.data.travelerId);
+        
+        if (!response.data.isTraveler) {
+          showStatusScreen(
+            'error',
+            'Traveler Required',
+            'You need to be a registered traveler to create a goods post.',
+            { label: 'Become a Traveler', onPress: navigateToBecomeTraveler },
+            { label: 'Cancel', onPress: closeStatusScreen }
+          );
+        } else if (!response.data.isVerified) {
+          showStatusScreen(
+            'error',
+            'Verification Required',
+            'Your traveler account needs to be verified before you can create goods posts.',
+            { label: 'OK', onPress: closeStatusScreen }
+          );
+        }
       } else {
         setIsTraveler(false);
         setIsVerified(false);
         setTravelerId(null);
+        showStatusScreen(
+          'error',
+          'Error',
+          response.data.message || 'Failed to check traveler status',
+          { label: 'OK', onPress: closeStatusScreen }
+        );
       }
-      
-      console.log(`Updated state - isTraveler: ${response.data.isTraveler}, isVerified: ${response.data.isVerified}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error checking traveler status for user ${user.id}:`, error);
       
-      // Reset state on error
       setIsTraveler(false);
       setIsVerified(false);
       setTravelerId(null);
       
-      Alert.alert(
+      const errorMessage = error.response?.data?.message || 'Failed to check traveler status';
+      showStatusScreen(
+        'error',
         'Error',
-        'Failed to check traveler status. Please try again.',
-        [{ text: 'OK' }]
+        errorMessage,
+        { label: 'OK', onPress: closeStatusScreen }
       );
     } finally {
       setIsCheckingStatus(false);
@@ -146,7 +187,12 @@ export default function CreateGoodsPost() {
       setCategories(response.data.data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
-      Alert.alert('Error', 'Failed to load categories');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Failed to load categories',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
     }
   };
 
@@ -157,8 +203,15 @@ export default function CreateGoodsPost() {
     });
   };
 
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
+  const handleDepartureDateChange = (event: any, selectedDate?: Date) => {
+    setShowDepartureDatePicker(false);
+    if (selectedDate) {
+      handleInputChange('departureDate', selectedDate);
+    }
+  };
+
+  const handleArrivalDateChange = (event: any, selectedDate?: Date) => {
+    setShowArrivalDatePicker(false);
     if (selectedDate) {
       handleInputChange('arrivalDate', selectedDate);
     }
@@ -166,55 +219,93 @@ export default function CreateGoodsPost() {
 
   const validateForm = () => {
     if (!formData.title.trim()) {
-      Alert.alert('Error', 'Please enter a title');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter a title',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     if (!formData.content.trim()) {
-      Alert.alert('Error', 'Please enter a description');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter a description',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     if (!formData.availableKg) {
-      Alert.alert('Error', 'Please enter available kg');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter available kg',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
+      return false;
+    }
+    if (!formData.originLocation.trim()) {
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter origin location',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     if (!formData.airportLocation.trim()) {
-      Alert.alert('Error', 'Please enter airport location');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter destination airport location',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     return true;
   };
 
   const navigateToBecomeTraveler = () => {
+    closeStatusScreen();
     router.push('/traveler/becomeTraveler');
+  };
+
+  const navigateToGoodPostPage = () => {
+    closeStatusScreen();
+    router.push('/goodPost/goodpostpage');
   };
 
   const handleSubmit = async () => {
     if (!user || !user.id) {
-      Alert.alert('Error', 'You must be logged in to create a post');
+      showStatusScreen(
+        'error',
+        'Error',
+        'You must be logged in to create a post',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return;
     }
 
     if (!validateForm()) return;
 
     if (!isTraveler) {
-      Alert.alert(
+      showStatusScreen(
+        'error',
         'Traveler Required',
         'You need to be a registered traveler to create a goods post.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Become a Traveler', onPress: navigateToBecomeTraveler }
-        ]
+        { label: 'Become a Traveler', onPress: navigateToBecomeTraveler },
+        { label: 'Cancel', onPress: closeStatusScreen }
       );
       return;
     }
 
     if (!isVerified) {
-      Alert.alert(
+      showStatusScreen(
+        'error',
         'Verification Required',
         'Your traveler account needs to be verified before you can create goods posts.',
-        [
-          { text: 'OK', style: 'cancel' }
-        ]
+        { label: 'OK', onPress: closeStatusScreen }
       );
       return;
     }
@@ -222,9 +313,19 @@ export default function CreateGoodsPost() {
     try {
       setIsLoading(true);
       
+      // First, verify traveler status again before creating the post
+      const timestamp = new Date().getTime();
+      const statusResponse = await axiosInstance.get(`/api/travelers/check/${user.id}?t=${timestamp}`);
+      
+      console.log('Final traveler status check:', statusResponse.data);
+      
+      if (!statusResponse.data.success || !statusResponse.data.isTraveler || !statusResponse.data.isVerified) {
+        throw new Error(statusResponse.data.message || 'Invalid traveler status');
+      }
+
       const payload = {
         ...formData,
-        travelerId: travelerId,
+        travelerId: user.id,
         availableKg: parseFloat(formData.availableKg),
         categoryId: formData.categoryId ? parseInt(formData.categoryId) : undefined,
       };
@@ -234,16 +335,29 @@ export default function CreateGoodsPost() {
       const response = await axiosInstance.post('/api/goods-posts', payload);
       
       if (response.data.success) {
-        Alert.alert('Success', 'Goods post created successfully', [
-          { text: 'OK', onPress: () => router.push('/goodPost/goodpostpage') }
-        ]);
+        showStatusScreen(
+          'success',
+          'Success',
+          'Goods post created successfully',
+          { label: 'Continue', onPress: navigateToGoodPostPage }
+        );
       } else {
-        Alert.alert('Error', response.data.message || 'Failed to create goods post');
+        showStatusScreen(
+          'error',
+          'Error',
+          response.data.message || 'Failed to create goods post',
+          { label: 'OK', onPress: closeStatusScreen }
+        );
       }
     } catch (error: any) {
       console.error('Error creating goods post:', error);
       const errorMessage = error.response?.data?.message || 'Failed to create goods post';
-      Alert.alert('Error', errorMessage);
+      showStatusScreen(
+        'error',
+        'Error',
+        errorMessage,
+        { label: 'OK', onPress: closeStatusScreen }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -255,13 +369,23 @@ export default function CreateGoodsPost() {
       style={{ flex: 1 }}
     >
       <ThemedView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={24} color="#333" />
-          </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>Create Goods Post</ThemedText>
-          <View style={{ width: 24 }} />
-        </View>
+        <Header 
+          title="Create Goods Post"
+          subtitle="Fill in the details about your travel journey"
+          onBackPress={() => router.back()}
+          showBackButton={true}
+        />
+
+        {/* Status Screen */}
+        <StatusScreen
+          visible={statusVisible}
+          type={statusType}
+          title={statusTitle}
+          message={statusMessage}
+          primaryAction={primaryAction}
+          secondaryAction={secondaryAction}
+          onClose={closeStatusScreen}
+        />
 
         {/* Status indicators */}
         {isCheckingStatus ? (
@@ -336,26 +460,78 @@ export default function CreateGoodsPost() {
           <View style={styles.card}>
             <View style={styles.formGroup}>
               <View style={styles.labelContainer}>
+                <Plane size={16} color="#3a86ff" />
+                <ThemedText style={styles.label}>Departure Date</ThemedText>
+              </View>
+              <TouchableOpacity 
+                style={styles.datePickerButton}
+                onPress={() => setShowDepartureDatePicker(true)}
+              >
+                <ThemedText style={styles.dateText}>
+                  {formData.departureDate.toLocaleDateString()}
+                </ThemedText>
+              </TouchableOpacity>
+              {showDepartureDatePicker && (
+                <DateTimePicker
+                  value={formData.departureDate}
+                  mode="date"
+                  display="default"
+                  onChange={handleDepartureDateChange}
+                  minimumDate={new Date()}
+                />
+              )}
+            </View>
+
+            <View style={styles.formGroup}>
+              <View style={styles.labelContainer}>
                 <Calendar size={16} color="#3a86ff" />
                 <ThemedText style={styles.label}>Arrival Date</ThemedText>
               </View>
               <TouchableOpacity 
                 style={styles.datePickerButton}
-                onPress={() => setShowDatePicker(true)}
+                onPress={() => setShowArrivalDatePicker(true)}
               >
                 <ThemedText style={styles.dateText}>
                   {formData.arrivalDate.toLocaleDateString()}
                 </ThemedText>
               </TouchableOpacity>
-              {showDatePicker && (
+              {showArrivalDatePicker && (
                 <DateTimePicker
                   value={formData.arrivalDate}
                   mode="date"
                   display="default"
-                  onChange={handleDateChange}
-                  minimumDate={new Date()}
+                  onChange={handleArrivalDateChange}
+                  minimumDate={formData.departureDate}
                 />
               )}
+            </View>
+
+            <View style={styles.formGroup}>
+              <View style={styles.labelContainer}>
+                <MapPin size={16} color="#3a86ff" />
+                <ThemedText style={styles.label}>Origin Location</ThemedText>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter origin location (city, country)"
+                value={formData.originLocation}
+                onChangeText={(text) => handleInputChange('originLocation', text)}
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <View style={styles.labelContainer}>
+                <MapPin size={16} color="#3a86ff" />
+                <ThemedText style={styles.label}>Destination Airport</ThemedText>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter destination airport"
+                value={formData.airportLocation}
+                onChangeText={(text) => handleInputChange('airportLocation', text)}
+                placeholderTextColor="#999"
+              />
             </View>
 
             <View style={styles.formGroup}>
@@ -372,20 +548,6 @@ export default function CreateGoodsPost() {
                 placeholderTextColor="#999"
               />
             </View>
-
-            <View style={styles.formGroup}>
-              <View style={styles.labelContainer}>
-                <MapPin size={16} color="#3a86ff" />
-                <ThemedText style={styles.label}>Airport Location</ThemedText>
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter airport location"
-                value={formData.airportLocation}
-                onChangeText={(text) => handleInputChange('airportLocation', text)}
-                placeholderTextColor="#999"
-              />
-            </View>
           </View>
 
           <View style={styles.card}>
@@ -396,13 +558,17 @@ export default function CreateGoodsPost() {
                   selectedValue={formData.categoryId}
                   onValueChange={(itemValue) => handleInputChange('categoryId', itemValue)}
                   style={styles.picker}
+                  itemStyle={{ fontSize: 16, height: 120, color: "#000" }}
+                  dropdownIconColor="#3a86ff"
+                  mode="dropdown"
                 >
-                  <Picker.Item label="Select a category" value="" />
+                  <Picker.Item label="Select a category" value="" color="#000" />
                   {categories.map((category) => (
                     <Picker.Item
                       key={category.id}
                       label={category.name}
                       value={category.id.toString()}
+                      color="#000"
                     />
                   ))}
                 </Picker>
@@ -433,28 +599,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+  formContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  card: {
     backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowRadius: 4,
     elevation: 2,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
   },
   warningBanner: {
     backgroundColor: '#fff3e0',
@@ -507,21 +665,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  formContainer: {
-    flex: 1,
-    padding: 16,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
   formGroup: {
     marginBottom: 16,
   },
@@ -572,10 +715,16 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     borderRadius: 8,
     overflow: 'hidden',
+    paddingVertical: Platform.OS === 'android' ? 4 : 0,
+    elevation: 2,
   },
   picker: {
-    height: 50,
-    color: '#333',
+    height: Platform.OS === 'ios' ? 150 : 55,
+    color: '#000',
+    backgroundColor: '#f9f9f9',
+    width: '100%',
+    fontSize: 16,
+    fontWeight: Platform.OS === 'android' ? 'bold' : 'normal',
   },
   buttonContainer: {
     marginTop: 8,

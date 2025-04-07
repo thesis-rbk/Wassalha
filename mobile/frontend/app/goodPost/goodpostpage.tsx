@@ -11,6 +11,8 @@ import {
   TextInput,
   Modal,
   SafeAreaView,
+  ScrollView,
+  Platform,
 } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -23,6 +25,8 @@ import { Picker } from '@react-native-picker/picker';
 import { Category } from '@/types/Category';
 import { TabBar } from "@/components/navigation/TabBar";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
+import SegmentedControl from "@/components/SegmentedControl";
+import { useAuth } from "@/context/AuthContext";
 
 const { width } = Dimensions.get("window");
 
@@ -34,6 +38,7 @@ export default function GoodPostPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [dateFilterType, setDateFilterType] = useState<'any' | 'departure' | 'arrival'>('any');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [activeTab, setActiveTab] = useState("travel");
@@ -43,12 +48,26 @@ export default function GoodPostPage() {
   const [maxKg, setMaxKg] = useState("");
   const [selectedGender, setSelectedGender] = useState("");
   
+  // New state for view mode: "all" or "yours"
+  const [viewMode, setViewMode] = useState<"all" | "yours">("all");
+  const [userGoodsPosts, setUserGoodsPosts] = useState<GoodsPost[]>([]);
+  
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  
   const router = useRouter();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchGoodsPosts();
     fetchCategories();
   }, []);
+  
+  // New effect to fetch user posts when viewMode changes to "yours"
+  useEffect(() => {
+    if (viewMode === "yours" && user?.id) {
+      fetchUserGoodsPosts();
+    }
+  }, [viewMode, user?.id]);
 
   useEffect(() => {
     applyFilters();
@@ -56,7 +75,9 @@ export default function GoodPostPage() {
     searchQuery, 
     selectedCategory, 
     selectedDate, 
-    goodsPosts, 
+    goodsPosts,
+    userGoodsPosts,
+    viewMode,
     minKg, 
     maxKg, 
     selectedGender
@@ -92,11 +113,59 @@ export default function GoodPostPage() {
       });
       
       setGoodsPosts(processedPosts);
-      setFilteredPosts(processedPosts);
+      if (viewMode === "all") {
+        setFilteredPosts(processedPosts);
+      }
     } catch (error) {
       console.error("Error fetching goods posts:", error);
       setGoodsPosts([]);
-      setFilteredPosts([]);
+      if (viewMode === "all") {
+        setFilteredPosts([]);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // New function to fetch user's goods posts
+  const fetchUserGoodsPosts = async () => {
+    if (!user?.id) {
+      console.log("No user ID available");
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      console.log(`Fetching goods posts for user ID: ${user.id}`);
+      
+      const response = await axiosInstance.get(`/api/goods-posts/user/${user.id}`);
+      
+      // Process the data similarly to fetchGoodsPosts
+      const processedPosts = (response.data.data || []).map((post: any) => {
+        // Ensure traveler object has the expected structure
+        if (post.traveler) {
+          const traveler = {
+            ...post.traveler,
+            firstName: post.traveler.firstName || '',
+            lastName: post.traveler.lastName || '',
+            gender: post.traveler.gender || 'UNKNOWN'
+          };
+          
+          return { ...post, traveler };
+        }
+        return post;
+      });
+      
+      setUserGoodsPosts(processedPosts);
+      if (viewMode === "yours") {
+        setFilteredPosts(processedPosts);
+      }
+    } catch (error) {
+      console.error(`Error fetching user goods posts:`, error);
+      setUserGoodsPosts([]);
+      if (viewMode === "yours") {
+        setFilteredPosts([]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -113,7 +182,9 @@ export default function GoodPostPage() {
   };
 
   const applyFilters = () => {
-    let filtered = [...goodsPosts];
+    // Select the appropriate source posts based on viewMode
+    let sourcePosts = viewMode === "all" ? goodsPosts : userGoodsPosts;
+    let filtered = [...sourcePosts];
 
     // Filter by search query (title or content or traveler name)
     if (searchQuery) {
@@ -130,6 +201,8 @@ export default function GoodPostPage() {
           
           return post.title?.toLowerCase().includes(query) || 
             post.content?.toLowerCase().includes(query) ||
+            post.originLocation?.toLowerCase().includes(query) ||
+            post.airportLocation?.toLowerCase().includes(query) ||
             (post.traveler?.firstName?.toLowerCase().includes(query) || 
              post.traveler?.lastName?.toLowerCase().includes(query));
         }
@@ -145,9 +218,34 @@ export default function GoodPostPage() {
     if (selectedDate) {
       const dateString = selectedDate.toISOString().split('T')[0];
       filtered = filtered.filter(post => {
-        if (!post.arrivalDate) return false;
-        const postDate = new Date(post.arrivalDate).toISOString().split('T')[0];
-        return postDate === dateString;
+        // Filter based on dateFilterType
+        if (dateFilterType === 'departure') {
+          if (!post.departureDate) return false;
+          const depDate = new Date(post.departureDate).toISOString().split('T')[0];
+          return depDate === dateString;
+        } 
+        else if (dateFilterType === 'arrival') {
+          if (!post.arrivalDate) return false;
+          const arrDate = new Date(post.arrivalDate).toISOString().split('T')[0];
+          return arrDate === dateString;
+        }
+        else { // 'any'
+          // Try to match either departure or arrival date
+          if (!post.departureDate && !post.arrivalDate) return false;
+          
+          let matches = false;
+          if (post.departureDate) {
+            const depDate = new Date(post.departureDate).toISOString().split('T')[0];
+            if (depDate === dateString) matches = true;
+          }
+          
+          if (post.arrivalDate && !matches) {
+            const arrDate = new Date(post.arrivalDate).toISOString().split('T')[0];
+            if (arrDate === dateString) matches = true;
+          }
+          
+          return matches;
+        }
       });
     }
     
@@ -186,6 +284,7 @@ export default function GoodPostPage() {
     setSearchQuery("");
     setSelectedCategory("");
     setSelectedDate(null);
+    setDateFilterType('any');
     setMinKg("");
     setMaxKg("");
     setSelectedGender("");
@@ -214,9 +313,21 @@ export default function GoodPostPage() {
     setActiveTab(tab);
     if (tab === "create") {
       router.push("/verification/CreateSponsorPost");
+    } else if (tab === "travel") {
+      // Already on travel tab, no need to navigate
+      return;
+    } else if (tab === "sponsor") {
+      router.push("/verification/fetchAll");
+    } else if (tab === "home") {
+      router.push("/home");
     } else {
-      router.push(tab as any);
+      // Handle other tabs if needed in the future
+      console.log(`Tab ${tab} not implemented yet`);
     }
+  };
+
+  const handleContactPress = () => {
+    setShowPremiumModal(true);
   };
 
   const renderGoodsPostItem = ({ item }: { item: any }) => {
@@ -233,6 +344,9 @@ export default function GoodPostPage() {
     
     const displayName = travelerName || 'Unknown Traveler';
     
+    // Check if this post belongs to the current user to determine if contact button should be shown
+    const isCurrentUserPost = viewMode === "yours";
+    
     return (
       <View style={styles.cardContainer}>
         <View style={styles.card}>
@@ -246,7 +360,13 @@ export default function GoodPostPage() {
           {/* Ticket header with date info - SMALLER */}
           <View style={styles.ticketHeader}>
             <View style={styles.dateInfo}>
-              <ThemedText style={styles.dateLabel}>DATE</ThemedText>
+              <ThemedText style={styles.dateLabel}>DEPARTURE</ThemedText>
+              <ThemedText style={styles.dateValue}>
+                {item.departureDate ? new Date(item.departureDate).toLocaleDateString() : 'TBD'}
+              </ThemedText>
+            </View>
+            <View style={styles.dateInfo}>
+              <ThemedText style={styles.dateLabel}>ARRIVAL</ThemedText>
               <ThemedText style={styles.dateValue}>
                 {item.arrivalDate ? new Date(item.arrivalDate).toLocaleDateString() : 'TBD'}
               </ThemedText>
@@ -286,7 +406,7 @@ export default function GoodPostPage() {
           <View style={styles.journeySection}>
             <View style={styles.journeyPoint}>
               <ThemedText style={styles.journeyCity}>ORIGIN</ThemedText>
-              <ThemedText style={styles.journeyAirport}>---</ThemedText>
+              <ThemedText style={styles.journeyAirport}>{item.originLocation || '---'}</ThemedText>
             </View>
             
             <View style={styles.journeyLine}>
@@ -319,15 +439,45 @@ export default function GoodPostPage() {
               <ThemedText style={styles.detailValue}>{item.availableKg || 'N/A'} KG</ThemedText>
             </View>
           </View>
+          
+          {/* Contact Button - Only show when not viewing user's own posts */}
+          {!isCurrentUserPost && (
+            <TouchableOpacity 
+              style={styles.contactButton}
+              onPress={handleContactPress}
+              activeOpacity={0.7}
+            >
+              <User size={18} color="#fff" />
+              <ThemedText style={styles.contactButtonText}>Contact</ThemedText>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     );
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#f0f4f8" }}>
       <ThemedView style={styles.container}>
         <TopNavigation title="Travel Posts" />
+        
+        {/* SegmentedControl for switching between All and Your posts */}
+        <SegmentedControl
+          values={["All", "Your Posts"]}
+          selectedIndex={viewMode === "all" ? 0 : 1}
+          onChange={(index) => {
+            setViewMode(index === 0 ? "all" : "yours");
+            // Reset filters when switching views
+            setSearchQuery("");
+            setSelectedCategory("");
+            setSelectedDate(null);
+            setDateFilterType('any');
+            setMinKg("");
+            setMaxKg("");
+            setSelectedGender("");
+          }}
+          style={styles.segmentedControl}
+        />
         
         {/* Search and filter bar */}
         <View style={styles.searchContainer}>
@@ -350,7 +500,7 @@ export default function GoodPostPage() {
             style={styles.filterButton}
             onPress={() => setShowFilterModal(true)}
           >
-            <Filter size={20} color="#fff" />
+            <Filter size={20} color="#3a86ff" />
           </TouchableOpacity>
         </View>
         
@@ -372,6 +522,8 @@ export default function GoodPostPage() {
               {selectedDate && (
                 <View style={styles.activeFilterTag}>
                   <ThemedText style={styles.activeFilterText}>
+                    {dateFilterType !== 'any' ? 
+                      `${dateFilterType === 'departure' ? 'Dep' : 'Arr'} ` : ''}
                     {selectedDate.toLocaleDateString()}
                   </ThemedText>
                   <TouchableOpacity onPress={() => setSelectedDate(null)}>
@@ -410,21 +562,36 @@ export default function GoodPostPage() {
         {isLoading ? (
           <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
         ) : (
-          <FlatList
-            data={filteredPosts}
-            renderItem={renderGoodsPostItem}
-            keyExtractor={(item) => item.id.toString()}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <ThemedText style={styles.emptyText}>
-                  {searchQuery || selectedCategory || selectedDate || minKg || maxKg || selectedGender
-                    ? "No posts match your search criteria" 
-                    : "No goods posts available"}
-                </ThemedText>
-              </View>
-            }
-            contentContainerStyle={styles.listContainer}
-          />
+          <View style={styles.contentContainer}>
+            <FlatList
+              data={filteredPosts}
+              renderItem={renderGoodsPostItem}
+              keyExtractor={(item) => item.id.toString()}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <ThemedText style={styles.emptyText}>
+                    {searchQuery || selectedCategory || selectedDate || minKg || maxKg || selectedGender
+                      ? "No posts match your search criteria" 
+                      : viewMode === "all"
+                        ? "No goods posts available"
+                        : "You haven't created any travel posts yet"}
+                  </ThemedText>
+                  {viewMode === "yours" && !isLoading && (
+                    <TouchableOpacity
+                      style={styles.createFirstPostButton}
+                      onPress={handleCreatePost}
+                    >
+                      <ThemedText style={styles.createFirstPostText}>
+                        Create Your First Post
+                      </ThemedText>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              }
+              contentContainerStyle={styles.listContainer}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
         )}
         
         {/* Filter Modal */}
@@ -443,110 +610,137 @@ export default function GoodPostPage() {
                 </TouchableOpacity>
               </View>
               
-              <View style={styles.filterSection}>
-                <ThemedText style={styles.filterLabel}>Category</ThemedText>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={selectedCategory}
-                    onValueChange={(itemValue) => setSelectedCategory(itemValue)}
-                    style={styles.picker}
+              <ScrollView style={styles.modalScrollContent} showsVerticalScrollIndicator={true}>
+                <View style={styles.filterSection}>
+                  <ThemedText style={styles.filterLabel}>Category</ThemedText>
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={selectedCategory}
+                      onValueChange={(itemValue) => setSelectedCategory(itemValue)}
+                      style={styles.picker}
+                      itemStyle={{ fontSize: 16, height: 120, color: "#000" }}
+                      dropdownIconColor="#3a86ff"
+                      mode="dropdown"
+                    >
+                      <Picker.Item label="All Categories" value="" color="#000" />
+                      {categories.map((category) => (
+                        <Picker.Item
+                          key={category.id}
+                          label={category.name}
+                          value={category.id.toString()}
+                          color="#000"
+                        />
+                      ))}
+                    </Picker>
+                  </View>
+                </View>
+                
+                <View style={styles.filterSection}>
+                  <ThemedText style={styles.filterLabel}>Date Type</ThemedText>
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={dateFilterType}
+                      onValueChange={(itemValue) => setDateFilterType(itemValue as 'any' | 'departure' | 'arrival')}
+                      style={styles.picker}
+                      itemStyle={{ fontSize: 16, height: 120, color: "#000" }}
+                      dropdownIconColor="#3a86ff"
+                      mode="dropdown"
+                    >
+                      <Picker.Item label="Any Date Type" value="any" color="#000" />
+                      <Picker.Item label="Departure Date" value="departure" color="#000" />
+                      <Picker.Item label="Arrival Date" value="arrival" color="#000" />
+                    </Picker>
+                  </View>
+                </View>
+                
+                <View style={styles.filterSection}>
+                  <ThemedText style={styles.filterLabel}>Select Date</ThemedText>
+                  <TouchableOpacity 
+                    style={styles.datePickerButton}
+                    onPress={() => setShowDatePicker(true)}
                   >
-                    <Picker.Item label="All Categories" value="" />
-                    {categories.map((category) => (
-                      <Picker.Item
-                        key={category.id}
-                        label={category.name}
-                        value={category.id.toString()}
+                    <Calendar size={20} color="#3a86ff" style={{marginRight: 10}} />
+                    <ThemedText style={styles.dateText}>
+                      {selectedDate ? selectedDate.toLocaleDateString() : 'Select a date'}
+                    </ThemedText>
+                  </TouchableOpacity>
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={selectedDate || new Date()}
+                      mode="date"
+                      display="default"
+                      onChange={handleDateChange}
+                    />
+                  )}
+                </View>
+                
+                {/* Weight Range Filter */}
+                <View style={styles.filterSection}>
+                  <ThemedText style={styles.filterLabel}>Available Weight (kg)</ThemedText>
+                  <View style={styles.weightRangeContainer}>
+                    <View style={styles.weightInputContainer}>
+                      <Weight size={18} color="#3a86ff" />
+                      <TextInput
+                        style={styles.weightInput}
+                        placeholder="Min"
+                        value={minKg}
+                        onChangeText={setMinKg}
+                        keyboardType="numeric"
+                        placeholderTextColor="#999"
                       />
-                    ))}
-                  </Picker>
-                </View>
-              </View>
-              
-              <View style={styles.filterSection}>
-                <ThemedText style={styles.filterLabel}>Arrival Date</ThemedText>
-                <TouchableOpacity 
-                  style={styles.datePickerButton}
-                  onPress={() => setShowDatePicker(true)}
-                >
-                  <Calendar size={20} color="#3a86ff" style={{marginRight: 10}} />
-                  <ThemedText style={styles.dateText}>
-                    {selectedDate ? selectedDate.toLocaleDateString() : 'Select a date'}
-                  </ThemedText>
-                </TouchableOpacity>
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={selectedDate || new Date()}
-                    mode="date"
-                    display="default"
-                    onChange={handleDateChange}
-                  />
-                )}
-              </View>
-              
-              {/* Weight Range Filter */}
-              <View style={styles.filterSection}>
-                <ThemedText style={styles.filterLabel}>Available Weight (kg)</ThemedText>
-                <View style={styles.weightRangeContainer}>
-                  <View style={styles.weightInputContainer}>
-                    <Weight size={18} color="#3a86ff" />
-                    <TextInput
-                      style={styles.weightInput}
-                      placeholder="Min"
-                      value={minKg}
-                      onChangeText={setMinKg}
-                      keyboardType="numeric"
-                      placeholderTextColor="#999"
-                    />
-                  </View>
-                  <ThemedText style={styles.weightRangeSeparator}>to</ThemedText>
-                  <View style={styles.weightInputContainer}>
-                    <Weight size={18} color="#3a86ff" />
-                    <TextInput
-                      style={styles.weightInput}
-                      placeholder="Max"
-                      value={maxKg}
-                      onChangeText={setMaxKg}
-                      keyboardType="numeric"
-                      placeholderTextColor="#999"
-                    />
+                    </View>
+                    <ThemedText style={styles.weightRangeSeparator}>to</ThemedText>
+                    <View style={styles.weightInputContainer}>
+                      <Weight size={18} color="#3a86ff" />
+                      <TextInput
+                        style={styles.weightInput}
+                        placeholder="Max"
+                        value={maxKg}
+                        onChangeText={setMaxKg}
+                        keyboardType="numeric"
+                        placeholderTextColor="#999"
+                      />
+                    </View>
                   </View>
                 </View>
-              </View>
-              
-              {/* Gender Filter */}
-              <View style={styles.filterSection}>
-                <ThemedText style={styles.filterLabel}>Traveler Gender</ThemedText>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={selectedGender}
-                    onValueChange={(itemValue) => setSelectedGender(itemValue)}
-                    style={styles.picker}
+                
+                {/* Gender Filter */}
+                <View style={styles.filterSection}>
+                  <ThemedText style={styles.filterLabel}>Traveler Gender</ThemedText>
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={selectedGender}
+                      onValueChange={(itemValue) => setSelectedGender(itemValue)}
+                      style={styles.picker}
+                      itemStyle={{ fontSize: 16, height: 120, color: "#000" }}
+                      dropdownIconColor="#3a86ff"
+                      mode="dropdown"
+                    >
+                      <Picker.Item label="Any Gender" value="" color="#000" />
+                      <Picker.Item label="Male" value="MALE" color="#000" />
+                      <Picker.Item label="Female" value="FEMALE" color="#000" />
+                    </Picker>
+                  </View>
+                </View>
+                
+                <View style={styles.modalButtonsContainer}>
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.resetButton]}
+                    onPress={resetFilters}
                   >
-                    <Picker.Item label="Any Gender" value="" />
-                    <Picker.Item label="Male" value="MALE" />
-                    <Picker.Item label="Female" value="FEMALE" />
-                  </Picker>
+                    <ThemedText style={styles.resetButtonText}>Reset</ThemedText>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.applyButton]}
+                    onPress={() => {
+                      applyFilters();
+                      setShowFilterModal(false);
+                    }}
+                  >
+                    <ThemedText style={styles.applyButtonText}>Apply Filters</ThemedText>
+                  </TouchableOpacity>
                 </View>
-              </View>
-              
-              <View style={styles.modalButtonsContainer}>
-                <TouchableOpacity 
-                  style={[styles.modalButton, styles.resetButton]}
-                  onPress={resetFilters}
-                >
-                  <ThemedText style={styles.resetButtonText}>Reset</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.modalButton, styles.applyButton]}
-                  onPress={() => {
-                    applyFilters();
-                    setShowFilterModal(false);
-                  }}
-                >
-                  <ThemedText style={styles.applyButtonText}>Apply Filters</ThemedText>
-                </TouchableOpacity>
-              </View>
+              </ScrollView>
             </View>
           </View>
         </Modal>
@@ -561,6 +755,68 @@ export default function GoodPostPage() {
         </TouchableOpacity>
 
         <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
+
+        {/* Premium Upgrade Modal */}
+        <Modal
+          visible={showPremiumModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowPremiumModal(false)}
+        >
+          <View style={styles.premiumModalOverlay}>
+            <View style={styles.premiumModalContent}>
+              <View style={styles.premiumModalHeader}>
+                <ThemedText style={styles.premiumModalTitle}>Unlock Premium Features</ThemedText>
+                <TouchableOpacity onPress={() => setShowPremiumModal(false)}>
+                  <X size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.premiumModalBody}>
+                <View style={styles.premiumIcon}>
+                  <Text style={styles.premiumIconText}>👑</Text>
+                </View>
+                <ThemedText style={styles.premiumModalTitle2}>Unlock Premium Features</ThemedText>
+                <ThemedText style={styles.premiumModalText}>
+                  Upgrade to Premium to contact travelers directly and arrange your shipments easily.
+                </ThemedText>
+                
+                <View style={styles.premiumFeaturesContainer}>
+                  <View style={styles.premiumFeatureItem}>
+                    <Text style={styles.premiumFeatureIcon}>✓</Text>
+                    <ThemedText style={styles.premiumFeatureText}>Direct messaging with travelers</ThemedText>
+                  </View>
+                  <View style={styles.premiumFeatureItem}>
+                    <Text style={styles.premiumFeatureIcon}>✓</Text>
+                    <ThemedText style={styles.premiumFeatureText}>Priority listing in search results</ThemedText>
+                  </View>
+                  <View style={styles.premiumFeatureItem}>
+                    <Text style={styles.premiumFeatureIcon}>✓</Text>
+                    <ThemedText style={styles.premiumFeatureText}>No ads or restrictions</ThemedText>
+                  </View>
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.upgradeButton}
+                  onPress={() => {
+                    setShowPremiumModal(false);
+                    // Navigate to premium page or show subscription options
+                    // router.push("/subscription"); // Uncomment when subscription page is ready
+                  }}
+                >
+                  <ThemedText style={styles.upgradeButtonText}>Upgrade to Premium</ThemedText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.laterButton}
+                  onPress={() => setShowPremiumModal(false)}
+                >
+                  <ThemedText style={styles.laterButtonText}>Maybe Later</ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </ThemedView>
     </SafeAreaView>
   );
@@ -571,51 +827,72 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f0f4f8",
   },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: '#f0f4f8',
+    overflow: 'hidden',
+  },
+  segmentedControl: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 4,
+    backgroundColor: 'transparent',
+  },
   searchContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    paddingVertical: 8,
+    backgroundColor: '#f0f4f8',
+    marginBottom: 4,
   },
   searchBar: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderRadius: 12,
     paddingHorizontal: 12,
     marginRight: 8,
+    height: 48,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   searchIcon: {
     marginRight: 8,
+    color: '#3a86ff',
   },
   searchInput: {
     flex: 1,
-    height: 40,
+    height: 48,
     fontSize: 16,
     color: '#333',
   },
   filterButton: {
-    backgroundColor: '#3a86ff',
-    width: 40,
-    height: 40,
-    borderRadius: 8,
+    backgroundColor: '#fff',
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   activeFiltersContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#f0f4f8',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    paddingBottom: 8,
   },
   activeFiltersTitle: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
-    marginBottom: 4,
+    marginBottom: 8,
+    fontWeight: '500',
   },
   activeFiltersRow: {
     flexDirection: 'row',
@@ -625,28 +902,39 @@ const styles = StyleSheet.create({
   activeFilterTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f4f8',
-    borderRadius: 16,
+    backgroundColor: '#fff',
+    borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
     marginRight: 8,
-    marginBottom: 4,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   activeFilterText: {
-    fontSize: 12,
+    fontSize: 13,
     marginRight: 6,
+    color: '#3a86ff',
+    fontWeight: '500',
   },
   resetFiltersButton: {
     marginLeft: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
   },
   resetFiltersText: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#3a86ff',
     fontWeight: 'bold',
   },
   listContainer: {
     padding: 16,
+    paddingTop: 12,
     paddingBottom: 80, // Add padding to account for TabBar
+    backgroundColor: "#f0f4f8",
   },
   cardContainer: {
     marginBottom: 24,
@@ -681,12 +969,14 @@ const styles = StyleSheet.create({
   },
   ticketHeader: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     padding: 12,
     paddingBottom: 8,
     backgroundColor: "#f8f9fa",
   },
-  dateInfo: {},
+  dateInfo: {
+    alignItems: "center",
+  },
   dateLabel: {
     fontSize: 9,
     color: "#999",
@@ -833,11 +1123,25 @@ const styles = StyleSheet.create({
   emptyContainer: {
     padding: 24,
     alignItems: "center",
+    backgroundColor: "#f0f4f8",
   },
   emptyText: {
     fontSize: 16,
     color: "#666",
     textAlign: "center",
+  },
+  createFirstPostButton: {
+    marginTop: 16,
+    backgroundColor: "#3a86ff",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  createFirstPostText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
   fab: {
     position: "absolute",
@@ -859,6 +1163,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f0f4f8',
   },
   modalOverlay: {
     flex: 1,
@@ -869,14 +1174,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
+    maxHeight: '95%',
+    paddingBottom: 30,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
   modalTitle: {
     fontSize: 20,
@@ -885,6 +1194,7 @@ const styles = StyleSheet.create({
   },
   filterSection: {
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   filterLabel: {
     fontSize: 16,
@@ -897,9 +1207,18 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     borderRadius: 8,
     overflow: 'hidden',
+    backgroundColor: '#fff',
+    marginBottom: 10,
+    paddingVertical: Platform.OS === 'android' ? 4 : 0,
+    elevation: 2,
   },
   picker: {
-    height: 50,
+    height: Platform.OS === 'ios' ? 150 : 55,
+    color: '#000',
+    backgroundColor: '#fff',
+    width: '100%',
+    fontSize: 16,
+    fontWeight: Platform.OS === 'android' ? 'bold' : 'normal',
   },
   datePickerButton: {
     flexDirection: 'row',
@@ -913,16 +1232,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
+  modalScrollContent: {
+    paddingTop: 15,
+    paddingBottom: 60,
+  },
   modalButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 10,
+    marginBottom: 20,
+    paddingHorizontal: 20,
   },
   modalButton: {
     flex: 1,
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   resetButton: {
     backgroundColor: '#f5f5f5',
@@ -964,5 +1294,146 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     fontSize: 16,
     color: "#666",
+  },
+  contactButton: {
+    backgroundColor: "#3a86ff",
+    marginHorizontal: 16,
+    marginVertical: 12,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "#2563eb",
+    flexDirection: "row",
+    justifyContent: "center"
+  },
+  contactButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+    marginLeft: 8
+  },
+  
+  // Premium Modal Styles
+  premiumModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  premiumModalContent: {
+    width: '90%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  premiumModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  premiumModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  premiumModalTitle2: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  premiumModalBody: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  premiumIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#fff7d6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#ffd700',
+    shadowColor: "#ffd700",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  premiumIconText: {
+    fontSize: 40,
+  },
+  premiumModalText: {
+    fontSize: 16,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  premiumFeaturesContainer: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  premiumFeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  premiumFeatureIcon: {
+    color: '#3a86ff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginRight: 10,
+  },
+  premiumFeatureText: {
+    fontSize: 15,
+    color: '#444',
+  },
+  upgradeButton: {
+    backgroundColor: '#3a86ff',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  upgradeButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  laterButton: {
+    paddingVertical: 12,
+    width: '100%',
+    alignItems: 'center',
+  },
+  laterButtonText: {
+    fontSize: 15,
+    color: '#666',
   },
 });
