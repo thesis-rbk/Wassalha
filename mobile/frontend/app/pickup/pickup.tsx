@@ -24,6 +24,7 @@ import PickupMap from "./pickupMap";
 import axiosInstance from "@/config";
 import io from "socket.io-client";
 import { PickupProps } from "@/types/PickupsProps";
+import { StatusScreen } from '@/app/screens/StatusScreen';
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 
@@ -60,6 +61,12 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
   const [airportSuggestions, setAirportSuggestions] = useState<string[]>([]);
   const [isFetchingAirports, setIsFetchingAirports] = useState<boolean>(false);
   const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const [statusVisible, setStatusVisible] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({
+    type: 'error' as 'success' | 'error',
+    title: '',
+    message: ''
+  });
 
   // Socket.IO setup
   useEffect(() => {
@@ -117,7 +124,12 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       setAirportSuggestions(results);
     } catch (error) {
       console.error("Error fetching airports from Google Places:", error);
-      Alert.alert("Error", "Failed to fetch airport suggestions");
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to fetch airport suggestions'
+      });
+      setStatusVisible(true);
     } finally {
       setIsFetchingAirports(false);
     }
@@ -137,7 +149,12 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission Denied", "Permission to access location was denied");
+        setStatusMessage({
+          type: 'error',
+          title: 'Permission Denied',
+          message: 'Permission to access location was denied'
+        });
+        setStatusVisible(true);
         return;
       }
 
@@ -153,7 +170,12 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       setManualAddress(displayAddress);
     } catch (error) {
       console.error("Error getting location:", error);
-      Alert.alert("Error", "Failed to get location");
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to get location'
+      });
+      setStatusVisible(true);
     }
   };
 
@@ -195,17 +217,32 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
   const handleConfirmPickup = async () => {
     const token = await AsyncStorage.getItem("jwtToken");
     if (!token) {
-      Alert.alert("Authentication Error", "User is not authenticated.");
+      setStatusMessage({
+        type: 'error',
+        title: 'Authentication Error',
+        message: 'User is not authenticated.'
+      });
+      setStatusVisible(true);
       return;
     }
 
     if (!pickupId && !orderId) {
-      Alert.alert("Error", "Order ID is required to create a new pickup.");
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Order ID is required to create a new pickup.'
+      });
+      setStatusVisible(true);
       return;
     }
 
     if (!pickupType) {
-      Alert.alert("Error", "Please select a valid pickup type");
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Please select a valid pickup type'
+      });
+      setStatusVisible(true);
       return;
     }
 
@@ -268,12 +305,15 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       socket.emit("suggestionUpdate", pickupData); // Match backend event name
       console.log(`✅ Emitted suggestionUpdate to room ${room}:`, pickupData);
     
-      Alert.alert(
-        "Success",
-        pickupId
-          ? "Pickup updated successfully!"
-          : "Pickup scheduled successfully! Awaiting traveler confirmation."
-      );
+      setStatusMessage({
+        type: 'success',
+        title: 'Success',
+        message: pickupId
+          ? 'Pickup updated successfully!'
+          : 'Pickup scheduled successfully! Awaiting traveler confirmation.'
+      });
+      setStatusVisible(true);
+
       setStep("select");
       setPickupType("");
       setLocation("");
@@ -283,15 +323,20 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       setCoordinates(null);
       if (setShowPickup) {
         setShowPickup(false);
-      }
-      else {
+      } else {
         router.push({
           pathname: "/pickup/PickupDashboard",
           params: params,
-        });      }
+        });
+      }
     } catch (error) {
       console.error("Pickup error:", error);
-      Alert.alert("Error", pickupId ? "Failed to update pickup" : "Failed to schedule pickup");
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: pickupId ? 'Failed to update pickup' : 'Failed to schedule pickup'
+      });
+      setStatusVisible(true);
     }
   };
 
@@ -766,7 +811,17 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
         </View>
       </Modal>
       
-    
+      <StatusScreen
+        visible={statusVisible}
+        type={statusMessage.type}
+        title={statusMessage.title}
+        message={statusMessage.message}
+        primaryAction={{
+          label: "OK",
+          onPress: () => setStatusVisible(false)
+        }}
+        onClose={() => setStatusVisible(false)}
+      />
     </ThemedView>
   );
 }

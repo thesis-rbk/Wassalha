@@ -35,6 +35,7 @@ import io, { Socket } from "socket.io-client";
 import { navigateToChat } from "@/services/chatService";
 import { LinearGradient } from "expo-linear-gradient";
 import Header from "@/components/navigation/headers";
+import { StatusScreen } from '@/app/screens/StatusScreen';
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -54,6 +55,12 @@ export default function PickupTraveler() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [statusVisible, setStatusVisible] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({
+    type: 'error' as 'success' | 'error',
+    title: '',
+    message: ''
+  });
 
   const {
     handleAccept,
@@ -159,7 +166,12 @@ export default function PickupTraveler() {
 
   const openChat = async () => {
     if (!user?.id) {
-      Alert.alert("Error", "You need to be logged in to chat");
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'You need to be logged in to chat'
+      });
+      setStatusVisible(true);
       return;
     }
 
@@ -180,11 +192,12 @@ export default function PickupTraveler() {
       });
     } catch (error) {
       console.error("Error opening chat:", error);
-      Alert.alert(
-        "Chat Error",
-        "Failed to open chat. Error: " +
-          (error instanceof Error ? error.message : String(error))
-      );
+      setStatusMessage({
+        type: 'error',
+        title: 'Chat Error',
+        message: 'Failed to open chat. Error: ' + (error instanceof Error ? error.message : String(error))
+      });
+      setStatusVisible(true);
     }
   };
 
@@ -206,7 +219,12 @@ export default function PickupTraveler() {
       console.log("Pickups (Traveler):", response.data.data);
     } catch (error) {
       console.error("Error fetching pickups (Traveler):", error);
-      Alert.alert("Error", "Failed to fetch pickups. Please try again.");
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to fetch pickups. Please try again.'
+      });
+      setStatusVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -244,14 +262,21 @@ export default function PickupTraveler() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      Alert.alert(
-        "Success",
-        `Pickup status updated to ${newStatus} successfully!`
-      );
+      setStatusMessage({
+        type: 'success',
+        title: 'Success',
+        message: `Pickup status updated to ${newStatus} successfully!`
+      });
+      setStatusVisible(true);
       setStatusModalVisible(false);
     } catch (error) {
       console.error("Error updating pickup status:", error);
-      Alert.alert("Error", "Failed to update pickup status. Please try again.");
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to update pickup status. Please try again.'
+      });
+      setStatusVisible(true);
     }
   };
 
@@ -279,11 +304,21 @@ export default function PickupTraveler() {
         setSuggestions(response.data.data);
         setShowSuggestions(true);
       } else {
-        Alert.alert("Info", "No suggestions found for this pickup.");
+        setStatusMessage({
+          type: 'error',
+          title: 'Info',
+          message: 'No suggestions found for this pickup.'
+        });
+        setStatusVisible(true);
       }
     } catch (error) {
       console.error("Error fetching suggestions:", error);
-      Alert.alert("Error", "Failed to fetch suggestions. Please try again.");
+      setStatusMessage({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to fetch suggestions. Please try again.'
+      });
+      setStatusVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -614,7 +649,17 @@ export default function PickupTraveler() {
           setPickups={setPickups}
           showPickup={showPickup}
           setShowPickup={setShowPickup}
-          paramsData={params}
+          paramsData={{
+            requesterId: params.requesterId as string,
+            travelerId: params.travelerId as string,
+            idOrder: params.idOrder as string,
+            requesterName: params.requesterName as string,
+            travelerName: params.travelerName as string,
+            goodsName: params.goodsName as string,
+            status: params.status as string,
+            reviewLabel: params.reviewLabel as string,
+            isTraveler: params.isTraveler as string
+          }}
         />
       ) : (
         <>
@@ -717,7 +762,17 @@ export default function PickupTraveler() {
         onClose={() => setShowScanner(false)}
         pickups={pickups}
         setPickups={setPickups}
-        paramsData={params}
+        paramsData={{
+          requesterId: params.requesterId.toString(),
+          travelerId: params.travelerId.toString(),
+          idOrder: params.idOrder.toString(),
+          requesterName: params.requesterName?.toString() || "Requester",
+          travelerName: params.travelerName?.toString() || "Traveler",
+          goodsName: params.goodsName?.toString() || "Item",
+          status: params.status?.toString() || "PENDING",
+          reviewLabel: "Rate the delivery",
+          isTraveler: "true"
+        }}
       />
 
       <Animated.View
@@ -727,6 +782,18 @@ export default function PickupTraveler() {
           <MessageCircle size={24} color="#ffffff" />
         </TouchableOpacity>
       </Animated.View>
+
+      <StatusScreen
+        visible={statusVisible}
+        type={statusMessage.type}
+        title={statusMessage.title}
+        message={statusMessage.message}
+        primaryAction={{
+          label: "OK",
+          onPress: () => setStatusVisible(false)
+        }}
+        onClose={() => setStatusVisible(false)}
+      />
     </View>
   );
 }
