@@ -15,12 +15,13 @@ import { MaterialIcons } from "@expo/vector-icons";
 import axiosInstance from "@/config";
 import { useLocalSearchParams } from "expo-router";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
-import { useNotification } from '@/context/NotificationContext';
+import { useNotification } from "@/context/NotificationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "@/config";
-import { useStatus } from '@/context/StatusContext';
+import { useStatus } from "@/context/StatusContext";
+import Header from "@/components/navigation/headers";
 
 export default function VerificationScreen() {
   const params = useLocalSearchParams();
@@ -47,20 +48,20 @@ export default function VerificationScreen() {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
       show({
-        type: 'error',
-        title: 'Permission Required',
-        message: 'Please allow camera access to take a photo.',
+        type: "error",
+        title: "Permission Required",
+        message: "Please allow camera access to take a photo.",
         primaryAction: {
-          label: 'Try Again',
+          label: "Try Again",
           onPress: () => {
             hide();
             takePhoto();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
+          label: "Cancel",
+          onPress: () => hide(),
+        },
       });
       return;
     }
@@ -111,15 +112,14 @@ export default function VerificationScreen() {
       console.log("🔌 Orders page socket connected");
       const room = params.idProcess; // Example; get this from props, context, or params
       socket.emit("joinProcessRoom", room);
-      console.log("🔌 Ophoto socket connected, ",room);
-   
-    })
+      console.log("🔌 Ophoto socket connected, ", room);
+    });
     socket.on("confirmProduct", (data) => {
       router.push({
         pathname: "/processTrack/paymentSP",
         params: params,
-      });      console.log("🔄 product confirmed updated to:", data);
-      
+      });
+      console.log("🔄 product confirmed updated to:", data);
     });
   }, []);
 
@@ -127,20 +127,20 @@ export default function VerificationScreen() {
   const uploadPhoto = async () => {
     if (!image) {
       show({
-        type: 'error',
-        title: 'No Image',
-        message: 'Please take a photo first.',
+        type: "error",
+        title: "No Image",
+        message: "Please take a photo first.",
         primaryAction: {
-          label: 'Take Photo',
+          label: "Take Photo",
           onPress: () => {
             hide();
             takePhoto();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
+          label: "Cancel",
+          onPress: () => hide(),
+        },
       });
       return;
     }
@@ -168,31 +168,32 @@ export default function VerificationScreen() {
       );
 
       if (response.status === 200) {
-        sendNotification('verification_photo_submitted', {
+        sendNotification("verification_photo_submitted", {
           requesterId: params.requesterId,
           travelerId: user?.id,
           requestDetails: {
-            goodsName: params.goodsName || 'this product',
+            goodsName: params.goodsName || "this product",
             requestId: params.idRequest,
             orderId: params.idOrder,
-            processId: params.idProcess
-          }
+            processId: params.idProcess,
+          },
         });
         socket.emit("photo", {
-          processId:params.idProcess,
+          processId: params.idProcess,
         });
-        
+
         show({
-          type: 'success',
-          title: 'Upload Successful',
-          message: 'Photo uploaded successfully. Waiting for product confirmation.',
+          type: "success",
+          title: "Upload Successful",
+          message:
+            "Photo uploaded successfully. Waiting for product confirmation.",
           primaryAction: {
-            label: 'OK',
+            label: "OK",
             onPress: () => {
               hide();
               setIsVerified(true);
-            }
-          }
+            },
+          },
         });
       } else {
         throw new Error("Failed to upload photo");
@@ -200,20 +201,20 @@ export default function VerificationScreen() {
     } catch (error) {
       console.error("Error uploading photo:", error);
       show({
-        type: 'error',
-        title: 'Upload Failed',
-        message: 'Failed to upload photo. Please try again.',
+        type: "error",
+        title: "Upload Failed",
+        message: "Failed to upload photo. Please try again.",
         primaryAction: {
-          label: 'Retry',
+          label: "Retry",
           onPress: () => {
             hide();
             uploadPhoto();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
+          label: "Cancel",
+          onPress: () => hide(),
+        },
       });
     } finally {
       setIsUploading(false);
@@ -221,111 +222,122 @@ export default function VerificationScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.container}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Verification</Text>
-          <Text style={styles.subtitle}>
-            Capture a photo of the product to send for validation
-          </Text>
+    <View style={styles.container}>
+      <Header
+        title="Verification"
+        subtitle="Track your order's process"
+        showBackButton={true}
+      />
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.container}>
+          <View style={styles.content}>
+            <Text style={styles.subtitle}>
+              Capture a photo of the product to send for validation
+            </Text>
 
-          <ProgressBar currentStep={2} steps={progressSteps} />
+            <ProgressBar currentStep={2} steps={progressSteps} />
 
-          {/* Description Section */}
-          <Text style={styles.description}>
-            Take a clear photo of the product to verify its authenticity. Ensure
-            the product is well-lit and fully visible in the photo.
-          </Text>
+            {/* Description Section */}
+            <Text style={styles.description}>
+              Take a clear photo of the product to verify its authenticity.
+              Ensure the product is well-lit and fully visible in the photo.
+            </Text>
 
-          {/* Success Message */}
-          {isVerified && (
-            <View style={styles.successContainer}>
-              <MaterialIcons name="check-circle" size={48} color="#10b981" />
-              <Text style={styles.successText}>
-                Product Image Sent Successfully!
-              </Text>
-            </View>
-          )}
+            {/* Success Message */}
+            {isVerified && (
+              <View style={styles.successContainer}>
+                <MaterialIcons name="check-circle" size={48} color="#10b981" />
+                <Text style={styles.successText}>
+                  Product Image Sent Successfully!
+                </Text>
+              </View>
+            )}
 
-          {/* Image Upload Section */}
-          {!isVerified && (
-            <View style={styles.uploadSection}>
-              {image ? (
-                <View style={styles.previewContainer}>
-                  <Text style={styles.previewTitle}>Preview</Text>
-                  <Image source={{ uri: image }} style={styles.image} />
+            {/* Image Upload Section */}
+            {!isVerified && (
+              <View style={styles.uploadSection}>
+                {image ? (
+                  <View style={styles.previewContainer}>
+                    <Text style={styles.previewTitle}>Preview</Text>
+                    <Image source={{ uri: image }} style={styles.image} />
+                    <BaseButton
+                      style={styles.retakeButton}
+                      onPress={() => setImage(null)}
+                      size="medium"
+                      variant="primary"
+                    >
+                      Retake Photo
+                    </BaseButton>
+                  </View>
+                ) : (
                   <BaseButton
-                    style={styles.retakeButton}
-                    onPress={() => setImage(null)}
-                    size="medium"
+                    style={styles.cameraButton}
+                    onPress={takePhoto}
+                    size="large"
                     variant="primary"
                   >
-                    Retake Photo
+                    <MaterialIcons
+                      name="camera-alt"
+                      size={32}
+                      color="#ffffff"
+                    />
                   </BaseButton>
-                </View>
-              ) : (
-                <BaseButton
-                  style={styles.cameraButton}
-                  onPress={takePhoto}
-                  size="large"
-                  variant="primary"
-                >
-                  <MaterialIcons name="camera-alt" size={32} color="#ffffff" />
-                </BaseButton>
-              )}
+                )}
 
-              {image && (
-                <BaseButton
-                  style={styles.uploadButton}
-                  onPress={uploadPhoto}
-                  size="medium"
-                  variant="primary"
-                  disabled={isUploading}
-                >
-                  {isUploading ? "Uploading..." : "Send Photo"}
-                </BaseButton>
-              )}
+                {image && (
+                  <BaseButton
+                    style={styles.uploadButton}
+                    onPress={uploadPhoto}
+                    size="medium"
+                    variant="primary"
+                    disabled={isUploading}
+                  >
+                    {isUploading ? "Uploading..." : "Send Photo"}
+                  </BaseButton>
+                )}
+              </View>
+            )}
+
+            {/* Loading Indicator */}
+            {isUploading && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#007AFF" />
+                <Text style={styles.loadingText}>Uploading...</Text>
+              </View>
+            )}
+
+            <View style={styles.tipsContainer}>
+              <Text style={styles.tipTitle}>Notes:</Text>
+              <Text style={styles.tipItem}>
+                • Ensure the product is well-lit and the photo is clear.
+              </Text>
+              <Text style={styles.tipItem}>
+                • Capture the entire product in the frame, avoiding any blur or
+                obstructions.
+              </Text>
+              <Text style={styles.tipItem}>
+                • Take a close-up shot if possible, highlighting any unique
+                features of the product.
+              </Text>
+              <Text style={styles.tipItem}>
+                • Avoid any reflections or shadows that could obscure the
+                product details.
+              </Text>
+              <Text style={styles.tipItem}>
+                • After taking the photo, review it for clarity before
+                uploading.
+              </Text>
             </View>
-          )}
 
-          {/* Loading Indicator */}
-          {isUploading && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#007AFF" />
-              <Text style={styles.loadingText}>Uploading...</Text>
-            </View>
-          )}
-
-          <View style={styles.tipsContainer}>
-            <Text style={styles.tipTitle}>Notes:</Text>
-            <Text style={styles.tipItem}>
-              • Ensure the product is well-lit and the photo is clear.
-            </Text>
-            <Text style={styles.tipItem}>
-              • Capture the entire product in the frame, avoiding any blur or
-              obstructions.
-            </Text>
-            <Text style={styles.tipItem}>
-              • Take a close-up shot if possible, highlighting any unique
-              features of the product.
-            </Text>
-            <Text style={styles.tipItem}>
-              • Avoid any reflections or shadows that could obscure the product
-              details.
-            </Text>
-            <Text style={styles.tipItem}>
-              • After taking the photo, review it for clarity before uploading.
+            <Text style={styles.description}>
+              Once you upload the photo, a notification will be sent to the
+              service owner for confirmation. Wait for their response before
+              proceeding.
             </Text>
           </View>
-
-          <Text style={styles.description}>
-            Once you upload the photo, a notification will be sent to the
-            service owner for confirmation. Wait for their response before
-            proceeding.
-          </Text>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
