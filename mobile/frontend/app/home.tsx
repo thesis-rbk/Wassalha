@@ -8,7 +8,7 @@ import { useRouter } from "expo-router";
 import HomeScreen from "@/screens/HomeScreen";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 
-// Add this type definition
+
 
 export default function Home() {
   return (

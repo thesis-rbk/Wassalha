@@ -26,7 +26,7 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
     const userId = req.params.id;
-    const { firstName, lastName, bio, country, phoneNumber } = req.body;
+    const { firstName, lastName, bio, country, phoneNumber, gender, preferredCategories } = req.body;
 
     console.log("Request body:", req.body);
     console.log("Uploaded file:", req.file);
@@ -41,6 +41,8 @@ const updateProfile = async (req, res) => {
         if (bio !== undefined) updateData.bio = bio;
         if (country !== undefined) updateData.country = country;
         if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+        if (gender !== undefined) updateData.gender = gender;
+        if (preferredCategories !== undefined) updateData.preferredCategories = preferredCategories;
 
         // Handle image upload if present
         if (req.file) {
