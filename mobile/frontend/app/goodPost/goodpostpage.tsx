@@ -448,7 +448,7 @@ export default function GoodPostPage() {
               activeOpacity={0.7}
             >
               <User size={18} color="#fff" />
-              <ThemedText style={styles.contactButtonText}>Contact Them</ThemedText>
+              <ThemedText style={styles.contactButtonText}>Contact</ThemedText>
             </TouchableOpacity>
           )}
         </View>
