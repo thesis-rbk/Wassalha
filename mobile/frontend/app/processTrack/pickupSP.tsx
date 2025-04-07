@@ -718,6 +718,7 @@ export default function PickupTraveler() {
         onClose={() => setShowScanner(false)}
         pickups={pickups}
         setPickups={setPickups}
+        paramsData={params}
       />
 
       <Animated.View

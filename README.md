@@ -34,6 +34,7 @@ Wassalha is a cross-platform app designed for seamless package delivery between 
 ### Setup
 
 #### 1. Clone the repository
+exp://192.168.1.14:8081
 
 ```bash
 git clone https://github.com/yourusername/wassalha.git

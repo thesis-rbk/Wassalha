@@ -67,6 +67,9 @@ const AdditionalDetails: React.FC = () => {
   // Add this new state for date picker
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  // Add this near your other state declarations
+  const [currentStep, setCurrentStep] = useState(0);
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -558,229 +561,307 @@ const AdditionalDetails: React.FC = () => {
     }
   }
 
+  // Add this component at the top of your file
+  const ProgressBar = () => {
+    const colorScheme = useColorScheme() ?? "light";
+    
+    return (
+      <View style={styles.progressContainer}>
+        {[1, 2, 3].map((step) => (
+          <View key={step} style={styles.progressStep}>
+            <View style={[
+              styles.progressDot,
+              {
+                backgroundColor: step <= currentStep + 1 
+                  ? Colors[colorScheme].primary 
+                  : Colors[colorScheme].border
+              }
+            ]} />
+            {step < 3 && (
+              <View style={[
+                styles.progressLine,
+                {
+                  backgroundColor: step < currentStep + 1 
+                    ? Colors[colorScheme].primary 
+                    : Colors[colorScheme].border
+                }
+              ]} />
+            )}
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   return (
     <ScrollView style={styles.container} scrollEnabled={!dropdownVisible}>
+      <ProgressBar />
+      
       <View style={styles.card}>
-        <TitleLarge style={styles.mainTitle}>Product Details</TitleLarge>
+        {currentStep === 0 && (
+          <>
+            <TitleLarge style={styles.mainTitle}>Basic Details</TitleLarge>
+            
+            {/* Image Selection Section */}
+            <View style={styles.imageSection}>
+              <TitleSection style={styles.sectionTitle}>Product Image</TitleSection>
 
-        {/* Image Selection Section */}
-        <View style={styles.imageSection}>
-          <TitleSection style={styles.sectionTitle}>Product Image</TitleSection>
-
-          {productDetails.imageUri ? (
-            <View style={styles.selectedImageContainer}>
-              <RNImage
-                source={{ uri: productDetails.imageUri }}
-                style={styles.selectedImage}
-                resizeMode="cover"
-              />
-              <TouchableOpacity
-                style={styles.changeImageButton}
-                onPress={pickDocument}
-                disabled={imageLoading}
-              >
-                <BodyMedium style={styles.changeImageText}>
-                  {imageLoading ? "Loading..." : "Change Image"}
-                </BodyMedium>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity
-              style={styles.pickDocumentButton}
-              onPress={pickDocument}
-              disabled={imageLoading}
-            >
-              {imageLoading ? (
-                <BodyMedium style={styles.pickDocumentText}>
-                  Loading...
-                </BodyMedium>
-              ) : (
-                <>
-                  <ImageIcon size={24} color={Colors[colorScheme].primary} />
-                  <BodyMedium style={styles.pickDocumentText}>
-                    Select Product Image
-                  </BodyMedium>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Category Dropdown */}
-        <View style={styles.dropdownContainer}>
-          <TitleSection style={styles.sectionTitle}>
-            Category * {/* Asterisk indicates required field */}
-          </TitleSection>
-          <TouchableOpacity style={styles.dropdownTrigger}>
-            <TitleSection style={styles.sectionTitle}>
-              Category * {/* Asterisk indicates required field */}
-            </TitleSection>
-            <TouchableOpacity
-              style={[
-                styles.dropdownTrigger,
-                categoryError ? styles.errorBorder : null,
-                dropdownVisible ? styles.dropdownTriggerActive : null,
-              ]}
-              onPress={() => setDropdownVisible(!dropdownVisible)}
-              activeOpacity={0.7}
-            >
-              <BodyMedium
-                style={
-                  categoryId ? styles.selectedText : styles.placeholderText
-                }
-              >
-                {categories.find((c) => c.id === categoryId)?.name ||
-                  "Select a category"}
-              </BodyMedium>
-              <ChevronDown
-                size={20}
-                color={Colors[colorScheme].primary}
-                style={[
-                  styles.dropdownIcon,
-                  dropdownVisible ? styles.dropdownIconActive : null,
-                ]}
-              />
-            </TouchableOpacity>
-
-            {/* Error message */}
-            {categoryError ? (
-              <BodyMedium style={styles.errorText}>{categoryError}</BodyMedium>
-            ) : null}
-          </TouchableOpacity>
-
-          {/* Error message */}
-          {categoryError ? (
-            <BodyMedium style={styles.errorText}>{categoryError}</BodyMedium>
-          ) : null}
-
-          {dropdownVisible && (
-            <View style={styles.dropdownMenu}>
-              <ScrollView
-                style={styles.dropdownScroll}
-                nestedScrollEnabled={true}
-              >
-                {categories.map((category) => (
+              {productDetails.imageUri ? (
+                <View style={styles.selectedImageContainer}>
+                  <RNImage
+                    source={{ uri: productDetails.imageUri }}
+                    style={styles.selectedImage}
+                    resizeMode="cover"
+                  />
                   <TouchableOpacity
-                    key={category.id}
-                    style={[
-                      styles.dropdownItem,
-                      categoryId === category.id && styles.dropdownItemSelected,
-                    ]}
-                    onPress={() => {
-                      handleCategorySelect(category.id);
-                      setDropdownVisible(false);
-                    }}
-                    activeOpacity={0.7}
+                    style={styles.changeImageButton}
+                    onPress={pickDocument}
+                    disabled={imageLoading}
                   >
-                    <BodyMedium
-                      style={[
-                        styles.dropdownItemText,
-                        categoryId === category.id &&
-                          styles.dropdownItemTextSelected,
-                      ]}
-                    >
-                      {category.name}
+                    <BodyMedium style={styles.changeImageText}>
+                      {imageLoading ? "Loading..." : "Change Image"}
                     </BodyMedium>
                   </TouchableOpacity>
-                ))}
-              </ScrollView>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.pickDocumentButton}
+                  onPress={pickDocument}
+                  disabled={imageLoading}
+                >
+                  {imageLoading ? (
+                    <BodyMedium style={styles.pickDocumentText}>
+                      Loading...
+                    </BodyMedium>
+                  ) : (
+                    <>
+                      <ImageIcon size={24} color={Colors[colorScheme].primary} />
+                      <BodyMedium style={styles.pickDocumentText}>
+                        Select Product Image
+                      </BodyMedium>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
             </View>
-          )}
-        </View>
 
-        {/* Size Input */}
-        <InputField
-          label="Size (Optional)"
-          value={size}
-          onChangeText={setSize}
-          placeholder="Enter size"
-          style={styles.input}
-        />
+            {/* Category Dropdown */}
+            <View style={styles.dropdownContainer}>
+              <TitleSection style={styles.sectionTitle}>
+                Category * {/* Asterisk indicates required field */}
+              </TitleSection>
+              <TouchableOpacity style={styles.dropdownTrigger}>
+                <TitleSection style={styles.sectionTitle}>
+                  Category * {/* Asterisk indicates required field */}
+                </TitleSection>
+                <TouchableOpacity
+                  style={[
+                    styles.dropdownTrigger,
+                    categoryError ? styles.errorBorder : null,
+                    dropdownVisible ? styles.dropdownTriggerActive : null,
+                  ]}
+                  onPress={() => setDropdownVisible(!dropdownVisible)}
+                  activeOpacity={0.7}
+                >
+                  <BodyMedium
+                    style={
+                      categoryId ? styles.selectedText : styles.placeholderText
+                    }
+                  >
+                    {categories.find((c) => c.id === categoryId)?.name ||
+                      "Select a category"}
+                  </BodyMedium>
+                  <ChevronDown
+                    size={20}
+                    color={Colors[colorScheme].primary}
+                    style={[
+                      styles.dropdownIcon,
+                      dropdownVisible ? styles.dropdownIconActive : null,
+                    ]}
+                  />
+                </TouchableOpacity>
 
-        {/* Weight Input */}
-        <InputField
-          label="Weight in kg (Optional)"
-          value={weight}
-          onChangeText={setWeight}
-          placeholder="Enter weight"
-          keyboardType="decimal-pad"
-          style={styles.input}
-        />
+                {/* Error message */}
+                {categoryError ? (
+                  <BodyMedium style={styles.errorText}>{categoryError}</BodyMedium>
+                ) : null}
+              </TouchableOpacity>
 
-        {/* Additional Notes */}
-        <InputField
-          label="Additional Notes"
-          value={notes}
-          onChangeText={setNotes}
-          placeholder="Any special instructions or requirements"
-          multiline
-          numberOfLines={3}
-          style={[styles.input, styles.textArea]}
-        />
+              {/* Error message */}
+              {categoryError ? (
+                <BodyMedium style={styles.errorText}>{categoryError}</BodyMedium>
+              ) : null}
 
-        <View style={styles.divider} />
+              {dropdownVisible && (
+                <View style={styles.dropdownMenu}>
+                  <ScrollView
+                    style={styles.dropdownScroll}
+                    nestedScrollEnabled={true}
+                  >
+                    {categories.map((category) => (
+                      <TouchableOpacity
+                        key={category.id}
+                        style={[
+                          styles.dropdownItem,
+                          categoryId === category.id && styles.dropdownItemSelected,
+                        ]}
+                        onPress={() => {
+                          handleCategorySelect(category.id);
+                          setDropdownVisible(false);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <BodyMedium
+                          style={[
+                            styles.dropdownItemText,
+                            categoryId === category.id &&
+                              styles.dropdownItemTextSelected,
+                          ]}
+                        >
+                          {category.name}
+                        </BodyMedium>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+            </View>
 
-        <TitleLarge style={styles.mainTitle}>Delivery Details</TitleLarge>
+            <View style={styles.buttonContainer}>
+              <BaseButton
+                size="large"
+                onPress={() => setCurrentStep(1)}
+                disabled={!categoryId}
+                style={{ width: '100%' }}
+              >
+                <BodyMedium style={styles.buttonText}>Next</BodyMedium>
+              </BaseButton>
+            </View>
+          </>
+        )}
 
-        <InputField
-          label="Quantity *"
-          value={quantity}
-          onChangeText={setQuantity}
-          placeholder="Enter quantity"
-          keyboardType="numeric"
-          style={styles.input}
-        />
+        {currentStep === 1 && (
+          <>
+            <TitleLarge style={styles.mainTitle}>Product Specifications</TitleLarge>
 
-        <InputField
-          label="Pickup Location *"
-          value={goodsLocation}
-          onChangeText={setGoodsLocation}
-          placeholder="Enter pickup location"
-          style={styles.input}
-        />
+            {/* Size Input */}
+            <InputField
+              label="Size (Optional)"
+              value={size}
+              onChangeText={setSize}
+              placeholder="Enter size"
+              style={styles.input}
+            />
 
-        <InputField
-          label="Delivery Location *"
-          value={goodsDestination}
-          onChangeText={setGoodsDestination}
-          placeholder="Enter delivery location"
-          style={styles.input}
-        />
+            {/* Weight Input */}
+            <InputField
+              label="Weight in kg (Optional)"
+              value={weight}
+              onChangeText={setWeight}
+              placeholder="Enter weight"
+              keyboardType="decimal-pad"
+              style={styles.input}
+            />
 
-        <View style={styles.formField}>
-          <BodyMedium style={styles.label}>Delivery Date</BodyMedium>
-          <TouchableOpacity
-            style={styles.dateInput}
-            onPress={() => setShowDatePicker(true)}
-          >
-            <BodyMedium>{deliveryDate.toLocaleDateString()}</BodyMedium>
-          </TouchableOpacity>
+            {/* Additional Notes */}
+            <InputField
+              label="Additional Notes"
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Any special instructions or requirements"
+              multiline
+              numberOfLines={3}
+              style={[styles.input, styles.textArea]}
+            />
 
-          <DateTimePickerModal
-            isVisible={showDatePicker}
-            mode="date"
-            onConfirm={(date) => {
-              setShowDatePicker(false);
-              setDeliveryDate(date);
-            }}
-            onCancel={() => setShowDatePicker(false)}
-            minimumDate={new Date()}
-          />
-        </View>
+            <View style={styles.buttonRow}>
+              <BaseButton
+                size="large"
+                onPress={() => setCurrentStep(0)}
+                style={[styles.backButton, { flex: 1, marginRight: 8 }]}
+              >
+                <BodyMedium style={styles.buttonText}>Back</BodyMedium>
+              </BaseButton>
+              <BaseButton
+                size="large"
+                onPress={() => setCurrentStep(2)}
+                style={{ flex: 1, marginLeft: 8 }}
+              >
+                <BodyMedium style={styles.buttonText}>Next</BodyMedium>
+              </BaseButton>
+            </View>
+          </>
+        )}
 
-        <View style={styles.buttonContainer}>
-          <BaseButton
-            size="large"
-            onPress={handleSubmit}
-            disabled={
-              !categoryId || !quantity || !goodsLocation || !goodsDestination
-            }
-          >
-            <BodyMedium style={styles.buttonText}>
-              Create Product & Request
-            </BodyMedium>
-          </BaseButton>
-        </View>
+        {currentStep === 2 && (
+          <>
+            <TitleLarge style={styles.mainTitle}>Delivery Details</TitleLarge>
+
+            <InputField
+              label="Quantity *"
+              value={quantity}
+              onChangeText={setQuantity}
+              placeholder="Enter quantity"
+              keyboardType="numeric"
+              style={styles.input}
+            />
+
+            <InputField
+              label="Pickup Location *"
+              value={goodsLocation}
+              onChangeText={setGoodsLocation}
+              placeholder="Enter pickup location"
+              style={styles.input}
+            />
+
+            <InputField
+              label="Delivery Location *"
+              value={goodsDestination}
+              onChangeText={setGoodsDestination}
+              placeholder="Enter delivery location"
+              style={styles.input}
+            />
+
+            <View style={styles.formField}>
+              <BodyMedium style={styles.label}>Delivery Date</BodyMedium>
+              <TouchableOpacity
+                style={styles.dateInput}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <BodyMedium>{deliveryDate.toLocaleDateString()}</BodyMedium>
+              </TouchableOpacity>
+
+              <DateTimePickerModal
+                isVisible={showDatePicker}
+                mode="date"
+                onConfirm={(date) => {
+                  setShowDatePicker(false);
+                  setDeliveryDate(date);
+                }}
+                onCancel={() => setShowDatePicker(false)}
+                minimumDate={new Date()}
+              />
+            </View>
+
+            <View style={styles.buttonRow}>
+              <BaseButton
+                size="large"
+                onPress={() => setCurrentStep(1)}
+                style={[styles.backButton, { flex: 1, marginRight: 8 }]}
+              >
+                <BodyMedium style={styles.buttonText}>Back</BodyMedium>
+              </BaseButton>
+              <BaseButton
+                size="large"
+                onPress={handleSubmit}
+                disabled={!categoryId || !quantity || !goodsLocation || !goodsDestination}
+                style={{ flex: 1, marginLeft: 8 }}
+              >
+                <BodyMedium style={styles.buttonText}>Create Product & Request</BodyMedium>
+              </BaseButton>
+            </View>
+          </>
+        )}
       </View>
     </ScrollView>
   );
@@ -893,10 +974,8 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   buttonContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    marginTop: 24,
+    width: '100%',
+    marginTop: 20,
   },
   buttonText: {
     color: "#ffffff",
@@ -976,6 +1055,36 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     backgroundColor: "white",
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#ffffff',
+  },
+  progressStep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  progressDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  progressLine: {
+    width: 40,
+    height: 2,
+    marginHorizontal: 4,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    paddingHorizontal: 0,
+  },
+  backButton: {
+    backgroundColor: Colors.light.secondary,
   },
 });
 

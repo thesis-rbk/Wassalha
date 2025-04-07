@@ -12,8 +12,9 @@ import { XCircle } from "lucide-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axiosInstance from "../../config";
 import { QRCodeScannerProps } from "../../types/QRCodeScannerProps"; // Adjust the import path as necessary
-
-export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ visible, onClose, pickups,setPickups,}) => {
+import { useRouter } from "expo-router";
+import { useAuth } from "@/context/AuthContext";
+export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ visible, onClose, pickups,setPickups,paramsData}) => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();

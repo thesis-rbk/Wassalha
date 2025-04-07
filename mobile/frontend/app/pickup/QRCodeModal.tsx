@@ -5,6 +5,7 @@ import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { QRCodeModalProps } from "@/types/QRCodeModalProps";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
+import { QRCodeScanner } from "./QRCodeScanner";
 
 export const QRCodeModal: React.FC<QRCodeModalProps> = ({ visible, qrCodeData, onClose, paramsData }) => {
   const { user } = useAuth();
