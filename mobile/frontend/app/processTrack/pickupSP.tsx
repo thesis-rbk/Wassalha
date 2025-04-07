@@ -34,6 +34,7 @@ import { QRCodeScanner } from "../pickup/QRCodeScanner";
 import io, { Socket } from "socket.io-client";
 import { navigateToChat } from "@/services/chatService";
 import { LinearGradient } from "expo-linear-gradient";
+import Header from "@/components/navigation/headers";
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -287,8 +288,6 @@ export default function PickupTraveler() {
       setIsLoading(false);
     }
   };
-
-  const isRequester = (pickup: Pickup) => console.log("pickup", pickup);
 
   const renderItem = ({ item }: { item: Pickup }) => {
     return (

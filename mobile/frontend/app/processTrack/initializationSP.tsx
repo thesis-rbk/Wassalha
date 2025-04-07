@@ -38,6 +38,7 @@ import { Picker } from "@react-native-picker/picker";
 import Card from "@/components/cards/ProcessCard";
 import { useNotification } from "@/context/NotificationContext";
 import { io } from "socket.io-client";
+import Header from "@/components/navigation/headers";
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -62,7 +63,7 @@ export default function InitializationSP() {
   const colorScheme = useColorScheme() ?? "light";
   const { sendNotification } = useNotification();
 
-  console.log("kjslkdsldslsd", params);
+  console.log("params from initialization SP:", params);
 
   // Progress steps
   const progressSteps = [
@@ -400,9 +401,8 @@ export default function InitializationSP() {
         .filter((place: any) => place.types.includes("airport"))
         .map((place: any) => place.displayName.text || place.formattedAddress);
       setSuggestions(results);
-     
     } catch (error) {
-      console.log("erooooooooooooooor",error);
+      console.log("erooooooooooooooor", error);
       console.log("API Key being used:", GOOGLE_PLACES_API_KEY);
       console.error("Error fetching airports from Google Places:", error);
       Alert.alert("Error", "Failed to fetch airport suggestions");
@@ -426,11 +426,15 @@ export default function InitializationSP() {
 
   return (
     <View style={styles.container}>
+      <Header
+        title="Initialization"
+        subtitle="Track your order's process"
+        showBackButton={true}
+      />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
-        <Text style={styles.title}>Initialization</Text>
         <Text style={styles.subtitle}>
           This is the first step of the process, check the product details below
           and you can submit an offer if you want
@@ -673,8 +677,9 @@ export default function InitializationSP() {
                         setOfferDetails((prev) => ({
                           ...prev,
                           flightNumber: value,
-                          departureFlightCode: `${AIRLINE_CODES[prev.airline]
-                            }${value}`,
+                          departureFlightCode: `${
+                            AIRLINE_CODES[prev.airline]
+                          }${value}`,
                         }));
                       }}
                     >
