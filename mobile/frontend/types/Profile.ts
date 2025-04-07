@@ -20,3 +20,11 @@ export interface Profile {
   preferredCategories?: string;
   referralSource?: string;
 }
+
+export interface ProfileInfoItemProps {
+  Icon: React.ElementType;
+  label: string;
+  value: string;
+  theme: 'light' | 'dark';
+  isCountry?: boolean;
+}
