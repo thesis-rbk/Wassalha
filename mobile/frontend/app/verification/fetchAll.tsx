@@ -9,6 +9,7 @@ import {
     ActivityIndicator,
     Animated,
     Alert,
+    SafeAreaView,
 } from "react-native";
 import Icon from 'react-native-vector-icons/Feather';
 import { Plus } from "lucide-react-native"
@@ -23,7 +24,9 @@ import SegmentedControl from "@/components/SegmentedControl";
 import OrdersScreen from "./SponsorRequests";
 import OrdersSponsor from "./ClientsOrders";
 import { useStatus } from '@/context/StatusContext';
-import Header from "@/components/navigation/headers";
+import { TopNavigation } from "@/components/navigation/TopNavigation";
+import { ThemedView } from "@/components/ThemedView";
+
 const SponsorshipsScreen: React.FC = () => {
     const [activeTab, setActiveTab] = useState("home");
     const [view, setView] = useState<"requests" | "orders" | "all">("all");
@@ -193,8 +196,19 @@ const SponsorshipsScreen: React.FC = () => {
         setActiveTab(tab);
         if (tab === "create") {
             navigation.navigate("verification/CreateSponsorPost", { id });
+        } else if (tab === "sponsor") {
+            // Already on sponsor tab, no need to navigate
+            return;
+        } else if (tab === "travel") {
+            navigation.navigate("home");
+            setTimeout(() => {
+                navigation.getParent()?.navigate("goodPost/goodpostpage");
+            }, 0);
+        } else if (tab === "home") {
+            navigation.navigate("home");
         } else {
-            navigation.navigate(tab as any);
+            // For any other tabs
+            console.log(`Tab ${tab} not implemented yet`);
         }
     };
 
@@ -221,26 +235,31 @@ const SponsorshipsScreen: React.FC = () => {
 
     const renderAllView = () => (
         <>
-            <Animated.View style={[styles.searchContainer, { transform: [{ scale: animatedScale }] }]}>
-                <Icon name="search" size={20} color="#007BFF" style={styles.searchIcon} />
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search Sponsorships"
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
-                    accessibilityLabel="Search sponsorships input"
-                />
-                {searchQuery.length > 0 && (
-                    <TouchableOpacity onPress={clearSearch} style={styles.clearIcon}>
-                        <Icon name="x" size={20} color="#007BFF" />
-                    </TouchableOpacity>
-                )}
-            </Animated.View>
+            <View style={styles.searchContainer}>
+                <View style={styles.searchBar}>
+                    <Icon name="search" size={20} color="#666" style={styles.searchIcon} />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Search Sponsorships"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
+                        accessibilityLabel="Search sponsorships input"
+                        placeholderTextColor="#999"
+                    />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity onPress={clearSearch} style={styles.clearIcon}>
+                            <Icon name="x" size={20} color="#666" />
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </View>
 
             {loading ? (
-                <ActivityIndicator size="large" color="#007BFF" style={styles.loading} />
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#007BFF" />
+                </View>
             ) : (
                 <FlatList
                     data={sponsorships}
@@ -248,6 +267,8 @@ const SponsorshipsScreen: React.FC = () => {
                     keyExtractor={(item) => item.id.toString()}
                     ListEmptyComponent={<Text style={styles.emptyText}>No sponsorships found.</Text>}
                     contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                    ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
                 />
             )}
             {isSponsor && (
@@ -263,31 +284,39 @@ const SponsorshipsScreen: React.FC = () => {
     );
 
     return (
-        <View style={styles.container}>
-            {isSponsor ? (
-                <SegmentedControl
-                    values={["Requests", "All"]}
-                    selectedIndex={view === "requests" ? 0 : 1}
-                    onChange={(index) => setView(index === 0 ? "requests" : "all")}
-                    style={styles.segmentedControl} // Added style to move it down
-                />
-            ) : (
-                <SegmentedControl
-                    values={["Orders", "All"]}
-                    selectedIndex={view === "orders" ? 0 : 1}
-                    onChange={(index) => setView(index === 0 ? "orders" : "all")}
-                    style={styles.segmentedControl} // Added style to move it down
-                />
-            )}
+        <SafeAreaView style={{ flex: 1 }}>
+            <ThemedView style={styles.container}>
+                <TopNavigation title="Sponsorships" />
+                
+                {isSponsor ? (
+                    <SegmentedControl
+                        values={["Requests", "All"]}
+                        selectedIndex={view === "requests" ? 0 : 1}
+                        onChange={(index) => setView(index === 0 ? "requests" : "all")}
+                        style={styles.segmentedControl}
+                    />
+                ) : (
+                    <SegmentedControl
+                        values={["Orders", "All"]}
+                        selectedIndex={view === "orders" ? 0 : 1}
+                        onChange={(index) => setView(index === 0 ? "orders" : "all")}
+                        style={styles.segmentedControl}
+                    />
+                )}
 
-            {isSponsor ? (
-                view === "requests" ? <OrdersScreen /> : renderAllView()
-            ) : (
-                view === "orders" ? <OrdersSponsor /> : renderAllView()
-            )}
+                <View style={styles.contentContainer}>
+                    {isSponsor ? (
+                        view === "requests" ? <OrdersScreen /> : renderAllView()
+                    ) : (
+                        view === "orders" ? <OrdersSponsor /> : renderAllView()
+                    )}
+                </View>
 
-            <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
-        </View>
+                <View style={styles.tabBarContainer}>
+                    <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
+                </View>
+            </ThemedView>
+        </SafeAreaView>
     );
 };
 
@@ -295,21 +324,40 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#F5F5F5",
+        display: 'flex',
+        flexDirection: 'column',
+    },
+    contentContainer: {
+        flex: 1,
+        width: '100%',
+    },
+    tabBarContainer: {
+        width: '100%',
+        position: 'absolute',
+        bottom: 0,
     },
     segmentedControl: {
-        marginTop: 40, // Moves the SegmentedControl down
-        marginHorizontal: 20, // Optional: adds horizontal spacing
+        marginHorizontal: 16,
+        marginVertical: 4,
     },
     searchContainer: {
+        paddingHorizontal: 16,
+        paddingVertical: 4,
+        backgroundColor: '#F5F5F5',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingBottom: 60,
+    },
+    searchBar: {
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "#FFFFFF",
-        borderRadius: 10,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        marginHorizontal: 20,
-        marginTop: 10,
-        marginBottom: 10,
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        height: 48,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -317,34 +365,16 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     searchIcon: {
-        marginRight: 8,
+        marginRight: 12,
     },
     searchInput: {
         flex: 1,
-        height: 40,
+        height: 48,
         fontSize: 16,
-        color: "#333",
-        fontWeight: "500",
+        color: '#333',
     },
     clearIcon: {
-        marginLeft: 8,
-    },
-    plusButtonContainer: {
-        marginLeft: 10,
-        backgroundColor: "#007BFF",
-        borderRadius: 15,
-        width: 30,
-        height: 30,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    plusButton: {
-        fontSize: 20,
-        color: "#FFFFFF",
-        fontWeight: "bold",
-    },
-    loading: {
-        marginTop: 20,
+        padding: 5,
     },
     emptyText: {
         textAlign: "center",
@@ -353,12 +383,15 @@ const styles = StyleSheet.create({
         color: "#666666",
     },
     listContent: {
-        padding: 20,
+        padding: 16,
         paddingBottom: 80,
+    },
+    cardSeparator: {
+        height: 12,
     },
     fab: {
         position: "absolute",
-        bottom: 95, // Adjust to be above TabBar
+        bottom: 95,
         right: 20,
         width: 56,
         height: 56,

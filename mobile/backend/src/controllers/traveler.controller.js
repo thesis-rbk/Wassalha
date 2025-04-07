@@ -9,7 +9,22 @@ const submitTravelerApplication = async (req, res) => {
     if (!userId || !idCard || !bankCard) {
       return res.status(400).json({ 
         success: false, 
-        message: 'User ID, ID card, and bank card are required' 
+        message: 'User ID, ID card number, and bank card number are required' 
+      });
+    }
+
+    // Validate card number formats
+    if (idCard.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID card number format'
+      });
+    }
+
+    if (bankCard.length < 16) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid bank card number format'
       });
     }
 
@@ -21,7 +36,7 @@ const submitTravelerApplication = async (req, res) => {
     if (!user) {
       return res.status(404).json({ 
         success: false, 
-        message: 'User not found' 
+        message: 'User not found. Please make sure you are logged in.' 
       });
     }
 
@@ -33,7 +48,7 @@ const submitTravelerApplication = async (req, res) => {
     if (existingTraveler) {
       return res.status(400).json({ 
         success: false, 
-        message: 'User is already a traveler' 
+        message: 'You are already a registered traveler' 
       });
     }
 
@@ -89,9 +104,29 @@ const checkTravelerStatus = async (req, res) => {
     // Convert userId to integer to ensure proper comparison
     const parsedUserId = parseInt(userId, 10);
     
+    // First check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id: parsedUserId },
+    });
+
+    if (!user) {
+      console.log(`User not found with ID: ${parsedUserId}`);
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+        isTraveler: false,
+        isVerified: false
+      });
+    }
+
+    console.log(`User found: ${user.id}`);
+    
     // Find the traveler with the given userId
     const traveler = await prisma.traveler.findUnique({
       where: { userId: parsedUserId },
+      include: {
+        user: true
+      }
     });
 
     console.log('Traveler found:', traveler);
@@ -100,20 +135,22 @@ const checkTravelerStatus = async (req, res) => {
       return res.status(200).json({
         success: true,
         isTraveler: false,
-        isVerified: false
+        isVerified: false,
+        message: 'User is not a registered traveler'
       });
     }
 
     // Return the traveler status with the correct verification status
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       isTraveler: true,
       isVerified: traveler.isVerified,
-      travelerId: traveler.id // Include the traveler ID for reference
+      travelerId: traveler.id,
+      message: traveler.isVerified ? 'User is a verified traveler' : 'User is a traveler but not verified'
     });
   } catch (error) {
     console.error('Error checking traveler status:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to check traveler status',
       error: error.message,

@@ -6,18 +6,17 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
-  Image,
 } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useRouter } from 'expo-router';
 import axiosInstance from '@/config';
-import { ArrowLeft, Upload, CreditCard, IdCard, Shield, CheckCircle } from 'lucide-react-native';
+import { CreditCard, IdCard, Shield, CheckCircle } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import * as ImagePicker from 'expo-image-picker';
+import Header from '@/components/navigation/headers';
+import { StatusScreen } from '@/app/screens/StatusScreen';
 
 export default function BecomeTraveler() {
   const router = useRouter();
@@ -25,55 +24,73 @@ export default function BecomeTraveler() {
   const [isLoading, setIsLoading] = useState(false);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const [formData, setFormData] = useState({
-    idCard: '',
-    bankCard: '',
+    idCardNumber: '',
+    bankCardNumber: '',
   });
-  const [idCardImage, setIdCardImage] = useState<string | null>(null);
-  const [bankCardImage, setBankCardImage] = useState<string | null>(null);
+  
+  // Status screen state
+  const [statusVisible, setStatusVisible] = useState(false);
+  const [statusType, setStatusType] = useState<'success' | 'error'>('success');
+  const [statusTitle, setStatusTitle] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [primaryAction, setPrimaryAction] = useState<{ label: string, onPress: () => void } | undefined>(undefined);
+  const [secondaryAction, setSecondaryAction] = useState<{ label: string, onPress: () => void } | undefined>(undefined);
 
-  const pickIdCardImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      setIdCardImage(result.assets[0].uri);
-      // In a real app, you would upload this to your server and get a URL back
-      setFormData({
-        ...formData,
-        idCard: result.assets[0].uri,
-      });
-    }
+  const closeStatusScreen = () => {
+    setStatusVisible(false);
   };
 
-  const pickBankCardImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      setBankCardImage(result.assets[0].uri);
-      // In a real app, you would upload this to your server and get a URL back
-      setFormData({
-        ...formData,
-        bankCard: result.assets[0].uri,
-      });
-    }
+  const showStatusScreen = (
+    type: 'success' | 'error',
+    title: string,
+    message: string,
+    primary?: { label: string; onPress: () => void },
+    secondary?: { label: string; onPress: () => void }
+  ) => {
+    setStatusType(type);
+    setStatusTitle(title);
+    setStatusMessage(message);
+    setPrimaryAction(primary);
+    setSecondaryAction(secondary);
+    setStatusVisible(true);
   };
 
   const validateForm = () => {
-    if (!formData.idCard) {
-      Alert.alert('Error', 'Please upload your ID card');
+    if (!formData.idCardNumber) {
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter your ID card number',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
-    if (!formData.bankCard) {
-      Alert.alert('Error', 'Please upload your bank card');
+    if (!formData.bankCardNumber) {
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter your bank card number',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
+      return false;
+    }
+    // Basic validation for card numbers
+    if (formData.idCardNumber.length < 8) {
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter a valid ID card number',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
+      return false;
+    }
+    if (formData.bankCardNumber.length < 16) {
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter a valid bank card number',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     return true;
@@ -82,30 +99,43 @@ export default function BecomeTraveler() {
   const handleSubmit = async () => {
     if (!validateForm()) return;
     if (!user || !user.id) {
-      Alert.alert('Error', 'You must be logged in to become a traveler');
+      showStatusScreen(
+        'error',
+        'Error',
+        'You must be logged in to become a traveler',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return;
     }
 
     try {
       setIsLoading(true);
 
-      // In a real app, you would first upload the images to your server
-      // and then use the returned URLs in this request
       const response = await axiosInstance.post('/api/travelers/apply', {
         userId: user.id,
-        idCard: formData.idCard,
-        bankCard: formData.bankCard,
+        idCard: formData.idCardNumber,
+        bankCard: formData.bankCardNumber,
       });
 
       if (response.data.success) {
         setApplicationSubmitted(true);
       } else {
-        Alert.alert('Error', response.data.message || 'Failed to submit application');
+        showStatusScreen(
+          'error',
+          'Error',
+          response.data.message || 'Failed to submit application',
+          { label: 'OK', onPress: closeStatusScreen }
+        );
       }
     } catch (error: any) {
       console.error('Error submitting traveler application:', error);
       const errorMessage = error.response?.data?.message || 'Failed to submit application';
-      Alert.alert('Error', errorMessage);
+      showStatusScreen(
+        'error',
+        'Error',
+        errorMessage,
+        { label: 'OK', onPress: closeStatusScreen }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -114,18 +144,18 @@ export default function BecomeTraveler() {
   if (applicationSubmitted) {
     return (
       <ThemedView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={24} color="#333" />
-          </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>Application Submitted</ThemedText>
-        </View>
+        <Header 
+          title="Application Submitted"
+          subtitle="Your application has been sent for review"
+          onBackPress={() => router.back()}
+          showBackButton={true}
+        />
 
         <View style={styles.successContainer}>
           <CheckCircle size={80} color="#4CAF50" />
           <ThemedText style={styles.successTitle}>Thank You!</ThemedText>
           <ThemedText style={styles.successMessage}>
-            Your traveler application has been submitted successfully. Our admin team will review your documents and verify your account soon.
+            Your traveler application has been submitted successfully. Our admin team will review your information and verify your account soon.
           </ThemedText>
           <ThemedText style={styles.successSubMessage}>
             You will receive a notification once your application is approved.
@@ -144,16 +174,26 @@ export default function BecomeTraveler() {
 
   return (
     <ThemedView style={styles.container}>
+      <StatusScreen
+        visible={statusVisible}
+        type={statusType}
+        title={statusTitle}
+        message={statusMessage}
+        primaryAction={primaryAction}
+        secondaryAction={secondaryAction}
+        onClose={closeStatusScreen}
+      />
+      
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={24} color="#333" />
-          </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>Become a Traveler</ThemedText>
-        </View>
+        <Header 
+          title="Become a Traveler"
+          subtitle="Verify your identity to start delivering goods"
+          onBackPress={() => router.back()}
+          showBackButton={true}
+        />
 
         <ScrollView style={styles.scrollView}>
           <View style={styles.infoCard}>
@@ -171,19 +211,20 @@ export default function BecomeTraveler() {
                 <ThemedText style={styles.cardTitle}>Identity Verification</ThemedText>
               </View>
               
-              <ThemedText style={styles.label}>Upload ID Card</ThemedText>
-              <ThemedText style={styles.sublabel}>Please upload a clear photo of your government-issued ID</ThemedText>
+              <ThemedText style={styles.label}>ID Card Number</ThemedText>
+              <ThemedText style={styles.sublabel}>Please enter your government-issued ID card number</ThemedText>
               
-              <TouchableOpacity style={styles.uploadButton} onPress={pickIdCardImage}>
-                {idCardImage ? (
-                  <Image source={{ uri: idCardImage }} style={styles.previewImage} />
-                ) : (
-                  <>
-                    <Upload size={24} color="#3a86ff" />
-                    <ThemedText style={styles.uploadText}>Tap to upload ID</ThemedText>
-                  </>
-                )}
-              </TouchableOpacity>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter ID card number"
+                  value={formData.idCardNumber}
+                  onChangeText={(text) => setFormData({ ...formData, idCardNumber: text })}
+                  keyboardType="numeric"
+                  maxLength={20}
+                  placeholderTextColor="#999"
+                />
+              </View>
             </View>
 
             <View style={styles.card}>
@@ -192,19 +233,20 @@ export default function BecomeTraveler() {
                 <ThemedText style={styles.cardTitle}>Payment Information</ThemedText>
               </View>
               
-              <ThemedText style={styles.label}>Upload Bank Card</ThemedText>
-              <ThemedText style={styles.sublabel}>Please upload a photo of your bank card (cover the middle digits)</ThemedText>
+              <ThemedText style={styles.label}>Bank Card Number</ThemedText>
+              <ThemedText style={styles.sublabel}>Please enter your bank card number (last 16 digits)</ThemedText>
               
-              <TouchableOpacity style={styles.uploadButton} onPress={pickBankCardImage}>
-                {bankCardImage ? (
-                  <Image source={{ uri: bankCardImage }} style={styles.previewImage} />
-                ) : (
-                  <>
-                    <Upload size={24} color="#3a86ff" />
-                    <ThemedText style={styles.uploadText}>Tap to upload bank card</ThemedText>
-                  </>
-                )}
-              </TouchableOpacity>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter bank card number"
+                  value={formData.bankCardNumber}
+                  onChangeText={(text) => setFormData({ ...formData, bankCardNumber: text })}
+                  keyboardType="numeric"
+                  maxLength={16}
+                  placeholderTextColor="#999"
+                />
+              </View>
             </View>
 
             <TouchableOpacity
@@ -228,27 +270,6 @@ export default function BecomeTraveler() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 16,
   },
   scrollView: {
     flex: 1,
@@ -309,27 +330,16 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 12,
   },
-  uploadButton: {
-    backgroundColor: '#f5f5f5',
+  inputContainer: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    borderStyle: 'dashed',
     borderRadius: 8,
-    height: 160,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
+    paddingHorizontal: 12,
   },
-  uploadText: {
-    marginTop: 8,
-    color: '#666',
-    fontSize: 14,
-  },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-    resizeMode: 'cover',
+  input: {
+    height: 50,
+    fontSize: 16,
+    color: '#333',
   },
   submitButton: {
     backgroundColor: '#3a86ff',

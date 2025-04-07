@@ -360,7 +360,7 @@ export default function HomeScreen() {
           >
             <View style={styles.cardWrapper}>
               <CardHome
-                title="Welcom to Wasssalha"
+                title="welcome to Wasssalha"
                 description=""
                 imageUrl="https://freerangestock.com/thumbnail/51436/world-map-indicates-backgrounds-globalization-and-globalise.jpg"
                 showButton={false}

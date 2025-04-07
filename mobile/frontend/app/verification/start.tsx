@@ -3,9 +3,10 @@ import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { ChevronLeft, Users, Clock, FileText, UserCircle2, CreditCard } from 'lucide-react-native';
+import { Users, Clock, FileText, UserCircle2, CreditCard } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import Header from '@/components/navigation/headers';
 
 export default function VerificationStart() {
   const router = useRouter();
@@ -50,13 +51,12 @@ export default function VerificationStart() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ChevronLeft size={24} color="#333" />
-        </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>Verify Your Identity</ThemedText>
-        <View style={{ width: 24 }} />
-      </View>
+      <Header 
+        title="Verify Your Identity"
+        subtitle="Complete these steps to get verified"
+        onBackPress={() => router.back()}
+        showBackButton={true}
+      />
       
       <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.content}>
         <View style={styles.progressContainer}>
@@ -150,24 +150,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    backgroundColor: '#FFF',
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1E293B',
   },
   scrollContainer: {
     flex: 1,
