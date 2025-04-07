@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React from "react"
 import { useEffect, useState, useRef } from "react"
 import {
   Dimensions,
@@ -20,17 +20,15 @@ import { TopNavigation } from "@/components/navigation/TopNavigation"
 import { TabBar } from "@/components/navigation/TabBar"
 import { ThemedView } from "@/components/ThemedView"
 import { ThemedText } from "@/components/ThemedText"
-import { Card } from "@/components/Card"
-import UserCard from "@/components/fetchCards"
 import OrderCard from "@/components/cardsForHomePage"
-import { Plane, ShoppingBag, MapPin, Crown, ChevronRight, Globe } from "lucide-react-native"
+import { Plane, MapPin, Crown, ChevronRight, Globe } from "lucide-react-native"
 import { useRouter } from "expo-router"
 import type { Traveler } from "@/types/Traveler"
 import type { Order } from "@/types/Sponsorship"
-import { useSelector } from 'react-redux'
-import { LinearGradient } from 'expo-linear-gradient'
-import { UserData } from '@/types/UserData'
-import { UserProfile } from '@/types/UserProfile'
+import { useSelector } from "react-redux"
+import { LinearGradient } from "expo-linear-gradient"
+import type { UserData } from "@/types/UserData"
+import type { UserProfile } from "@/types/UserProfile"
 import CardHome from "@/components/homecard"
 
 export default function HomeScreen() {
@@ -78,76 +76,76 @@ export default function HomeScreen() {
   // Update fetchRecentUsers function
   const fetchRecentUsers = async () => {
     try {
-      const usersResponse = await axiosInstance.get('/api/users');
-      const users = (usersResponse.data.data || []) as UserData[];
+      const usersResponse = await axiosInstance.get("/api/users")
+      const users = (usersResponse.data.data || []) as UserData[]
 
       // Create initial profiles
-      const profiles: UserProfile[] = users.map((user: UserData): UserProfile => ({
-        id: user.id,
-        name: user.profile?.firstName || user.name,
-        imageUrl: user.profile?.image?.url || null
-      }));
+      const profiles: UserProfile[] = users.map(
+        (user: UserData): UserProfile => ({
+          id: user.id,
+          name: user.profile?.firstName || user.name,
+          imageUrl: user.profile?.image?.url || null,
+        }),
+      )
 
-      setRecentUsers(profiles);
+      setRecentUsers(profiles)
 
       // After setting initial data, fetch images for users that need them
       users.forEach(async (user) => {
         if (user.id) {
           try {
-            const imageResponse = await axiosInstance.get(`/api/users/${user.id}/profile-image`);
+            const imageResponse = await axiosInstance.get(`/api/users/${user.id}/profile-image`)
             if (imageResponse.data.success && imageResponse.data.data?.imageUrl) {
               // Update the specific user's image URL
-              setRecentUsers(prevUsers =>
-                prevUsers.map(prevUser =>
-                  prevUser.id === user.id
-                    ? { ...prevUser, imageUrl: imageResponse.data.data.imageUrl }
-                    : prevUser
-                )
-              );
+              setRecentUsers((prevUsers) =>
+                prevUsers.map((prevUser) =>
+                  prevUser.id === user.id ? { ...prevUser, imageUrl: imageResponse.data.data.imageUrl } : prevUser,
+                ),
+              )
             }
           } catch (error: any) {
             // Silently ignore 404 errors (no image found)
             if (!(error.response && error.response.status === 404)) {
-              console.error(`Error fetching image for user ${user.id}:`, error);
+              console.error(`Error fetching image for user ${user.id}:`, error)
             }
           }
         }
-      });
+      })
     } catch (error) {
-      console.error('Error fetching recent users:', error);
+      console.error("Error fetching recent users:", error)
     }
-  };
+  }
 
   // New function to fetch current user profile
   const fetchCurrentUser = async () => {
     try {
-      if (!user || !user.id) return;
+      if (!user || !user.id) return
 
       const response = await axiosInstance.get(`/api/users/${user.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      });
+      })
 
       if (response.data) {
-        console.log("Fetched current user data:", response.data);
+        console.log("Fetched current user data:", response.data)
         // Update local state with fresh user data
         setUser({
           ...user,
           profile: response.data.profile,
           firstName: response.data.profile?.firstName,
-          lastName: response.data.profile?.lastName
-        });
+          lastName: response.data.profile?.lastName,
+        })
       }
     } catch (err) {
-      console.log('Error fetching current user data:', err);
+      console.log("Error fetching current user data:", err)
     }
-  };
+  }
 
   useEffect(() => {
-    fetchRecentUsers();
-    fetchCurrentUser();
-    handleBestTraveler();
+    fetchRecentUsers()
+    fetchCurrentUser()
+    handleBestTraveler()
     fetchData()
     if (travelers.length > 0 && sponsors.length > 0) {
       startAutoScroll()
@@ -301,18 +299,18 @@ export default function HomeScreen() {
           style: "default",
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     )
   }
 
   const handleTabPress = (tabName: string) => {
-    setActiveTab(tabName);
+    setActiveTab(tabName)
     if (tabName === "create") {
-      router.push("/verification/CreateSponsorPost");
+      router.push("/verification/CreateSponsorPost")
     } else {
-      router.push(tabName as any);
+      router.push(tabName as any)
     }
-  };
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -320,32 +318,22 @@ export default function HomeScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Welcome Section */}
         <View style={styles.welcomeSection}>
-          <ThemedText style={styles.welcomeTitle}>
-            Hi {user?.profile?.firstName || user?.name || 'there'},
-          </ThemedText>
+          <ThemedText style={styles.welcomeTitle}>Hi {user?.profile?.firstName || user?.name || "there"},</ThemedText>
           <ThemedText style={styles.welcomeSubtitle}>
-            100K+ shoppers around the world have saved 40% or more by shopping with wassalha. 2 weeks approximate delivery time.
+            100K+ shoppers around the world have saved 40% or more by shopping with wassalha. 2 weeks approximate
+            delivery time.
           </ThemedText>
           <View style={styles.avatarRow}>
             {recentUsers.slice(0, 10).map((user, index) => (
               <View
                 key={index}
-                style={[
-                  styles.avatarContainer,
-                  { marginLeft: index > 0 ? -15 : 0, zIndex: 10 - index }
-                ]}
+                style={[styles.avatarContainer, { marginLeft: index > 0 ? -15 : 0, zIndex: 10 - index }]}
               >
                 {user.imageUrl ? (
-                  <Image
-                    source={{ uri: user.imageUrl }}
-                    style={styles.avatar}
-                    resizeMode="cover"
-                  />
+                  <Image source={{ uri: user.imageUrl }} style={styles.avatar} resizeMode="cover" />
                 ) : (
                   <View style={styles.avatarFallback}>
-                    <ThemedText style={styles.avatarInitial}>
-                      {user.name?.charAt(0) || '?'}
-                    </ThemedText>
+                    <ThemedText style={styles.avatarInitial}>{user.name?.charAt(0) || "?"}</ThemedText>
                   </View>
                 )}
               </View>
@@ -354,16 +342,62 @@ export default function HomeScreen() {
               <ThemedText style={styles.avatarMoreText}>+100K</ThemedText>
             </View>
           </View>
-          <TouchableOpacity
-            style={styles.orderButton}
-            onPress={() => router.push("/productDetails/create-order")}
-          >
+          <TouchableOpacity style={styles.orderButton} onPress={() => router.push("/productDetails/create-order")}>
             <ThemedText style={styles.orderButtonText}>Are you ready, click to start...</ThemedText>
             <ChevronRight size={24} color="#1a1a1a" />
           </TouchableOpacity>
         </View>
+        {/*welcom*/}
+        <View style={styles.section}>
+          <View style={styles.separator}>
+            <ThemedText style={styles.separatorText}></ThemedText>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalCardsContainer}
+            style={styles.horizontalScrollView}
+          >
+            <View style={styles.cardWrapper}>
+              <CardHome
+                title="Welcom to Wasssalha"
+                description=""
+                imageUrl="https://freerangestock.com/thumbnail/51436/world-map-indicates-backgrounds-globalization-and-globalise.jpg"
+                showButton={false}
+              />
+            </View>
+            <View style={styles.cardWrapper}>
+              <CardHome
+                title="Secure Payment"
+                description=""
+                imageUrl="https://media.istockphoto.com/id/1444046253/vector/fingerprint-recognition-access-to-electronic-data-financial-and-business-data-security.jpg?b=1&s=612x612&w=0&k=20&c=LBl9DvE2tKtITE8GyhsCxB3LsihjjYXcsPOHTXMkRwA="
+                onPress={() => router.push("/screens/SponsorshipScreen")}
+                showButton={false}
+              />
+            </View>
+            <View style={styles.cardWrapper}>
+              <CardHome
+                title="Decrease your shipping costs"
+                description=""
+                imageUrl="https://cms-img.coverfox.com/impact-of-corporate-tax-cut-on-indias-economy.jpg"
+                onPress={() => router.push("/screens/SponsorshipScreen")}
+                showButton={false}
+              />
+            </View>
+            <View style={styles.cardWrapper}>
+              <CardHome
+                title="Earn Bonuses"
+                description=""
+                imageUrl="https://media.licdn.com/dms/image/v2/D5612AQE5_UVfKVYiJg/article-cover_image-shrink_600_2000/article-cover_image-shrink_600_2000/0/1668493895980?e=2147483647&v=beta&t=zHvEZeKjmJemGcQqhZhLVMQaM3QqQtRmbkfLWLg0xqQ"
+                onPress={() => router.push("/screens/SponsorshipScreen")}
+                showButton={false}
+              />
+            </View>
+          </ScrollView>
+        </View>
 
         {/* Services Section */}
+
         <View style={styles.section}>
           <View style={styles.servicesSection}>
             <ThemedText style={styles.servicesTitle}>Our Services</ThemedText>
@@ -379,18 +413,16 @@ export default function HomeScreen() {
                 >
                   <View style={styles.serviceContent}>
                     <LinearGradient
-                      colors={['#007BFF', '#00A3FF']}
+                      colors={["#007BFF", "#00A3FF"]}
                       style={styles.serviceIconContainer}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
                     >
-                      {React.cloneElement(service.icon, { size: 24, color: '#fff' })}
+                      {React.cloneElement(service.icon, { size: 24, color: "#fff" })}
                     </LinearGradient>
                     <View style={styles.serviceTextContainer}>
                       <ThemedText style={styles.serviceTitle}>{service.title}</ThemedText>
-                      <ThemedText style={styles.serviceDescription}>
-                        {service.description}
-                      </ThemedText>
+                      <ThemedText style={styles.serviceDescription}>{service.description}</ThemedText>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -480,12 +512,14 @@ export default function HomeScreen() {
             description="Earn a lot of money with only ONE CLICK ..."
             imageUrl="https://www.chargebee.com/blog/wp-content/uploads/2022/07/Chargebee-Subscription-Box-Industry-trends-opportunities-and-Market-Size.png"
             onPress={() => router.push("/screens/SponsorshipScreen")}
+            showButton={true}
           />
           <CardHome
             title="Do you want to be a traveler?"
             description="Gain more money by becoming a sponsor ..."
             imageUrl="https://media.istockphoto.com/id/487391637/vector/bomber.jpg?s=612x612&w=0&k=20&c=mx6mwMFITuqF_QegfH2CmHg__YGUGVYnYIIbZ6P0Tm4="
             onPress={() => router.push("/traveler/becomeTraveler")}
+            showButton={true}
           />
         </SafeAreaView>
         <View style={styles.section}>
@@ -526,6 +560,10 @@ const { width } = Dimensions.get("window")
 const cardSize = (width - 48) / 2
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flexGrow: 0, // Prevents ScrollView from taking full screen height
+    height: 100, // Set a fixed height for the scroll area
+  },
   container: {
     flex: 1,
     backgroundColor: "#F5F7FA",
@@ -674,21 +712,21 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
     borderWidth: 2,
     borderColor: "#fff",
   },
   avatar: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: 16,
   },
   avatarFallback: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 16,
   },
   avatarInitial: {
@@ -728,6 +766,23 @@ const styles = StyleSheet.create({
   },
   containerHomeCard: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  }
+    backgroundColor: "#f5f5f5",
+  },
+  cardHomeContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 16,
+  },
+  horizontalScrollView: {
+    height: 220, // Adjust this height based on your card size
+  },
+  cardWrapper: {
+    width: width, // Adjust width to show part of next card
+    marginRight: 16,
+  },
+  horizontalCardsContainer: {
+    paddingVertical: 10,
+    alignItems: "center",
+  },
 })
+
