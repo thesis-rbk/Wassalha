@@ -360,7 +360,7 @@ export default function HomeScreen() {
           >
             <View style={styles.cardWrapper}>
               <CardHome
-                title="Welcom to Wasssalha"
+                title="Welcome to Wasssalha"
                 description=""
                 imageUrl="https://freerangestock.com/thumbnail/51436/world-map-indicates-backgrounds-globalization-and-globalise.jpg"
                 showButton={false}
@@ -769,16 +769,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
   },
   cardHomeContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     paddingVertical: 10,
-    gap: 16,
+    gap: 10,
   },
   horizontalScrollView: {
     height: 220, // Adjust this height based on your card size
   },
   cardWrapper: {
-    width: width, // Adjust width to show part of next card
-    marginRight: 16,
+    width: width - 10, // Adjust width to show part of next card
+    marginRight: -20,
   },
   horizontalCardsContainer: {
     paddingVertical: 10,

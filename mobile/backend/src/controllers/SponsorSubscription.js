@@ -531,6 +531,35 @@ const sponsor = {
         } catch (err) {
             console.log("err", err)
         }
+    },
+    findBalance: async (req, res) => {
+        const { id } = req.user
+        try {
+            const findBalance = await prisma.profile.findUnique({
+                where: { userId: id },
+                select: {
+                    balance: true,
+                    firstName: true
+                }
+            })
+            res.status(200).send(findBalance)
+        } catch (err) {
+            console.log("err", err)
+            res.status(400).send({ message: err })
+        }
+    },
+    updateProfileBonus: async (req, res) => {
+        const { id, bonus } = req.body
+        try {
+            await prisma.profile.update({
+                where: { userId: id },
+                data: { balance: bonus }
+            })
+            res.status(200).send({ message: "success" })
+        } catch (err) {
+            console.log("err", err)
+            res.status(400).send({ message: err })
+        }
     }
 
 }

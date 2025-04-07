@@ -15,7 +15,7 @@ import { useSelector } from "react-redux";
 import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { router, useLocalSearchParams } from "expo-router";
-import { BACKEND_URL } from "@/config";
+import axiosInstance, { BACKEND_URL } from "@/config";
 import { useNotification } from "@/context/NotificationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
@@ -31,17 +31,31 @@ export default function PaymentScreen() {
   const [userData, setUserData] = useState<any>(null);
   const { sendNotification } = useNotification();
   const socket = io(`${BACKEND_URL}/processTrack`);
-
+  const [bonus, setBonus] = useState(0)
   const totalPrice =
     parseInt(params.quantity.toString()) * parseInt(params.price.toString());
   const travelerFee = totalPrice * 0.1;
   const serviceFee = 1;
   const totalAmount = totalPrice + travelerFee + serviceFee;
-
-  console.log(params, "paraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaamss");
-
+  const getBalance = async () => {
+    try {
+      const res = await axiosInstance.get("/api/Bonus")
+      setBonus(res.data.balance)
+    } catch (err) {
+      console.log("err", err)
+    }
+  }
+  const handleUpdate = async (id, bonus) => {
+    try {
+      await axiosInstance.put("/api/update", { id, bonus })
+      console.log("update successfully")
+    } catch (err) {
+      console.log(err)
+    }
+  }
   // Add user data loading effect
   useEffect(() => {
+    getBalance()
     const loadUserData = async () => {
       try {
         const userData = await AsyncStorage.getItem("user");
@@ -109,7 +123,6 @@ export default function PaymentScreen() {
           }),
         }
       );
-
       if (!response.ok) {
         throw new Error("Failed to create payment intent");
       }
@@ -133,7 +146,8 @@ export default function PaymentScreen() {
       }
 
       if (paymentIntent) {
-        // Send payment completed notification
+        console.log("PaymentIntent:", bonus + travelerFee);
+        handleUpdate(params.travelerId, (bonus + travelerFee));
         if (userData?.id) {
           sendNotification("payment_completed", {
             travelerId: params.travelerId,
@@ -156,6 +170,7 @@ export default function PaymentScreen() {
           pathname: "/pickup/pickup",
           params: params,
         });
+
       }
     } catch (error: Error | any) {
       console.error("Payment error:", error);
@@ -287,7 +302,7 @@ export default function PaymentScreen() {
                   style={[
                     styles.paymentOptionText,
                     paymentMethod === "card" &&
-                      styles.selectedPaymentOptionText,
+                    styles.selectedPaymentOptionText,
                   ]}
                 >
                   Credit Card
@@ -305,7 +320,7 @@ export default function PaymentScreen() {
                   style={[
                     styles.paypalText,
                     paymentMethod === "paypal" &&
-                      styles.selectedPaymentOptionText,
+                    styles.selectedPaymentOptionText,
                   ]}
                 >
                   PayPal

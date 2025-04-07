@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     },
     sendButton: {
         borderRadius: 12,
-        backgroundColor: "#FFD700",
+        backgroundColor: "#4A90E2",
         position: "absolute",
         bottom: 16,
         right: 16,

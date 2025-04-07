@@ -19,12 +19,15 @@ import {
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
+import axiosInstance from "@/config"
 import { BonusProps, CardInfo } from "../../types/Sponsorship"
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
 const { width } = Dimensions.get("window")
 const cardWidth = width * 0.85
 const cardHeight = cardWidth * 0.6
 
-const BonusTransferComponent: React.FC<BonusProps> = ({ name, bonusAmount, currency = "TD" }) => {
+const BonusTransferComponent: React.FC<BonusProps> = ({ name, currency = "TD" }) => {
     const [modalVisible, setModalVisible] = useState(false)
     const [transferAmount, setTransferAmount] = useState("")
     const [cardInfo, setCardInfo] = useState<CardInfo>({
@@ -37,22 +40,82 @@ const BonusTransferComponent: React.FC<BonusProps> = ({ name, bonusAmount, curre
     const [isLoading, setIsLoading] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
     const [cardFlip] = useState(new Animated.Value(0))
+    const [bonusAmount, setBonusAmount] = useState<number>(0)
+    const [token, setToken] = useState<string | null>(null)
+    const [names, setName] = useState("")
+    // Function to fetch token from AsyncStorage
+    const tokenVerif = async () => {
+        try {
+            const tokeny = await AsyncStorage.getItem('jwtToken')
+            console.log("token:", tokeny)
+            setToken(tokeny)
+            return tokeny // Return token for use in fetchBonusAmount
+        } catch (error) {
+            console.error("Error retrieving token:", error)
+            Alert.alert("Error", "Failed to retrieve authentication token")
+            return null
+        }
+    }
 
+    // Function to fetch bonus from backend
+    const fetchBonusAmount = async (authToken: string | null) => {
+        if (!authToken) {
+            Alert.alert("Error", "No authentication token available")
+            setIsLoading(false)
+            return
+        }
+
+        try {
+            setIsLoading(true)
+            const response = await axiosInstance.get("/api/Bonus", {
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                },
+            })
+            console.log("Fetched bonus amount:", response.data.balance) // Debugging line
+            if (response.data) {
+                setName(response.data.firstName)
+                setBonusAmount(response.data.balance || 0) // Adjust based on your API response structure
+            } else {
+                Alert.alert("Error", "Failed to fetch bonus amount")
+            }
+        } catch (error) {
+            console.error("Error fetching bonus:", error)
+            Alert.alert("Error", "An error occurred while fetching your bonus balance")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // Fetch token and bonus on mount
     useEffect(() => {
-        Animated.timing(cardFlip, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-        }).start()
+        const initialize = async () => {
+            // Step 1: Fetch token
+            const authToken = await tokenVerif()
 
-        setTimeout(() => {
+            // Step 2: Fetch bonus only if token is available
+            if (authToken) {
+                await fetchBonusAmount(authToken)
+            }
+
+            // Step 3: Animate card flip
             Animated.timing(cardFlip, {
-                toValue: 0,
+                toValue: 1,
                 duration: 300,
                 useNativeDriver: true,
             }).start()
-        }, 1500)
-    }, [])
+
+            setTimeout(() => {
+                Animated.timing(cardFlip, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                }).start()
+            }, 1500)
+        }
+
+        initialize()
+    }, []) // Empty dependency array since this runs only on mount
 
     const flipCard = () => {
         Animated.timing(cardFlip, {
@@ -184,14 +247,13 @@ const BonusTransferComponent: React.FC<BonusProps> = ({ name, bonusAmount, curre
                                 <View style={styles.balanceContainer}>
                                     <Text style={styles.balanceLabel}>Bonus Balance</Text>
                                     <Text style={styles.balanceAmount}>
-                                        00.00
+                                        {isLoading ? "Loading..." : `${currency} ${bonusAmount.toFixed(2)}`}
                                     </Text>
                                 </View>
-
                                 <View style={styles.cardFooter}>
                                     <View>
                                         <Text style={styles.cardLabel}>CARD HOLDER</Text>
-                                        <Text style={styles.cardValue}>{name}</Text>
+                                        <Text style={styles.cardValue}>{names}</Text>
                                     </View>
                                     <View>
                                         <Text style={styles.cardLabel}>EXPIRES</Text>
@@ -257,7 +319,7 @@ const BonusTransferComponent: React.FC<BonusProps> = ({ name, bonusAmount, curre
                                     <Text style={styles.modalTitle}>{step === 1 ? "Transfer Amount" : "Card Details"}</Text>
                                     <Text style={styles.modalSubtitle}>
                                         {step === 1
-                                            ? `Enter the amount to transfer (Max: ${currency} ${bonusAmount})`
+                                            ? `Enter the amount to transfer (Max: ${currency} ${bonusAmount.toFixed(2)})`
                                             : "Enter your card information to complete the transfer"}
                                     </Text>
                                 </View>
@@ -278,7 +340,7 @@ const BonusTransferComponent: React.FC<BonusProps> = ({ name, bonusAmount, curre
                                                 />
                                             </View>
                                             <Text style={styles.balanceHint}>
-                                                Available balance: {currency} 00.00
+                                                Available balance: {currency} {bonusAmount.toFixed(2)}
                                             </Text>
                                         </View>
                                     ) : (
@@ -308,7 +370,6 @@ const BonusTransferComponent: React.FC<BonusProps> = ({ name, bonusAmount, curre
                                                     <Text style={styles.cardInputLabel}>Card Holder</Text>
                                                     <TextInput
                                                         style={styles.cardInput}
-                                                        // placeholder="John Doe"
                                                         placeholderTextColor="#CCE5FF"
                                                         value={cardInfo.cardHolder}
                                                         onChangeText={(text) => setCardInfo({ ...cardInfo, cardHolder: text })}
@@ -531,10 +592,10 @@ const styles = StyleSheet.create({
         color: "#007BFF",
         marginBottom: 20,
         textAlign: "center",
-        fontWeight: "400", // Changed to make text thinner
+        fontWeight: "400",
     },
     transferButton: {
-        width: cardWidth, // Changed to match card width
+        width: cardWidth,
         borderRadius: 12,
         overflow: "hidden",
         shadowColor: "#007BFF",
