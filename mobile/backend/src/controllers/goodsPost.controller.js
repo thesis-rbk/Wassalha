@@ -31,9 +31,11 @@ exports.getGoodsPosts = async (req, res) => {
       id: post.id,
       title: post.title,
       content: post.content,
+      departureDate: post.departureDate,
       arrivalDate: post.arrivalDate,
-      availableKg: post.availableKg,
+      originLocation: post.originLocation,
       airportLocation: post.airportLocation,
+      availableKg: post.availableKg,
       traveler: {
         firstName: post.traveler.profile.firstName,
         lastName: post.traveler.profile.lastName,
@@ -60,7 +62,17 @@ exports.getGoodsPosts = async (req, res) => {
 
 // Create a new goods post
 exports.createGoodsPost = async (req, res) => {
-  const { title, content, travelerId, arrivalDate, availableKg, airportLocation, categoryId } = req.body;
+  const { 
+    title, 
+    content, 
+    travelerId, 
+    departureDate, 
+    arrivalDate, 
+    availableKg, 
+    originLocation, 
+    airportLocation, 
+    categoryId 
+  } = req.body;
 
   try {
     console.log("Creating goods post with data:", req.body); // Debug log
@@ -114,9 +126,11 @@ exports.createGoodsPost = async (req, res) => {
         title,
         content,
         travelerId: parseInt(travelerId),
-        arrivalDate: new Date(arrivalDate),
-        availableKg: parseFloat(availableKg),
+        departureDate: departureDate ? new Date(departureDate) : undefined,
+        arrivalDate: arrivalDate ? new Date(arrivalDate) : undefined,
+        originLocation,
         airportLocation,
+        availableKg: parseFloat(availableKg),
         categoryId: categoryId ? parseInt(categoryId) : undefined,
       },
     });

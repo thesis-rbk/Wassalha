@@ -11,6 +11,7 @@ import {
   TextInput,
   Modal,
   SafeAreaView,
+  ScrollView,
 } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -34,6 +35,7 @@ export default function GoodPostPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [dateFilterType, setDateFilterType] = useState<'any' | 'departure' | 'arrival'>('any');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [activeTab, setActiveTab] = useState("travel");
@@ -130,6 +132,8 @@ export default function GoodPostPage() {
           
           return post.title?.toLowerCase().includes(query) || 
             post.content?.toLowerCase().includes(query) ||
+            post.originLocation?.toLowerCase().includes(query) ||
+            post.airportLocation?.toLowerCase().includes(query) ||
             (post.traveler?.firstName?.toLowerCase().includes(query) || 
              post.traveler?.lastName?.toLowerCase().includes(query));
         }
@@ -145,9 +149,34 @@ export default function GoodPostPage() {
     if (selectedDate) {
       const dateString = selectedDate.toISOString().split('T')[0];
       filtered = filtered.filter(post => {
-        if (!post.arrivalDate) return false;
-        const postDate = new Date(post.arrivalDate).toISOString().split('T')[0];
-        return postDate === dateString;
+        // Filter based on dateFilterType
+        if (dateFilterType === 'departure') {
+          if (!post.departureDate) return false;
+          const depDate = new Date(post.departureDate).toISOString().split('T')[0];
+          return depDate === dateString;
+        } 
+        else if (dateFilterType === 'arrival') {
+          if (!post.arrivalDate) return false;
+          const arrDate = new Date(post.arrivalDate).toISOString().split('T')[0];
+          return arrDate === dateString;
+        }
+        else { // 'any'
+          // Try to match either departure or arrival date
+          if (!post.departureDate && !post.arrivalDate) return false;
+          
+          let matches = false;
+          if (post.departureDate) {
+            const depDate = new Date(post.departureDate).toISOString().split('T')[0];
+            if (depDate === dateString) matches = true;
+          }
+          
+          if (post.arrivalDate && !matches) {
+            const arrDate = new Date(post.arrivalDate).toISOString().split('T')[0];
+            if (arrDate === dateString) matches = true;
+          }
+          
+          return matches;
+        }
       });
     }
     
@@ -186,6 +215,7 @@ export default function GoodPostPage() {
     setSearchQuery("");
     setSelectedCategory("");
     setSelectedDate(null);
+    setDateFilterType('any');
     setMinKg("");
     setMaxKg("");
     setSelectedGender("");
@@ -254,7 +284,13 @@ export default function GoodPostPage() {
           {/* Ticket header with date info - SMALLER */}
           <View style={styles.ticketHeader}>
             <View style={styles.dateInfo}>
-              <ThemedText style={styles.dateLabel}>DATE</ThemedText>
+              <ThemedText style={styles.dateLabel}>DEPARTURE</ThemedText>
+              <ThemedText style={styles.dateValue}>
+                {item.departureDate ? new Date(item.departureDate).toLocaleDateString() : 'TBD'}
+              </ThemedText>
+            </View>
+            <View style={styles.dateInfo}>
+              <ThemedText style={styles.dateLabel}>ARRIVAL</ThemedText>
               <ThemedText style={styles.dateValue}>
                 {item.arrivalDate ? new Date(item.arrivalDate).toLocaleDateString() : 'TBD'}
               </ThemedText>
@@ -294,7 +330,7 @@ export default function GoodPostPage() {
           <View style={styles.journeySection}>
             <View style={styles.journeyPoint}>
               <ThemedText style={styles.journeyCity}>ORIGIN</ThemedText>
-              <ThemedText style={styles.journeyAirport}>---</ThemedText>
+              <ThemedText style={styles.journeyAirport}>{item.originLocation || '---'}</ThemedText>
             </View>
             
             <View style={styles.journeyLine}>
@@ -380,6 +416,8 @@ export default function GoodPostPage() {
               {selectedDate && (
                 <View style={styles.activeFilterTag}>
                   <ThemedText style={styles.activeFilterText}>
+                    {dateFilterType !== 'any' ? 
+                      `${dateFilterType === 'departure' ? 'Dep' : 'Arr'} ` : ''}
                     {selectedDate.toLocaleDateString()}
                   </ThemedText>
                   <TouchableOpacity onPress={() => setSelectedDate(null)}>
@@ -451,110 +489,127 @@ export default function GoodPostPage() {
                 </TouchableOpacity>
               </View>
               
-              <View style={styles.filterSection}>
-                <ThemedText style={styles.filterLabel}>Category</ThemedText>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={selectedCategory}
-                    onValueChange={(itemValue) => setSelectedCategory(itemValue)}
-                    style={styles.picker}
+              <ScrollView style={styles.modalScrollContent} showsVerticalScrollIndicator={true}>
+                <View style={styles.filterSection}>
+                  <ThemedText style={styles.filterLabel}>Category</ThemedText>
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={selectedCategory}
+                      onValueChange={(itemValue) => setSelectedCategory(itemValue)}
+                      style={styles.picker}
+                    >
+                      <Picker.Item label="All Categories" value="" />
+                      {categories.map((category) => (
+                        <Picker.Item
+                          key={category.id}
+                          label={category.name}
+                          value={category.id.toString()}
+                        />
+                      ))}
+                    </Picker>
+                  </View>
+                </View>
+                
+                <View style={styles.filterSection}>
+                  <ThemedText style={styles.filterLabel}>Date Type</ThemedText>
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={dateFilterType}
+                      onValueChange={(itemValue) => setDateFilterType(itemValue as 'any' | 'departure' | 'arrival')}
+                      style={styles.picker}
+                    >
+                      <Picker.Item label="Any Date Type" value="any" />
+                      <Picker.Item label="Departure Date" value="departure" />
+                      <Picker.Item label="Arrival Date" value="arrival" />
+                    </Picker>
+                  </View>
+                </View>
+                
+                <View style={styles.filterSection}>
+                  <ThemedText style={styles.filterLabel}>Select Date</ThemedText>
+                  <TouchableOpacity 
+                    style={styles.datePickerButton}
+                    onPress={() => setShowDatePicker(true)}
                   >
-                    <Picker.Item label="All Categories" value="" />
-                    {categories.map((category) => (
-                      <Picker.Item
-                        key={category.id}
-                        label={category.name}
-                        value={category.id.toString()}
+                    <Calendar size={20} color="#3a86ff" style={{marginRight: 10}} />
+                    <ThemedText style={styles.dateText}>
+                      {selectedDate ? selectedDate.toLocaleDateString() : 'Select a date'}
+                    </ThemedText>
+                  </TouchableOpacity>
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={selectedDate || new Date()}
+                      mode="date"
+                      display="default"
+                      onChange={handleDateChange}
+                    />
+                  )}
+                </View>
+                
+                {/* Weight Range Filter */}
+                <View style={styles.filterSection}>
+                  <ThemedText style={styles.filterLabel}>Available Weight (kg)</ThemedText>
+                  <View style={styles.weightRangeContainer}>
+                    <View style={styles.weightInputContainer}>
+                      <Weight size={18} color="#3a86ff" />
+                      <TextInput
+                        style={styles.weightInput}
+                        placeholder="Min"
+                        value={minKg}
+                        onChangeText={setMinKg}
+                        keyboardType="numeric"
+                        placeholderTextColor="#999"
                       />
-                    ))}
-                  </Picker>
-                </View>
-              </View>
-              
-              <View style={styles.filterSection}>
-                <ThemedText style={styles.filterLabel}>Arrival Date</ThemedText>
-                <TouchableOpacity 
-                  style={styles.datePickerButton}
-                  onPress={() => setShowDatePicker(true)}
-                >
-                  <Calendar size={20} color="#3a86ff" style={{marginRight: 10}} />
-                  <ThemedText style={styles.dateText}>
-                    {selectedDate ? selectedDate.toLocaleDateString() : 'Select a date'}
-                  </ThemedText>
-                </TouchableOpacity>
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={selectedDate || new Date()}
-                    mode="date"
-                    display="default"
-                    onChange={handleDateChange}
-                  />
-                )}
-              </View>
-              
-              {/* Weight Range Filter */}
-              <View style={styles.filterSection}>
-                <ThemedText style={styles.filterLabel}>Available Weight (kg)</ThemedText>
-                <View style={styles.weightRangeContainer}>
-                  <View style={styles.weightInputContainer}>
-                    <Weight size={18} color="#3a86ff" />
-                    <TextInput
-                      style={styles.weightInput}
-                      placeholder="Min"
-                      value={minKg}
-                      onChangeText={setMinKg}
-                      keyboardType="numeric"
-                      placeholderTextColor="#999"
-                    />
-                  </View>
-                  <ThemedText style={styles.weightRangeSeparator}>to</ThemedText>
-                  <View style={styles.weightInputContainer}>
-                    <Weight size={18} color="#3a86ff" />
-                    <TextInput
-                      style={styles.weightInput}
-                      placeholder="Max"
-                      value={maxKg}
-                      onChangeText={setMaxKg}
-                      keyboardType="numeric"
-                      placeholderTextColor="#999"
-                    />
+                    </View>
+                    <ThemedText style={styles.weightRangeSeparator}>to</ThemedText>
+                    <View style={styles.weightInputContainer}>
+                      <Weight size={18} color="#3a86ff" />
+                      <TextInput
+                        style={styles.weightInput}
+                        placeholder="Max"
+                        value={maxKg}
+                        onChangeText={setMaxKg}
+                        keyboardType="numeric"
+                        placeholderTextColor="#999"
+                      />
+                    </View>
                   </View>
                 </View>
-              </View>
-              
-              {/* Gender Filter */}
-              <View style={styles.filterSection}>
-                <ThemedText style={styles.filterLabel}>Traveler Gender</ThemedText>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={selectedGender}
-                    onValueChange={(itemValue) => setSelectedGender(itemValue)}
-                    style={styles.picker}
+                
+                {/* Gender Filter */}
+                <View style={styles.filterSection}>
+                  <ThemedText style={styles.filterLabel}>Traveler Gender</ThemedText>
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={selectedGender}
+                      onValueChange={(itemValue) => setSelectedGender(itemValue)}
+                      style={styles.picker}
+                    >
+                      <Picker.Item label="Any Gender" value="" />
+                      <Picker.Item label="Male" value="MALE" />
+                      <Picker.Item label="Female" value="FEMALE" />
+                    </Picker>
+                  </View>
+                </View>
+                
+                <View style={styles.modalButtonsContainer}>
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.resetButton]}
+                    onPress={resetFilters}
                   >
-                    <Picker.Item label="Any Gender" value="" />
-                    <Picker.Item label="Male" value="MALE" />
-                    <Picker.Item label="Female" value="FEMALE" />
-                  </Picker>
+                    <ThemedText style={styles.resetButtonText}>Reset</ThemedText>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.applyButton]}
+                    onPress={() => {
+                      applyFilters();
+                      setShowFilterModal(false);
+                    }}
+                  >
+                    <ThemedText style={styles.applyButtonText}>Apply Filters</ThemedText>
+                  </TouchableOpacity>
                 </View>
-              </View>
-              
-              <View style={styles.modalButtonsContainer}>
-                <TouchableOpacity 
-                  style={[styles.modalButton, styles.resetButton]}
-                  onPress={resetFilters}
-                >
-                  <ThemedText style={styles.resetButtonText}>Reset</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.modalButton, styles.applyButton]}
-                  onPress={() => {
-                    applyFilters();
-                    setShowFilterModal(false);
-                  }}
-                >
-                  <ThemedText style={styles.applyButtonText}>Apply Filters</ThemedText>
-                </TouchableOpacity>
-              </View>
+              </ScrollView>
             </View>
           </View>
         </Modal>
@@ -689,12 +744,14 @@ const styles = StyleSheet.create({
   },
   ticketHeader: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     padding: 12,
     paddingBottom: 8,
     backgroundColor: "#f8f9fa",
   },
-  dateInfo: {},
+  dateInfo: {
+    alignItems: "center",
+  },
   dateLabel: {
     fontSize: 9,
     color: "#999",
@@ -877,14 +934,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
   modalTitle: {
     fontSize: 20,
@@ -893,6 +953,7 @@ const styles = StyleSheet.create({
   },
   filterSection: {
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   filterLabel: {
     fontSize: 16,
@@ -921,16 +982,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
+  modalScrollContent: {
+    paddingBottom: 30,
+  },
   modalButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 10,
+    marginBottom: 20,
+    paddingHorizontal: 20,
   },
   modalButton: {
     flex: 1,
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   resetButton: {
     backgroundColor: '#f5f5f5',
