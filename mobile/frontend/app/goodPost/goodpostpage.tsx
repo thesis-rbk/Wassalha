@@ -214,8 +214,16 @@ export default function GoodPostPage() {
     setActiveTab(tab);
     if (tab === "create") {
       router.push("/verification/CreateSponsorPost");
+    } else if (tab === "travel") {
+      // Already on travel tab, no need to navigate
+      return;
+    } else if (tab === "sponsor") {
+      router.push("/verification/fetchAll");
+    } else if (tab === "home") {
+      router.push("/home");
     } else {
-      router.push(tab as any);
+      // Handle other tabs if needed in the future
+      console.log(`Tab ${tab} not implemented yet`);
     }
   };
 

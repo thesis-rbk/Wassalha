@@ -102,6 +102,10 @@ export default function RootLayout() {
                           options={{ headerShown: false }}
                         />
 
+                        {/* Main tab routes */}
+                        <Stack.Screen name="sponsor" options={{ headerShown: false }} />
+                        <Stack.Screen name="travel" options={{ headerShown: false }} />
+
                         {/* Rest of the screens with normal headers */}
                         <Stack.Screen
                           name="productDetails"
@@ -218,6 +222,18 @@ export default function RootLayout() {
                           name="processTrack/makeOffer"
                           options={{ title: "Make Offer" }}
                         />
+                        <Stack.Screen
+                          name="goodPost/goodpostpage"
+                          options={{ title: "Traveler Posts" }}
+                        />
+                        <Stack.Screen
+                          name="verification/fetchAll"
+                          options={{ title: "Fetch Sub" }}
+                        />
+                        <Stack.Screen
+                          name="verification/CreateSponsorPost"
+                          options={{ title: "Create Sponsor Post" }}
+                        />
 
                         {/* Add the new success screens */}
                         <Stack.Screen
@@ -233,24 +249,12 @@ export default function RootLayout() {
                           }}
                         />
                         <Stack.Screen
-                          name="verification/fetchAll"
-                          options={{ title: "Fetch Sub" }}
-                        />
-                        <Stack.Screen
                           name="verification/SponsorshipDetails"
                           options={{ title: "verif details" }}
                         />
                         <Stack.Screen
-                          name="verification/CreateSponsorPost"
-                          options={{ title: "Create Sponsor Post" }}
-                        />
-                        <Stack.Screen
                           name="reporting-system/create-ticket"
                           options={{ title: "Create Report" }}
-                        />
-                        <Stack.Screen
-                          name="goodPost/goodpostpage"
-                          options={{ title: "Traveler Posts" }}
                         />
                         <Stack.Screen
                           name="goodPost/createGoodsPost"

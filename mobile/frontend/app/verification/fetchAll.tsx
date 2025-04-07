@@ -193,8 +193,19 @@ const SponsorshipsScreen: React.FC = () => {
         setActiveTab(tab);
         if (tab === "create") {
             navigation.navigate("verification/CreateSponsorPost", { id });
+        } else if (tab === "sponsor") {
+            // Already on sponsor tab, no need to navigate
+            return;
+        } else if (tab === "travel") {
+            navigation.navigate("home");
+            setTimeout(() => {
+                navigation.getParent()?.navigate("goodPost/goodpostpage");
+            }, 0);
+        } else if (tab === "home") {
+            navigation.navigate("home");
         } else {
-            navigation.navigate(tab as any);
+            // For any other tabs
+            console.log(`Tab ${tab} not implemented yet`);
         }
     };
 
