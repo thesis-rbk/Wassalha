@@ -38,6 +38,7 @@ const travelerRoutes = require('./routes/traveler.route');
 const sponsorRequestRoutes = require('./routes/sponsorRequest.route');
 const sponsorOrderRoutes = require('./routes/sponsorOrder.route');
 const sponsorCheckoutRoutes = require('./routes/sponsorcheckout.route');
+const processReviewRoutes=require("./routes/processReview.route")
 
 const sponsorshipProcessRoutes=require("./routes/sponsorshipProcess.routes")
 // Import socket initialization function
@@ -99,6 +100,7 @@ app.use('/api/sponsor-orders', sponsorOrderRoutes);
 app.use('/api/sponsor-checkouts', sponsorCheckoutRoutes);
 
 app.use('/api/sponsorship-process',sponsorshipProcessRoutes);
+app.use("/api/processReview",processReviewRoutes)
 
 // Configure nodemailer
 const transporter = nodemailer.createTransport({

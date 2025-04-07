@@ -301,6 +301,7 @@ model User {
   messagesSent     Message[]      @relation("MessagesSent")
   messagesRecieved Message[]      @relation("MessagesRecieved")
   ordersTraveling  Order[]        @relation("TravelerOrders")
+ experienceReviews ExperienceReview[] @relation("ExperienceReviewReviewer")
 
   // Subscriptions / Sponsorships
   subscriptions Subscription[] @relation("UserSubscriptions")
@@ -520,6 +521,7 @@ model Order {
   pickup        Pickup?
   reviews       Review[]
   notifications Notification[]
+  experienceReviews ExperienceReview[] @relation("ExperienceReviewOrder")
 
   // Link to the high-level goods process
   goodsProcess GoodsProcess?
@@ -607,6 +609,17 @@ model Review {
   comment    String?
   reviewType ReviewType
   status     ReviewStatus @default(PENDING)
+}
+// ========== ExperienceReview ==========
+model ExperienceReview {
+  id         Int      @id @default(autoincrement())
+  reviewerId Int
+  orderId    Int
+  rating     Int
+  createdAt  DateTime @default(now())
+
+  reviewer   User   @relation("ExperienceReviewReviewer", fields: [reviewerId], references: [id])
+  order      Order  @relation("ExperienceReviewOrder", fields: [orderId], references: [id])
 }
 
 // ========== CHAT ==========

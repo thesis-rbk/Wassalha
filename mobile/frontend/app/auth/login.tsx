@@ -16,6 +16,8 @@ import { InputFieldPassword } from "@/components/InputFieldPassword";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { FontAwesome5 } from "@expo/vector-icons";
+import { useAuth } from "@/context/AuthContext";
+
 WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
@@ -23,6 +25,8 @@ export default function Login() {
   const router = useRouter();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state: RootState) => state.auth);
+  const { setUser } = useAuth();
+
 
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -84,6 +88,12 @@ export default function Login() {
         // Save token and user data
         await AsyncStorage.setItem("jwtToken", data.token);
         await AsyncStorage.setItem("userId", data.user.id.toString());
+        setUser({
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+        });
+        console.log("user iddddddddddddddddddddddddddddddd", data.user.id);
         
         console.log("Login successful");
         console.log("Token stored:", data.token.substring(0, 10) + "...");
@@ -136,6 +146,11 @@ export default function Login() {
       });
       const data = res.data;
       if (res.status === 200) {
+        setUser({
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+        });
         dispatch(
           loginSuccess({
             token: data.token,
