@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -20,6 +19,7 @@ import { Category } from '@/types/Category';
 import { ArrowLeft, Calendar, Package, MapPin, AlertTriangle, Plane } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import Header from '@/components/navigation/headers';
+import { StatusScreen } from '@/app/screens/StatusScreen';
 
 export default function CreateGoodsPost() {
   const router = useRouter();
@@ -41,6 +41,14 @@ export default function CreateGoodsPost() {
     airportLocation: '',
     categoryId: '',
   });
+  // Status screen state
+  const [statusVisible, setStatusVisible] = useState(false);
+  const [statusType, setStatusType] = useState<'success' | 'error'>('success');
+  const [statusTitle, setStatusTitle] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [primaryAction, setPrimaryAction] = useState<{ label: string, onPress: () => void } | undefined>(undefined);
+  const [secondaryAction, setSecondaryAction] = useState<{ label: string, onPress: () => void } | undefined>(undefined);
+  
   const [showDepartureDatePicker, setShowDepartureDatePicker] = useState(false);
   const [showArrivalDatePicker, setShowArrivalDatePicker] = useState(false);
 
@@ -85,6 +93,25 @@ export default function CreateGoodsPost() {
     setTravelerId(null);
   };
 
+  const closeStatusScreen = () => {
+    setStatusVisible(false);
+  };
+
+  const showStatusScreen = (
+    type: 'success' | 'error',
+    title: string,
+    message: string,
+    primary?: { label: string; onPress: () => void },
+    secondary?: { label: string; onPress: () => void }
+  ) => {
+    setStatusType(type);
+    setStatusTitle(title);
+    setStatusMessage(message);
+    setPrimaryAction(primary);
+    setSecondaryAction(secondary);
+    setStatusVisible(true);
+  };
+
   const checkTravelerStatus = async () => {
     if (!user?.id) {
       console.log('No user ID available, skipping traveler status check');
@@ -109,26 +136,31 @@ export default function CreateGoodsPost() {
         setTravelerId(response.data.travelerId);
         
         if (!response.data.isTraveler) {
-          Alert.alert(
+          showStatusScreen(
+            'error',
             'Traveler Required',
             'You need to be a registered traveler to create a goods post.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Become a Traveler', onPress: navigateToBecomeTraveler }
-            ]
+            { label: 'Become a Traveler', onPress: navigateToBecomeTraveler },
+            { label: 'Cancel', onPress: closeStatusScreen }
           );
         } else if (!response.data.isVerified) {
-          Alert.alert(
+          showStatusScreen(
+            'error',
             'Verification Required',
             'Your traveler account needs to be verified before you can create goods posts.',
-            [{ text: 'OK', style: 'cancel' }]
+            { label: 'OK', onPress: closeStatusScreen }
           );
         }
       } else {
         setIsTraveler(false);
         setIsVerified(false);
         setTravelerId(null);
-        Alert.alert('Error', response.data.message || 'Failed to check traveler status');
+        showStatusScreen(
+          'error',
+          'Error',
+          response.data.message || 'Failed to check traveler status',
+          { label: 'OK', onPress: closeStatusScreen }
+        );
       }
     } catch (error: any) {
       console.error(`Error checking traveler status for user ${user.id}:`, error);
@@ -138,7 +170,12 @@ export default function CreateGoodsPost() {
       setTravelerId(null);
       
       const errorMessage = error.response?.data?.message || 'Failed to check traveler status';
-      Alert.alert('Error', errorMessage);
+      showStatusScreen(
+        'error',
+        'Error',
+        errorMessage,
+        { label: 'OK', onPress: closeStatusScreen }
+      );
     } finally {
       setIsCheckingStatus(false);
     }
@@ -150,7 +187,12 @@ export default function CreateGoodsPost() {
       setCategories(response.data.data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
-      Alert.alert('Error', 'Failed to load categories');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Failed to load categories',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
     }
   };
 
@@ -177,57 +219,93 @@ export default function CreateGoodsPost() {
 
   const validateForm = () => {
     if (!formData.title.trim()) {
-      Alert.alert('Error', 'Please enter a title');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter a title',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     if (!formData.content.trim()) {
-      Alert.alert('Error', 'Please enter a description');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter a description',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     if (!formData.availableKg) {
-      Alert.alert('Error', 'Please enter available kg');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter available kg',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     if (!formData.originLocation.trim()) {
-      Alert.alert('Error', 'Please enter origin location');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter origin location',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     if (!formData.airportLocation.trim()) {
-      Alert.alert('Error', 'Please enter destination airport location');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter destination airport location',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     return true;
   };
 
   const navigateToBecomeTraveler = () => {
+    closeStatusScreen();
     router.push('/traveler/becomeTraveler');
+  };
+
+  const navigateToGoodPostPage = () => {
+    closeStatusScreen();
+    router.push('/goodPost/goodpostpage');
   };
 
   const handleSubmit = async () => {
     if (!user || !user.id) {
-      Alert.alert('Error', 'You must be logged in to create a post');
+      showStatusScreen(
+        'error',
+        'Error',
+        'You must be logged in to create a post',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return;
     }
 
     if (!validateForm()) return;
 
     if (!isTraveler) {
-      Alert.alert(
+      showStatusScreen(
+        'error',
         'Traveler Required',
         'You need to be a registered traveler to create a goods post.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Become a Traveler', onPress: navigateToBecomeTraveler }
-        ]
+        { label: 'Become a Traveler', onPress: navigateToBecomeTraveler },
+        { label: 'Cancel', onPress: closeStatusScreen }
       );
       return;
     }
 
     if (!isVerified) {
-      Alert.alert(
+      showStatusScreen(
+        'error',
         'Verification Required',
         'Your traveler account needs to be verified before you can create goods posts.',
-        [{ text: 'OK', style: 'cancel' }]
+        { label: 'OK', onPress: closeStatusScreen }
       );
       return;
     }
@@ -257,16 +335,29 @@ export default function CreateGoodsPost() {
       const response = await axiosInstance.post('/api/goods-posts', payload);
       
       if (response.data.success) {
-        Alert.alert('Success', 'Goods post created successfully', [
-          { text: 'OK', onPress: () => router.push('/goodPost/goodpostpage') }
-        ]);
+        showStatusScreen(
+          'success',
+          'Success',
+          'Goods post created successfully',
+          { label: 'Continue', onPress: navigateToGoodPostPage }
+        );
       } else {
-        Alert.alert('Error', response.data.message || 'Failed to create goods post');
+        showStatusScreen(
+          'error',
+          'Error',
+          response.data.message || 'Failed to create goods post',
+          { label: 'OK', onPress: closeStatusScreen }
+        );
       }
     } catch (error: any) {
       console.error('Error creating goods post:', error);
       const errorMessage = error.response?.data?.message || 'Failed to create goods post';
-      Alert.alert('Error', errorMessage);
+      showStatusScreen(
+        'error',
+        'Error',
+        errorMessage,
+        { label: 'OK', onPress: closeStatusScreen }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -283,6 +374,17 @@ export default function CreateGoodsPost() {
           subtitle="Fill in the details about your travel journey"
           onBackPress={() => router.back()}
           showBackButton={true}
+        />
+
+        {/* Status Screen */}
+        <StatusScreen
+          visible={statusVisible}
+          type={statusType}
+          title={statusTitle}
+          message={statusMessage}
+          primaryAction={primaryAction}
+          secondaryAction={secondaryAction}
+          onClose={closeStatusScreen}
         />
 
         {/* Status indicators */}

@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -14,8 +13,10 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useRouter } from 'expo-router';
 import axiosInstance from '@/config';
-import { ArrowLeft, CreditCard, IdCard, Shield, CheckCircle } from 'lucide-react-native';
+import { CreditCard, IdCard, Shield, CheckCircle } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
+import Header from '@/components/navigation/headers';
+import { StatusScreen } from '@/app/screens/StatusScreen';
 
 export default function BecomeTraveler() {
   const router = useRouter();
@@ -26,23 +27,70 @@ export default function BecomeTraveler() {
     idCardNumber: '',
     bankCardNumber: '',
   });
+  
+  // Status screen state
+  const [statusVisible, setStatusVisible] = useState(false);
+  const [statusType, setStatusType] = useState<'success' | 'error'>('success');
+  const [statusTitle, setStatusTitle] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [primaryAction, setPrimaryAction] = useState<{ label: string, onPress: () => void } | undefined>(undefined);
+  const [secondaryAction, setSecondaryAction] = useState<{ label: string, onPress: () => void } | undefined>(undefined);
+
+  const closeStatusScreen = () => {
+    setStatusVisible(false);
+  };
+
+  const showStatusScreen = (
+    type: 'success' | 'error',
+    title: string,
+    message: string,
+    primary?: { label: string; onPress: () => void },
+    secondary?: { label: string; onPress: () => void }
+  ) => {
+    setStatusType(type);
+    setStatusTitle(title);
+    setStatusMessage(message);
+    setPrimaryAction(primary);
+    setSecondaryAction(secondary);
+    setStatusVisible(true);
+  };
 
   const validateForm = () => {
     if (!formData.idCardNumber) {
-      Alert.alert('Error', 'Please enter your ID card number');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter your ID card number',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     if (!formData.bankCardNumber) {
-      Alert.alert('Error', 'Please enter your bank card number');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter your bank card number',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     // Basic validation for card numbers
     if (formData.idCardNumber.length < 8) {
-      Alert.alert('Error', 'Please enter a valid ID card number');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter a valid ID card number',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     if (formData.bankCardNumber.length < 16) {
-      Alert.alert('Error', 'Please enter a valid bank card number');
+      showStatusScreen(
+        'error',
+        'Error',
+        'Please enter a valid bank card number',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return false;
     }
     return true;
@@ -51,7 +99,12 @@ export default function BecomeTraveler() {
   const handleSubmit = async () => {
     if (!validateForm()) return;
     if (!user || !user.id) {
-      Alert.alert('Error', 'You must be logged in to become a traveler');
+      showStatusScreen(
+        'error',
+        'Error',
+        'You must be logged in to become a traveler',
+        { label: 'OK', onPress: closeStatusScreen }
+      );
       return;
     }
 
@@ -67,12 +120,22 @@ export default function BecomeTraveler() {
       if (response.data.success) {
         setApplicationSubmitted(true);
       } else {
-        Alert.alert('Error', response.data.message || 'Failed to submit application');
+        showStatusScreen(
+          'error',
+          'Error',
+          response.data.message || 'Failed to submit application',
+          { label: 'OK', onPress: closeStatusScreen }
+        );
       }
     } catch (error: any) {
       console.error('Error submitting traveler application:', error);
       const errorMessage = error.response?.data?.message || 'Failed to submit application';
-      Alert.alert('Error', errorMessage);
+      showStatusScreen(
+        'error',
+        'Error',
+        errorMessage,
+        { label: 'OK', onPress: closeStatusScreen }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -81,12 +144,12 @@ export default function BecomeTraveler() {
   if (applicationSubmitted) {
     return (
       <ThemedView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={24} color="#333" />
-          </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>Application Submitted</ThemedText>
-        </View>
+        <Header 
+          title="Application Submitted"
+          subtitle="Your application has been sent for review"
+          onBackPress={() => router.back()}
+          showBackButton={true}
+        />
 
         <View style={styles.successContainer}>
           <CheckCircle size={80} color="#4CAF50" />
@@ -111,16 +174,26 @@ export default function BecomeTraveler() {
 
   return (
     <ThemedView style={styles.container}>
+      <StatusScreen
+        visible={statusVisible}
+        type={statusType}
+        title={statusTitle}
+        message={statusMessage}
+        primaryAction={primaryAction}
+        secondaryAction={secondaryAction}
+        onClose={closeStatusScreen}
+      />
+      
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={24} color="#333" />
-          </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>Become a Traveler</ThemedText>
-        </View>
+        <Header 
+          title="Become a Traveler"
+          subtitle="Verify your identity to start delivering goods"
+          onBackPress={() => router.back()}
+          showBackButton={true}
+        />
 
         <ScrollView style={styles.scrollView}>
           <View style={styles.infoCard}>
@@ -197,27 +270,6 @@ export default function BecomeTraveler() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 16,
   },
   scrollView: {
     flex: 1,

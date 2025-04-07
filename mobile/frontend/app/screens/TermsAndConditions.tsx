@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ChevronLeft, Check } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
+import Header from '@/components/navigation/headers';
 
 // Get screen width for responsive design
 const { width } = Dimensions.get('window');
@@ -63,13 +64,12 @@ const TermsAndConditions: React.FC = () => {
 
     return (
         <ThemedView style={styles.outerContainer}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <ChevronLeft size={24} color="#333" />
-                </TouchableOpacity>
-                <ThemedText style={styles.headerTitle}>Terms and Conditions</ThemedText>
-                <View style={{ width: 24 }} />
-            </View>
+            <Header 
+                title="Terms and Conditions"
+                subtitle="Please review our terms before continuing"
+                onBackPress={() => router.back()}
+                showBackButton={true}
+            />
 
             <View style={styles.card}>
                 <ThemedText style={styles.title}>Sponsorship Terms and Conditions</ThemedText>
@@ -235,29 +235,6 @@ const styles = StyleSheet.create({
     outerContainer: {
         flex: 1,
         backgroundColor: '#FFFFFF',
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 20,
-        backgroundColor: '#FFF',
-        borderBottomWidth: 1,
-        borderBottomColor: '#E2E8F0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    backButton: {
-        padding: 8,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#1E293B',
     },
     card: {
         flex: 1,
