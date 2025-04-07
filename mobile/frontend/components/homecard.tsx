@@ -1,15 +1,15 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity, Animated } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient'; // For gradient background
-import { Ionicons } from '@expo/vector-icons'; // For icons (you can use any icon library)
-import { CardProps } from '../types/Sponsorship'; // Assuming you have a type definition for props
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { CardProps, ExtendedCardProps } from '../types/Sponsorship'; // Assuming this is your type file
+
+
 // Get the screen width for responsive design
 const { width } = Dimensions.get('window');
 
-
-
 // Card Component with Enhanced UX
-const CardHome: React.FC<CardProps> = ({ title, description, imageUrl, onPress }) => {
+const CardHome: React.FC<ExtendedCardProps> = ({ title, description, imageUrl, onPress, showButton }) => {
     // Animation for scaling effect on press
     const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
@@ -42,24 +42,26 @@ const CardHome: React.FC<CardProps> = ({ title, description, imageUrl, onPress }
 
             {/* Content Section */}
             <View style={styles.contentWrapper}>
-                {/* Icon for Premium Feel */}
                 <Text style={styles.title}>{title}</Text>
                 <Text style={styles.description}>{description}</Text>
 
-                <TouchableOpacity
-                    style={styles.ctaButton}
-                    onPress={onPress}
-                    onPressIn={handlePressIn}
-                    onPressOut={handlePressOut}
-                    activeOpacity={0.8}
-                >
-                    <LinearGradient
-                        colors={['#FFD700', '#FFA500']}
-                        style={styles.ctaGradient}
+                {/* Conditionally render the button based on showButton prop */}
+                {showButton && (
+                    <TouchableOpacity
+                        style={styles.ctaButton}
+                        onPress={onPress}
+                        onPressIn={handlePressIn}
+                        onPressOut={handlePressOut}
+                        activeOpacity={0.8}
                     >
-                        <Text style={styles.ctaText}>Join Now</Text>
-                    </LinearGradient>
-                </TouchableOpacity>
+                        <LinearGradient
+                            colors={['#FFD700', '#FFA500']}
+                            style={styles.ctaGradient}
+                        >
+                            <Text style={styles.ctaText}>Join Now</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                )}
             </View>
         </Animated.View>
     );
@@ -73,7 +75,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         marginVertical: 15,
         marginHorizontal: 15,
-        height: 220, // Increased height for better spacing
+        height: 220,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
@@ -112,19 +114,16 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         backgroundColor: 'rgba(255, 255, 255, 0.1)', // Slight white overlay for readability
     },
-    crownIcon: {
-        marginBottom: 10,
-    },
     title: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#fff', // White text for contrast
+        color: '#fff',
         textTransform: 'uppercase',
         maxWidth: '80%',
     },
     description: {
         fontSize: 14,
-        color: '#ddd', // Light gray for contrast
+        color: '#ddd',
         lineHeight: 20,
         maxWidth: '80%',
         marginBottom: 15,
