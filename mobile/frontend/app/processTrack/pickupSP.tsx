@@ -289,8 +289,6 @@ export default function PickupTraveler() {
     }
   };
 
-  const isRequester = (pickup: Pickup) => console.log("pickup", pickup);
-
   const renderItem = ({ item }: { item: Pickup }) => {
     return (
       <View style={styles.card}>
@@ -607,11 +605,6 @@ export default function PickupTraveler() {
 
   return (
     <View style={styles.container}>
-      <Header
-        title="Pickups"
-        subtitle="Track your order's process"
-        showBackButton={true}
-      />
       {showSuggestions ? (
         renderSuggestions()
       ) : showPickup ? (

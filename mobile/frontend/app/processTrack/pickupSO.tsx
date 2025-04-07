@@ -484,11 +484,6 @@ export default function PickupOwner() {
 
   return (
     <ThemedView style={styles.container}>
-      <Header
-        title="Pickups"
-        subtitle="Track your order's process"
-        showBackButton={true}
-      />
       {showSuggestions ? (
         renderSuggestions()
       ) : showPickup ? (

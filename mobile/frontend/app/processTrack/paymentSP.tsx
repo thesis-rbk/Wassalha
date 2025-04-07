@@ -77,6 +77,7 @@ const PaymentScreen = () => {
   const fetchProcessData = async () => {
     try {
       setLoading(true);
+      const token = await AsyncStorage.getItem("jwtToken");
       const processId = params.idProcess;
       const orderId = params.idOrder;
 
@@ -88,9 +89,17 @@ const PaymentScreen = () => {
 
       let response;
       if (processId) {
-        response = await axiosInstance.get(`/api/process/${processId}`);
+        response = await axiosInstance.get(`/api/process/${processId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
       } else {
-        response = await axiosInstance.get(`/api/process/order/${orderId}`);
+        response = await axiosInstance.get(`/api/process/order/${orderId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
       }
 
       setProcessData(response.data.data);
@@ -98,7 +107,12 @@ const PaymentScreen = () => {
       // Also fetch order details
       if (response.data.data?.orderId) {
         const orderResponse = await axiosInstance.get(
-          `/api/orders/${response.data.data.orderId}`
+          `/api/orders/${response.data.data.orderId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         setOrderData(orderResponse.data.data);
       }

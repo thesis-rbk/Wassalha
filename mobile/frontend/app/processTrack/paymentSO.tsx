@@ -252,6 +252,22 @@ export default function PaymentScreen() {
             </View>
           </Card>
 
+          <View style={styles.feeNote}>
+            <CreditCard size={16} color="#3b82f6" />
+            <Text style={styles.feeText}>
+              A <Text style={{ fontWeight: "bold" }}>10% traveler fee</Text> (
+              <Text style={{ fontStyle: "italic" }}>
+                ${travelerFee.toFixed(2)}
+              </Text>
+              ) and a{" "}
+              <Text style={{ fontWeight: "bold" }}>
+                fixed and non-refundable service fee
+              </Text>{" "}
+              (<Text style={{ fontStyle: "italic" }}>$1.00</Text>) are included
+              in your total.
+            </Text>
+          </View>
+
           <Card style={styles.paymentCard}>
             <Text style={styles.sectionTitle}>Payment Method</Text>
 
@@ -489,6 +505,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#64748b",
     textAlign: "center",
+  },
+  feeNote: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 16,
+    marginBottom: 8,
+    backgroundColor: "#f0f9ff",
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: "#3b82f6",
+  },
+  feeText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "#1e40af",
+    marginLeft: 8,
+    flexShrink: 1,
   },
   securityNote: {
     flexDirection: "row",

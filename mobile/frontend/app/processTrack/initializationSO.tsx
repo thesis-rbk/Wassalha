@@ -135,10 +135,16 @@ export default function InitializationSO() {
 
       try {
         console.log("Updating offer status");
+        const token = await AsyncStorage.getItem("jwtToken");
         const response = await axiosInstance.patch(
           `/api/process/${processId}/status`,
           {
             status: "INITIALIZED",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
         );
         console.log("Offer status updated successfully");
