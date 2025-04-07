@@ -34,8 +34,9 @@ export default function PaymentScreen() {
 
   const totalPrice =
     parseInt(params.quantity.toString()) * parseInt(params.price.toString());
-  const serviceFee = totalPrice * 0.1;
-  const totalAmount = totalPrice + serviceFee;
+  const travelerFee = totalPrice * 0.1;
+  const serviceFee = 1;
+  const totalAmount = totalPrice + travelerFee + serviceFee;
 
   console.log(params, "paraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaamss");
 
@@ -231,6 +232,11 @@ export default function PaymentScreen() {
             <View style={styles.orderRow}>
               <Text style={styles.orderLabel}>Price:</Text>
               <Text style={styles.priceValue}>${totalPrice.toFixed(2)}</Text>
+            </View>
+
+            <View style={styles.orderRow}>
+              <Text style={styles.orderLabel}>Traveler Fee:</Text>
+              <Text style={styles.orderValue}>${travelerFee.toFixed(2)}</Text>
             </View>
 
             <View style={styles.orderRow}>
