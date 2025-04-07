@@ -33,13 +33,17 @@ import {
   ArrowRight,
   RefreshCw,
   History,
-  Info,
+  Truck,
+  Plane,
+  Navigation,
+  Send,
 } from "lucide-react-native"
 import { usePickupActions } from "../../hooks/usePickupActions"
 import { QRCodeModal } from "../pickup/QRCodeModal"
 import io, { type Socket } from "socket.io-client"
 import { navigateToChat } from "@/services/chatService"
 import { LinearGradient } from "expo-linear-gradient"
+import { MotiView } from "moti"
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 const { width } = Dimensions.get("window")
@@ -65,16 +69,6 @@ export default function PickupOwner() {
 
   const socketRef = useRef<Socket | null>(null)
   const pulseAnim = useRef(new Animated.Value(1)).current
-  const slideAnim = useRef(new Animated.Value(0)).current
-
-  // Animation for cards
-  useEffect(() => {
-    Animated.timing(slideAnim, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start()
-  }, [pickups])
 
   // Pulse animation for chat button
   useEffect(() => {
@@ -244,184 +238,242 @@ export default function PickupOwner() {
     }
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return <Clock size={16} color="#fff" />
-      case "IN_PROGRESS":
-        return <RefreshCw size={16} color="#fff" />
-      case "CANCELLED":
-        return <XCircle size={16} color="#fff" />
-      case "COMPLETED":
-        return <CheckCircle size={16} color="#fff" />
-      default:
-        return <Info size={16} color="#fff" />
-    }
-  }
-
   const renderItem = ({ item, index }: { item: Pickup; index: number }) => {
     const isConfirmed = item.userconfirmed && item.travelerconfirmed
     const needsAction = !item.userconfirmed && item.travelerconfirmed && item.status !== "CANCELLED"
     const isCancelled = item.status === "CANCELLED"
     const isWaiting = item.userconfirmed && !item.travelerconfirmed
 
-    // Calculate gradient colors based on status
-    let gradientColors: [string, string, ...string[]]
-    if (isConfirmed) {
-      gradientColors = ["#ecfdf5", "#d1fae5"] as [string, string] // Green gradient for confirmed
-    } else if (isCancelled) {
-      gradientColors = ["#fef2f2", "#fee2e2"] as [string, string] // Red gradient for cancelled
-    } else if (needsAction) {
-      gradientColors = ["#eff6ff", "#dbeafe"] as [string, string] // Blue gradient for action needed
-    } else {
-      gradientColors = ["#f8fafc", "#f1f5f9"] as [string, string] // Default light gradient
+    // Get card style based on status
+    const getCardStyle = () => {
+      if (isConfirmed) return styles.confirmedCard
+      if (needsAction) return styles.actionCard
+      if (isCancelled) return styles.cancelledCard
+      return styles.waitingCard
+    }
+
+    // Get status icon based on status
+    const getStatusIcon = () => {
+      if (isConfirmed) return <CheckCircle size={20} color="#10b981" />
+      if (needsAction) return <AlertCircle size={20} color="#3b82f6" />
+      if (isCancelled) return <XCircle size={20} color="#ef4444" />
+      return <Clock size={20} color="#f59e0b" />
+    }
+
+    // Get status text based on status
+    const getStatusText = () => {
+      if (isConfirmed) return "Confirmed"
+      if (needsAction) return "Action Needed"
+      if (isCancelled) return "Cancelled"
+      return "Waiting"
+    }
+
+    // Get pickup type icon
+    const getPickupTypeIcon = () => {
+      switch (item.pickupType) {
+        case "AIRPORT":
+          return <Plane size={24} color="#fff" />
+        case "DELIVERY":
+          return <Truck size={24} color="#fff" />
+        case "IN_PERSON":
+          return <User size={24} color="#fff" />
+        case "PICKUPPOINT":
+          return <MapPin size={24} color="#fff" />
+        default:
+          return <Package size={24} color="#fff" />
+      }
+    }
+
+    // Get pickup type text
+    const getPickupTypeText = () => {
+      switch (item.pickupType) {
+        case "AIRPORT":
+          return "Airport"
+        case "DELIVERY":
+          return "Delivery"
+        case "IN_PERSON":
+          return "In-Person"
+        case "PICKUPPOINT":
+          return "Pickup Point"
+        default:
+          return "Pickup"
+      }
+    }
+
+    // Get pickup type gradient colors
+    const getPickupTypeGradient = (): [string, string] => {
+      switch (item.pickupType) {
+        case "AIRPORT":
+          return ["#8b5cf6", "#7c3aed"] // Purple
+        case "DELIVERY":
+          return ["#10b981", "#059669"] // Green
+        case "IN_PERSON":
+          return ["#3b82f6", "#2563eb"] // Blue
+        case "PICKUPPOINT":
+          return ["#f59e0b", "#d97706"] // Orange
+        default:
+          return ["#6b7280", "#4b5563"] // Gray
+      }
     }
 
     return (
-      <Animated.View
-        style={[
-          styles.cardContainer,
-          {
-            opacity: slideAnim,
-            transform: [
-              {
-                translateY: slideAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [50, 0],
-                }),
-              },
-            ],
-          },
-        ]}
+      <MotiView
+        from={{ opacity: 0, translateY: 50 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{ type: "timing", duration: 500, delay: index * 100 }}
+        style={[styles.cardContainer, getCardStyle()]}
       >
-        <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardGradient}>
-          {/* Status Badge */}
-          <View style={[styles.statusBadgeContainer, { backgroundColor: getStatusColor(item.status) }]}>
-            {getStatusIcon(item.status)}
-            <Text style={styles.statusBadgeText}>{item.status.replace("_", " ")}</Text>
+        {/* Top Section with Pickup Type */}
+        <LinearGradient
+          colors={getPickupTypeGradient()}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.cardHeader}
+        >
+          <View style={styles.pickupTypeContainer}>
+            <View style={styles.pickupTypeIconContainer}>{getPickupTypeIcon()}</View>
+            <View>
+              <Text style={styles.pickupTypeText}>{getPickupTypeText()}</Text>
+              <Text style={styles.pickupTypeDescription}>{item.location || "Location not specified"}</Text>
+            </View>
           </View>
 
-          {/* Card Header */}
-          <View style={styles.cardHeader}>
-            <View style={styles.orderInfo}>
-              <Text style={styles.orderTitle}>{params.goodsName || "Your Order"}</Text>
+          <TouchableOpacity style={styles.historyButton} onPress={() => fetchSuggestions(item.id)}>
+            <History size={16} color="#fff" />
+          </TouchableOpacity>
+        </LinearGradient>
 
-              <View style={styles.travelerContainer}>
-                <User size={14} color="#64748b" style={{ marginRight: 6 }} />
-                <Text style={styles.travelerName}>{params.travelerName || "Traveler"}</Text>
-              </View>
+        {/* Main Card Content */}
+        <View style={styles.cardContent}>
+          {/* Order Info */}
+          <View style={styles.orderInfoContainer}>
+            <Text style={styles.orderTitle}>{params.goodsName || "Your Order"}</Text>
+            <View style={styles.travelerRow}>
+              <User size={14} color="#64748b" />
+              <Text style={styles.travelerName}>with {params.travelerName || "Traveler"}</Text>
             </View>
+          </View>
 
-            <TouchableOpacity style={styles.historyButton} onPress={() => fetchSuggestions(item.id)}>
-              <History size={16} color="#3b82f6" />
-              <Text style={styles.historyButtonText}>History</Text>
-            </TouchableOpacity>
+          {/* Status Badge */}
+          <View style={styles.statusContainer}>
+            <View style={styles.statusIconContainer}>{getStatusIcon()}</View>
+            <Text
+              style={[
+                styles.statusText,
+                isConfirmed && styles.confirmedText,
+                needsAction && styles.actionText,
+                isCancelled && styles.cancelledText,
+                isWaiting && styles.waitingText,
+              ]}
+            >
+              {getStatusText()}
+            </Text>
           </View>
 
           {/* Divider */}
           <View style={styles.divider} />
 
-          {/* Details Section */}
-          <View style={styles.detailsContainer}>
+          {/* Details Grid */}
+          <View style={styles.detailsGrid}>
             {/* Location */}
-            <View style={styles.detailRow}>
-              <View style={styles.iconContainer}>
+            <View style={styles.detailItem}>
+              <View style={styles.detailIconContainer}>
                 <MapPin size={18} color="#3b82f6" />
               </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Pickup Location</Text>
-                <Text style={styles.detailValue}>
-                  {item.location || "Not specified"}
-                  {item.address ? `, ${item.address}` : ""}
+              <View>
+                <Text style={styles.detailLabel}>Location</Text>
+                <Text style={styles.detailValue} numberOfLines={1}>
+                  {item.address || "Not specified"}
                 </Text>
               </View>
             </View>
 
-            {/* Time and Date */}
-            <View style={styles.timeContainer}>
-              <View style={styles.detailRow}>
-                <View style={styles.iconContainer}>
-                  <Clock size={18} color="#3b82f6" />
-                </View>
-                <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Time</Text>
-                  <Text style={styles.detailValue}>
-                    {new Date(item.scheduledTime).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </Text>
-                </View>
+            {/* Time */}
+            <View style={styles.detailItem}>
+              <View style={styles.detailIconContainer}>
+                <Clock size={18} color="#3b82f6" />
               </View>
+              <View>
+                <Text style={styles.detailLabel}>Time</Text>
+                <Text style={styles.detailValue}>
+                  {new Date(item.scheduledTime).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              </View>
+            </View>
 
-              <View style={styles.detailRow}>
-                <View style={styles.iconContainer}>
-                  <Calendar size={18} color="#3b82f6" />
-                </View>
-                <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Date</Text>
-                  <Text style={styles.detailValue}>
-                    {new Date(item.scheduledTime).toLocaleDateString([], {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </Text>
-                </View>
+            {/* Date */}
+            <View style={styles.detailItem}>
+              <View style={styles.detailIconContainer}>
+                <Calendar size={18} color="#3b82f6" />
+              </View>
+              <View>
+                <Text style={styles.detailLabel}>Date</Text>
+                <Text style={styles.detailValue}>
+                  {new Date(item.scheduledTime).toLocaleDateString([], {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </Text>
+              </View>
+            </View>
+
+            {/* Contact */}
+            <View style={styles.detailItem}>
+              <View style={styles.detailIconContainer}>
+                <User size={18} color="#3b82f6" />
+              </View>
+              <View>
+                <Text style={styles.detailLabel}>Contact</Text>
+                <Text style={styles.detailValue}>{item.contactPhoneNumber || "N/A"}</Text>
               </View>
             </View>
           </View>
 
-          {/* Status Messages */}
-          {isWaiting && (
-            <View style={styles.statusMessage}>
-              <Clock size={18} color="#3b82f6" />
-              <Text style={styles.waitingText}>Waiting for traveler confirmation</Text>
-            </View>
-          )}
-
-          {isConfirmed && (
-            <View style={styles.statusMessage}>
-              <CheckCircle size={18} color="#10b981" />
-              <Text style={styles.successText}>Pickup confirmed! Your package is on the way.</Text>
-            </View>
-          )}
-
-          {needsAction && (
-            <View style={styles.statusMessage}>
-              <AlertCircle size={18} color="#3b82f6" />
-              <Text style={styles.actionText}>Traveler has confirmed. Your action is required.</Text>
-            </View>
-          )}
-
-          {isCancelled && (
-            <View style={styles.statusMessage}>
-              <XCircle size={18} color="#ef4444" />
-              <Text style={styles.cancelledText}>This pickup was cancelled</Text>
+          {/* Status Message */}
+          {(isWaiting || isConfirmed || needsAction) && (
+            <View
+              style={[
+                styles.messageContainer,
+                isConfirmed && styles.confirmedMessage,
+                needsAction && styles.actionMessage,
+                isWaiting && styles.waitingMessage,
+              ]}
+            >
+              {isWaiting && <Text style={styles.messageText}>Waiting for traveler confirmation</Text>}
+              {isConfirmed && <Text style={styles.messageText}>Pickup confirmed! Your package is on the way.</Text>}
+              {needsAction && <Text style={styles.messageText}>Traveler has confirmed. Your action is required.</Text>}
             </View>
           )}
 
           {/* Action Buttons */}
           {needsAction && (
-            <View style={styles.actionContainer}>
-              <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.acceptButton} onPress={() => handleAccept(item.id)}>
-                  <LinearGradient
-                    colors={["#3b82f6", "#2563eb"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.buttonGradient}
-                  >
-                    <CheckCircle size={18} color="#fff" style={styles.buttonIcon} />
-                    <Text style={styles.buttonText}>Accept</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
+            <View style={styles.actionButtonsContainer}>
+              <TouchableOpacity style={styles.acceptButton} onPress={() => handleAccept(item.id)}>
+                <LinearGradient
+                  colors={["#3b82f6", "#2563eb"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.buttonGradient}
+                >
+                  <CheckCircle size={18} color="#fff" style={styles.buttonIcon} />
+                  <Text style={styles.buttonText}>Accept</Text>
+                </LinearGradient>
+              </TouchableOpacity>
 
-                <TouchableOpacity style={styles.suggestButton} onPress={() => handleSuggest(item.id)}>
-                  <MapPin size={18} color="#3b82f6" style={styles.buttonIcon} />
-                  <Text style={styles.suggestButtonText}>Suggest Alternative</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity style={styles.suggestButton} onPress={() => handleSuggest(item.id)}>
+                <LinearGradient
+                  colors={["#f59e0b", "#d97706"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.buttonGradient}
+                >
+                  <Navigation size={18} color="#fff" style={styles.buttonIcon} />
+                  <Text style={styles.buttonText}>Suggest</Text>
+                </LinearGradient>
+              </TouchableOpacity>
 
               <TouchableOpacity style={styles.cancelButton} onPress={() => handleCancel(item.id)}>
                 <LinearGradient
@@ -438,21 +490,21 @@ export default function PickupOwner() {
           )}
 
           {isCancelled && (
-            <TouchableOpacity style={styles.newSuggestionButton} onPress={() => handleSuggest(item.id)}>
+            <TouchableOpacity style={styles.fullWidthButton} onPress={() => handleSuggest(item.id)}>
               <LinearGradient
                 colors={["#3b82f6", "#2563eb"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.buttonGradient}
               >
-                <MapPin size={18} color="#fff" style={styles.buttonIcon} />
+                <Send size={18} color="#fff" style={styles.buttonIcon} />
                 <Text style={styles.buttonText}>Suggest New Pickup</Text>
               </LinearGradient>
             </TouchableOpacity>
           )}
 
           {isConfirmed && (
-            <TouchableOpacity style={styles.qrButton} onPress={() => showStoredQRCode(item)}>
+            <TouchableOpacity style={styles.fullWidthButton} onPress={() => showStoredQRCode(item)}>
               <LinearGradient
                 colors={["#10b981", "#059669"]}
                 start={{ x: 0, y: 0 }}
@@ -464,17 +516,17 @@ export default function PickupOwner() {
               </LinearGradient>
             </TouchableOpacity>
           )}
-        </LinearGradient>
-      </Animated.View>
+        </View>
+      </MotiView>
     )
   }
 
   const renderSuggestions = () => (
     <ThemedView style={styles.suggestionsContainer}>
-      <View style={styles.suggestionsHeader}>
+      <LinearGradient colors={["#1e293b", "#0f172a"]} style={styles.suggestionsHeader}>
         <Text style={styles.suggestionsTitle}>Pickup History</Text>
         <Text style={styles.suggestionsSubtitle}>Previous pickup suggestions and arrangements</Text>
-      </View>
+      </LinearGradient>
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -483,7 +535,7 @@ export default function PickupOwner() {
         </View>
       ) : suggestions.length === 0 ? (
         <View style={styles.emptyHistoryContainer}>
-          <History size={48} color="#cbd5e1" />
+          <History size={64} color="#cbd5e1" />
           <Text style={styles.emptyHistoryTitle}>No History Found</Text>
           <Text style={styles.emptyHistoryText}>There are no previous pickup suggestions for this order</Text>
         </View>
@@ -491,34 +543,22 @@ export default function PickupOwner() {
         <FlatList
           data={suggestions}
           renderItem={({ item, index }) => (
-            <Animated.View
-              style={[
-                styles.historyItem,
-                {
-                  opacity: slideAnim,
-                  transform: [
-                    {
-                      translateY: slideAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [30 * index, 0],
-                      }),
-                    },
-                  ],
-                },
-              ]}
+            <MotiView
+              from={{ opacity: 0, translateY: 20 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: "timing", duration: 300, delay: index * 100 }}
+              style={styles.historyItem}
             >
               <LinearGradient
-                colors={["#f8fafc", "#f1f5f9"]}
+                colors={getHistoryGradient(item.pickupType)}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.historyItemGradient}
               >
                 <View style={styles.historyItemHeader}>
                   <View style={styles.historyTypeContainer}>
-                    <View style={[styles.historyTypeIcon, { backgroundColor: getPickupTypeColor(item.pickupType) }]}>
-                      {getPickupTypeIcon(item.pickupType)}
-                    </View>
-                    <Text style={styles.historyType}>{formatPickupType(item.pickupType)}</Text>
+                    <View style={styles.historyTypeIconContainer}>{getHistoryTypeIcon(item.pickupType)}</View>
+                    <Text style={styles.historyTypeText}>{formatPickupType(item.pickupType)}</Text>
                   </View>
                   <Text style={styles.historyDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
                 </View>
@@ -552,7 +592,7 @@ export default function PickupOwner() {
                   </View>
                 </View>
               </LinearGradient>
-            </Animated.View>
+            </MotiView>
           )}
           keyExtractor={(item, index) => `${item.id}-${index}`}
           contentContainerStyle={styles.historyList}
@@ -587,10 +627,10 @@ export default function PickupOwner() {
         />
       ) : (
         <>
-          <View style={styles.header}>
+          <LinearGradient colors={["#1e293b", "#0f172a"]} style={styles.header}>
             <Text style={styles.title}>Your Pickups</Text>
             <Text style={styles.subtitle}>Manage your delivery requests and pickup options</Text>
-          </View>
+          </LinearGradient>
 
           {isLoading && pickups.length === 0 ? (
             <View style={styles.loadingContainer}>
@@ -608,7 +648,7 @@ export default function PickupOwner() {
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
-                  <Package size={64} color="#cbd5e1" />
+                  <Package size={80} color="#cbd5e1" />
                   <Text style={styles.emptyTitle}>No Pickups Found</Text>
                   <Text style={styles.emptyText}>You don't have any active pickup requests yet</Text>
                   <TouchableOpacity style={styles.refreshButton} onPress={fetchPickups}>
@@ -658,33 +698,33 @@ const getStatusColor = (status: string): string => {
   }
 }
 
-const getPickupTypeColor = (type: string): string => {
+const getHistoryGradient = (type: string): [string, string] => {
   switch (type) {
     case "AIRPORT":
-      return "#8b5cf6" // purple
+      return ["#4c1d95", "#5b21b6"] // Deep purple
     case "DELIVERY":
-      return "#10b981" // green
+      return ["#065f46", "#047857"] // Deep green
     case "IN_PERSON":
-      return "#3b82f6" // blue
+      return ["#1e40af", "#1d4ed8"] // Deep blue
     case "PICKUPPOINT":
-      return "#f59e0b" // orange
+      return ["#92400e", "#b45309"] // Deep orange
     default:
-      return "#6b7280" // gray
+      return ["#374151", "#4b5563"] // Deep gray
   }
 }
 
-const getPickupTypeIcon = (type: string) => {
+const getHistoryTypeIcon = (type: string) => {
   switch (type) {
     case "AIRPORT":
-      return <MapPin size={14} color="#fff" />
+      return <Plane size={18} color="#fff" />
     case "DELIVERY":
-      return <Package size={14} color="#fff" />
+      return <Truck size={18} color="#fff" />
     case "IN_PERSON":
-      return <User size={14} color="#fff" />
+      return <User size={18} color="#fff" />
     case "PICKUPPOINT":
-      return <MapPin size={14} color="#fff" />
+      return <MapPin size={18} color="#fff" />
     default:
-      return <Package size={14} color="#fff" />
+      return <Package size={18} color="#fff" />
   }
 }
 
@@ -706,23 +746,25 @@ const formatPickupType = (type: string): string => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#f1f5f9",
   },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 16,
+    paddingTop: 40,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   title: {
     fontFamily: "Poppins-Bold",
     fontSize: 28,
-    color: "#1e293b",
+    color: "#ffffff",
     marginBottom: 8,
   },
   subtitle: {
     fontFamily: "Inter-Regular",
     fontSize: 16,
-    color: "#64748b",
+    color: "#cbd5e1",
     lineHeight: 24,
   },
   loadingContainer: {
@@ -738,162 +780,181 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   listContainer: {
-    paddingHorizontal: 16,
+    padding: 16,
     paddingBottom: 100,
   },
   cardContainer: {
-    marginBottom: 20,
+    marginBottom: 24,
     borderRadius: 20,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+    backgroundColor: "#ffffff",
   },
-  cardGradient: {
-    padding: 20,
-    position: "relative",
+  confirmedCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#10b981",
   },
-  statusBadgeContainer: {
-    position: "absolute",
-    top: 20,
-    right: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    zIndex: 10,
+  actionCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#3b82f6",
   },
-  statusBadgeText: {
-    fontFamily: "Inter-SemiBold",
-    fontSize: 12,
-    color: "white",
-    textTransform: "capitalize",
-    marginLeft: 6,
+  cancelledCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#ef4444",
+  },
+  waitingCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#f59e0b",
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 16,
-    paddingRight: 80, // Make room for the status badge
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
   },
-  orderInfo: {
-    flex: 1,
+  pickupTypeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  pickupTypeIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  pickupTypeText: {
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 18,
+    color: "#ffffff",
+  },
+  pickupTypeDescription: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.8)",
+  },
+  historyButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cardContent: {
+    padding: 20,
+  },
+  orderInfoContainer: {
+    marginBottom: 16,
   },
   orderTitle: {
     fontFamily: "Poppins-SemiBold",
-    fontSize: 18,
+    fontSize: 20,
     color: "#1e293b",
-    marginBottom: 6,
+    marginBottom: 4,
   },
-  travelerContainer: {
+  travelerRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 6,
   },
   travelerName: {
     fontFamily: "Inter-Medium",
     fontSize: 14,
     color: "#64748b",
   },
-  historyButton: {
+  statusContainer: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: "rgba(59, 130, 246, 0.1)",
+    marginBottom: 16,
   },
-  historyButtonText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
+  statusIconContainer: {
+    marginRight: 8,
+  },
+  statusText: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 16,
+  },
+  confirmedText: {
+    color: "#10b981",
+  },
+  actionText: {
     color: "#3b82f6",
-    marginLeft: 6,
+  },
+  cancelledText: {
+    color: "#ef4444",
+  },
+  waitingText: {
+    color: "#f59e0b",
   },
   divider: {
     height: 1,
-    backgroundColor: "rgba(203, 213, 225, 0.5)",
+    backgroundColor: "#e2e8f0",
     marginVertical: 16,
   },
-  detailsContainer: {
+  detailsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginBottom: 16,
   },
-  detailRow: {
+  detailItem: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 12,
+    alignItems: "center",
+    width: "50%",
+    marginBottom: 16,
   },
-  iconContainer: {
+  detailIconContainer: {
     width: 36,
     height: 36,
     borderRadius: 18,
     backgroundColor: "rgba(59, 130, 246, 0.1)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
-  },
-  detailContent: {
-    flex: 1,
+    marginRight: 10,
   },
   detailLabel: {
     fontFamily: "Inter-Medium",
-    fontSize: 13,
+    fontSize: 12,
     color: "#64748b",
-    marginBottom: 4,
+    marginBottom: 2,
   },
   detailValue: {
     fontFamily: "Inter-SemiBold",
-    fontSize: 15,
+    fontSize: 14,
     color: "#1e293b",
-    lineHeight: 22,
+    maxWidth: 120,
   },
-  timeContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
-  },
-  statusMessage: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(241, 245, 249, 0.8)",
+  messageContainer: {
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
   },
-  waitingText: {
+  confirmedMessage: {
+    backgroundColor: "rgba(16, 185, 129, 0.1)",
+  },
+  actionMessage: {
+    backgroundColor: "rgba(59, 130, 246, 0.1)",
+  },
+  waitingMessage: {
+    backgroundColor: "rgba(245, 158, 11, 0.1)",
+  },
+  messageText: {
     fontFamily: "Inter-Medium",
     fontSize: 14,
-    color: "#3b82f6",
-    marginLeft: 10,
+    textAlign: "center",
   },
-  successText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#10b981",
-    marginLeft: 10,
-  },
-  actionText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#3b82f6",
-    marginLeft: 10,
-  },
-  cancelledText: {
-    fontFamily: "Inter-Medium",
-    fontSize: 14,
-    color: "#ef4444",
-    marginLeft: 10,
-  },
-  actionContainer: {
-    width: "100%",
-  },
-  buttonRow: {
+  actionButtonsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 12,
-    marginBottom: 12,
-    width: "100%",
+    gap: 8,
+    marginBottom: 8,
   },
   acceptButton: {
     flex: 1,
@@ -907,29 +968,16 @@ const styles = StyleSheet.create({
   },
   suggestButton: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
     borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    backgroundColor: "rgba(59, 130, 246, 0.1)",
-    borderWidth: 1,
-    borderColor: "#3b82f6",
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   cancelButton: {
-    width: "100%",
-    borderRadius: 12,
-    overflow: "hidden",
-    marginTop: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  newSuggestionButton: {
-    width: "100%",
+    flex: 1,
     borderRadius: 12,
     overflow: "hidden",
     shadowColor: "#000",
@@ -938,7 +986,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  qrButton: {
+  fullWidthButton: {
     width: "100%",
     borderRadius: 12,
     overflow: "hidden",
@@ -960,11 +1008,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#fff",
   },
-  suggestButtonText: {
-    fontFamily: "Inter-SemiBold",
-    fontSize: 15,
-    color: "#3b82f6",
-  },
   buttonIcon: {
     marginRight: 8,
   },
@@ -973,36 +1016,6 @@ const styles = StyleSheet.create({
     height: 18,
     marginRight: 8,
     tintColor: "#fff",
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 40,
-    marginTop: 60,
-  },
-  emptyTitle: {
-    fontFamily: "Poppins-SemiBold",
-    fontSize: 20,
-    color: "#1e293b",
-    marginTop: 20,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontFamily: "Inter-Regular",
-    fontSize: 16,
-    color: "#64748b",
-    textAlign: "center",
-    marginBottom: 32,
-    maxWidth: 300,
-  },
-  refreshButton: {
-    borderRadius: 12,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   chatButton: {
     position: "absolute",
@@ -1028,25 +1041,59 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 30,
   },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+    marginTop: 60,
+  },
+  emptyTitle: {
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 24,
+    color: "#1e293b",
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 16,
+    color: "#64748b",
+    textAlign: "center",
+    marginBottom: 32,
+    maxWidth: 300,
+  },
+  refreshButton: {
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   suggestionsContainer: {
     flex: 1,
-    padding: 20,
   },
   suggestionsHeader: {
-    marginBottom: 24,
+    paddingHorizontal: 24,
+    paddingTop: 40,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   suggestionsTitle: {
     fontFamily: "Poppins-Bold",
-    fontSize: 24,
-    color: "#1e293b",
+    fontSize: 28,
+    color: "#ffffff",
     marginBottom: 8,
   },
   suggestionsSubtitle: {
     fontFamily: "Inter-Regular",
     fontSize: 16,
-    color: "#64748b",
+    color: "#cbd5e1",
   },
   historyList: {
+    padding: 16,
     paddingBottom: 100,
   },
   historyItem: {
@@ -1054,10 +1101,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   historyItemGradient: {
     padding: 16,
@@ -1072,25 +1119,29 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  historyTypeIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  historyTypeIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 8,
+    marginRight: 10,
   },
-  historyType: {
+  historyTypeText: {
     fontFamily: "Inter-SemiBold",
     fontSize: 16,
-    color: "#1e293b",
+    color: "#ffffff",
   },
   historyDate: {
     fontFamily: "Inter-Medium",
     fontSize: 14,
-    color: "#64748b",
+    color: "rgba(255, 255, 255, 0.8)",
   },
   historyDetails: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 12,
+    padding: 12,
     marginTop: 8,
   },
   historyDetailRow: {
@@ -1100,13 +1151,13 @@ const styles = StyleSheet.create({
   historyDetailLabel: {
     fontFamily: "Inter-Medium",
     fontSize: 14,
-    color: "#64748b",
+    color: "rgba(255, 255, 255, 0.8)",
     width: 80,
   },
   historyDetailValue: {
     fontFamily: "Inter-Regular",
     fontSize: 14,
-    color: "#1e293b",
+    color: "#ffffff",
     flex: 1,
   },
   backButton: {
@@ -1130,7 +1181,7 @@ const styles = StyleSheet.create({
   },
   emptyHistoryTitle: {
     fontFamily: "Poppins-SemiBold",
-    fontSize: 20,
+    fontSize: 24,
     color: "#1e293b",
     marginTop: 16,
     marginBottom: 8,
