@@ -7,7 +7,7 @@ const crypto = require("crypto");
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 const saltRounds = parseInt(process.env.SALT_ROUNDS, 10) || 10;
-const multer = require('multer');
+const multer = require("multer");
 const upload = multer();
 
 const transporter = nodemailer.createTransport({
@@ -73,7 +73,7 @@ const signup = async (req, res) => {
 
       const mediaData = {
         url: req.file.path, // Path saved by Multer
-        type: 'IMAGE',
+        type: "IMAGE",
         filename: req.file.filename,
         size: req.file.size,
         width: 100, // Static (could be dynamic with image processing)
@@ -101,8 +101,8 @@ const signup = async (req, res) => {
       const profile = await prisma.profile.create({
         data: {
           userId: newUser.id,
-          firstName: name.split(' ')[0] || name, // First word as firstName
-          lastName: name.split(' ').slice(1).join(' ') || '', // Rest as lastName
+          firstName: name.split(" ")[0] || name, // First word as firstName
+          lastName: name.split(" ").slice(1).join(" ") || "", // Rest as lastName
           country: "OTHER",
           isAnonymous: false,
           isBanned: false,
@@ -119,7 +119,7 @@ const signup = async (req, res) => {
     const token = jwt.sign(
       { id: result.newUser.id, email: result.newUser.email },
       process.env.JWT_SECRET || "secretkey",
-      { expiresIn: "1h" }
+      { expiresIn: "24h" }
     );
 
     res.status(201).json({
@@ -129,7 +129,7 @@ const signup = async (req, res) => {
         name: result.newUser.name,
         email: result.newUser.email,
       },
-      token: token // Include the token in the response
+      token: token, // Include the token in the response
     });
   } catch (error) {
     console.error("Signup error:", error);
@@ -158,7 +158,7 @@ const loginUser = async (req, res) => {
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET || "secretkey",
-      { expiresIn: "1h" }
+      { expiresIn: "24h" }
     );
 
     res.status(200).json({
@@ -179,7 +179,6 @@ const loginUser = async (req, res) => {
   }
 };
 
-
 const loginAdmin = async (req, res) => {
   const { email, password } = req.body;
 
@@ -193,10 +192,10 @@ const loginAdmin = async (req, res) => {
       include: {
         profile: {
           include: {
-            image: true
-          }
-        }
-      }
+            image: true,
+          },
+        },
+      },
     });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -204,18 +203,20 @@ const loginAdmin = async (req, res) => {
     }
 
     // Check if the user is an admin or super admin
-    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
-      return res.status(403).json({ error: "Access denied. Admin privileges required." });
+    if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+      return res
+        .status(403)
+        .json({ error: "Access denied. Admin privileges required." });
     }
 
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
-        role: user.role
+        role: user.role,
       },
       process.env.JWT_SECRET || "secretkey",
-      { expiresIn: "1h" }
+      { expiresIn: "24h" }
     );
 
     res.status(200).json({
@@ -226,9 +227,11 @@ const loginAdmin = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        profile: user.profile ? {
-          image: user.profile.image
-        } : null
+        profile: user.profile
+          ? {
+              image: user.profile.image,
+            }
+          : null,
       },
     });
   } catch (error) {
@@ -267,23 +270,24 @@ const googleLogin = async (req, res) => {
       include: {
         profile: {
           include: {
-            image: true
-          }
-        }
-      }
+            image: true,
+          },
+        },
+      },
     });
 
     // If no user exists, create one as a regular user
     if (!user) {
       // Check if request is for admin login
-      const isAdminLoginRequest = req.path && req.path.includes('/admin/');
-      
+      const isAdminLoginRequest = req.path && req.path.includes("/admin/");
+
       if (isAdminLoginRequest) {
-        return res.status(403).json({ 
-          error: "No admin account found with this Google account. Please contact system administrator to create an admin account." 
+        return res.status(403).json({
+          error:
+            "No admin account found with this Google account. Please contact system administrator to create an admin account.",
         });
       }
-      
+
       // For regular login, create a new user
       user = await prisma.user.create({
         data: {
@@ -300,29 +304,35 @@ const googleLogin = async (req, res) => {
         include: {
           profile: {
             include: {
-              image: true
-            }
-          }
-        }
+              image: true,
+            },
+          },
+        },
       });
     }
 
     // For admin login requests, check if user is an admin
-    const isAdminLoginRequest = req.path && req.path.includes('/admin/');
-    if (isAdminLoginRequest && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
-      return res.status(403).json({ error: "Access denied. Admin privileges required." });
+    const isAdminLoginRequest = req.path && req.path.includes("/admin/");
+    if (
+      isAdminLoginRequest &&
+      user.role !== "ADMIN" &&
+      user.role !== "SUPER_ADMIN"
+    ) {
+      return res
+        .status(403)
+        .json({ error: "Access denied. Admin privileges required." });
     }
 
     // Generate token with appropriate role information
     const token = jwt.sign(
-      { 
-        id: user.id, 
+      {
+        id: user.id,
         email: user.email,
-        role: user.role 
+        role: user.role,
       },
       process.env.JWT_SECRET || "secretkey",
       {
-        expiresIn: "1h",
+        expiresIn: "24h",
       }
     );
 
@@ -336,20 +346,22 @@ const googleLogin = async (req, res) => {
           name: user.name,
           email: user.email,
           role: user.role,
-          profile: user.profile ? {
-            image: user.profile.image
-          } : null
+          profile: user.profile
+            ? {
+                image: user.profile.image,
+              }
+            : null,
         },
       });
     } else {
       res.status(200).json({
         message: "Google login successful",
         token,
-        user: { 
-          id: user.id, 
-          name: user.name, 
+        user: {
+          id: user.id,
+          name: user.name,
           email: user.email,
-          role: user.role
+          role: user.role,
         },
       });
     }
@@ -363,7 +375,7 @@ const googleLogin = async (req, res) => {
 
 const requestPasswordReset = async (req, res) => {
   const { email } = req.body;
-  const isAdminRequest = req.path && req.path.includes('/admin/');
+  const isAdminRequest = req.path && req.path.includes("/admin/");
 
   try {
     if (!email) {
@@ -380,10 +392,16 @@ const requestPasswordReset = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "No user found with this email" });
     }
-    
+
     // For admin requests, verify user is an admin
-    if (isAdminRequest && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
-      return res.status(403).json({ error: "Access denied. This feature is only for admin users." });
+    if (
+      isAdminRequest &&
+      user.role !== "ADMIN" &&
+      user.role !== "SUPER_ADMIN"
+    ) {
+      return res.status(403).json({
+        error: "Access denied. This feature is only for admin users.",
+      });
     }
 
     const resetToken = generateRandomCode();
@@ -397,9 +415,11 @@ const requestPasswordReset = async (req, res) => {
       },
     });
 
-    const subject = isAdminRequest ? "Admin Password Reset Code" : "Password Reset Code";
-    const htmlContent = isAdminRequest ? 
-      `
+    const subject = isAdminRequest
+      ? "Admin Password Reset Code"
+      : "Password Reset Code";
+    const htmlContent = isAdminRequest
+      ? `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333; text-align: center;">Admin Password Reset</h2>
           <p>Hello,</p>
@@ -411,8 +431,8 @@ const requestPasswordReset = async (req, res) => {
           <p>If you didn't request this password reset, please ignore this email or contact support.</p>
           <p style="margin-top: 30px; color: #777; font-size: 12px;">This is an automated message, please do not reply.</p>
         </div>
-      ` : 
-      `<p>Your password reset code is: <strong>${resetToken}</strong>. This code expires in 1 hour.</p>`;
+      `
+      : `<p>Your password reset code is: <strong>${resetToken}</strong>. This code expires in 1 hour.</p>`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -434,7 +454,7 @@ const requestPasswordReset = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   const { email, code, newPassword } = req.body;
-  const isAdminRequest = req.path && req.path.includes('/admin/');
+  const isAdminRequest = req.path && req.path.includes("/admin/");
 
   try {
     if (!email || !code || !newPassword) {
@@ -468,8 +488,14 @@ const resetPassword = async (req, res) => {
     }
 
     // For admin requests, verify user is an admin
-    if (isAdminRequest && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
-      return res.status(403).json({ error: "Access denied. This feature is only for admin users." });
+    if (
+      isAdminRequest &&
+      user.role !== "ADMIN" &&
+      user.role !== "SUPER_ADMIN"
+    ) {
+      return res.status(403).json({
+        error: "Access denied. This feature is only for admin users.",
+      });
     }
 
     if (new Date() > user.resetTokenExpiry) {
@@ -605,7 +631,7 @@ const getUsers = async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       where: {
-        role: 'USER' // Add this line to filter only users with 'user' role
+        role: "USER", // Add this line to filter only users with 'user' role
       },
       include: {
         profile: {
@@ -614,26 +640,30 @@ const getUsers = async (req, res) => {
               select: {
                 id: true,
                 url: true,
-                type: true
-              }
-            }
-          }
-        }
-      }
+                type: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     // Transform the data to ensure image URLs are complete
-    const transformedUsers = users.map(user => ({
+    const transformedUsers = users.map((user) => ({
       ...user,
-      profile: user.profile ? {
-        ...user.profile,
-        image: user.profile.image ? {
-          ...user.profile.image,
-          url: user.profile.image.url.startsWith('http')
-            ? user.profile.image.url
-            : `${process.env.NEXT_PUBLIC_API_URL}/${user.profile.image.url}`
-        } : null
-      } : null
+      profile: user.profile
+        ? {
+            ...user.profile,
+            image: user.profile.image
+              ? {
+                  ...user.profile.image,
+                  url: user.profile.image.url.startsWith("http")
+                    ? user.profile.image.url
+                    : `${process.env.NEXT_PUBLIC_API_URL}/${user.profile.image.url}`,
+                }
+              : null,
+          }
+        : null,
     }));
 
     res.status(200).json({
@@ -661,7 +691,7 @@ const getUserById = async (req, res) => {
         profile: {
           include: {
             image: true,
-          }
+          },
         },
         serviceProvider: true, // Include service provider information
         reviewsGiven: {
@@ -670,12 +700,12 @@ const getUserById = async (req, res) => {
               include: {
                 profile: {
                   include: {
-                    image: true
-                  }
-                }
-              }
-            }
-          }
+                    image: true,
+                  },
+                },
+              },
+            },
+          },
         },
         reviewsReceived: {
           include: {
@@ -683,13 +713,13 @@ const getUserById = async (req, res) => {
               include: {
                 profile: {
                   include: {
-                    image: true
-                  }
-                }
-              }
-            }
-          }
-        }
+                    image: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -704,8 +734,8 @@ const getUserById = async (req, res) => {
         where: { id: user.serviceProvider.id },
         include: {
           sponsorships: true,
-          reviews: true
-        }
+          reviews: true,
+        },
       });
     }
 
@@ -721,7 +751,7 @@ const getUserById = async (req, res) => {
       },
       serviceProvider: serviceProviderDetails || user.serviceProvider,
       reviewsGiven: user.reviewsGiven,
-      reviewsReceived: user.reviewsReceived
+      reviewsReceived: user.reviewsReceived,
     });
   } catch (error) {
     console.error("Error fetching user:", error);
@@ -757,7 +787,7 @@ const updateUser = async (req, res) => {
     isVerified,
     isOnline,
     preferredCategories,
-    referralSource
+    referralSource,
   } = req.body;
 
   try {
@@ -854,7 +884,7 @@ const updateUser = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to update user",
-      details: error.message
+      details: error.message,
     });
   } finally {
     await prisma.$disconnect();
@@ -869,7 +899,7 @@ const deleteUser = async (req, res) => {
     if (!id) {
       return res.status(400).json({
         success: false,
-        error: "User ID is required"
+        error: "User ID is required",
       });
     }
 
@@ -877,7 +907,7 @@ const deleteUser = async (req, res) => {
     if (isNaN(userId)) {
       return res.status(400).json({
         success: false,
-        error: "Invalid user ID format"
+        error: "Invalid user ID format",
       });
     }
 
@@ -888,40 +918,44 @@ const deleteUser = async (req, res) => {
         where: { id: userId },
         include: {
           profile: {
-            include: { image: true }
-          }
-        }
+            include: { image: true },
+          },
+        },
       });
 
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
 
       try {
         // 1. Delete profile and image first
         if (user.profile) {
           if (user.profile.image) {
-            await prisma.media.delete({
-              where: { id: user.profile.image.id }
-            }).catch(error => {
-              console.error("Error deleting media:", error);
-              // Continue with deletion even if media deletion fails
-            });
+            await prisma.media
+              .delete({
+                where: { id: user.profile.image.id },
+              })
+              .catch((error) => {
+                console.error("Error deleting media:", error);
+                // Continue with deletion even if media deletion fails
+              });
           }
 
-          await prisma.profile.delete({
-            where: { userId }
-          }).catch(error => {
-            console.error("Error deleting profile:", error);
-            throw error;
-          });
+          await prisma.profile
+            .delete({
+              where: { userId },
+            })
+            .catch((error) => {
+              console.error("Error deleting profile:", error);
+              throw error;
+            });
         }
 
         // 2. Delete user preferences and settings
         await Promise.all([
           prisma.userPreference.deleteMany({ where: { userId } }),
-          prisma.userCategory.deleteMany({ where: { userId } })
-        ]).catch(error => {
+          prisma.userCategory.deleteMany({ where: { userId } }),
+        ]).catch((error) => {
           console.error("Error deleting user preferences:", error);
           throw error;
         });
@@ -929,122 +963,115 @@ const deleteUser = async (req, res) => {
         // 3. Delete reputation data
         await Promise.all([
           prisma.reputationTransaction.deleteMany({
-            where: { reputation: { userId } }
+            where: { reputation: { userId } },
           }),
-          prisma.reputation.deleteMany({ where: { userId } })
-        ]).catch(error => {
+          prisma.reputation.deleteMany({ where: { userId } }),
+        ]).catch((error) => {
           console.error("Error deleting reputation data:", error);
           throw error;
         });
 
         // 4. Delete notifications
-        await prisma.notification.deleteMany({
-          where: { userId }
-        }).catch(error => {
-          console.error("Error deleting notifications:", error);
-          throw error;
-        });
+        await prisma.notification
+          .deleteMany({
+            where: { userId },
+          })
+          .catch((error) => {
+            console.error("Error deleting notifications:", error);
+            throw error;
+          });
 
         // 5. Delete service provider data
-        await prisma.serviceProvider.deleteMany({
-          where: { userId }
-        }).catch(error => {
-          console.error("Error deleting service provider data:", error);
-          throw error;
-        });
+        await prisma.serviceProvider
+          .deleteMany({
+            where: { userId },
+          })
+          .catch((error) => {
+            console.error("Error deleting service provider data:", error);
+            throw error;
+          });
 
         // 6. Delete messages and chats
         await Promise.all([
           prisma.message.deleteMany({
             where: {
-              OR: [
-                { senderId: userId },
-                { receiverId: userId }
-              ]
-            }
+              OR: [{ senderId: userId }, { receiverId: userId }],
+            },
           }),
           prisma.chat.deleteMany({
             where: {
-              OR: [
-                { requesterId: userId },
-                { providerId: userId }
-              ]
-            }
-          })
-        ]).catch(error => {
+              OR: [{ requesterId: userId }, { providerId: userId }],
+            },
+          }),
+        ]).catch((error) => {
           console.error("Error deleting messages and chats:", error);
           throw error;
         });
 
         // 7. Delete reviews
-        await prisma.review.deleteMany({
-          where: {
-            OR: [
-              { reviewerId: userId },
-              { reviewedId: userId }
-            ]
-          }
-        }).catch(error => {
-          console.error("Error deleting reviews:", error);
-          throw error;
-        });
+        await prisma.review
+          .deleteMany({
+            where: {
+              OR: [{ reviewerId: userId }, { reviewedId: userId }],
+            },
+          })
+          .catch((error) => {
+            console.error("Error deleting reviews:", error);
+            throw error;
+          });
 
         // 8. Delete posts
         await Promise.all([
           prisma.goodsPost.deleteMany({ where: { travelerId: userId } }),
-          prisma.promoPost.deleteMany({ where: { publisherId: userId } })
-        ]).catch(error => {
+          prisma.promoPost.deleteMany({ where: { publisherId: userId } }),
+        ]).catch((error) => {
           console.error("Error deleting posts:", error);
           throw error;
         });
 
         // 9. Delete orders and related processes
         await Promise.all([
-          prisma.processEvent.deleteMany({ where: { changedByUserId: userId } }),
+          prisma.processEvent.deleteMany({
+            where: { changedByUserId: userId },
+          }),
           prisma.goodsProcess.deleteMany({
             where: {
               order: {
-                OR: [
-                  { buyerId: userId },
-                  { sellerId: userId }
-                ]
-              }
-            }
+                OR: [{ buyerId: userId }, { sellerId: userId }],
+              },
+            },
           }),
           prisma.order.deleteMany({
             where: {
-              OR: [
-                { buyerId: userId },
-                { sellerId: userId }
-              ]
-            }
-          })
-        ]).catch(error => {
+              OR: [{ buyerId: userId }, { sellerId: userId }],
+            },
+          }),
+        ]).catch((error) => {
           console.error("Error deleting orders and processes:", error);
           throw error;
         });
 
         // 10. Delete payments
-        await prisma.payment.deleteMany({
-          where: {
-            OR: [
-              { payerId: userId },
-              { receiverId: userId }
-            ]
-          }
-        }).catch(error => {
-          console.error("Error deleting payments:", error);
-          throw error;
-        });
+        await prisma.payment
+          .deleteMany({
+            where: {
+              OR: [{ payerId: userId }, { receiverId: userId }],
+            },
+          })
+          .catch((error) => {
+            console.error("Error deleting payments:", error);
+            throw error;
+          });
 
         // 11. Finally delete the user
-        await prisma.user.delete({
-          where: { id: userId }
-        }).catch(error => {
-          console.error("Error deleting user:", error);
-          throw error;
-        });
-
+        await prisma.user
+          .delete({
+            where: { id: userId },
+          })
+          .catch((error) => {
+            console.error("Error deleting user:", error);
+            throw error;
+          });
       } catch (error) {
         console.error("Transaction error:", error);
         throw error;
@@ -1053,25 +1080,24 @@ const deleteUser = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "User and all associated data deleted successfully"
+      message: "User and all associated data deleted successfully",
     });
-
   } catch (error) {
     console.error("Error in delete operation:", error);
 
-    if (error.message === 'User not found') {
+    if (error.message === "User not found") {
       return res.status(404).json({
         success: false,
-        error: "User not found"
+        error: "User not found",
       });
     }
 
-    if (error.code === 'P2003') {
+    if (error.code === "P2003") {
       return res.status(400).json({
         success: false,
         error: "Cannot delete user due to existing references",
         details: error.message,
-        hint: "Please try again or contact support if the issue persists"
+        hint: "Please try again or contact support if the issue persists",
       });
     }
 
@@ -1079,7 +1105,7 @@ const deleteUser = async (req, res) => {
       success: false,
       error: "Failed to delete user",
       details: error.message,
-      hint: "An unexpected error occurred during deletion"
+      hint: "An unexpected error occurred during deletion",
     });
   } finally {
     try {
@@ -1144,32 +1170,32 @@ const verifyIdCard = async (req, res) => {
     if (!file) {
       return res.status(400).json({
         success: false,
-        message: "No ID Card image uploaded"
+        message: "No ID Card image uploaded",
       });
     }
 
     // Hash the file path/content for security
     const fileHash = crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(file.path)
-      .digest('hex');
+      .digest("hex");
 
     // Update or create ServiceProvider record
     const serviceProvider = await prisma.serviceProvider.upsert({
       where: {
-        userId: userId
+        userId: userId,
       },
       update: {
         idCard: fileHash,
-        isVerified: false // Requires manual verification
+        isVerified: false, // Requires manual verification
       },
       create: {
         userId: userId,
         type: "SUBSCRIBER",
         idCard: fileHash,
         isVerified: false,
-        subscriptionLevel: "BASIC"
-      }
+        subscriptionLevel: "BASIC",
+      },
     });
 
     res.status(200).json({
@@ -1177,16 +1203,15 @@ const verifyIdCard = async (req, res) => {
       message: "ID Card uploaded successfully",
       data: {
         idCard: fileHash,
-        isVerified: serviceProvider.isVerified
-      }
+        isVerified: serviceProvider.isVerified,
+      },
     });
-
   } catch (error) {
-    console.error('Error in ID verification:', error);
+    console.error("Error in ID verification:", error);
     res.status(500).json({
       success: false,
       message: "Failed to process ID Card",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -1199,40 +1224,39 @@ const verifySelfie = async (req, res) => {
     if (!file) {
       return res.status(400).json({
         success: false,
-        message: "No selfie uploaded"
+        message: "No selfie uploaded",
       });
     }
 
     // Hash the file path/content for security
     const fileHash = crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(file.path)
-      .digest('hex');
+      .digest("hex");
 
     // Update ServiceProvider record with selfie
     const serviceProvider = await prisma.serviceProvider.update({
       where: {
-        userId: userId
+        userId: userId,
       },
       data: {
         selfie: fileHash,
-      }
+      },
     });
 
     res.status(200).json({
       success: true,
       message: "Selfie uploaded successfully",
       data: {
-        selfie: fileHash
-      }
+        selfie: fileHash,
+      },
     });
-
   } catch (error) {
-    console.error('Error in selfie verification:', error);
+    console.error("Error in selfie verification:", error);
     res.status(500).json({
       success: false,
       message: "Failed to process selfie",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -1245,13 +1269,13 @@ const verifyCreditCard = async (req, res) => {
     // Validate the user exists
     const user = await prisma.user.findUnique({
       where: { id: parseInt(userId) },
-      include: { serviceProvider: true }
+      include: { serviceProvider: true },
     });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
@@ -1262,43 +1286,43 @@ const verifyCreditCard = async (req, res) => {
         where: { id: user.serviceProvider.id },
         data: {
           creditCard: `${brand} **** **** **** ${last4}`,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
     } else {
       serviceProvider = await prisma.serviceProvider.create({
         data: {
           userId: parseInt(userId),
-          type: 'SPONSOR',
+          type: "SPONSOR",
           creditCard: `${brand} **** **** **** ${last4}`,
           isVerified: false,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
 
       // Update user but don't set as sponsor yet
       await prisma.user.update({
         where: { id: parseInt(userId) },
         data: {
-          serviceProviderId: serviceProvider.id.toString()
-        }
+          serviceProviderId: serviceProvider.id.toString(),
+        },
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Credit card added successfully, awaiting verification',
+      message: "Credit card added successfully, awaiting verification",
       data: {
         isVerified: false,
-        last4
-      }
+        last4,
+      },
     });
   } catch (error) {
-    console.error('Error verifying credit card:', error);
+    console.error("Error verifying credit card:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to verify credit card',
-      error: error.message
+      message: "Failed to verify credit card",
+      error: error.message,
     });
   }
 };
@@ -1313,23 +1337,23 @@ const submitQuestionnaire = async (req, res) => {
       where: { userId: parseInt(userId) },
       data: {
         questionnaireAnswers: answers, // Store directly in the JSON field
-        isVerified: false // Set verification status
-      }
+        isVerified: false, // Set verification status
+      },
     });
 
     res.status(200).json({
       success: true,
-      message: 'Questionnaire submitted successfully',
+      message: "Questionnaire submitted successfully",
       data: {
-        isVerified: serviceProvider.isVerified
-      }
+        isVerified: serviceProvider.isVerified,
+      },
     });
   } catch (error) {
-    console.error('Error submitting questionnaire:', error);
+    console.error("Error submitting questionnaire:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to submit questionnaire',
-      error: error.message
+      message: "Failed to submit questionnaire",
+      error: error.message,
     });
   }
 };
@@ -1363,32 +1387,32 @@ const getUserDemographics = async (req, res) => {
   try {
     // Get user demographics by country
     const demographicsByCountry = await prisma.profile.groupBy({
-      by: ['country'],
+      by: ["country"],
       _count: {
-        country: true
+        country: true,
       },
       orderBy: {
         _count: {
-          country: 'desc'
-        }
-      }
+          country: "desc",
+        },
+      },
     });
 
     // Format the data
-    const demographicData = demographicsByCountry.map(item => ({
+    const demographicData = demographicsByCountry.map((item) => ({
       country: item.country,
-      count: item._count.country
+      count: item._count.country,
     }));
 
-    return res.status(200).json({ 
-      success: true, 
-      data: demographicData 
+    return res.status(200).json({
+      success: true,
+      data: demographicData,
     });
   } catch (error) {
-    console.error('Error fetching user demographics:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Failed to retrieve user demographic data' 
+    console.error("Error fetching user demographics:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to retrieve user demographic data",
     });
   }
 };
@@ -1402,7 +1426,7 @@ const updateProfilePicture = async (req, res) => {
     if (!file) {
       return res.status(400).json({
         success: false,
-        message: "No profile picture uploaded"
+        message: "No profile picture uploaded",
       });
     }
 
@@ -1411,17 +1435,17 @@ const updateProfilePicture = async (req, res) => {
       originalname: file.originalname,
       mimetype: file.mimetype,
       size: file.size,
-      path: file.path
+      path: file.path,
     });
 
     // Create media record for the uploaded image
     const mediaData = {
       url: file.path,
-      type: 'IMAGE',
+      type: "IMAGE",
       filename: file.originalname,
       size: file.size,
       width: 150, // Default dimensions for profile pictures
-      height: 150
+      height: 150,
     };
 
     // Start a transaction to ensure both operations succeed or fail together
@@ -1433,7 +1457,7 @@ const updateProfilePicture = async (req, res) => {
 
       // Find the user's profile or create one if it doesn't exist
       const existingProfile = await tx.profile.findUnique({
-        where: { userId: userId }
+        where: { userId: userId },
       });
 
       let profile;
@@ -1441,17 +1465,17 @@ const updateProfilePicture = async (req, res) => {
         // Update existing profile with new image
         profile = await tx.profile.update({
           where: { userId: userId },
-          data: { 
-            imageId: media.id 
+          data: {
+            imageId: media.id,
           },
           include: {
-            image: true
-          }
+            image: true,
+          },
         });
       } else {
         // Get user details to create profile if needed
         const user = await tx.user.findUnique({
-          where: { id: userId }
+          where: { id: userId },
         });
 
         if (!user) {
@@ -1462,18 +1486,18 @@ const updateProfilePicture = async (req, res) => {
         profile = await tx.profile.create({
           data: {
             userId: userId,
-            firstName: user.name.split(' ')[0] || user.name,
-            lastName: user.name.split(' ').slice(1).join(' ') || '',
+            firstName: user.name.split(" ")[0] || user.name,
+            lastName: user.name.split(" ").slice(1).join(" ") || "",
             country: "OTHER",
             imageId: media.id,
             isAnonymous: false,
             isBanned: false,
             isVerified: false,
-            isOnline: false
+            isOnline: false,
           },
           include: {
-            image: true
-          }
+            image: true,
+          },
         });
       }
 
@@ -1488,17 +1512,16 @@ const updateProfilePicture = async (req, res) => {
         profile: result.profile,
         image: {
           id: result.media.id,
-          url: result.media.url
-        }
-      }
+          url: result.media.url,
+        },
+      },
     });
-
   } catch (error) {
-    console.error('Error uploading profile picture:', error);
+    console.error("Error uploading profile picture:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to upload profile picture",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -1507,19 +1530,19 @@ const updateProfilePicture = async (req, res) => {
 const getProfileImage = async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
-    
+
     // Find the user's profile with image
     const userProfile = await prisma.profile.findUnique({
       where: { userId },
       include: {
-        image: true
-      }
+        image: true,
+      },
     });
 
     if (!userProfile) {
       return res.status(404).json({
         success: false,
-        message: "User profile not found"
+        message: "User profile not found",
       });
     }
 
@@ -1527,25 +1550,25 @@ const getProfileImage = async (req, res) => {
     if (!userProfile.image) {
       return res.status(404).json({
         success: false,
-        message: "Profile image not found"
+        message: "Profile image not found",
       });
     }
 
     // Process the image URL
     let imageUrl = userProfile.image.url;
-    
+
     // If the image path is a local file path, convert it to a proper API URL
-    if (imageUrl && !imageUrl.startsWith('http')) {
+    if (imageUrl && !imageUrl.startsWith("http")) {
       // Remove any leading slashes
-      imageUrl = imageUrl.replace(/^\//, '');
-      
+      imageUrl = imageUrl.replace(/^\//, "");
+
       // If the path includes 'uploads', extract just the uploads part
-      if (imageUrl.includes('uploads/')) {
-        imageUrl = imageUrl.substring(imageUrl.indexOf('uploads/'));
+      if (imageUrl.includes("uploads/")) {
+        imageUrl = imageUrl.substring(imageUrl.indexOf("uploads/"));
       }
-      
+
       // Create a proper URL that the client can use
-      imageUrl = `${req.protocol}://${req.get('host')}/api/${imageUrl}`;
+      imageUrl = `${req.protocol}://${req.get("host")}/api/${imageUrl}`;
     }
 
     // Return the image data with the processed URL
@@ -1558,15 +1581,15 @@ const getProfileImage = async (req, res) => {
         type: userProfile.image.type,
         mimeType: userProfile.image.mimeType,
         extension: userProfile.image.extension,
-        filename: userProfile.image.filename
-      }
+        filename: userProfile.image.filename,
+      },
     });
   } catch (error) {
-    console.error('Error retrieving profile image:', error);
+    console.error("Error retrieving profile image:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to retrieve profile image",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -1595,5 +1618,5 @@ module.exports = {
   verifyUserProfile,
   getUserDemographics,
   updateProfilePicture,
-  getProfileImage
+  getProfileImage,
 };
