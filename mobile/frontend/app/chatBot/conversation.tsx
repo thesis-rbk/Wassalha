@@ -58,12 +58,16 @@ export default function ChatBotConversation() {
   const isDark = colorScheme === 'dark';
   const router = useRouter();
   const { user, token } = useSelector((state: any) => state.auth);
-  const [state, setState] = useState<ChatBotState>({
-    messages: [],
-    isLoading: false,
-    error: null,
-    sessionId: null,
-  });
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      text: 'Welcome to Wassalha! I\'m your Wassalha Assistant. How can I help you with your package delivery needs today?',
+      isUser: false,
+      timestamp: new Date(),
+    },
+  ]);
+  const [isLoading, setIsLoading] = useState(false);
   const [orderData, setOrderData] = useState<any>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   
@@ -90,11 +94,11 @@ export default function ChatBotConversation() {
   };
 
   const sendMessage = async () => {
-    if (state.messages.length === 0) return;
+    if (message.trim() === '') return;
     
-    const userMessage: ChatBotMessage = {
+    const userMessage: Message = {
       id: Date.now().toString(),
-      text: state.messages[state.messages.length - 1].text,
+      text: message,
       isUser: true,
       timestamp: new Date(),
     };
@@ -104,8 +108,8 @@ export default function ChatBotConversation() {
     setIsLoading(true);
     
     // Process the message to check for order-related queries
-    const lowerCaseMessage = userMessage.text.toLowerCase();
-    let promptText = userMessage.text;
+    const lowerCaseMessage = message.toLowerCase();
+    let promptText = message;
     
     // Check if the message is asking about order status
     if (
@@ -124,7 +128,7 @@ export default function ChatBotConversation() {
         }));
         
         promptText = `The user is asking about order status. Here's their recent order data: ${JSON.stringify(recentOrders)}. 
-        Please provide a helpful response about their order status. The original query was: ${userMessage.text}`;
+        Please provide a helpful response about their order status. The original query was: ${message}`;
       }
     }
     
@@ -196,36 +200,27 @@ export default function ChatBotConversation() {
         console.error('API Error:', data.error);
       }
       
-      const botMessage: ChatBotMessage = {
+      const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: aiResponse,
         isUser: false,
         timestamp: new Date(),
       };
       
-      setState((prevState) => ({
-        ...prevState,
-        messages: [...prevState.messages, botMessage],
-      }));
+      setMessages((prevMessages) => [...prevMessages, botMessage]);
     } catch (error) {
       console.error('Error calling Gemini API:', error);
       
-      const errorMessage: ChatBotMessage = {
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: 'I apologize, but I\'m having trouble connecting to our services right now. Please try again later or contact Wassalha customer support for immediate assistance.',
         isUser: false,
         timestamp: new Date(),
       };
       
-      setState((prevState) => ({
-        ...prevState,
-        messages: [...prevState.messages, errorMessage],
-      }));
+      setMessages((prevMessages) => [...prevMessages, errorMessage]);
     } finally {
-      setState((prevState) => ({
-        ...prevState,
-        isLoading: false,
-      }));
+      setIsLoading(false);
     }
   };
 
@@ -236,42 +231,7 @@ export default function ChatBotConversation() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  }, [state.messages]);
-
-  const renderMessage = (message: ChatBotMessage) => {
-    return (
-      <View 
-        key={message.id} 
-        style={[
-          styles.messageBubble, 
-          message.isUser ? 
-            [styles.userBubble, { backgroundColor: Colors[colorScheme].primary }] : 
-            [styles.botBubble, { backgroundColor: Colors[colorScheme].card }]
-        ]}
-      >
-        <Text 
-          style={[
-            styles.messageText, 
-            { 
-              color: message.isUser ? '#fff' : Colors[colorScheme].text 
-            }
-          ]}
-        >
-          {message.text}
-        </Text>
-        <Text 
-          style={[
-            styles.timestamp, 
-            { 
-              color: message.isUser ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.5)' 
-            }
-          ]}
-        >
-          {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </Text>
-      </View>
-    );
-  };
+  }, [messages]);
 
   return (
     <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
@@ -292,9 +252,40 @@ export default function ChatBotConversation() {
         style={styles.messagesContainer}
         contentContainerStyle={styles.messagesContent}
       >
-        {state.messages.map(renderMessage)}
+        {messages.map((msg) => (
+          <View 
+            key={msg.id} 
+            style={[
+              styles.messageBubble, 
+              msg.isUser ? 
+                [styles.userBubble, { backgroundColor: Colors[colorScheme].primary }] : 
+                [styles.botBubble, { backgroundColor: Colors[colorScheme].card }]
+            ]}
+          >
+            <Text 
+              style={[
+                styles.messageText, 
+                { 
+                  color: msg.isUser ? '#fff' : Colors[colorScheme].text 
+                }
+              ]}
+            >
+              {msg.text}
+            </Text>
+            <Text 
+              style={[
+                styles.timestamp, 
+                { 
+                  color: msg.isUser ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.5)' 
+                }
+              ]}
+            >
+              {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Text>
+          </View>
+        ))}
         
-        {state.isLoading && (
+        {isLoading && (
           <View style={[styles.messageBubble, styles.botBubble, { backgroundColor: Colors[colorScheme].card }]}>
             <ActivityIndicator size="small" color={Colors[colorScheme].primary} />
           </View>
@@ -314,13 +305,8 @@ export default function ChatBotConversation() {
               color: Colors[colorScheme].text
             }
           ]}
-          value={state.messages[state.messages.length - 1]?.text || ''}
-          onChangeText={(text) => {
-            setState((prevState) => ({
-              ...prevState,
-              messages: [...prevState.messages.slice(0, -1), { ...prevState.messages[prevState.messages.length - 1], text } as ChatBotMessage]
-            }));
-          }}
+          value={message}
+          onChangeText={setMessage}
           placeholder="Ask about Wassalha services..."
           placeholderTextColor={'gray'}
           multiline
@@ -328,7 +314,7 @@ export default function ChatBotConversation() {
         <TouchableOpacity 
           onPress={sendMessage} 
           style={[styles.sendButton, { backgroundColor: Colors[colorScheme].primary }]}
-          disabled={state.isLoading || state.messages[state.messages.length - 1]?.text.trim() === ''}
+          disabled={isLoading || message.trim() === ''}
         >
           <Send size={20} color="#fff" />
         </TouchableOpacity>
