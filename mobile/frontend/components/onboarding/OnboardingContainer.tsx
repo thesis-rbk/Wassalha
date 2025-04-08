@@ -41,6 +41,7 @@ export const OnboardingContainer = ({
   };
 
   const completeOnboarding = () => {
+    // Just call onComplete - let the parent handle navigation
     if (onComplete) {
       onComplete();
     }
