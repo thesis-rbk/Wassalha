@@ -405,7 +405,7 @@ const requestPasswordReset = async (req, res) => {
     }
 
     const resetToken = generateRandomCode();
-    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
+    const resetTokenExpiry = new Date(Date.now() + 900000); // 15 minutes
 
     await prisma.user.update({
       where: { email },
@@ -427,18 +427,18 @@ const requestPasswordReset = async (req, res) => {
           <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; letter-spacing: 5px;">
             ${resetToken}
           </div>
-          <p>This code will expire in 1 hour.</p>
+          <p>This code will expire in 15 minutes.</p>
           <p>If you didn't request this password reset, please ignore this email or contact support.</p>
           <p style="margin-top: 30px; color: #777; font-size: 12px;">This is an automated message, please do not reply.</p>
         </div>
       `
-      : `<p>Your password reset code is: <strong>${resetToken}</strong>. This code expires in 1 hour.</p>`;
+      : `<p>Your password reset code is: <strong>${resetToken}</strong>. This code expires in 15 minutes.</p>`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
       subject: subject,
-      text: `Your password reset code is: ${resetToken}. This code expires in 1 hour.`,
+      text: `Your password reset code is: ${resetToken}. This code expires in 15 minutes.`,
       html: htmlContent,
     };
 
