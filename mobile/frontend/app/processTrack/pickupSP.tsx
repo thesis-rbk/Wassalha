@@ -49,7 +49,6 @@ import { QRCodeScanner } from "../pickup/QRCodeScanner";
 import io, { Socket } from "socket.io-client";
 import { navigateToChat } from "@/services/chatService";
 import { LinearGradient } from "expo-linear-gradient";
-import Header from "@/components/navigation/headers";
 import { StatusScreen } from '@/app/screens/StatusScreen';
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
@@ -754,15 +753,15 @@ export default function PickupTraveler() {
           showPickup={showPickup}
           setShowPickup={setShowPickup}
           paramsData={{
-            requesterId: params.requesterId as string,
-            travelerId: params.travelerId as string,
-            idOrder: params.idOrder as string,
-            requesterName: params.requesterName as string,
-            travelerName: params.travelerName as string,
-            goodsName: params.goodsName as string,
-            status: params.status as string,
-            reviewLabel: params.reviewLabel as string,
-            isTraveler: params.isTraveler as string
+            requesterId: params.requesterId ? params.requesterId.toString() : "",
+            travelerId: params.travelerId ? params.travelerId.toString() : "",
+            idOrder: params.idOrder ? params.idOrder.toString() : "",
+            requesterName: params.requesterName ? params.requesterName.toString() : "Requester",
+            travelerName: params.travelerName ? params.travelerName.toString() : "Traveler",
+            goodsName: params.goodsName ? params.goodsName.toString() : "Item",
+            status: params.status ? params.status.toString() : "PENDING",
+            reviewLabel: "Rate the delivery",
+            isTraveler: "true"
           }}
         />
       ) : (
@@ -855,13 +854,13 @@ export default function PickupTraveler() {
         pickups={pickups}
         setPickups={setPickups}
         paramsData={{
-          requesterId: params.requesterId.toString(),
-          travelerId: params.travelerId.toString(),
-          idOrder: params.idOrder.toString(),
-          requesterName: params.requesterName?.toString() || "Requester",
-          travelerName: params.travelerName?.toString() || "Traveler",
-          goodsName: params.goodsName?.toString() || "Item",
-          status: params.status?.toString() || "PENDING",
+          requesterId: params.requesterId ? params.requesterId.toString() : "",
+          travelerId: params.travelerId ? params.travelerId.toString() : "",
+          idOrder: params.idOrder ? params.idOrder.toString() : "",
+          requesterName: params.requesterName ? params.requesterName.toString() : "Requester",
+          travelerName: params.travelerName ? params.travelerName.toString() : "Traveler",
+          goodsName: params.goodsName ? params.goodsName.toString() : "Item",
+          status: params.status ? params.status.toString() : "PENDING",
           reviewLabel: "Rate the delivery",
           isTraveler: "true"
         }}
