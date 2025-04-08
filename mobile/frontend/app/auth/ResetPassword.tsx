@@ -12,6 +12,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { InputField } from "@/components/InputField";
 import { BaseButton } from "../../components/ui/buttons/BaseButton";
+import { Colors } from "@/constants/Colors";
 
 const ForgotPassword = () => {
   const router = useRouter();
@@ -138,6 +139,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   loginLink: {
+    color: Colors.light.primary,
     fontWeight: "bold",
   },
 });
