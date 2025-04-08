@@ -629,52 +629,67 @@ const AdditionalDetails: React.FC = () => {
     }
   };
 
-  // Add this new validation function specifically for the final submit
+  // Replace validateFinalSubmission with this simpler version
   const validateFinalSubmission = () => {
-    if (!quantity) {
-      setStatusMessage({
+    if (!categoryId) {
+      show({
         type: 'error',
-        title: "Quantity Required",
-        message: "Please enter the quantity of items you want to ship."
+        title: 'Required Field',
+        message: 'Please go back and select a category',
+        primaryAction: {
+          label: 'Go Back',
+          onPress: () => {
+            hide();
+            setCurrentStep(0); // Go back to category selection
+          }
+        },
+        secondaryAction: {
+          label: 'Cancel',
+          onPress: hide
+        }
       });
-      setStatusVisible(true);
+      return false;
+    }
+
+    if (!quantity) {
+      show({
+        type: 'error',
+        title: 'Required Field',
+        message: 'Please enter quantity',
+        primaryAction: {
+          label: 'OK',
+          onPress: hide
+        }
+      });
       return false;
     }
 
     if (!goodsLocation) {
-      setStatusMessage({
+      show({
         type: 'error',
-        title: "Pickup Location Required",
-        message: "Please enter the location where the item will be picked up from."
+        title: 'Required Field',
+        message: 'Please enter pickup location',
+        primaryAction: {
+          label: 'OK',
+          onPress: hide
+        }
       });
-      setStatusVisible(true);
       return false;
     }
 
     if (!goodsDestination) {
-      setStatusMessage({
+      show({
         type: 'error',
-        title: "Delivery Location Required",
-        message: "Please enter the location where the item should be delivered to."
+        title: 'Required Field',
+        message: 'Please enter delivery location',
+        primaryAction: {
+          label: 'OK',
+          onPress: hide
+        }
       });
-      setStatusVisible(true);
       return false;
     }
 
-    return true;
-  };
-
-  // Keep your existing category validation for the first screen
-  const validateCategory = () => {
-    if (!categoryId) {
-      setStatusMessage({
-        type: 'error',
-        title: "Category Required",
-        message: "Please select a category for your product before proceeding."
-      });
-      setStatusVisible(true);
-      return false;
-    }
     return true;
   };
 
@@ -690,11 +705,8 @@ const AdditionalDetails: React.FC = () => {
           }
         }}
         onNextPress={() => {
-          if (currentStep === 0) {
-            if (validateCategory()) {
-              setCurrentStep(1);
-            }
-          }
+          // Simply move to next step without validation
+          setCurrentStep(1);
         }}
       />
 
@@ -840,11 +852,7 @@ const AdditionalDetails: React.FC = () => {
                   <TitleSection style={styles.sectionTitle}>Product Specifications</TitleSection>
                   <TouchableOpacity 
                     style={styles.skipButton}
-                    onPress={() => {
-                      if (validateCategory()) {
-                        setCurrentStep(1);
-                      }
-                    }}
+                    onPress={() => setCurrentStep(1)}
                   >
                     <BodyMedium style={styles.skipButtonText}>Skip</BodyMedium>
                   </TouchableOpacity>
@@ -879,11 +887,7 @@ const AdditionalDetails: React.FC = () => {
 
                 <BaseButton
                   size="large"
-                  onPress={() => {
-                    if (validateCategory()) {
-                      setCurrentStep(1);
-                    }
-                  }}
+                  onPress={() => setCurrentStep(1)}
                   style={styles.nextButton}
                 >
                   <BodyMedium style={styles.buttonText}>Continue to Delivery Details</BodyMedium>
@@ -1008,18 +1012,6 @@ const AdditionalDetails: React.FC = () => {
           )}
         </View>
       </ScrollView>
-
-      <StatusScreen
-        visible={statusVisible}
-        type={statusMessage.type}
-        title={statusMessage.title}
-        message={statusMessage.message}
-        primaryAction={{
-          label: "OK",
-          onPress: hide
-        }}
-        onClose={hide}
-      />
     </View>
   );
 };

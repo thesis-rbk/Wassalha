@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import axiosInstance from "@/config";
 import { ThemedView } from "@/components/ThemedView";
-import { Message, User } from "../../types";
+import { User } from "../../types";
+import { Message } from "../../types/Message";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { TopNavigation } from "@/components/navigation/TopNavigation";

@@ -292,16 +292,16 @@ model User {
   resetTokenExpiry       DateTime?
   traveler               Traveler?
 
-  requests         Request[]
-  notifications    Notification[]
-  reviewsGiven     Review[]       @relation("ReviewsGiven")
-  reviewsReceived  Review[]       @relation("ReviewsReceived")
-  chatsRequested   Chat[]         @relation("ChatsRequested")
-  chatsProvided    Chat[]         @relation("ChatsProvided")
-  messagesSent     Message[]      @relation("MessagesSent")
-  messagesRecieved Message[]      @relation("MessagesRecieved")
-  ordersTraveling  Order[]        @relation("TravelerOrders")
- experienceReviews ExperienceReview[] @relation("ExperienceReviewReviewer")
+  requests          Request[]
+  notifications     Notification[]
+  reviewsGiven      Review[]           @relation("ReviewsGiven")
+  reviewsReceived   Review[]           @relation("ReviewsReceived")
+  chatsRequested    Chat[]             @relation("ChatsRequested")
+  chatsProvided     Chat[]             @relation("ChatsProvided")
+  messagesSent      Message[]          @relation("MessagesSent")
+  messagesRecieved  Message[]          @relation("MessagesRecieved")
+  ordersTraveling   Order[]            @relation("TravelerOrders")
+  experienceReviews ExperienceReview[] @relation("ExperienceReviewReviewer")
 
   // Subscriptions / Sponsorships
   subscriptions Subscription[] @relation("UserSubscriptions")
@@ -517,10 +517,10 @@ model Order {
   verificationImageId Int?
   verificationImage   Media? @relation("VerificationImage", fields: [verificationImageId], references: [id])
 
-  payment       Payment[]
-  pickup        Pickup?
-  reviews       Review[]
-  notifications Notification[]
+  payment           Payment[]
+  pickup            Pickup?
+  reviews           Review[]
+  notifications     Notification[]
   experienceReviews ExperienceReview[] @relation("ExperienceReviewOrder")
 
   // Link to the high-level goods process
@@ -610,6 +610,7 @@ model Review {
   reviewType ReviewType
   status     ReviewStatus @default(PENDING)
 }
+
 // ========== ExperienceReview ==========
 model ExperienceReview {
   id         Int      @id @default(autoincrement())
@@ -618,8 +619,8 @@ model ExperienceReview {
   rating     Int
   createdAt  DateTime @default(now())
 
-  reviewer   User   @relation("ExperienceReviewReviewer", fields: [reviewerId], references: [id])
-  order      Order  @relation("ExperienceReviewOrder", fields: [orderId], references: [id])
+  reviewer User  @relation("ExperienceReviewReviewer", fields: [reviewerId], references: [id])
+  order    Order @relation("ExperienceReviewOrder", fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 // ========== CHAT ==========
@@ -917,6 +918,6 @@ model CodeSubmission {
   status         String // 'SUBMITTED', 'DELIVERED', etc.
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  request        Request  @relation(fields: [requestId], references: [id])
+  request        Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
   sponsor        User     @relation(fields: [sponsorId], references: [id])
 }
