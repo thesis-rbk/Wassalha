@@ -99,6 +99,11 @@ export default function MorePage() {
       label: 'Previous Tickets',
       route: '/reporting-system/MyTicketsPage',
     },
+    {
+      icon: <ClipboardList size={24} color={Colors[colorScheme].text} />,
+      label: 'Previous Tickets',
+      route: '/reporting-system/MyTicketsPage',
+    },
   ];
 
   const handleNavigation = (route: string) => {
