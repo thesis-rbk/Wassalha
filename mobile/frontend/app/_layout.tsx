@@ -253,6 +253,10 @@ export default function RootLayout() {
                           options={{ title: "Create Report" }}
                         />
                         <Stack.Screen
+                          name="reporting-system/Question&Answer"
+                          options={{ title: "Q&A" }}
+                        />
+                        <Stack.Screen
                           name="goodPost/goodpostpage"
                           options={{ title: "Traveler Posts" }}
                         />

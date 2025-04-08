@@ -557,6 +557,7 @@ export default function HomeScreen() {
 }
 
 const { width } = Dimensions.get("window")
+const { height } = Dimensions.get("window")
 const cardSize = (width - 48) / 2
 
 const styles = StyleSheet.create({
@@ -781,7 +782,7 @@ const styles = StyleSheet.create({
     marginRight: -20,
   },
   horizontalCardsContainer: {
-    paddingVertical: 10,
+    paddingVertical: -200,
     alignItems: "center",
   },
 })

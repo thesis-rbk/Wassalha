@@ -7,7 +7,7 @@ import axiosInstance from '@/config';
 import { Colors } from '@/constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ticket } from '@/types/Ticket';
-
+import Header from '@/components/navigation/headers';
 export default function MyTicketsPage() {
   const router = useRouter();
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -64,6 +64,7 @@ export default function MyTicketsPage() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <Header title="My Tickets" subtitle="View all your previous tickets" showBackButton={true} />
       <ThemedView style={styles.container}>
         <Stack.Screen options={{ title: 'My Tickets' }} />
         {isLoading ? (
@@ -92,7 +93,9 @@ export default function MyTicketsPage() {
               contentContainerStyle={styles.ticketList}
               showsVerticalScrollIndicator={false}
             />
-            <View style={styles.buttonWrapper}>
+
+            {/* Create button is now outside the FlatList */}
+            <View style={styles.fixedButtonWrapper}>
               <ThemedText style={styles.buttonDescription}>
                 Need more assistance? Our support team is ready to help.
               </ThemedText>
@@ -106,7 +109,6 @@ export default function MyTicketsPage() {
           </View>
         )}
       </ThemedView>
-      <View style={styles.bottomSpacer} />
     </SafeAreaView>
   );
 }
@@ -115,7 +117,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.light.background,
-    paddingBottom: Platform.OS === 'ios' ? 70 : 60,
   },
   container: {
     flex: 1,
@@ -123,7 +124,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    position: 'relative',
   },
   loadingContainer: {
     flex: 1,
@@ -154,7 +154,6 @@ const styles = StyleSheet.create({
     elevation: 3,
     width: '90%',
     alignItems: 'center',
-    marginBottom: 50,
   },
   createButtonText: {
     fontSize: 16,
@@ -164,7 +163,7 @@ const styles = StyleSheet.create({
   },
   ticketList: {
     paddingTop: 12,
-    paddingBottom: 220,
+    paddingBottom: 150, // Increased padding to make room for the button
   },
   ticketItem: {
     backgroundColor: '#f9f9f9',
@@ -194,27 +193,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 6,
   },
-  buttonWrapper: {
+  // Changed from buttonWrapper to fixedButtonWrapper
+  fixedButtonWrapper: {
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: Platform.OS === 'ios' ? 120 : 110,
+    bottom: 0,
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 30,
-    marginBottom: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 5,
-  },
-  bottomSpacer: {
-    height: 120,
   },
   buttonDescription: {
     fontSize: 16,

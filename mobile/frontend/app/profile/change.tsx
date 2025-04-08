@@ -12,7 +12,7 @@ import { useRouter } from "expo-router"
 import { TabBar } from "@/components/navigation/TabBar"
 import { BodyMedium } from "@/components/Typography"
 import { MaterialIcons } from "@expo/vector-icons"
-
+import Header from "@/components/navigation/headers"
 const ChangePassword = () => {
   const { theme } = useTheme()
   const navigation = useNavigation()
@@ -64,14 +64,9 @@ const ChangePassword = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
+      <Header title="Change Password" subtitle="Strong password, Secure acccount" showBackButton={true} />
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-          {/* Header with only subtitle */}
-          <View style={styles.header}>
-            <BodyMedium style={[styles.headerSubtitle, { color: Colors[theme].muted }]}>
-              Keep your account secure with a strong password
-            </BodyMedium>
-          </View>
 
           {/* Form Section */}
           <View style={styles.formSection}>
