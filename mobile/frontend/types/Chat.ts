@@ -14,7 +14,7 @@ export interface Chat {
   lastMessage?: Message;
 }
 
-export type Message = {
+export type MessagesBot = {
   id: string;
   text: string;
   isUser: boolean;
