@@ -10,16 +10,19 @@ import {
 } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
+import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { Colors } from "@/constants/Colors";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { NewPasswordValidation } from "./newPasswordValidation";
+
+const TIMER_DURATION = 900; // 15 minutes in seconds
 
 export default function NewPassword() {
   const router = useRouter();
   const { email } = useLocalSearchParams<{ email?: string }>();
 
   const [code, setCode] = useState<string[]>(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState<number>(60);
+  const [timer, setTimer] = useState<number>(TIMER_DURATION);
   const [isTimerActive, setIsTimerActive] = useState<boolean>(true);
   const [showPasswordForm, setShowPasswordForm] = useState<boolean>(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
@@ -59,19 +62,18 @@ export default function NewPassword() {
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Automatically verify if all digits are entered
-    if (newCode.every((digit) => digit !== "") && index === 5) {
+    if (newCode.every((digit) => digit !== "")) {
       verifyCode(newCode.join(""));
     }
   };
 
   const verifyCode = (fullCode: string) => {
-    // Here you might want to add actual verification with your backend
+    // Here you would typically verify with your backend
     setShowPasswordForm(true);
-    setIsTimerActive(false);
   };
 
   const handleSuccess = () => {
+    setIsTimerActive(false);
     Alert.alert(
       "Success",
       "Your password has been reset successfully!",
@@ -114,17 +116,17 @@ export default function NewPassword() {
                   />
                 ))}
               </View>
-              {isTimerActive && (
-                <ThemedText style={styles.timerText}>
-                  Time remaining: {formatTime(timer)}
-                </ThemedText>
-              )}
+              <ThemedText style={styles.timerText}>
+                Time remaining: {formatTime(timer)}
+              </ThemedText>
             </>
           ) : (
             <NewPasswordValidation
               email={email}
               verificationCode={code.join("")}
               onSuccess={handleSuccess}
+              remainingTime={timer}
+              isTimerActive={isTimerActive}
             />
           )}
         </ScrollView>

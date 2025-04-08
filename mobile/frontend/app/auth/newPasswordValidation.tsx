@@ -1,23 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Alert } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import { Colors } from "@/constants/Colors";
 import { InputFieldPassword } from "@/components/InputFieldPassword";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import { Colors } from "@/constants/Colors";
 import { useRouter } from "expo-router";
-import axiosInstance from "@/config";
+import axiosInstance from "../../config";
 
 interface NewPasswordValidationProps {
   email?: string;
   verificationCode: string;
   onSuccess: () => void;
+  remainingTime: number;
+  isTimerActive: boolean;
 }
 
 export function NewPasswordValidation({
   email,
   verificationCode,
   onSuccess,
+  remainingTime,
+  isTimerActive,
 }: NewPasswordValidationProps) {
   const router = useRouter();
   const [newPassword, setNewPassword] = useState<string>("");
@@ -25,6 +29,32 @@ export function NewPasswordValidation({
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [timer, setTimer] = useState<number>(remainingTime);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | undefined;
+
+    if (isTimerActive && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (timer <= 0) {
+      Alert.alert(
+        "Expired",
+        "The verification code has expired. Please go back and request a new one."
+      );
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timer, isTimerActive]);
+
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs < 10 ? "0" + secs : secs}`;
+  };
 
   const validatePassword = (password: string): string | null => {
     if (password.length < 8) return "Password must be at least 8 characters";
@@ -35,6 +65,11 @@ export function NewPasswordValidation({
   };
 
   const handleSubmit = async () => {
+    if (timer <= 0) {
+      Alert.alert("Error", "The verification code has expired");
+      return;
+    }
+
     const passwordValidation = validatePassword(newPassword);
     const confirmValidation =
       newPassword !== confirmPassword ? "Passwords do not match" : null;
@@ -50,7 +85,6 @@ export function NewPasswordValidation({
           code: verificationCode,
           newPassword: confirmPassword,
         });
-
         onSuccess();
       } catch (error: any) {
         if (error.response?.data?.error) {
@@ -72,6 +106,10 @@ export function NewPasswordValidation({
       <ThemedText style={styles.title}>Create New Password</ThemedText>
       <ThemedText style={styles.subText}>
         Your new password must be different from previous used passwords
+      </ThemedText>
+
+      <ThemedText style={styles.timerText}>
+        Time remaining: {formatTime(timer)}
       </ThemedText>
 
       <View style={styles.inputContainer}>
@@ -99,7 +137,7 @@ export function NewPasswordValidation({
         size="login"
         style={styles.button}
         onPress={handleSubmit}
-        disabled={isLoading}
+        disabled={isLoading || timer <= 0}
       >
         {isLoading ? "Resetting..." : "Reset Password"}
       </BaseButton>
@@ -122,7 +160,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 24,
-    paddingVertical: 40,
   },
   title: {
     fontSize: 28,
@@ -136,6 +173,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     lineHeight: 20,
     paddingHorizontal: 20,
+  },
+  timerText: {
+    fontSize: 12,
+    textAlign: "center",
+    color: Colors.light.primary,
+    marginBottom: 16,
   },
   inputContainer: {
     marginBottom: 24,
