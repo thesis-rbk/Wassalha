@@ -1,3 +1,20 @@
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TextInput,
+  Platform,
+  KeyboardAvoidingView,
+} from "react-native";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { Colors } from "@/constants/Colors";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { NewPasswordValidation } from "./newPasswordValidation";
+
+const TIMER_DURATION = 900; // 15 minutes in seconds
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, ScrollView, Image, Alert, TextInput, Platform, KeyboardAvoidingView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
@@ -11,24 +28,16 @@ import axiosInstance from '../../config';
 import { useStatus } from '@/context/StatusContext';
 
 export default function NewPassword() {
-  const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
   const { email } = useLocalSearchParams<{ email?: string }>();
   const { show, hide } = useStatus();
 
-  const [newPassword, setNewPassword] = useState<string>('');
-  const [confirmPassword, setConfirmPassword] = useState<string>('');
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [confirmError, setConfirmError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [code, setCode] = useState<string[]>(['', '', '', '', '', '']); // 6-digit code array
-  const [timer, setTimer] = useState<number>(60); // 1 minute in seconds for testing (adjust to 300 for 5 min)
-  const [isTimerActive, setIsTimerActive] = useState<boolean>(true); // Track if timer should run
-
-  // Refs for focusing TextInputs
+  const [code, setCode] = useState<string[]>(["", "", "", "", "", ""]);
+  const [timer, setTimer] = useState<number>(TIMER_DURATION);
+  const [isTimerActive, setIsTimerActive] = useState<boolean>(true);
+  const [showPasswordForm, setShowPasswordForm] = useState<boolean>(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
-  // Timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
 
@@ -37,6 +46,11 @@ export default function NewPassword() {
         setTimer((prev) => prev - 1);
       }, 1000);
     } else if (timer <= 0) {
+      Alert.alert(
+        "Expired",
+        "The verification code has expired. Request a new one."
+      );
+      setIsTimerActive(false);
       show({
         type: 'error',
         title: 'Code Expired',
@@ -60,14 +74,7 @@ export default function NewPassword() {
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${minutes}:${secs < 10 ? '0' + secs : secs}`;
-  };
-
-  const validatePassword = (password: string): string | null => {
-    if (password.length < 8) return 'Password must be at least 8 characters';
-    if (!/[A-Z]/.test(password)) return 'Must contain at least one uppercase letter';
-    if (!/\d/.test(password)) return 'Must contain at least one number';
-    return null;
+    return `${minutes}:${secs < 10 ? "0" + secs : secs}`;
   };
 
   const handleCodeChange = (text: string, index: number) => {
@@ -75,10 +82,33 @@ export default function NewPassword() {
     newCode[index] = text;
     setCode(newCode);
 
-    // Auto-focus next input
     if (text && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
+
+    if (newCode.every((digit) => digit !== "")) {
+      verifyCode(newCode.join(""));
+    }
+  };
+
+  const verifyCode = (fullCode: string) => {
+    // Here you would typically verify with your backend
+    setShowPasswordForm(true);
+  };
+
+  const handleSuccess = () => {
+    setIsTimerActive(false);
+    Alert.alert(
+      "Success",
+      "Your password has been reset successfully!",
+      [
+        {
+          text: "OK",
+          onPress: () => router.push("/auth/login"),
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   const handleSubmit = async () => {
@@ -162,68 +192,40 @@ export default function NewPassword() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <ThemedText style={styles.title}>Create New Password</ThemedText>
-          <ThemedText style={styles.subText}>
-            Your new password must be different from previous used passwords
-          </ThemedText>
+          {!showPasswordForm ? (
+            <>
+              <ThemedText style={styles.title}>Verification Code</ThemedText>
+              <ThemedText style={styles.subText}>
+                Enter the 6-digit code sent to your email
+              </ThemedText>
 
-          <View style={styles.inputContainer}>
-            <ThemedText style={styles.label}>Verification Code</ThemedText>
-            <View style={styles.codeContainer}>
-              {code.map((digit, index) => (
-                <TextInput
-                  key={index}
-                  ref={(ref) => (inputRefs.current[index] = ref)}
-                  style={styles.codeInput}
-                  value={digit}
-                  onChangeText={(text) => handleCodeChange(text, index)}
-                  keyboardType="numeric"
-                  maxLength={1}
-                  textAlign="center"
-                />
-              ))}
-            </View>
-            {isTimerActive && (
+              <View style={styles.codeContainer}>
+                {code.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    ref={(ref) => (inputRefs.current[index] = ref)}
+                    style={styles.codeInput}
+                    value={digit}
+                    onChangeText={(text) => handleCodeChange(text, index)}
+                    keyboardType="numeric"
+                    maxLength={1}
+                    textAlign="center"
+                  />
+                ))}
+              </View>
               <ThemedText style={styles.timerText}>
                 Time remaining: {formatTime(timer)}
               </ThemedText>
-            )}
-
-            <InputFieldPassword
-              label="New Password"
-              placeholder="Enter new password"
-              value={newPassword}
-              onChangeText={setNewPassword}
-              error={passwordError || undefined}
-              secureTextEntry
+            </>
+          ) : (
+            <NewPasswordValidation
+              email={email}
+              verificationCode={code.join("")}
+              onSuccess={handleSuccess}
+              remainingTime={timer}
+              isTimerActive={isTimerActive}
             />
-
-            <InputFieldPassword
-              label="Confirm Password"
-              placeholder="Confirm your password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              error={confirmError || undefined}
-              secureTextEntry
-            />
-          </View>
-
-          <BaseButton
-            variant="primary"
-            size="login"
-            style={styles.button}
-            onPress={handleSubmit}
-            disabled={isLoading || (timer <= 0 && isTimerActive)}
-          >
-            {isLoading ? 'Resetting...' : 'Reset Password'}
-          </BaseButton>
-
-          <ThemedText style={styles.loginText}>
-            Remember your password?{' '}
-            <ThemedText style={styles.loginLink} onPress={() => router.push('/auth/login')}>
-              Login
-            </ThemedText>
-          </ThemedText>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </ThemedView>
@@ -233,75 +235,48 @@ export default function NewPassword() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   keyboardAvoidingView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingHorizontal: 24,
     paddingVertical: 40,
   },
-  logo: {
-    width: 200,
-    height: 200,
-    alignSelf: 'center',
-    marginBottom: 24,
-  },
   title: {
     fontSize: 28,
-    fontFamily: 'InterBold',
-    textAlign: 'center',
+    fontFamily: "InterBold",
+    textAlign: "center",
     marginBottom: 16,
   },
   subText: {
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 32,
     lineHeight: 20,
     paddingHorizontal: 20,
   },
-  inputContainer: {
-    marginBottom: 24,
-  },
-  label: {
-    fontSize: 14,
-    fontFamily: 'InterSemiBold',
-    marginBottom: 8,
-  },
   codeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   codeInput: {
-    width: 40,
-    height: 40,
+    width: 50,
+    height: 50,
     borderWidth: 1,
     borderColor: Colors.light.border,
     borderRadius: 8,
     fontSize: 18,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
   },
   timerText: {
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: "center",
     color: Colors.light.primary,
     marginBottom: 16,
-  },
-  button: {
-    marginTop: 24,
-    paddingVertical: 16,
-  },
-  loginText: {
-    textAlign: 'center',
-    marginTop: 24,
-    fontSize: 14,
-  },
-  loginLink: {
-    color: Colors.light.primary,
-    fontFamily: 'InterSemiBold',
   },
 });

@@ -89,7 +89,9 @@ const ForgotPassword = () => {
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <ThemedText style={styles.title}>Forgot Password?</ThemedText>
-          <ThemedText style={styles.subtitle}>Enter your email to reset password</ThemedText>
+          <ThemedText style={styles.subtitle}>
+            Enter your email to reset password
+          </ThemedText>
 
           <InputField
             label="Email"
@@ -113,10 +115,10 @@ const ForgotPassword = () => {
           </BaseButton>
 
           <ThemedText style={styles.loginText}>
-            Remember your password?{' '}
+            Remember your password?{" "}
             <ThemedText
               style={styles.loginLink}
-              onPress={() => router.push('/auth/login')}
+              onPress={() => router.push("/auth/login")}
             >
               Login
             </ThemedText>
@@ -136,29 +138,30 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 20,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 32,
   },
   button: {
     marginTop: 20,
   },
   loginText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 20,
   },
   loginLink: {
-    fontWeight: 'bold',
+    color: Colors.light.primary,
+    fontWeight: "bold",
   },
 });
 

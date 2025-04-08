@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axiosInstance from "@/config";
-import { Chat, Message } from "@/types";
+import { Chat } from "@/types";
+import { Message } from "@/types/Message";
 import {
   View,
   Text,

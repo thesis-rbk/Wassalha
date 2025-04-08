@@ -4,7 +4,7 @@ export type ChatBotMessage = {
   isUser: boolean;
   timestamp: Date;
   mediaUrl?: string;
-  mediaType?: 'image' | 'audio';
+  mediaType?: "image" | "audio";
 };
 
 export type ChatBotSession = {
@@ -20,4 +20,4 @@ export type ChatBotState = {
   isLoading: boolean;
   error: string | null;
   sessionId: string | null;
-}; 
+};
