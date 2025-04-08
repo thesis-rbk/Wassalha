@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-} from "react-native";
+import { View, Text, StyleSheet, Modal } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera"; // No need for BarCodeScanner import unless using constants
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { XCircle } from "lucide-react-native";
@@ -12,7 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axiosInstance from "../../config";
 import { QRCodeScannerProps } from "../../types/QRCodeScannerProps"; // Adjust the import path as necessary
 import { useRouter } from "expo-router";
-import { StatusScreen } from '@/app/screens/StatusScreen';
+import { StatusScreen } from "@/app/screens/StatusScreen";
 
 export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   visible,
@@ -29,9 +24,9 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   // Add state for StatusScreen
   const [statusVisible, setStatusVisible] = useState(false);
   const [statusMessage, setStatusMessage] = useState({
-    type: 'error' as 'success' | 'error',
-    title: '',
-    message: ''
+    type: "error" as "success" | "error",
+    title: "",
+    message: "",
   });
 
   useEffect(() => {
@@ -57,12 +52,12 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
     try {
       const scannedData = JSON.parse(data);
       const pickup = pickups.find((p) => p.id === scannedData.pickupNumber);
-      
+
       if (!pickup || pickup.orderId !== scannedData.orderNumber) {
         setStatusMessage({
-          type: 'error',
-          title: 'Error',
-          message: 'Invalid QR code for this pickup.'
+          type: "error",
+          title: "Error",
+          message: "Invalid QR code for this pickup.",
         });
         setStatusVisible(true);
         onClose();
@@ -71,9 +66,9 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
 
       if (pickup.status === "COMPLETED") {
         setStatusMessage({
-          type: 'error',
-          title: 'Info',
-          message: 'This pickup is already completed.'
+          type: "error",
+          title: "Info",
+          message: "This pickup is already completed.",
         });
         setStatusVisible(true);
         onClose();
@@ -85,9 +80,9 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
 
       // Show success message with review navigation
       setStatusMessage({
-        type: 'success',
-        title: '✅ Success',
-        message: 'Pickup completed successfully! Please leave a review.'
+        type: "success",
+        title: "✅ Success",
+        message: "Pickup completed successfully! Please leave a review.",
       });
       setStatusVisible(true);
 
@@ -116,25 +111,24 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
               travelerId: paramsData.travelerId,
               requesterId: paramsData.requesterId,
               requesterName: paramsData.requesterName,
-              travelerName: paramsData.travelerName
-            }
+              travelerName: paramsData.travelerName,
+            },
           });
         } catch (error) {
           setStatusMessage({
-            type: 'error',
-            title: 'Error',
-            message: 'Failed to update pickup status.'
+            type: "error",
+            title: "Error",
+            message: "Failed to update pickup status.",
           });
           setStatusVisible(true);
         }
       };
-
     } catch (error) {
       console.error("Error processing QR scan:", error);
       setStatusMessage({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to complete pickup. Please try again.'
+        type: "error",
+        title: "Error",
+        message: "Failed to complete pickup. Please try again.",
       });
       setStatusVisible(true);
       onClose();
@@ -155,7 +149,9 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
       >
         <View style={styles.modalOverlay}>
           {hasPermission === null ? (
-            <Text style={styles.scannerText}>Requesting camera permission...</Text>
+            <Text style={styles.scannerText}>
+              Requesting camera permission...
+            </Text>
           ) : hasPermission === false ? (
             <View style={styles.permissionDeniedContainer}>
               <Text style={styles.scannerText}>Camera access denied</Text>
@@ -196,10 +192,10 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         title={statusMessage.title}
         message={statusMessage.message}
         primaryAction={{
-          label: statusMessage.type === 'success' ? "Continue" : "OK",
+          label: statusMessage.type === "success" ? "Continue" : "OK",
           onPress: () => {
             setStatusVisible(false);
-            if (statusMessage.type === 'success') {
+            if (statusMessage.type === "success") {
               onClose();
               router.push({
                 pathname: "/screens/Review",
@@ -209,17 +205,17 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
                   travelerId: paramsData.travelerId,
                   requesterId: paramsData.requesterId,
                   requesterName: paramsData.requesterName,
-                  travelerName: paramsData.travelerName
-                }
+                  travelerName: paramsData.travelerName,
+                },
               });
             } else {
               onClose();
             }
-          }
+          },
         }}
         onClose={() => {
           setStatusVisible(false);
-          if (statusMessage.type === 'success') {
+          if (statusMessage.type === "success") {
             onClose();
             router.push({
               pathname: "/screens/Review",
@@ -229,8 +225,8 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
                 travelerId: paramsData.travelerId,
                 requesterId: paramsData.requesterId,
                 requesterName: paramsData.requesterName,
-                travelerName: paramsData.travelerName
-              }
+                travelerName: paramsData.travelerName,
+              },
             });
           } else {
             onClose();
@@ -293,4 +289,3 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 });
- 
