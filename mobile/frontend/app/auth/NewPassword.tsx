@@ -167,8 +167,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   codeInput: {
-    width: 40,
-    height: 40,
+    width: 50,
+    height: 50,
     borderWidth: 1,
     borderColor: Colors.light.border,
     borderRadius: 8,
