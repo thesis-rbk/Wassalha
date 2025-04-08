@@ -3,26 +3,10 @@ import { Modal, View, Text, StyleSheet } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { QRCodeModalProps } from "@/types/QRCodeModalProps";
-import { useRouter } from "expo-router";
-import { useAuth } from "@/context/AuthContext";
-import { QRCodeScanner } from "./QRCodeScanner";
 
 export const QRCodeModal: React.FC<QRCodeModalProps> = ({ visible, qrCodeData, onClose, paramsData }) => {
-  const { user } = useAuth();
-  const router = useRouter();
-
+  // Simple close without navigation
   const handleClose = () => {
-    router.push({
-      pathname: "/screens/Review",
-      params: {
-        idOrder: paramsData.idOrder,
-        goodsName: paramsData.goodsName,
-        travelerId: paramsData.travelerId,
-        travelerName: paramsData.travelerName,
-        requesterId: paramsData.requesterId,
-        requesterName: paramsData.requesterName,
-      },
-    });
     onClose();
   };
 
@@ -37,7 +21,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({ visible, qrCodeData, o
           <Text style={styles.qrInstructions}>
             Show this QR code to identify yourself when picking up your package.
           </Text>
-          <BaseButton variant="primary" size="small" style={styles.cancelModalButton} onPress={handleClose}>
+          <BaseButton variant="secondary" size="small" style={styles.closeButton} onPress={handleClose}>
             Close
           </BaseButton>
         </View>
@@ -83,8 +67,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
-  cancelModalButton: {
-    backgroundColor: "#FF4444",
+  closeButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,

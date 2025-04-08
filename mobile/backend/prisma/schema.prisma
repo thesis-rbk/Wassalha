@@ -619,7 +619,7 @@ model ExperienceReview {
   createdAt  DateTime @default(now())
 
   reviewer   User   @relation("ExperienceReviewReviewer", fields: [reviewerId], references: [id])
-  order      Order  @relation("ExperienceReviewOrder", fields: [orderId], references: [id])
+  order      Order  @relation("ExperienceReviewOrder", fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 // ========== CHAT ==========
@@ -917,6 +917,6 @@ model CodeSubmission {
   status         String // 'SUBMITTED', 'DELIVERED', etc.
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  request        Request  @relation(fields: [requestId], references: [id])
+  request        Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
   sponsor        User     @relation(fields: [sponsorId], references: [id])
 }

@@ -763,13 +763,13 @@ export default function PickupTraveler() {
         pickups={pickups}
         setPickups={setPickups}
         paramsData={{
-          requesterId: params.requesterId.toString(),
-          travelerId: params.travelerId.toString(),
-          idOrder: params.idOrder.toString(),
-          requesterName: params.requesterName?.toString() || "Requester",
-          travelerName: params.travelerName?.toString() || "Traveler",
-          goodsName: params.goodsName?.toString() || "Item",
-          status: params.status?.toString() || "PENDING",
+          requesterId: params.requesterId ? params.requesterId.toString() : "",
+          travelerId: params.travelerId ? params.travelerId.toString() : "",
+          idOrder: params.idOrder ? params.idOrder.toString() : "",
+          requesterName: params.requesterName ? params.requesterName.toString() : "Requester",
+          travelerName: params.travelerName ? params.travelerName.toString() : "Traveler",
+          goodsName: params.goodsName ? params.goodsName.toString() : "Item",
+          status: params.status ? params.status.toString() : "PENDING",
           reviewLabel: "Rate the delivery",
           isTraveler: "true"
         }}
