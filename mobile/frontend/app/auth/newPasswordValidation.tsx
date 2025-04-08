@@ -8,14 +8,6 @@ import { Colors } from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import axiosInstance from "../../config";
 
-interface NewPasswordValidationProps {
-  email?: string;
-  verificationCode: string;
-  onSuccess: () => void;
-  remainingTime: number;
-  isTimerActive: boolean;
-}
-
 export function NewPasswordValidation({
   email,
   verificationCode,
@@ -185,7 +177,6 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 24,
-    paddingVertical: 16,
   },
   loginText: {
     textAlign: "center",
