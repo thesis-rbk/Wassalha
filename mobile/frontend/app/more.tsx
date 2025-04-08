@@ -101,8 +101,8 @@ export default function MorePage() {
     },
     {
       icon: <ClipboardList size={24} color={Colors[colorScheme].text} />,
-      label: 'Previous Tickets',
-      route: '/reporting-system/MyTicketsPage',
+      label: 'chat',
+      route: '/chatBot/conversation',
     },
   ];
 

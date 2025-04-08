@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
-  ScrollView, 
-  KeyboardAvoidingView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
   Platform,
   ActivityIndicator
 } from 'react-native';
@@ -17,19 +17,18 @@ import { ArrowLeft, Send } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSelector } from 'react-redux';
 import axiosInstance from '@/config';
-import { GEMINI_API_KEY } from '@/config';
+import GEMINI_API_KEY from '@/config';
 import AssistantService from '@/services/assistantService';
 import { ChatBotMessage, ChatBotSession, ChatBotState } from '@/types/ChatBotMessage';
 
 
-console.log(GEMINI_API_KEY);
 // Enhanced Wassalha context with more comprehensive information
 const createWassalhaContext = () => {
   const faqs = AssistantService.getWassalhaFAQs();
   const features = AssistantService.getServiceFeatures();
   const illegalItems = AssistantService.getIllegalItems();
   const orderStatuses = AssistantService.getOrderStatusInfo();
-  
+
   return `
 You are the official AI assistant for Wassalha, a cross-platform app designed for seamless package delivery between countries.
 Your name is Wassalha Assistant.
@@ -43,14 +42,14 @@ USER ROLES IN WASSALHA:
 2. Sponsors: People who need items delivered from one country to another and are willing to pay for the service
 
 KEY FEATURES:
-${Object.entries(features).map(([key, feature]: [string, any]) => 
-  `- ${feature.description}\n  ${feature.benefits ? feature.benefits.map((b: string) => `  * ${b}`).join('\n') : ''}`
-).join('\n')}
+${Object.entries(features).map(([key, feature]: [string, any]) =>
+    `- ${feature.description}\n  ${feature.benefits ? feature.benefits.map((b: string) => `  * ${b}`).join('\n') : ''}`
+  ).join('\n')}
 
 ORDER STATUS MEANINGS:
-${Object.entries(orderStatuses).map(([status, description]: [string, string]) => 
-  `- ${status.toUpperCase()}: ${description}`
-).join('\n')}
+${Object.entries(orderStatuses).map(([status, description]: [string, string]) =>
+    `- ${status.toUpperCase()}: ${description}`
+  ).join('\n')}
 
 FREQUENTLY ASKED QUESTIONS:
 ${faqs.map((faq: any) => `Q: ${faq.question}\nA: ${faq.answer}`).join('\n\n')}
@@ -87,7 +86,7 @@ export default function ChatBotConversation() {
   });
   const [orderData, setOrderData] = useState<any>(null);
   const scrollViewRef = useRef<ScrollView>(null);
-  
+
   // Fetch user's order data if available
   useEffect(() => {
     if (token && user?.id) {
@@ -112,33 +111,33 @@ export default function ChatBotConversation() {
 
   const sendMessage = async () => {
     if (state.messages.length === 0) return;
-    
+
     const userMessage: ChatBotMessage = {
       id: Date.now().toString(),
       text: state.messages[state.messages.length - 1].text,
       isUser: true,
       timestamp: new Date(),
     };
-    
+
     setState((prevState) => ({
       ...prevState,
       messages: [...prevState.messages, userMessage],
     }));
-    
+
     // Create the context for the model dynamically
     const WASSALHA_CONTEXT = createWassalhaContext();
-    
+
     // Process the message to check for order-related queries
     const lowerCaseMessage = userMessage.text.toLowerCase();
     let promptText = userMessage.text;
-    
+
     // Check if the message is asking about order status
     if (
-      lowerCaseMessage.includes('order') && 
-      (lowerCaseMessage.includes('status') || 
-       lowerCaseMessage.includes('track') || 
-       lowerCaseMessage.includes('where') ||
-       lowerCaseMessage.includes('my order'))
+      lowerCaseMessage.includes('order') &&
+      (lowerCaseMessage.includes('status') ||
+        lowerCaseMessage.includes('track') ||
+        lowerCaseMessage.includes('where') ||
+        lowerCaseMessage.includes('my order'))
     ) {
       // If user has order data, include it in the context
       if (orderData && orderData.length > 0) {
@@ -148,16 +147,16 @@ export default function ChatBotConversation() {
           createdAt: order.createdAt,
           destination: order.destination
         }));
-        
+
         promptText = `The user is asking about order status. Here's their recent order data: ${JSON.stringify(recentOrders)}. 
         Please provide a helpful response about their order status. The original query was: ${userMessage.text}`;
       }
     }
-    
+
     // Check if the message is asking about illegal items
     if (
-      lowerCaseMessage.includes('illegal') || 
-      lowerCaseMessage.includes('prohibited') || 
+      lowerCaseMessage.includes('illegal') ||
+      lowerCaseMessage.includes('prohibited') ||
       lowerCaseMessage.includes('banned') ||
       lowerCaseMessage.includes('allowed') ||
       lowerCaseMessage.includes('can i send') ||
@@ -165,7 +164,7 @@ export default function ChatBotConversation() {
     ) {
       const illegalItems = AssistantService.getIllegalItems();
       const categories = illegalItems.map((item: any) => item.category);
-      
+
       // Check if the message mentions specific categories of illegal items
       for (const item of illegalItems) {
         const category = item.category.toLowerCase();
@@ -176,13 +175,13 @@ export default function ChatBotConversation() {
           break;
         }
       }
-      
+
       if (promptText === userMessage.text) {
         promptText = `The user is asking about prohibited items. Wassalha prohibits transporting items in these categories: 
         ${categories.join(', ')}. The original query was: ${userMessage.text}`;
       }
     }
-    
+
     try {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -227,39 +226,39 @@ export default function ChatBotConversation() {
           }),
         }
       );
-      
+
       const data = await response.json();
-      
+
       let aiResponse = 'Sorry, I couldn\'t process your request.';
-      
+
       if (data.candidates && data.candidates[0]?.content?.parts && data.candidates[0].content.parts[0]?.text) {
         aiResponse = data.candidates[0].content.parts[0].text;
       } else if (data.error) {
         aiResponse = `I apologize, but I'm having trouble answering your question right now. Please try again later or contact Wassalha support for assistance.`;
         console.error('API Error:', data.error);
       }
-      
+
       const botMessage: ChatBotMessage = {
         id: (Date.now() + 1).toString(),
         text: aiResponse,
         isUser: false,
         timestamp: new Date(),
       };
-      
+
       setState((prevState) => ({
         ...prevState,
         messages: [...prevState.messages, botMessage],
       }));
     } catch (error) {
       console.error('Error calling Gemini API:', error);
-      
+
       const errorMessage: ChatBotMessage = {
         id: (Date.now() + 1).toString(),
         text: 'I apologize, but I\'m having trouble connecting to our services right now. Please try again later or contact Wassalha customer support for immediate assistance.',
         isUser: false,
         timestamp: new Date(),
       };
-      
+
       setState((prevState) => ({
         ...prevState,
         messages: [...prevState.messages, errorMessage],
@@ -283,30 +282,30 @@ export default function ChatBotConversation() {
 
   const renderMessage = (message: ChatBotMessage) => {
     return (
-      <View 
-        key={message.id} 
+      <View
+        key={message.id}
         style={[
-          styles.messageBubble, 
-          message.isUser ? 
-            [styles.userBubble, { backgroundColor: Colors[colorScheme].primary }] : 
+          styles.messageBubble,
+          message.isUser ?
+            [styles.userBubble, { backgroundColor: Colors[colorScheme].primary }] :
             [styles.botBubble, { backgroundColor: Colors[colorScheme].card }]
         ]}
       >
-        <Text 
+        <Text
           style={[
-            styles.messageText, 
-            { 
-              color: message.isUser ? '#fff' : Colors[colorScheme].text 
+            styles.messageText,
+            {
+              color: message.isUser ? '#fff' : Colors[colorScheme].text
             }
           ]}
         >
           {message.text}
         </Text>
-        <Text 
+        <Text
           style={[
-            styles.timestamp, 
-            { 
-              color: message.isUser ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.5)' 
+            styles.timestamp,
+            {
+              color: message.isUser ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.5)'
             }
           ]}
         >
@@ -319,7 +318,7 @@ export default function ChatBotConversation() {
   return (
     <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      
+
       {/* Header */}
       <View style={[styles.header, { backgroundColor: Colors[colorScheme].card }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -328,22 +327,22 @@ export default function ChatBotConversation() {
         <Text style={[styles.headerTitle, { color: Colors[colorScheme].text }]}>Wassalha Assistant</Text>
         <View style={styles.placeholder} />
       </View>
-      
+
       {/* Messages Area */}
-      <ScrollView 
+      <ScrollView
         ref={scrollViewRef}
         style={styles.messagesContainer}
         contentContainerStyle={styles.messagesContent}
       >
         {state.messages.map(renderMessage)}
-        
+
         {state.isLoading && (
           <View style={[styles.messageBubble, styles.botBubble, { backgroundColor: Colors[colorScheme].card }]}>
             <ActivityIndicator size="small" color={Colors[colorScheme].primary} />
           </View>
         )}
       </ScrollView>
-      
+
       {/* Message Input */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -352,7 +351,7 @@ export default function ChatBotConversation() {
         <TextInput
           style={[
             styles.input,
-            { 
+            {
               backgroundColor: isDark ? Colors.dark.background : '#f0f0f0',
               color: Colors[colorScheme].text
             }
@@ -368,8 +367,8 @@ export default function ChatBotConversation() {
           placeholderTextColor={'gray'}
           multiline
         />
-        <TouchableOpacity 
-          onPress={sendMessage} 
+        <TouchableOpacity
+          onPress={sendMessage}
           style={[styles.sendButton, { backgroundColor: Colors[colorScheme].primary }]}
           disabled={state.isLoading || state.messages[state.messages.length - 1]?.text.trim() === ''}
         >

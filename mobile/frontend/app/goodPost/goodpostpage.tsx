@@ -31,6 +31,7 @@ import { useAuth } from "@/context/AuthContext";
 const { width } = Dimensions.get("window");
 
 export default function GoodPostPage() {
+  // All state variables remain the same
   const [isLoading, setIsLoading] = useState(false);
   const [goodsPosts, setGoodsPosts] = useState<GoodsPost[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<GoodsPost[]>([]);
@@ -42,27 +43,27 @@ export default function GoodPostPage() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [activeTab, setActiveTab] = useState("travel");
-  
-  // New filter states
+
+  // Filter states
   const [minKg, setMinKg] = useState("");
   const [maxKg, setMaxKg] = useState("");
   const [selectedGender, setSelectedGender] = useState("");
-  
-  // New state for view mode: "all" or "yours"
+
+  // View mode state
   const [viewMode, setViewMode] = useState<"all" | "yours">("all");
   const [userGoodsPosts, setUserGoodsPosts] = useState<GoodsPost[]>([]);
-  
+
   const [showPremiumModal, setShowPremiumModal] = useState(false);
-  
+
   const router = useRouter();
   const { user } = useAuth();
 
+  // All useEffect hooks and functions remain the same
   useEffect(() => {
     fetchGoodsPosts();
     fetchCategories();
   }, []);
-  
-  // New effect to fetch user posts when viewMode changes to "yours"
+
   useEffect(() => {
     if (viewMode === "yours" && user?.id) {
       fetchUserGoodsPosts();
@@ -72,14 +73,14 @@ export default function GoodPostPage() {
   useEffect(() => {
     applyFilters();
   }, [
-    searchQuery, 
-    selectedCategory, 
-    selectedDate, 
+    searchQuery,
+    selectedCategory,
+    selectedDate,
     goodsPosts,
     userGoodsPosts,
     viewMode,
-    minKg, 
-    maxKg, 
+    minKg,
+    maxKg,
     selectedGender
   ]);
 
@@ -87,31 +88,27 @@ export default function GoodPostPage() {
     try {
       setIsLoading(true);
       const response = await axiosInstance.get("/api/goods-posts");
-      
-      // Log the entire first post to see its structure
+
       if (response.data.data && response.data.data.length > 0) {
         console.log("First post data:", JSON.stringify(response.data.data[0], null, 2));
       }
-      
-      // Process the data to ensure traveler info is properly structured
+
       const processedPosts = (response.data.data || []).map((post: any) => {
         console.log("Processing post:", post.id, "Traveler:", post.traveler);
-        
-        // Ensure traveler object has the expected structure
+
         if (post.traveler) {
-          // Make sure firstName and lastName are accessible
           const traveler = {
             ...post.traveler,
             firstName: post.traveler.firstName || '',
             lastName: post.traveler.lastName || '',
             gender: post.traveler.gender || 'UNKNOWN'
           };
-          
+
           return { ...post, traveler };
         }
         return post;
       });
-      
+
       setGoodsPosts(processedPosts);
       if (viewMode === "all") {
         setFilteredPosts(processedPosts);
@@ -126,23 +123,20 @@ export default function GoodPostPage() {
       setIsLoading(false);
     }
   };
-  
-  // New function to fetch user's goods posts
+
   const fetchUserGoodsPosts = async () => {
     if (!user?.id) {
       console.log("No user ID available");
       return;
     }
-    
+
     try {
       setIsLoading(true);
       console.log(`Fetching goods posts for user ID: ${user.id}`);
-      
+
       const response = await axiosInstance.get(`/api/goods-posts/user/${user.id}`);
-      
-      // Process the data similarly to fetchGoodsPosts
+
       const processedPosts = (response.data.data || []).map((post: any) => {
-        // Ensure traveler object has the expected structure
         if (post.traveler) {
           const traveler = {
             ...post.traveler,
@@ -150,12 +144,12 @@ export default function GoodPostPage() {
             lastName: post.traveler.lastName || '',
             gender: post.traveler.gender || 'UNKNOWN'
           };
-          
+
           return { ...post, traveler };
         }
         return post;
       });
-      
+
       setUserGoodsPosts(processedPosts);
       if (viewMode === "yours") {
         setFilteredPosts(processedPosts);
@@ -182,97 +176,88 @@ export default function GoodPostPage() {
   };
 
   const applyFilters = () => {
-    // Select the appropriate source posts based on viewMode
     let sourcePosts = viewMode === "all" ? goodsPosts : userGoodsPosts;
     let filtered = [...sourcePosts];
 
-    // Filter by search query (title or content or traveler name)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         post => {
-          // Debug log to see what we're working with
           if (post.traveler) {
-            console.log("Filtering traveler:", 
-              post.traveler.firstName, 
+            console.log("Filtering traveler:",
+              post.traveler.firstName,
               post.traveler.lastName,
               "Query:", query);
           }
-          
-          return post.title?.toLowerCase().includes(query) || 
+
+          return post.title?.toLowerCase().includes(query) ||
             post.content?.toLowerCase().includes(query) ||
             post.originLocation?.toLowerCase().includes(query) ||
             post.airportLocation?.toLowerCase().includes(query) ||
-            (post.traveler?.firstName?.toLowerCase().includes(query) || 
-             post.traveler?.lastName?.toLowerCase().includes(query));
+            (post.traveler?.firstName?.toLowerCase().includes(query) ||
+              post.traveler?.lastName?.toLowerCase().includes(query));
         }
       );
     }
 
-    // Filter by category
     if (selectedCategory) {
       filtered = filtered.filter(post => post.category?.id.toString() === selectedCategory);
     }
 
-    // Filter by date
     if (selectedDate) {
       const dateString = selectedDate.toISOString().split('T')[0];
       filtered = filtered.filter(post => {
-        // Filter based on dateFilterType
         if (dateFilterType === 'departure') {
           if (!post.departureDate) return false;
           const depDate = new Date(post.departureDate).toISOString().split('T')[0];
           return depDate === dateString;
-        } 
+        }
         else if (dateFilterType === 'arrival') {
           if (!post.arrivalDate) return false;
           const arrDate = new Date(post.arrivalDate).toISOString().split('T')[0];
           return arrDate === dateString;
         }
-        else { // 'any'
-          // Try to match either departure or arrival date
+        else {
           if (!post.departureDate && !post.arrivalDate) return false;
-          
+
           let matches = false;
           if (post.departureDate) {
             const depDate = new Date(post.departureDate).toISOString().split('T')[0];
             if (depDate === dateString) matches = true;
           }
-          
+
           if (post.arrivalDate && !matches) {
             const arrDate = new Date(post.arrivalDate).toISOString().split('T')[0];
             if (arrDate === dateString) matches = true;
           }
-          
+
           return matches;
         }
       });
     }
-    
-    // Filter by available kg
+
     if (minKg) {
       const min = parseFloat(minKg);
       filtered = filtered.filter(post => {
-        const kg = typeof post.availableKg === 'number' 
-          ? post.availableKg 
+        const kg = typeof post.availableKg === 'number'
+          ? post.availableKg
           : parseFloat(String(post.availableKg || "0"));
         return !isNaN(kg) && kg >= min;
       });
     }
-    
+
     if (maxKg) {
       const max = parseFloat(maxKg);
       filtered = filtered.filter(post => {
-        const kg = typeof post.availableKg === 'number' 
-          ? post.availableKg 
+        const kg = typeof post.availableKg === 'number'
+          ? post.availableKg
           : parseFloat(String(post.availableKg || "0"));
         return !isNaN(kg) && kg <= max;
       });
     }
-    
-    // Filter by traveler gender
+
     if (selectedGender) {
-      filtered = filtered.filter(post => 
+      filtered = filtered.filter(post =>
         post.traveler?.gender === selectedGender
       );
     }
@@ -333,30 +318,28 @@ export default function GoodPostPage() {
   const renderGoodsPostItem = ({ item }: { item: any }) => {
     console.log("Rendering item:", item.id);
     console.log("Traveler data:", item.traveler);
-    
-    // Extract firstName and lastName safely with more detailed logging
+
     const firstName = item.traveler?.firstName || '';
     const lastName = item.traveler?.lastName || '';
     console.log(`Name parts: "${firstName}" "${lastName}"`);
-    
+
     const travelerName = `${firstName} ${lastName}`.trim();
     console.log(`Final traveler name: "${travelerName}"`);
-    
+
     const displayName = travelerName || 'Unknown Traveler';
-    
-    // Check if this post belongs to the current user to determine if contact button should be shown
+
     const isCurrentUserPost = viewMode === "yours";
-    
+
     return (
       <View style={styles.cardContainer}>
         <View style={styles.card}>
           {/* Top perforated edge */}
           <View style={styles.perforatedEdge}>
-            {Array.from({ length: 15 }).map((_, i) => (
+            {Array.from({ length: 12 }).map((_, i) => (
               <View key={i} style={styles.perforation} />
             ))}
           </View>
-          
+
           {/* Ticket header with date info - SMALLER */}
           <View style={styles.ticketHeader}>
             <View style={styles.dateInfo}>
@@ -372,7 +355,7 @@ export default function GoodPostPage() {
               </ThemedText>
             </View>
           </View>
-          
+
           {/* Traveler information */}
           <View style={styles.travelerSection}>
             {item.traveler?.imageUrl ? (
@@ -393,61 +376,61 @@ export default function GoodPostPage() {
               </ThemedText>
             </View>
           </View>
-          
+
           {/* Title and description section */}
           <View style={styles.contentSection}>
             <ThemedText style={styles.titleText}>{item.title || 'Untitled'}</ThemedText>
-            <ThemedText style={styles.descriptionText}>
+            <ThemedText style={styles.descriptionText} numberOfLines={3}>
               {item.content || 'No description available'}
             </ThemedText>
           </View>
-          
+
           {/* Journey visualization */}
           <View style={styles.journeySection}>
             <View style={styles.journeyPoint}>
               <ThemedText style={styles.journeyCity}>ORIGIN</ThemedText>
-              <ThemedText style={styles.journeyAirport}>{item.originLocation || '---'}</ThemedText>
+              <ThemedText style={styles.journeyAirport} numberOfLines={1}>{item.originLocation || '---'}</ThemedText>
             </View>
-            
+
             <View style={styles.journeyLine}>
               <View style={styles.journeyDashedLine} />
               <Text style={styles.journeyIcon}>✈️</Text>
             </View>
-            
+
             <View style={styles.journeyPoint}>
               <ThemedText style={styles.journeyCity}>DESTINATION</ThemedText>
-              <ThemedText style={styles.journeyAirport}>{item.airportLocation || 'TBD'}</ThemedText>
+              <ThemedText style={styles.journeyAirport} numberOfLines={1}>{item.airportLocation || 'TBD'}</ThemedText>
             </View>
           </View>
-          
+
           {/* Perforated divider */}
           <View style={styles.perforatedDivider}>
-            {Array.from({ length: 15 }).map((_, i) => (
+            {Array.from({ length: 12 }).map((_, i) => (
               <View key={i} style={styles.perforation} />
             ))}
           </View>
-          
+
           {/* Ticket details */}
           <View style={styles.ticketDetails}>
             <View style={styles.detailColumn}>
               <ThemedText style={styles.detailLabel}>CATEGORY</ThemedText>
-              <ThemedText style={styles.detailValue}>{item.category?.name || 'Uncategorized'}</ThemedText>
+              <ThemedText style={styles.detailValue} numberOfLines={1}>{item.category?.name || 'Uncategorized'}</ThemedText>
             </View>
-            
+
             <View style={styles.detailColumn}>
               <ThemedText style={styles.detailLabel}>AVAILABLE KG</ThemedText>
               <ThemedText style={styles.detailValue}>{item.availableKg || 'N/A'} KG</ThemedText>
             </View>
           </View>
-          
+
           {/* Contact Button - Only show when not viewing user's own posts */}
           {!isCurrentUserPost && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.contactButton}
               onPress={handleContactPress}
               activeOpacity={0.7}
             >
-              <User size={18} color="#fff" />
+              <User size={16} color="#fff" />
               <ThemedText style={styles.contactButtonText}>Contact</ThemedText>
             </TouchableOpacity>
           )}
@@ -460,7 +443,7 @@ export default function GoodPostPage() {
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f0f4f8" }}>
       <ThemedView style={styles.container}>
         <TopNavigation title="Travel Posts" />
-        
+
         {/* SegmentedControl for switching between All and Your posts */}
         <SegmentedControl
           values={["All", "Your Posts"]}
@@ -478,7 +461,7 @@ export default function GoodPostPage() {
           }}
           style={styles.segmentedControl}
         />
-        
+
         {/* Search and filter bar */}
         <View style={styles.searchContainer}>
           <View style={styles.searchBar}>
@@ -496,14 +479,14 @@ export default function GoodPostPage() {
               </TouchableOpacity>
             ) : null}
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.filterButton}
             onPress={() => setShowFilterModal(true)}
           >
             <Filter size={20} color="#3a86ff" />
           </TouchableOpacity>
         </View>
-        
+
         {/* Active filters display */}
         {(selectedCategory || selectedDate || minKg || maxKg || selectedGender) && (
           <View style={styles.activeFiltersContainer}>
@@ -522,7 +505,7 @@ export default function GoodPostPage() {
               {selectedDate && (
                 <View style={styles.activeFilterTag}>
                   <ThemedText style={styles.activeFilterText}>
-                    {dateFilterType !== 'any' ? 
+                    {dateFilterType !== 'any' ?
                       `${dateFilterType === 'departure' ? 'Dep' : 'Arr'} ` : ''}
                     {selectedDate.toLocaleDateString()}
                   </ThemedText>
@@ -534,8 +517,8 @@ export default function GoodPostPage() {
               {(minKg || maxKg) && (
                 <View style={styles.activeFilterTag}>
                   <ThemedText style={styles.activeFilterText}>
-                    {minKg && maxKg ? `${minKg}-${maxKg} kg` : 
-                     minKg ? `Min ${minKg} kg` : `Max ${maxKg} kg`}
+                    {minKg && maxKg ? `${minKg}-${maxKg} kg` :
+                      minKg ? `Min ${minKg} kg` : `Max ${maxKg} kg`}
                   </ThemedText>
                   <TouchableOpacity onPress={() => { setMinKg(""); setMaxKg(""); }}>
                     <X size={16} color="#666" />
@@ -571,7 +554,7 @@ export default function GoodPostPage() {
                 <View style={styles.emptyContainer}>
                   <ThemedText style={styles.emptyText}>
                     {searchQuery || selectedCategory || selectedDate || minKg || maxKg || selectedGender
-                      ? "No posts match your search criteria" 
+                      ? "No posts match your search criteria"
                       : viewMode === "all"
                         ? "No goods posts available"
                         : "You haven't created any travel posts yet"}
@@ -593,7 +576,7 @@ export default function GoodPostPage() {
             />
           </View>
         )}
-        
+
         {/* Filter Modal */}
         <Modal
           visible={showFilterModal}
@@ -609,7 +592,7 @@ export default function GoodPostPage() {
                   <X size={24} color="#333" />
                 </TouchableOpacity>
               </View>
-              
+
               <ScrollView style={styles.modalScrollContent} showsVerticalScrollIndicator={true}>
                 <View style={styles.filterSection}>
                   <ThemedText style={styles.filterLabel}>Category</ThemedText>
@@ -634,7 +617,7 @@ export default function GoodPostPage() {
                     </Picker>
                   </View>
                 </View>
-                
+
                 <View style={styles.filterSection}>
                   <ThemedText style={styles.filterLabel}>Date Type</ThemedText>
                   <View style={styles.pickerContainer}>
@@ -652,14 +635,14 @@ export default function GoodPostPage() {
                     </Picker>
                   </View>
                 </View>
-                
+
                 <View style={styles.filterSection}>
                   <ThemedText style={styles.filterLabel}>Select Date</ThemedText>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.datePickerButton}
                     onPress={() => setShowDatePicker(true)}
                   >
-                    <Calendar size={20} color="#3a86ff" style={{marginRight: 10}} />
+                    <Calendar size={20} color="#3a86ff" style={{ marginRight: 10 }} />
                     <ThemedText style={styles.dateText}>
                       {selectedDate ? selectedDate.toLocaleDateString() : 'Select a date'}
                     </ThemedText>
@@ -673,7 +656,7 @@ export default function GoodPostPage() {
                     />
                   )}
                 </View>
-                
+
                 {/* Weight Range Filter */}
                 <View style={styles.filterSection}>
                   <ThemedText style={styles.filterLabel}>Available Weight (kg)</ThemedText>
@@ -703,7 +686,7 @@ export default function GoodPostPage() {
                     </View>
                   </View>
                 </View>
-                
+
                 {/* Gender Filter */}
                 <View style={styles.filterSection}>
                   <ThemedText style={styles.filterLabel}>Traveler Gender</ThemedText>
@@ -722,15 +705,15 @@ export default function GoodPostPage() {
                     </Picker>
                   </View>
                 </View>
-                
+
                 <View style={styles.modalButtonsContainer}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.modalButton, styles.resetButton]}
                     onPress={resetFilters}
                   >
                     <ThemedText style={styles.resetButtonText}>Reset</ThemedText>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.modalButton, styles.applyButton]}
                     onPress={() => {
                       applyFilters();
@@ -744,9 +727,9 @@ export default function GoodPostPage() {
             </View>
           </View>
         </Modal>
-        
+
         {/* Floating Action Button with Lucide icon */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.fab}
           onPress={handleCreatePost}
           activeOpacity={0.8}
@@ -756,7 +739,7 @@ export default function GoodPostPage() {
 
         <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
 
-        {/* Premium Upgrade Modal */}
+        {/* Premium Upgrade Modal - REDUCED SIZE */}
         <Modal
           visible={showPremiumModal}
           transparent={true}
@@ -766,37 +749,37 @@ export default function GoodPostPage() {
           <View style={styles.premiumModalOverlay}>
             <View style={styles.premiumModalContent}>
               <View style={styles.premiumModalHeader}>
-                <ThemedText style={styles.premiumModalTitle}>Unlock Premium Features</ThemedText>
+                <ThemedText style={styles.premiumModalTitle}>Premium Features</ThemedText>
                 <TouchableOpacity onPress={() => setShowPremiumModal(false)}>
-                  <X size={24} color="#333" />
+                  <X size={20} color="#333" />
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.premiumModalBody}>
                 <View style={styles.premiumIcon}>
                   <Text style={styles.premiumIconText}>👑</Text>
                 </View>
-                <ThemedText style={styles.premiumModalTitle2}>Unlock Premium Features</ThemedText>
+                <ThemedText style={styles.premiumModalTitle2}>Contact Travelers</ThemedText>
                 <ThemedText style={styles.premiumModalText}>
-                  Upgrade to Premium to contact travelers directly and arrange your shipments easily.
+                  Upgrade to Premium to message travelers directly.
                 </ThemedText>
-                
+
                 <View style={styles.premiumFeaturesContainer}>
                   <View style={styles.premiumFeatureItem}>
                     <Text style={styles.premiumFeatureIcon}>✓</Text>
-                    <ThemedText style={styles.premiumFeatureText}>Direct messaging with travelers</ThemedText>
+                    <ThemedText style={styles.premiumFeatureText}>Direct messaging</ThemedText>
                   </View>
                   <View style={styles.premiumFeatureItem}>
                     <Text style={styles.premiumFeatureIcon}>✓</Text>
-                    <ThemedText style={styles.premiumFeatureText}>Priority listing in search results</ThemedText>
+                    <ThemedText style={styles.premiumFeatureText}>Priority listings</ThemedText>
                   </View>
                   <View style={styles.premiumFeatureItem}>
                     <Text style={styles.premiumFeatureIcon}>✓</Text>
-                    <ThemedText style={styles.premiumFeatureText}>No ads or restrictions</ThemedText>
+                    <ThemedText style={styles.premiumFeatureText}>No restrictions</ThemedText>
                   </View>
                 </View>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={styles.upgradeButton}
                   onPress={() => {
                     setShowPremiumModal(false);
@@ -804,10 +787,10 @@ export default function GoodPostPage() {
                     // router.push("/subscription"); // Uncomment when subscription page is ready
                   }}
                 >
-                  <ThemedText style={styles.upgradeButtonText}>Upgrade to Premium</ThemedText>
+                  <ThemedText style={styles.upgradeButtonText}>Upgrade Now</ThemedText>
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={styles.laterButton}
                   onPress={() => setShowPremiumModal(false)}
                 >
@@ -937,138 +920,138 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f4f8",
   },
   cardContainer: {
-    marginBottom: 24,
+    marginBottom: 20, // Reduced from 24
     alignItems: "center",
   },
   card: {
-    width: width * 0.9,
+    width: width * 0.85, // Reduced from 0.9
     borderRadius: 12,
     backgroundColor: "#fff",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowRadius: 6,
+    elevation: 4,
     overflow: "hidden",
   },
   perforatedEdge: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 10,
-    height: 10,
+    height: 8, // Reduced from 10
     backgroundColor: "#f8f9fa",
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
   },
   perforation: {
-    width: 6,
-    height: 6,
+    width: 5, // Reduced from 6
+    height: 5, // Reduced from 6
     borderRadius: 3,
     backgroundColor: "#f0f4f8",
-    marginTop: 2,
+    marginTop: 1, // Reduced from 2
   },
   ticketHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    padding: 12,
-    paddingBottom: 8,
+    padding: 10, // Reduced from 12
+    paddingBottom: 6, // Reduced from 8
     backgroundColor: "#f8f9fa",
   },
   dateInfo: {
     alignItems: "center",
   },
   dateLabel: {
-    fontSize: 9,
+    fontSize: 8, // Reduced from 9
     color: "#999",
     fontWeight: "bold",
   },
   dateValue: {
-    fontSize: 14,
+    fontSize: 12, // Reduced from 14
     fontWeight: "bold",
     color: "#333",
   },
   travelerSection: {
     flexDirection: "row",
-    padding: 16,
+    padding: 12, // Reduced from 16
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
     backgroundColor: "#ffffff",
   },
   travelerImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50, // Reduced from 60
+    height: 50, // Reduced from 60
+    borderRadius: 25, // Reduced from 30
     borderWidth: 2,
     borderColor: "#3a86ff",
   },
   initialsContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50, // Reduced from 60
+    height: 50, // Reduced from 60
+    borderRadius: 25, // Reduced from 30
     backgroundColor: "#3a86ff",
     justifyContent: "center",
     alignItems: "center",
   },
   initialsText: {
     color: "#fff",
-    fontSize: 24,
+    fontSize: 20, // Reduced from 24
     fontWeight: "bold",
   },
   travelerInfo: {
-    marginLeft: 16,
+    marginLeft: 12, // Reduced from 16
     justifyContent: "center",
   },
   passengerLabel: {
-    fontSize: 10,
+    fontSize: 9, // Reduced from 10
     color: "#999",
     fontWeight: "bold",
-    marginBottom: 4,
+    marginBottom: 3, // Reduced from 4
   },
   travelerName: {
-    fontSize: 18,
+    fontSize: 16, // Reduced from 18
     fontWeight: "bold",
     color: "#333",
-    marginBottom: 4,
+    marginBottom: 3, // Reduced from 4
   },
   travelerGender: {
-    fontSize: 14,
+    fontSize: 12, // Reduced from 14
     color: "#666",
   },
   contentSection: {
-    padding: 16,
+    padding: 12, // Reduced from 16
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
     backgroundColor: "#ffffff",
   },
   titleText: {
-    fontSize: 18,
+    fontSize: 16, // Reduced from 18
     fontWeight: "bold",
     color: "#3a86ff",
-    marginBottom: 8,
+    marginBottom: 6, // Reduced from 8
   },
   descriptionText: {
-    fontSize: 14,
+    fontSize: 13, // Reduced from 14
     color: "#666",
-    lineHeight: 20,
+    lineHeight: 18, // Reduced from 20
   },
   journeySection: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
+    padding: 12, // Reduced from 16
     backgroundColor: "#f8f9fa",
   },
   journeyPoint: {
     alignItems: "center",
-    width: 100,
+    width: 90, // Reduced from 100
   },
   journeyCity: {
-    fontSize: 10,
+    fontSize: 9, // Reduced from 10
     color: "#999",
     fontWeight: "bold",
-    marginBottom: 4,
+    marginBottom: 3, // Reduced from 4
   },
   journeyAirport: {
-    fontSize: 16,
+    fontSize: 14, // Reduced from 16
     fontWeight: "bold",
     color: "#333",
   },
@@ -1088,13 +1071,13 @@ const styles = StyleSheet.create({
   },
   journeyIcon: {
     position: "absolute",
-    fontSize: 16,
+    fontSize: 14, // Reduced from 16
   },
   perforatedDivider: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 10,
-    height: 10,
+    height: 8, // Reduced from 10
     backgroundColor: "#ffffff",
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
@@ -1103,20 +1086,20 @@ const styles = StyleSheet.create({
   },
   ticketDetails: {
     flexDirection: "row",
-    padding: 16,
+    padding: 12, // Reduced from 16
     backgroundColor: "#ffffff",
   },
   detailColumn: {
     flex: 1,
   },
   detailLabel: {
-    fontSize: 10,
+    fontSize: 9, // Reduced from 10
     color: "#999",
     fontWeight: "bold",
-    marginBottom: 4,
+    marginBottom: 3, // Reduced from 4
   },
   detailValue: {
-    fontSize: 16,
+    fontSize: 14, // Reduced from 16
     fontWeight: "bold",
     color: "#333",
   },
@@ -1269,7 +1252,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  // New styles for weight range filter
+  // Weight range filter styles
   weightRangeContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -1297,9 +1280,9 @@ const styles = StyleSheet.create({
   },
   contactButton: {
     backgroundColor: "#3a86ff",
-    marginHorizontal: 16,
-    marginVertical: 12,
-    paddingVertical: 14,
+    marginHorizontal: 12, // Reduced from 16
+    marginVertical: 10, // Reduced from 12
+    paddingVertical: 12, // Reduced from 14
     borderRadius: 8,
     alignItems: "center",
     shadowColor: "#000",
@@ -1315,11 +1298,11 @@ const styles = StyleSheet.create({
   contactButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 16,
-    marginLeft: 8
+    fontSize: 14, // Reduced from 16
+    marginLeft: 6 // Reduced from 8
   },
-  
-  // Premium Modal Styles
+
+  // Premium Modal Styles - REDUCED SIZE
   premiumModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -1328,7 +1311,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   premiumModalContent: {
-    width: '90%',
+    width: '80%', // Reduced from 90%
     backgroundColor: '#fff',
     borderRadius: 16,
     overflow: 'hidden',
@@ -1342,35 +1325,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 15,
+    paddingHorizontal: 16, // Reduced from 20
+    paddingTop: 16, // Reduced from 20
+    paddingBottom: 12, // Reduced from 15
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
   premiumModalTitle: {
-    fontSize: 20,
+    fontSize: 18, // Reduced from 20
     fontWeight: 'bold',
     color: '#333',
   },
   premiumModalTitle2: {
-    fontSize: 22,
+    fontSize: 18, // Reduced from 22
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 10,
+    marginBottom: 8, // Reduced from 10
   },
   premiumModalBody: {
-    padding: 24,
+    padding: 16, // Reduced from 24
     alignItems: 'center',
   },
   premiumIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 60, // Reduced from 80
+    height: 60, // Reduced from 80
+    borderRadius: 30, // Reduced from 40
     backgroundColor: '#fff7d6',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12, // Reduced from 16
     borderWidth: 2,
     borderColor: '#ffd700',
     shadowColor: "#ffd700",
@@ -1380,42 +1363,42 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   premiumIconText: {
-    fontSize: 40,
+    fontSize: 30, // Reduced from 40
   },
   premiumModalText: {
-    fontSize: 16,
+    fontSize: 14, // Reduced from 16
     color: '#555',
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
+    marginBottom: 16, // Reduced from 24
+    lineHeight: 20, // Reduced from 22
   },
   premiumFeaturesContainer: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 16, // Reduced from 24
   },
   premiumFeatureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8, // Reduced from 12
   },
   premiumFeatureIcon: {
     color: '#3a86ff',
-    fontSize: 18,
+    fontSize: 16, // Reduced from 18
     fontWeight: 'bold',
-    marginRight: 10,
+    marginRight: 8, // Reduced from 10
   },
   premiumFeatureText: {
-    fontSize: 15,
+    fontSize: 14, // Reduced from 15
     color: '#444',
   },
   upgradeButton: {
     backgroundColor: '#3a86ff',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 10,
+    paddingVertical: 12, // Reduced from 14
+    paddingHorizontal: 20, // Reduced from 24
+    borderRadius: 8, // Reduced from 10
     width: '100%',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10, // Reduced from 12
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -1423,17 +1406,17 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   upgradeButtonText: {
-    fontSize: 16,
+    fontSize: 15, // Reduced from 16
     fontWeight: 'bold',
     color: '#fff',
   },
   laterButton: {
-    paddingVertical: 12,
+    paddingVertical: 10, // Reduced from 12
     width: '100%',
     alignItems: 'center',
   },
   laterButtonText: {
-    fontSize: 15,
+    fontSize: 14, // Reduced from 15
     color: '#666',
   },
 });
