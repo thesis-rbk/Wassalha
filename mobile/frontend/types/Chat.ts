@@ -1,5 +1,6 @@
 import { User } from './User';
 import { Goods } from './Goods';
+import { Message } from './Message';
 
 export interface Chat {
     id: number;
@@ -13,26 +14,9 @@ export interface Chat {
     lastMessage?: Message;
 }
 
-export type Message = {
+export type MessagesBot = {
   id: string;
   text: string;
   isUser: boolean;
   timestamp: Date;
-  mediaUrl?: string;
-  mediaType?: 'image' | 'audio';
-};
-
-export type ChatSession = {
-  id: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  messages: Message[];
-};
-
-export type ChatState = {
-  messages: Message[];
-  isLoading: boolean;
-  error: string | null;
-  sessionId: string | null;
 };
