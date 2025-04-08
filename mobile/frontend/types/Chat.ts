@@ -13,3 +13,10 @@ export interface Chat {
   messages: Message[];
   lastMessage?: Message;
 }
+
+export type Message = {
+  id: string;
+  text: string;
+  isUser: boolean;
+  timestamp: Date;
+};
