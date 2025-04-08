@@ -1,4 +1,3 @@
-
 import { useLocalSearchParams } from "expo-router"
 import { useState, useEffect, useRef } from "react"
 import {
@@ -8,7 +7,6 @@ import {
   ActivityIndicator,
   Text,
   TouchableOpacity,
-  Alert,
   Animated,
   Image,
   Dimensions,
@@ -46,6 +44,7 @@ import { navigateToChat } from "@/services/chatService";
 import { LinearGradient } from "expo-linear-gradient";
 import Header from "@/components/navigation/headers";
 import { StatusScreen } from '@/app/screens/StatusScreen';
+import { useStatus } from '@/context/StatusContext';
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 const { width } = Dimensions.get("window")
@@ -77,6 +76,8 @@ export default function PickupOwner() {
 
   const socketRef = useRef<Socket | null>(null)
   const pulseAnim = useRef(new Animated.Value(1)).current
+
+  const { show, hide } = useStatus();
 
   // Pulse animation for chat button
   useEffect(() => {
@@ -157,8 +158,16 @@ export default function PickupOwner() {
 
   const openChat = async () => {
     if (!user?.id) {
-      Alert.alert("Error", "You need to be logged in to chat")
-      return
+      show({
+        type: "error",
+        title: "Error",
+        message: "You need to be logged in to chat",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
+      return;
     }
 
     try {
@@ -178,10 +187,15 @@ export default function PickupOwner() {
       })
     } catch (error) {
       console.error("Error opening chat:", error)
-      Alert.alert(
-        "Chat Error",
-        "Failed to open chat. Error: " + (error instanceof Error ? error.message : String(error)),
-      )
+      show({
+        type: "error",
+        title: "Chat Error",
+        message: "Failed to open chat. Error: " + (error instanceof Error ? error.message : String(error)),
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   }
 

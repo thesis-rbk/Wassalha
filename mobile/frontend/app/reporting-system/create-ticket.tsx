@@ -4,7 +4,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -18,9 +17,11 @@ import { Colors } from '@/constants/Colors';
 import { Send, AlertCircle, ChevronDown, ChevronUp, Upload } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
+import { useStatus } from '@/context/StatusContext';
 
 export default function ReportIssuePage() {
   const router = useRouter();
+  const { show, hide } = useStatus();
   const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -89,13 +90,29 @@ export default function ReportIssuePage() {
       }
     } catch (error) {
       console.error('Error picking file:', error);
-      Alert.alert('Error', 'Failed to pick file. Please try again.');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to pick file. Please try again.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 
   const handleSubmitTicket = async () => {
     if (!title.trim() || !description.trim() || !category) {
-      Alert.alert('Error', 'Please fill in all fields');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Please fill in all fields",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return;
     }
 
@@ -145,11 +162,18 @@ export default function ReportIssuePage() {
       );
 
       console.log('Ticket created:', response.data);
-      Alert.alert(
-        'Success',
-        'Your ticket has been submitted successfully. Please wait for an admin to review it.',
-        [{ text: 'OK', onPress: () => router.push('/home') }]
-      );
+      show({
+        type: "success",
+        title: "Success",
+        message: "Your ticket has been submitted successfully. Please wait for an admin to review it.",
+        primaryAction: {
+          label: "OK",
+          onPress: () => {
+            hide();
+            router.push('/home');
+          }
+        }
+      });
       setTitle('');
       setDescription('');
       setCategory('');
@@ -157,7 +181,15 @@ export default function ReportIssuePage() {
       setShowForm(false);
     } catch (error) {
       console.error('Error creating ticket:', error);
-      Alert.alert('Error', 'Failed to create ticket. Please try again.');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to create ticket. Please try again.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setIsLoading(false);
     }

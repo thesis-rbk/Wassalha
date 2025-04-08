@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from "react-native"
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native"
 import { useRoute, useNavigation } from "@react-navigation/native"
 import { Image as ExpoImage } from "expo-image"
 import type { Sponsorship } from "@/types/Sponsorship"

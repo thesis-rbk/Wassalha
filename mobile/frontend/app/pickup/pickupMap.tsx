@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Alert, Modal, View } from "react-native";
+import { StyleSheet, Modal, View } from "react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { ThemedText } from "@/components/ThemedText";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -10,6 +10,7 @@ import MapViewDirections from "react-native-maps-directions";
 import * as Location from "expo-location";
 import { SafeLocation } from "@/types/Pickup";
 import { PickupMapProps } from "@/types/Pickup";
+import { useStatus } from '@/context/StatusContext';
 
 // Custom Map Style mimicking Facebook's color scheme
 const facebookMapStyle = [
@@ -33,6 +34,7 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
     longitude: number;
   } | null>(null);
   const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const { show, hide } = useStatus();
 
   const safeLocations: SafeLocation[] = [
     { name: "Tunis-Carthage International Airport", latitude: 36.851, longitude: 10.2272 },
@@ -106,7 +108,15 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission Denied", "Permission to access location was denied");
+        show({
+          type: "error",
+          title: "Permission Denied",
+          message: "Permission to access location was denied",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
         return;
       }
 
@@ -118,7 +128,15 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
       setCurrentPosition({ latitude, longitude });
     } catch (error) {
       console.error("Error fetching current location:", error);
-      Alert.alert("Error", "Failed to get current location");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to get current location",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 
@@ -138,7 +156,15 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
       setManualAddress(name);
       setMapModalVisible(false);
     } else {
-      Alert.alert("Error", "Please select a location before confirming");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Please select a location before confirming",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 

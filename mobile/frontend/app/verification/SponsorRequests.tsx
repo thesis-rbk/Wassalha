@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList, StyleSheet, View, ActivityIndicator, Alert, Modal, TextInput, TouchableOpacity, Text } from 'react-native';
+import { FlatList, StyleSheet, View, ActivityIndicator, Modal, TextInput, TouchableOpacity, Text } from 'react-native';
 import OrderCard from '../../components/fetchOrdersSponsors';
 import axiosInstance from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -352,7 +352,6 @@ const OrdersScreen: React.FC = () => {
         try {
             console.log("Rejecting order with ID:", orderId);
             await axiosInstance.put("/api/confirmedUpdate", { orderId, status: "REJECTED" });
-            Alert.alert("Success", "Order rejected successfully");
             console.log("Order rejected:");
             await fetchOrders(token); // Refresh orders after rejection
             show({

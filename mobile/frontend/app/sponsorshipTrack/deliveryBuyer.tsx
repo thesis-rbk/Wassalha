@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Alert,
   TouchableOpacity,
   Linking,
   Platform,
@@ -15,6 +14,7 @@ import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { Image } from "expo-image";
 import { Mail, Star, Clock, RefreshCw, ExternalLink } from "lucide-react-native";
 import { TabBar } from "@/components/navigation/TabBar";
+import { useStatus } from "@/context/StatusContext";
 
 export default function DeliveryBuyer() {
   const router = useRouter();
@@ -22,13 +22,23 @@ export default function DeliveryBuyer() {
   const [rating, setRating] = useState(0);
   const [detailsReceived, setDetailsReceived] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("orders");
+  const { show, hide } = useStatus();
+
   const handleOpenGmail = async () => {
     try {
       // Open Gmail in browser
       await Linking.openURL('https://mail.google.com/mail/');
     } catch (error) {
       console.error('Error:', error);
-      Alert.alert('Error', 'Unable to open Gmail in browser');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Unable to open Gmail in browser",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 
@@ -38,28 +48,46 @@ export default function DeliveryBuyer() {
 
   const submitReview = () => {
     if (rating === 0) {
-      Alert.alert("Error", "Please select a rating before submitting");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Please select a rating before submitting",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return;
     }
     setHasReviewed(true);
-    Alert.alert("Success", "Thank you for your review!");
+    show({
+      type: "success",
+      title: "Success",
+      message: "Thank you for your review!",
+      primaryAction: {
+        label: "OK",
+        onPress: hide
+      }
+    });
   };
 
   const confirmDetailsReceived = () => {
-    Alert.alert(
-      "Confirm Receipt",
-      "Have you received the sponsorship details in your email?",
-      [
-        {
-          text: "No, Still Waiting",
-          style: "cancel"
-        },
-        {
-          text: "Yes, Received",
-          onPress: () => setDetailsReceived(true)
+    show({
+      type: "success",
+      title: "Confirm Receipt",
+      message: "Have you received the sponsorship details in your email?",
+      primaryAction: {
+        label: "Yes, Received",
+        onPress: () => {
+          hide();
+          setDetailsReceived(true);
         }
-      ]
-    );
+      },
+      secondaryAction: {
+        label: "No, Still Waiting",
+        onPress: hide
+      }
+    });
   };
   const handleTabPress = (tabName: string) => {
     setActiveTab(tabName);

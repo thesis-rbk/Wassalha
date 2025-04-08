@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image, Alert, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image,  Dimensions } from 'react-native';
 import { Camera, CameraView } from 'expo-camera';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -123,7 +123,15 @@ const TakeSelfie = () => {
 
       formData.append('selfie', imageFile);
 
-      Alert.alert('Uploading', 'Please wait while we upload your selfie...');
+      show({
+        type: 'success',
+        title: 'Uploading',
+        message: 'Please wait while we upload your selfie...',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => hide()
+        }
+      });
 
       const response = await axiosInstance.post(
         `/api/users/verify-selfie/${decoded.id}`,

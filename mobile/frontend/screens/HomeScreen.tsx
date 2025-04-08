@@ -30,6 +30,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import type { UserData } from "@/types/UserData"
 import type { UserProfile } from "@/types/UserProfile"
 import CardHome from "@/components/homecard"
+import { useStatus } from '@/context/StatusContext'
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home")
@@ -60,6 +61,8 @@ export default function HomeScreen() {
   })
 
   const [currentUser, setUser] = useState(user)
+
+  const { show, hide } = useStatus()
 
   const fetchData = async () => {
     try {
@@ -290,17 +293,15 @@ export default function HomeScreen() {
 
   // New function to handle clicking on a traveler or sponsor card
   const handleUserCardPress = (name: string, role: "Traveler" | "Sponsor") => {
-    Alert.alert(
-      "Premium Feature",
-      `You need to be a premium member to contact ${role}s like ${name}. Upgrade your account to unlock this feature!`,
-      [
-        {
-          text: "OK",
-          style: "default",
-        },
-      ],
-      { cancelable: true },
-    )
+    show({
+      type: "error",
+      title: "Premium Feature",
+      message: `You need to be a premium member to contact ${role}s like ${name}. Upgrade your account to unlock this feature!`,
+      primaryAction: {
+        label: "OK",
+        onPress: hide
+      }
+    })
   }
 
   const handleTabPress = (tabName: string) => {

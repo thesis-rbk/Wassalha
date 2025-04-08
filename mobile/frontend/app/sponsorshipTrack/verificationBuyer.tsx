@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -14,6 +13,7 @@ import { ThemedText } from "@/components/ThemedText";
 import ProgressBar from "@/components/ProgressBar";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useSponsorshipProcess } from "@/context/SponsorshipProcessContext";
+import { useStatus } from "@/context/StatusContext";
 import axiosInstance from "@/config";
 import {
   CheckCircle,
@@ -27,6 +27,7 @@ export default function VerificationBuyer() {
   const price = params.price as string;
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
+  const { show, hide } = useStatus();
 
   const [order, setOrder] = useState<any>(null);
   const [sponsorship, setSponsorship] = useState<any>(null);
@@ -62,7 +63,15 @@ export default function VerificationBuyer() {
       }
     } catch (error) {
       console.error("Error fetching process details:", error);
-      Alert.alert("Error", "Failed to load process details");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to load process details",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -79,7 +88,15 @@ export default function VerificationBuyer() {
 
   const handleProceedToPayment = () => {
     if (!sponsorship) {
-      Alert.alert("Error", "Please wait for sponsorship details to load");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Please wait for sponsorship details to load",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return;
     }
 

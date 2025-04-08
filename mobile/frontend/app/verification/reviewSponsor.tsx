@@ -21,7 +21,15 @@ const ReviewComponent: React.FC<ReviewComponentProps> = ({ onReviewSubmitted }) 
     // Submit review to backend
     const handleSubmit = async () => {
         if (rating === null) {
-            alert('Please select a rating before submitting.');
+            show({
+                type: 'error',
+                title: 'Missing Rating',
+                message: 'Please select a rating before submitting.',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             return;
         }
         console.log("rating:", rating)
