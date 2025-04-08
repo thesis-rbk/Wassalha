@@ -8,11 +8,13 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import axiosInstance from '../../config';
+import { useStatus } from '@/context/StatusContext';
 
 export default function NewPassword() {
   const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
   const { email } = useLocalSearchParams<{ email?: string }>();
+  const { show, hide } = useStatus();
 
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
@@ -35,7 +37,18 @@ export default function NewPassword() {
         setTimer((prev) => prev - 1);
       }, 1000);
     } else if (timer <= 0) {
-      Alert.alert('Expired', 'The verification code has expired. Request a new one.');
+      show({
+        type: 'error',
+        title: 'Code Expired',
+        message: 'The verification code has expired. Request a new one.',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {
+            hide();
+            router.back(); // Go back to request code screen
+          }
+        }
+      });
       setIsTimerActive(false); // Stop further alerts
     }
 
@@ -71,7 +84,15 @@ export default function NewPassword() {
   const handleSubmit = async () => {
     const fullCode = code.join('');
     if (fullCode.length !== 6) {
-      Alert.alert('Error', 'Please enter a 6-digit verification code');
+      show({
+        type: 'error',
+        title: 'Invalid Code',
+        message: 'Please enter a 6-digit verification code',
+        primaryAction: {
+          label: 'OK',
+          onPress: hide
+        }
+      });
       return;
     }
 
@@ -93,23 +114,39 @@ export default function NewPassword() {
         // Stop the timer on success
         setIsTimerActive(false);
 
-        // Success alert
-        Alert.alert(
-          'Success',
-          'Your password has been reset successfully!',
-          [
-            {
-              text: 'OK',
-              onPress: () => router.push('/auth/login'),
-            },
-          ],
-          { cancelable: false }
-        );
+        show({
+          type: 'success',
+          title: 'Password Reset',
+          message: 'Your password has been reset successfully!',
+          primaryAction: {
+            label: 'Go to Login',
+            onPress: () => {
+              hide();
+              router.push('/auth/login');
+            }
+          }
+        });
       } catch (error: any) {
         if (error.response?.data?.error) {
-          Alert.alert('Error', `Password reset failed: ${error.response.data.error}`);
+          show({
+            type: 'error',
+            title: 'Reset Failed',
+            message: `Password reset failed: ${error.response.data.error}`,
+            primaryAction: {
+              label: 'Try Again',
+              onPress: hide
+            }
+          });
         } else {
-          Alert.alert('Error', 'Password reset failed. Please try again.');
+          show({
+            type: 'error',
+            title: 'Reset Failed',
+            message: 'Password reset failed. Please try again.',
+            primaryAction: {
+              label: 'OK',
+              onPress: hide
+            }
+          });
         }
       } finally {
         setIsLoading(false);

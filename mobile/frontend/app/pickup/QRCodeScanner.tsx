@@ -34,9 +34,6 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
     message: ''
   });
 
-  // Flag to track if we should process the scan
-  const [shouldProcessScan, setShouldProcessScan] = useState(false);
-
   useEffect(() => {
     const checkAndRequestPermission = async () => {
       if (!permission) return; // Wait for hook to initialize
@@ -53,25 +50,8 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
     checkAndRequestPermission();
   }, [permission, requestPermission]);
 
-  // Handle successful navigation to review screen
-  const handleNavigateToReview = () => {
-    setStatusVisible(false);
-    onClose();
-    router.push({
-      pathname: "/screens/Review",
-      params: {
-        idOrder: paramsData.idOrder,
-        goodsName: paramsData.goodsName,
-        travelerId: paramsData.travelerId,
-        requesterId: paramsData.requesterId,
-        requesterName: paramsData.requesterName,
-        travelerName: paramsData.travelerName
-      }
-    });
-  };
-
   const handleScan = async ({ type, data }: { type: string; data: string }) => {
-    if (scanned || !shouldProcessScan) return;
+    if (scanned) return;
     setScanned(true);
 
     try {
@@ -85,6 +65,7 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
           message: 'Invalid QR code for this pickup.'
         });
         setStatusVisible(true);
+        onClose();
         return;
       }
 
@@ -95,42 +76,59 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
           message: 'This pickup is already completed.'
         });
         setStatusVisible(true);
+        onClose();
         return;
       }
 
-      try {
-        const token = await AsyncStorage.getItem("jwtToken");
-        if (!token) throw new Error("No authentication token found");
-        
-        // Update status in the database
-        await axiosInstance.put(
-          "/api/pickup/status",
-          { pickupId: pickup.id, newStatus: "COMPLETED" },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        
-        // Update local state
-        setPickups((prev) =>
-          prev.map((p) =>
-            p.id === pickup.id ? { ...p, status: "COMPLETED" } : p
-          )
-        );
-        
-        // Show success message
-        setStatusMessage({
-          type: 'success',
-          title: '✅ Success',
-          message: 'Pickup completed successfully! Please leave a review.'
-        });
-        setStatusVisible(true);
-      } catch (error) {
-        setStatusMessage({
-          type: 'error',
-          title: 'Error',
-          message: 'Failed to update pickup status.'
-        });
-        setStatusVisible(true);
-      }
+      const token = await AsyncStorage.getItem("jwtToken");
+      if (!token) throw new Error("No authentication token found");
+
+      // Show success message with review navigation
+      setStatusMessage({
+        type: 'success',
+        title: '✅ Success',
+        message: 'Pickup completed successfully! Please leave a review.'
+      });
+      setStatusVisible(true);
+
+      // Handle the success flow
+      const handleSuccess = async () => {
+        try {
+          await axiosInstance.put(
+            "/api/pickup/status",
+            { pickupId: pickup.id, newStatus: "COMPLETED" },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          setPickups((prev) =>
+            prev.map((p) =>
+              p.id === pickup.id ? { ...p, status: "COMPLETED" } : p
+            )
+          );
+
+          onClose();
+          // Navigate to Review screen
+          router.push({
+            pathname: "/screens/Review",
+            params: {
+              idOrder: paramsData.idOrder,
+              goodsName: paramsData.goodsName,
+              travelerId: paramsData.travelerId,
+              requesterId: paramsData.requesterId,
+              requesterName: paramsData.requesterName,
+              travelerName: paramsData.travelerName
+            }
+          });
+        } catch (error) {
+          setStatusMessage({
+            type: 'error',
+            title: 'Error',
+            message: 'Failed to update pickup status.'
+          });
+          setStatusVisible(true);
+        }
+      };
+
     } catch (error) {
       console.error("Error processing QR scan:", error);
       setStatusMessage({
@@ -139,23 +137,11 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         message: 'Failed to complete pickup. Please try again.'
       });
       setStatusVisible(true);
+      onClose();
     } finally {
       setTimeout(() => setScanned(false), 1000);
     }
   };
-
-  // Update shouldProcessScan when the modal becomes visible
-  useEffect(() => {
-    if (visible) {
-      // Give a slight delay before enabling scan to prevent accidental scans
-      const timer = setTimeout(() => {
-        setShouldProcessScan(true);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else {
-      setShouldProcessScan(false);
-    }
-  }, [visible]);
 
   if (!visible) return null;
 
@@ -183,24 +169,17 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
               </BaseButton>
             </View>
           ) : (
-            <>
-              <CameraView
-                style={styles.camera}
-                facing="back"
-                onBarcodeScanned={handleScan}
-                barcodeScannerSettings={{
-                  barcodeTypes: ["qr"],
-                }}
-              />
-              {!shouldProcessScan && (
-                <View style={styles.preparingOverlay}>
-                  <Text style={styles.preparingText}>Preparing scanner...</Text>
-                </View>
-              )}
-            </>
+            <CameraView
+              style={styles.camera}
+              facing="back"
+              onBarcodeScanned={handleScan} // Updated prop name (case-sensitive)
+              barcodeScannerSettings={{
+                barcodeTypes: ["qr"], // Simplified, "qr" works in newer versions
+              }}
+            />
           )}
           <BaseButton
-            variant="secondary"
+            variant="primary"
             size="small"
             style={styles.cancelScannerButton}
             onPress={onClose}
@@ -218,9 +197,45 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         message={statusMessage.message}
         primaryAction={{
           label: statusMessage.type === 'success' ? "Continue" : "OK",
-          onPress: () => statusMessage.type === 'success' ? handleNavigateToReview() : setStatusVisible(false)
+          onPress: () => {
+            setStatusVisible(false);
+            if (statusMessage.type === 'success') {
+              onClose();
+              router.push({
+                pathname: "/screens/Review",
+                params: {
+                  idOrder: paramsData.idOrder,
+                  goodsName: paramsData.goodsName,
+                  travelerId: paramsData.travelerId,
+                  requesterId: paramsData.requesterId,
+                  requesterName: paramsData.requesterName,
+                  travelerName: paramsData.travelerName
+                }
+              });
+            } else {
+              onClose();
+            }
+          }
         }}
-        onClose={() => statusMessage.type === 'success' ? handleNavigateToReview() : setStatusVisible(false)}
+        onClose={() => {
+          setStatusVisible(false);
+          if (statusMessage.type === 'success') {
+            onClose();
+            router.push({
+              pathname: "/screens/Review",
+              params: {
+                idOrder: paramsData.idOrder,
+                goodsName: paramsData.goodsName,
+                travelerId: paramsData.travelerId,
+                requesterId: paramsData.requesterId,
+                requesterName: paramsData.requesterName,
+                travelerName: paramsData.travelerName
+              }
+            });
+          } else {
+            onClose();
+          }
+        }}
       />
     </>
   );
@@ -237,21 +252,6 @@ const styles = StyleSheet.create({
     width: "80%",
     height: "60%",
     borderRadius: 10,
-  },
-  preparingOverlay: {
-    position: 'absolute',
-    width: "80%",
-    height: "60%",
-    borderRadius: 10,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  preparingText: {
-    fontFamily: "Poppins-SemiBold",
-    fontSize: 16,
-    color: "white",
-    textAlign: "center",
   },
   scannerText: {
     fontFamily: "Poppins-SemiBold",

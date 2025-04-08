@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import axiosInstance from '../../config';
@@ -8,42 +8,75 @@ import { ThemedText } from '@/components/ThemedText';
 import { InputField } from '@/components/InputField';
 import { BaseButton } from '../../components/ui/buttons/BaseButton';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useStatus } from '@/context/StatusContext';
 
 const ForgotPassword = () => {
   const router = useRouter();
   const [email, setEmail] = useState<string>('');
   const colorScheme = useColorScheme() ?? 'light';
+  const { show, hide } = useStatus();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRequestReset = async () => {
     if (!email) {
-      Alert.alert('Error', 'Please enter your email');
+      show({
+        type: 'error',
+        title: 'Error',
+        message: 'Please enter your email',
+        primaryAction: {
+          label: 'OK',
+          onPress: hide
+        }
+      });
       return;
     }
+    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      show({
+        type: 'error',
+        title: 'Error',
+        message: 'Please enter a valid email address',
+        primaryAction: {
+          label: 'OK',
+          onPress: hide
+        }
+      });
       return;
     }
 
+    setIsLoading(true);
+    
     try {
       const response = await axiosInstance.post(`/api/users/reset-password/request`, { email });
+      
       if (response.status === 200) {
-        // Replace AwesomeAlert with Alert
-        Alert.alert(
-          'Success',
-          'A reset link has been sent to your email. Check your inbox.',
-          [
-            {
-              text: 'OK',
-              onPress: () => router.push({ pathname: '/auth/NewPassword', params: { email } }),
-            },
-          ],
-          { cancelable: false }
-        );
+        show({
+          type: 'success',
+          title: 'Success',
+          message: 'A reset link has been sent to your email. Check your inbox.',
+          primaryAction: {
+            label: 'OK',
+            onPress: () => {
+              hide();
+              router.push({ pathname: '/auth/NewPassword', params: { email } });
+            }
+          }
+        });
       }
     } catch (error) {
       console.error('Request reset error:', error);
-      Alert.alert('Error', (error as any).response?.data?.error || 'Failed to send reset link');
+      show({
+        type: 'error',
+        title: 'Error',
+        message: (error as any).response?.data?.error || 'Failed to send reset link',
+        primaryAction: {
+          label: 'OK',
+          onPress: hide
+        }
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,8 +106,10 @@ const ForgotPassword = () => {
             size="login"
             style={styles.button}
             onPress={handleRequestReset}
+            loading={isLoading}
+            disabled={isLoading}
           >
-            Send Reset Link
+            {isLoading ? 'Sending...' : 'Send Reset Link'}
           </BaseButton>
 
           <ThemedText style={styles.loginText}>

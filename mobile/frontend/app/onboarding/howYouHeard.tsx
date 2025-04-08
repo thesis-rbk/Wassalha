@@ -8,6 +8,7 @@ import { useRouter } from "expo-router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import axiosInstance from "@/config";
+import { useStatus } from "@/context/StatusContext";
 
 enum ReferralSource {
   SOCIAL_MEDIA = "SOCIAL_MEDIA",
@@ -36,6 +37,7 @@ export default function HowYouHeardScreen() {
   );
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
+  const { show, hide } = useStatus();
 
   // Get user and token from Redux store
   const { user, token } = useSelector((state: RootState) => state.auth);
@@ -43,14 +45,30 @@ export default function HowYouHeardScreen() {
 
   const handleNext = async () => {
     if (!selectedOption) {
-      alert("Please select an option before proceeding.");
+      show({
+        type: "error",
+        title: "Selection Required",
+        message: "Please select an option before proceeding.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return;
     }
 
     try {
       if (!userId) {
         console.error("User ID is missing");
-        alert("User ID is missing. Please log in again.");
+        show({
+          type: "error",
+          title: "User ID Missing",
+          message: "User ID is missing. Please log in again.",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
         return;
       }
 
@@ -73,11 +91,27 @@ export default function HowYouHeardScreen() {
         router.push("/onboarding/selectCategories");
       } else {
         console.error("Failed to update referral source:", data.message);
-        alert("Failed to update referral source. Please try again.");
+        show({
+          type: "error",
+          title: "Update Failed",
+          message: "Failed to update referral source. Please try again.",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
       }
     } catch (error) {
       console.error("Error updating referral source:", error);
-      alert("An error occurred. Please try again.");
+      show({
+        type: "error",
+        title: "Error",
+        message: "An error occurred. Please try again.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 

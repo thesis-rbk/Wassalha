@@ -35,6 +35,7 @@ import { BACKEND_URL } from "@/config";
 import { getSocket } from "@/services/socketService";
 import { Socket } from "socket.io-client";
 import * as DocumentPicker from "expo-document-picker";
+import { useStatus } from "@/context/StatusContext";
 
 export default function ChatScreen() {
   const params = useLocalSearchParams();
@@ -57,6 +58,8 @@ export default function ChatScreen() {
 
   // Auto-scroll to latest message
   const flatListRef = useRef<FlatList>(null);
+
+  const { show, hide } = useStatus();
 
   // Socket initialization - following the pattern from NotificationContext
   useEffect(() => {
@@ -266,7 +269,15 @@ export default function ChatScreen() {
       }
     } catch (error) {
       console.error("Error sending message:", error);
-      Alert.alert("Error", "Failed to send message. Please try again.");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to send message. Please try again.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 
@@ -297,10 +308,15 @@ export default function ChatScreen() {
       await uploadDocument(document);
     } catch (error) {
       console.error("Error picking document:", error);
-      Alert.alert(
-        "Document Error",
-        "There was a problem selecting the document. Please try again."
-      );
+      show({
+        type: "error",
+        title: "Document Error",
+        message: "There was a problem selecting the document. Please try again.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 
@@ -309,7 +325,15 @@ export default function ChatScreen() {
    */
   const uploadDocument = async (document: any) => {
     if (!document || !document.uri) {
-      Alert.alert("Error", "Invalid document");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Invalid document",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return;
     }
 
@@ -395,10 +419,15 @@ export default function ChatScreen() {
       }
     } catch (error) {
       console.error("Error uploading document:", error);
-      Alert.alert(
-        "Upload Failed",
-        "Could not upload the document. Please try again later."
-      );
+      show({
+        type: "error",
+        title: "Upload Failed",
+        message: "Could not upload the document. Please try again later.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setIsUploading(false);
     }
@@ -506,7 +535,15 @@ export default function ChatScreen() {
   const handleFileOpen = async (media: any) => {
     try {
       if (!media || !media.url) {
-        Alert.alert("Error", "File URL not available");
+        show({
+          type: "error",
+          title: "Error",
+          message: "File URL not available",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
         return;
       }
 
@@ -523,24 +560,44 @@ export default function ChatScreen() {
       if (canOpen) {
         await Linking.openURL(fileUrl);
       } else {
-        Alert.alert(
-          "Cannot Open File",
-          "Your device cannot open this type of file.",
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Copy URL",
-              onPress: () => {
-                // Implement clipboard copy here if needed
-                Alert.alert("URL Copied", "File URL copied to clipboard");
-              },
-            },
-          ]
-        );
+        show({
+          type: "error",
+          title: "Cannot Open File",
+          message: "Your device cannot open this type of file.",
+          primaryAction: {
+            label: "Cancel",
+            onPress: hide
+          },
+          secondaryAction: {
+            label: "Copy URL",
+            onPress: () => {
+              // Implement clipboard copy here if needed
+              hide();
+              // Show confirmation after copying
+              show({
+                type: "success",
+                title: "URL Copied",
+                message: "File URL copied to clipboard",
+                primaryAction: {
+                  label: "OK",
+                  onPress: hide
+                }
+              });
+            }
+          }
+        });
       }
     } catch (error) {
       console.error("Error opening file:", error);
-      Alert.alert("Error", "Could not open the file");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Could not open the file",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 

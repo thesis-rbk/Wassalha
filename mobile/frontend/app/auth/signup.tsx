@@ -12,10 +12,12 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { InputFieldPassword } from "@/components/InputFieldPassword";
 import axiosInstance from "../../config";
+import { useStatus } from '@/context/StatusContext';
 
 const Signup = () => {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
+  const { show, hide } = useStatus();
 
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -215,6 +217,17 @@ const Signup = () => {
       if (!email) setEmailError("Email is required");
       if (!password) setPasswordError("Password is required");
       if (!confirmPassword) setConfirmPasswordError("Confirm Password is required");
+      
+      // Add a status message for missing fields
+      show({
+        type: "error",
+        title: "Incomplete Form",
+        message: "Please fill in all required fields",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return;
     }
     if (!isNameValid(name)) {
@@ -229,10 +242,32 @@ const Signup = () => {
       setPasswordError(
         "Password must be at least 8 characters long and include an uppercase letter and a number"
       );
+      
+      // Add a status message for weak password
+      show({
+        type: "error",
+        title: "Password Strength",
+        message: "Password must be at least 8 characters long and include an uppercase letter and a number",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return;
     }
     if (password !== confirmPassword) {
       setConfirmPasswordError("Passwords do not match");
+      
+      // Add a status message for password mismatch
+      show({
+        type: "error",
+        title: "Password Mismatch",
+        message: "Passwords do not match",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return;
     }
 
@@ -270,21 +305,51 @@ const Signup = () => {
             console.log("Stored token from registration response");
           }
           
-          // Navigate to profile picture page
-          console.log("Navigating to profile picture setup");
-          router.push({
-            pathname: "/auth/profile-picture" as any,
-            params: {
-              userId,
-              userName: name
+          // Show success message
+          show({
+            type: "success",
+            title: "Registration Successful",
+            message: "Your account has been created successfully!",
+            primaryAction: {
+              label: "Continue",
+              onPress: () => {
+                hide();
+                // Navigate to profile picture page
+                console.log("Navigating to profile picture setup");
+                router.push({
+                  pathname: "/auth/profile-picture" as any,
+                  params: {
+                    userId,
+                    userName: name
+                  }
+                });
+              }
             }
           });
         } else {
           setEmailError("Registration successful but user data not found. Please try logging in manually.");
+          show({
+            type: "error",
+            title: "Registration Issue",
+            message: "Registration successful but user data not found. Please try logging in manually.",
+            primaryAction: {
+              label: "OK",
+              onPress: hide
+            }
+          });
           setIsLoading(false);
         }
       } else {
         setEmailError(res.data?.error || "Signup failed");
+        show({
+          type: "error",
+          title: "Signup Failed",
+          message: res.data?.error || "Signup failed. Please try again.",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
         setIsLoading(false);
       }
     } catch (error: any) {
@@ -293,12 +358,39 @@ const Signup = () => {
       // Handle 409 conflict (email already exists)
       if (error.response && error.response.status === 409) {
         setEmailError("This email is already registered. Please try logging in or use a different email.");
+        show({
+          type: "error",
+          title: "Email Already Registered",
+          message: "This email is already registered. Please try logging in or use a different email.",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
       } else if (error.response && error.response.data && error.response.data.error) {
         // Show specific error from server
         setEmailError(error.response.data.error);
+        show({
+          type: "error",
+          title: "Signup Failed",
+          message: error.response.data.error,
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
       } else {
         // Generic error message
         setEmailError("Something went wrong during signup. Please try again.");
+        show({
+          type: "error",
+          title: "Signup Error",
+          message: "Something went wrong during signup. Please try again.",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
       }
       setIsLoading(false);
     }

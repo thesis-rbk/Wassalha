@@ -25,6 +25,7 @@ import axiosInstance from "@/config";
 import io from "socket.io-client";
 import { PickupProps } from "@/types/PickupsProps";
 import { StatusScreen } from '@/app/screens/StatusScreen';
+import { useStatus } from "@/context/StatusContext";
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 
@@ -67,6 +68,7 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
     title: '',
     message: ''
   });
+  const { show, hide } = useStatus();
 
   // Socket.IO setup
   useEffect(() => {
@@ -288,7 +290,15 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
         };
         break;
       default:
-        Alert.alert("Error", "Invalid pickup type");
+        show({
+          type: "error",
+          title: "Error",
+          message: "Invalid pickup type",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
         return;
     }
 
