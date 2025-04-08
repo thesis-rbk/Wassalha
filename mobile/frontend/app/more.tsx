@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, ScrollView, Image } from 'react-native';
-import { KeyRound, MessageCircleQuestion, LifeBuoy, HelpCircle, Headphones, Coins, PiggyBank, Banknote, Wallet, DollarSign, Users, PenSquare, LogOut, ChevronRight } from 'lucide-react-native';
+import { KeyRound, MessageCircleQuestion, LifeBuoy, HelpCircle, Headphones, Coins, PiggyBank, Banknote, Wallet, DollarSign, Users, PenSquare, LogOut, ChevronRight, Bot } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
@@ -89,6 +89,11 @@ export default function MorePage() {
       label: 'Change Password',
       route: '/profile/change',
       badge: unreadCount > 0 ? unreadCount : undefined,
+    },
+    {
+      icon: <Bot size={24} color={Colors[colorScheme].text} />,
+      label: 'AI Assistance',
+      route: '/chatBot',
     },
     {
       icon: isSponsor ? (
