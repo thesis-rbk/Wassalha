@@ -6,23 +6,22 @@ export * from './Order';
 export * from './Notification';
 export * from './Review';
 export * from './Chat';
-export * from './Message';
 export * from './Subscription';
-export * from './Sponsorship';
+
 export * from './Category';
 export * from './Reputation';
 export * from './ProcessEvent';
 export * from './GoodsProcess';
 export * from './GoodsPost';
-export * from './ServiceProvider';
 export * from './PromoPost';
 export * from './InfoItemProps';
 export * from './ProfileState';
 export * from './ProfileImage';
 export * from './Media';
-export * from './Message';
 export * from './Role';
 export * from './Traveler';
 export * from './VerificationStatusProps';
 export * from "./PaymentParams"
 export * from "./DeliveryData"
+export * from "./ChatBotMessage"
+export * from "./Chat"

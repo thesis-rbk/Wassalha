@@ -1,6 +1,5 @@
 import { User } from './User';
 import { Goods } from './Goods';
-import { Message } from './Message';
 
 export interface Chat {
     id: number;
