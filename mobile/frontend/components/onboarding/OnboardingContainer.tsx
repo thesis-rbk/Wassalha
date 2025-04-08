@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { OnboardingScreen } from './OnboardingScreen';
-import { useRouter } from 'expo-router';
 import { OnboardingContainerProps } from '@/types/OnboardingContainerProps';
+
 const onboardingData = [
   {
     image: require('../../assets/onboarding/global-delivery.png'),
@@ -20,11 +20,8 @@ const onboardingData = [
   },
 ];
 
-
-
 export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) => {
   const [currentStep, setCurrentStep] = useState(1);
-  const router = useRouter();
 
   const handleNext = () => {
     if (currentStep < onboardingData.length) {
@@ -39,8 +36,10 @@ export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) =>
   };
 
   const completeOnboarding = () => {
-    onComplete();
-    router.push('/auth/login');
+    // Just call onComplete - let the parent handle navigation
+    if (onComplete) {
+      onComplete();
+    }
   };
 
   const currentScreen = onboardingData[currentStep - 1];

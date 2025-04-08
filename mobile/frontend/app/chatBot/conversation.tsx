@@ -15,9 +15,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { ArrowLeft, Send } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useSelector } from 'react-redux';
-import axiosInstance from '@/config';
-import { Message } from '@/types/Chat';
+import { MessagesBot } from '@/types/Chat';
 import { GEMINI_API_KEY } from '@/config';
 
 // Wassalha system context to provide to the model
@@ -57,9 +55,8 @@ export default function ChatBotConversation() {
   const colorScheme = useColorScheme() ?? 'light';
   const isDark = colorScheme === 'dark';
   const router = useRouter();
-  const { user, token } = useSelector((state: any) => state.auth);
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<MessagesBot[]>([
     {
       id: '1',
       text: 'Welcome to Wassalha! I\'m your Wassalha Assistant. How can I help you with your package delivery needs today?',
@@ -68,35 +65,12 @@ export default function ChatBotConversation() {
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [orderData, setOrderData] = useState<any>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   
-  // Fetch user's order data if available
-  useEffect(() => {
-    if (token && user?.id) {
-      fetchUserOrders();
-    }
-  }, [token, user]);
-
-  const fetchUserOrders = async () => {
-    try {
-      const response = await axiosInstance.get('/api/orders/user', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.data) {
-        setOrderData(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching user orders:', error);
-    }
-  };
-
   const sendMessage = async () => {
     if (message.trim() === '') return;
     
-    const userMessage: Message = {
+    const userMessage: MessagesBot = {
       id: Date.now().toString(),
       text: message,
       isUser: true,
@@ -118,18 +92,24 @@ export default function ChatBotConversation() {
        lowerCaseMessage.includes('track') || 
        lowerCaseMessage.includes('where'))
     ) {
-      // If user has order data, include it in the context
-      if (orderData && orderData.length > 0) {
-        const recentOrders = orderData.slice(0, 3).map((order: any) => ({
-          id: order.id,
-          status: order.status,
-          createdAt: order.createdAt,
-          destination: order.destination
-        }));
-        
-        promptText = `The user is asking about order status. Here's their recent order data: ${JSON.stringify(recentOrders)}. 
-        Please provide a helpful response about their order status. The original query was: ${message}`;
-      }
+      // Frontend only mock data for orders
+      const mockOrders = [
+        {
+          id: "ORD-123456",
+          status: "In Transit",
+          createdAt: "2023-04-05T10:30:00Z",
+          destination: "Paris, France"
+        },
+        {
+          id: "ORD-789012",
+          status: "Delivered",
+          createdAt: "2023-03-20T14:15:00Z",
+          destination: "Berlin, Germany"
+        }
+      ];
+      
+      promptText = `The user is asking about order status. Here's their recent order data: ${JSON.stringify(mockOrders)}. 
+      Please provide a helpful response about their order status. The original query was: ${message}`;
     }
     
     // Check if the message is asking about illegal items
@@ -200,7 +180,7 @@ export default function ChatBotConversation() {
         console.error('API Error:', data.error);
       }
       
-      const botMessage: Message = {
+      const botMessage: MessagesBot = {
         id: (Date.now() + 1).toString(),
         text: aiResponse,
         isUser: false,
@@ -211,7 +191,7 @@ export default function ChatBotConversation() {
     } catch (error) {
       console.error('Error calling Gemini API:', error);
       
-      const errorMessage: Message = {
+      const errorMessage: MessagesBot = {
         id: (Date.now() + 1).toString(),
         text: 'I apologize, but I\'m having trouble connecting to our services right now. Please try again later or contact Wassalha customer support for immediate assistance.',
         isUser: false,
