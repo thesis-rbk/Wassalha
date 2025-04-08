@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { Colors } from "@/constants/Colors";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { NewPasswordValidation } from "./newPasswordValidation";

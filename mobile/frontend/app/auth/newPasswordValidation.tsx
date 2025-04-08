@@ -105,7 +105,7 @@ export function NewPasswordValidation({
     <ThemedView style={styles.container}>
       <ThemedText style={styles.title}>Create New Password</ThemedText>
       <ThemedText style={styles.subText}>
-        Your new password must be different from previous used passwords
+        Make sure your new password is strong and easy to remember
       </ThemedText>
 
       <ThemedText style={styles.timerText}>

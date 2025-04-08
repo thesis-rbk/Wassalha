@@ -484,7 +484,7 @@ const resetPassword = async (req, res) => {
     });
 
     if (!user || user.resetToken !== code || !user.resetTokenExpiry) {
-      return res.status(400).json({ error: "Invalid or expired code" });
+      return res.status(400).json({ error: "Invalid code" });
     }
 
     // For admin requests, verify user is an admin
