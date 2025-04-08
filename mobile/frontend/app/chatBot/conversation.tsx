@@ -17,12 +17,12 @@ import { ArrowLeft, Send } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSelector } from 'react-redux';
 import axiosInstance from '@/config';
+import { GEMINI_API_KEY } from '@/config';
 import AssistantService from '@/services/assistantService';
 import { ChatBotMessage, ChatBotSession, ChatBotState } from '@/types/ChatBotMessage';
 
-// Using the Gemini API key directly from environment
-const GEMINI_API_KEY = 'AIzaSyCfXU8UUHPXWeUvpUg7WJejccsjmzUS_VE';
 
+console.log(GEMINI_API_KEY);
 // Enhanced Wassalha context with more comprehensive information
 const createWassalhaContext = () => {
   const faqs = AssistantService.getWassalhaFAQs();
