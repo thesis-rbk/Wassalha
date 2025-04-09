@@ -11,7 +11,6 @@ import {
   type NativeSyntheticEvent,
   type NativeScrollEvent,
   TouchableOpacity,
-  Alert,
   Image,
   SafeAreaView,
 } from "react-native"
@@ -31,6 +30,8 @@ import type { UserData } from "@/types/UserData"
 import type { UserProfile } from "@/types/UserProfile"
 import CardHome from "@/components/homecard"
 import { useStatus } from '@/context/StatusContext'
+import { BackHandler } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home")
@@ -145,6 +146,32 @@ export default function HomeScreen() {
     }
   }
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        show({
+          type: 'error',
+          title: 'Exit App',
+          message: 'Are you sure you want to exit Wassalha?',
+          primaryAction: {
+            label: 'Exit',
+            onPress: () => BackHandler.exitApp()
+          },
+          secondaryAction: {
+            label: 'Cancel',
+            onPress: hide
+          }
+        });
+        return true; // Prevent default behavior
+      };
+  
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+  
+      return () => {
+        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+      };
+    }, [show, hide])
+  );
   useEffect(() => {
     fetchRecentUsers()
     fetchCurrentUser()

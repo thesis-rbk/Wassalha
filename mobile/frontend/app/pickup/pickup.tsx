@@ -5,7 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
-  Alert,
+  
   TextInput,
   FlatList,
 } from "react-native";
@@ -25,7 +25,6 @@ import axiosInstance from "@/config";
 import io from "socket.io-client";
 import { PickupProps } from "@/types/PickupsProps";
 import { StatusScreen } from '@/app/screens/StatusScreen';
-import { useStatus } from "@/context/StatusContext";
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
 
@@ -68,7 +67,6 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
     title: '',
     message: ''
   });
-  const { show, hide } = useStatus();
 
   // Socket.IO setup
   useEffect(() => {
@@ -290,15 +288,12 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
         };
         break;
       default:
-        show({
-          type: "error",
-          title: "Error",
-          message: "Invalid pickup type",
-          primaryAction: {
-            label: "OK",
-            onPress: hide
-          }
+        setStatusMessage({
+          type: 'error',
+          title: 'Error',
+          message: 'Invalid pickup type'
         });
+        setStatusVisible(true);
         return;
     }
 
@@ -651,19 +646,20 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   onChangeText={handleAirportInputChange}
                 />
                 {airportSuggestions.length > 0 && (
-                  <FlatList
-                    data={airportSuggestions}
-                    renderItem={({ item }) => (
+                  <ScrollView 
+                    nestedScrollEnabled={true}
+                    style={styles.suggestionContainer}
+                  >
+                    {airportSuggestions.map((item) => (
                       <TouchableOpacity
+                        key={item}
                         style={styles.suggestionItem}
                         onPress={() => handleSuggestionSelect(item)}
                       >
                         <ThemedText style={styles.suggestionText}>{item}</ThemedText>
                       </TouchableOpacity>
-                    )}
-                    keyExtractor={(item) => item}
-                    style={styles.suggestionContainer}
-                  />
+                    ))}
+                  </ScrollView>
                 )}
               </>
             )}

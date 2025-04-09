@@ -111,12 +111,12 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
           router.push({
             pathname: "/screens/Review",
             params: {
-              idOrder: paramsData.idOrder,
-              goodsName: paramsData.goodsName,
-              travelerId: paramsData.travelerId,
-              requesterId: paramsData.requesterId,
-              requesterName: paramsData.requesterName,
-              travelerName: paramsData.travelerName
+              idOrder: paramsData.idOrder || "",
+              goodsName: paramsData.goodsName || "Item",
+              travelerId: paramsData.travelerId || "",
+              requesterId: paramsData.requesterId || "",
+              requesterName: paramsData.requesterName || "Requester",
+              travelerName: paramsData.travelerName || "Traveler"
             }
           });
         } catch (error) {
@@ -204,12 +204,12 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
               router.push({
                 pathname: "/screens/Review",
                 params: {
-                  idOrder: paramsData.idOrder,
-                  goodsName: paramsData.goodsName,
-                  travelerId: paramsData.travelerId,
-                  requesterId: paramsData.requesterId,
-                  requesterName: paramsData.requesterName,
-                  travelerName: paramsData.travelerName
+                  idOrder: paramsData.idOrder || "",
+                  goodsName: paramsData.goodsName || "Item",
+                  travelerId: paramsData.travelerId || "",
+                  requesterId: paramsData.requesterId || "",
+                  requesterName: paramsData.requesterName || "Requester",
+                  travelerName: paramsData.travelerName || "Traveler"
                 }
               });
             } else {
@@ -224,12 +224,12 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
             router.push({
               pathname: "/screens/Review",
               params: {
-                idOrder: paramsData.idOrder,
-                goodsName: paramsData.goodsName,
-                travelerId: paramsData.travelerId,
-                requesterId: paramsData.requesterId,
-                requesterName: paramsData.requesterName,
-                travelerName: paramsData.travelerName
+                idOrder: paramsData.idOrder || "",
+                goodsName: paramsData.goodsName || "Item",
+                travelerId: paramsData.travelerId || "",
+                requesterId: paramsData.requesterId || "",
+                requesterName: paramsData.requesterName || "Requester",
+                travelerName: paramsData.travelerName || "Traveler"
               }
             });
           } else {

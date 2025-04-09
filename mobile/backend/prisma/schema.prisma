@@ -919,6 +919,5 @@ model CodeSubmission {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   request        Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  request        Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
   sponsor        User     @relation(fields: [sponsorId], references: [id])
 }

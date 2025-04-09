@@ -8,6 +8,7 @@ import {
   Dimensions,
   Animated,
   Easing,
+  BackHandler,
 } from "react-native";
 import SegmentedControl from "@/components/SegmentedControl";
 import { ThemedView } from "@/components/ThemedView";
@@ -24,6 +25,7 @@ import { decode as atob } from "base-64";
 import { GoodsProcess, ProcessStatus } from "@/types/GoodsProcess";
 import { LinearGradient } from "expo-linear-gradient";
 import { io } from "socket.io-client";
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
@@ -742,6 +744,21 @@ export default function OrderPage() {
   const handleProfilePress = () => {
     router.push("/profile");
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        router.push("/home");  // This will navigate to home
+        return true;  // Prevents default back behavior
+      };
+
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => {
+        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+      };
+    }, [router])
+  );
 
   return (
     <ThemedView style={styles.container}>
