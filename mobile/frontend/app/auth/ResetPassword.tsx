@@ -9,6 +9,7 @@ import { InputField } from '@/components/InputField';
 import { BaseButton } from '../../components/ui/buttons/BaseButton';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useStatus } from '@/context/StatusContext';
+import { Colors } from '@/constants/Colors';
 
 const ForgotPassword = () => {
   const router = useRouter();

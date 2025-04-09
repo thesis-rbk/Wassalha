@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   TextInput,
   Text,
 } from "react-native";
@@ -39,6 +38,8 @@ import Card from "@/components/cards/ProcessCard";
 import { useNotification } from "@/context/NotificationContext";
 import { io } from "socket.io-client";
 import Header from "@/components/navigation/headers";
+import { useStatus } from "@/context/StatusContext";
+import { StatusScreen } from '@/app/screens/StatusScreen';
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -62,6 +63,7 @@ export default function InitializationSP() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
   const { sendNotification } = useNotification();
+  const { show, hide } = useStatus();
 
   console.log("params from initialization SP:", params);
 
@@ -121,6 +123,16 @@ export default function InitializationSP() {
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const [statusVisible, setStatusVisible] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({
+    type: 'error' as 'success' | 'error',
+    title: '',
+    message: '',
+    primaryAction: {
+      label: 'OK',
+      onPress: () => {}
+    }
+  });
 
   useEffect(() => {
     fetchRequestDetails();
@@ -169,7 +181,15 @@ export default function InitializationSP() {
       setLoading(false);
     } catch (error) {
       console.error("Error fetching request details:", error);
-      Alert.alert("Error", "Failed to load request details");
+      show({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to load request details',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
       setLoading(false);
     }
   };
@@ -216,11 +236,15 @@ export default function InitializationSP() {
       const request = checkResponse.data.data;
 
       if (request.status !== "PENDING" || request.order) {
-        Alert.alert(
-          "Request Not Available",
-          "This request already has an active order or is not accepting offers.",
-          [{ text: "Back to Requests", onPress: () => router.back() }]
-        );
+        show({
+          type: 'error',
+          title: 'Request Not Available',
+          message: 'This request already has an active order or is not accepting offers.',
+          primaryAction: {
+            label: 'Back to Requests',
+            onPress: () => router.back()
+          }
+        });
         return;
       }
 
@@ -282,10 +306,15 @@ export default function InitializationSP() {
       }
     } catch (error: any) {
       console.error("Error submitting offer:", error);
-      Alert.alert(
-        "Error",
-        "This request is not available for offers at the moment. Please try another request."
-      );
+      show({
+        type: 'error',
+        title: 'Error',
+        message: 'This request is not available for offers at the moment. Please try another request.',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -405,7 +434,15 @@ export default function InitializationSP() {
       console.log("erooooooooooooooor", error);
       console.log("API Key being used:", GOOGLE_PLACES_API_KEY);
       console.error("Error fetching airports from Google Places:", error);
-      Alert.alert("Error", "Failed to fetch airport suggestions");
+      show({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to fetch airport suggestions',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
     } finally {
       setIsFetchingAirports(false);
     }
@@ -756,6 +793,14 @@ export default function InitializationSP() {
           ) : null}
         </View>
       </ScrollView>
+      <StatusScreen
+        visible={statusVisible}
+        type={statusMessage.type}
+        title={statusMessage.title}
+        message={statusMessage.message}
+        primaryAction={statusMessage.primaryAction}
+        onClose={() => setStatusVisible(false)}
+      />
     </View>
   );
 }

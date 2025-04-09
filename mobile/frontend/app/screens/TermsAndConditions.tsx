@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions, Alert, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Check } from 'lucide-react-native';
 import Header from '@/components/navigation/headers';
+import { useStatus } from '@/context/StatusContext';
 
 // Get screen width for responsive design
 const { width } = Dimensions.get('window');
@@ -15,6 +16,7 @@ const TermsAndConditions: React.FC = () => {
     const [hasReadToBottom, setHasReadToBottom] = useState<boolean>(false);
     const scrollViewRef = useRef<ScrollView>(null);
     const router = useRouter();
+    const { show, hide } = useStatus();
 
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
@@ -28,11 +30,15 @@ const TermsAndConditions: React.FC = () => {
 
     const toggleCheckbox = () => {
         if (!hasReadToBottom) {
-            Alert.alert(
-                "Please Read Terms",
-                "Please read the entire terms and conditions before accepting.",
-                [{ text: "OK" }]
-            );
+            show({
+                type: 'error',
+                title: 'Please Read Terms',
+                message: 'Please read the entire terms and conditions before accepting.',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => {}
+                }
+            });
             return;
         }
         setIsAgreed((prev) => !prev);
@@ -49,16 +55,26 @@ const TermsAndConditions: React.FC = () => {
                 router.push('/verification/start');
             } catch (error) {
                 console.error('Error saving terms acceptance:', error);
-                Alert.alert(
-                    'Error',
-                    'There was a problem saving your acceptance. Please try again.'
-                );
+                show({
+                    type: 'error',
+                    title: 'Error',
+                    message: 'There was a problem saving your acceptance. Please try again.',
+                    primaryAction: {
+                        label: 'OK',
+                        onPress: () => {}
+                    }
+                });
             }
         } else {
-            Alert.alert(
-                'Terms Required',
-                'Please accept the terms and conditions to continue.'
-            );
+            show({
+                type: 'error',
+                title: 'Terms Required',
+                message: 'Please accept the terms and conditions to continue.',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => {}
+                }
+            });
         }
     };
 

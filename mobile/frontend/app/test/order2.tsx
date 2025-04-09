@@ -7,7 +7,6 @@ import {
   Dimensions,
   Text,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -22,6 +21,7 @@ import { BACKEND_URL } from "@/config";
 import { useRouter } from "expo-router";
 import { decode as atob } from "base-64";
 import { ProcessStatus } from "@/types/GoodsProcess";
+import { useStatus } from "@/context/StatusContext";
 
 // Custom hook to ensure we have user data
 const useReliableAuth = () => {
@@ -95,6 +95,7 @@ export default function OrderPage() {
   const [requests, setRequests] = useState<Request[]>([]);
   const { user, loading: authLoading } = useReliableAuth();
   const router = useRouter();
+  const { show, hide } = useStatus();
 
   // Add a function to check if the current user is the owner of a request
   const isOwnRequest = (requestUserId: number): boolean => {
@@ -469,11 +470,27 @@ export default function OrderPage() {
         });
       } else {
         console.log("No offers found for this request");
-        Alert.alert("No Offers", "There are no offers for this request yet.");
+        show({
+          type: 'error',
+          title: 'No Offers',
+          message: 'There are no offers for this request yet.',
+          primaryAction: {
+            label: 'OK',
+            onPress: () => {}
+          }
+        });
       }
     } catch (error) {
       console.error("Error fetching offers:", error);
-      Alert.alert("Error", "Failed to load offers for this request.");
+      show({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to load offers for this request.',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
     } finally {
       setIsLoading(false);
     }
@@ -482,7 +499,15 @@ export default function OrderPage() {
   // Add this function to handle order confirmation
   const handleConfirmOrder = async (orderId?: number) => {
     if (!orderId) {
-      Alert.alert("Error", "Order ID is missing.");
+      show({
+        type: 'error',
+        title: 'Error',
+        message: 'Order ID is missing.',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
       return;
     }
 
@@ -498,12 +523,28 @@ export default function OrderPage() {
         JSON.stringify(response.data, null, 2)
       );
 
-      Alert.alert("Success", "Order confirmed successfully!");
+      show({
+        type: 'success',
+        title: 'Success',
+        message: 'Order confirmed successfully!',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
       // Refresh the requests list to show updated status
       fetchRequests();
     } catch (error) {
       console.error("Error confirming order:", error);
-      Alert.alert("Error", "Failed to confirm order. Please try again.");
+      show({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to confirm order. Please try again.',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
     } finally {
       setIsLoading(false);
     }

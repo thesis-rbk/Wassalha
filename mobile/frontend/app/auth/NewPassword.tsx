@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Alert,
   TextInput,
   Platform,
   KeyboardAvoidingView,
@@ -13,19 +12,9 @@ import { ThemedText } from "@/components/ThemedText";
 import { Colors } from "@/constants/Colors";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { NewPasswordValidation } from "./newPasswordValidation";
+import { useStatus } from "@/context/StatusContext";
 
 const TIMER_DURATION = 900; // 15 minutes in seconds
-import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Image, Alert, TextInput, Platform, KeyboardAvoidingView } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { InputFieldPassword } from '@/components/InputFieldPassword';
-import { BaseButton } from '@/components/ui/buttons/BaseButton';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import axiosInstance from '../../config';
-import { useStatus } from '@/context/StatusContext';
 
 export default function NewPassword() {
   const router = useRouter();
@@ -46,24 +35,16 @@ export default function NewPassword() {
         setTimer((prev) => prev - 1);
       }, 1000);
     } else if (timer <= 0) {
-      Alert.alert(
-        "Expired",
-        "The verification code has expired. Request a new one."
-      );
-      setIsTimerActive(false);
       show({
         type: 'error',
-        title: 'Code Expired',
+        title: 'Expired',
         message: 'The verification code has expired. Request a new one.',
         primaryAction: {
           label: 'OK',
-          onPress: () => {
-            hide();
-            router.back(); // Go back to request code screen
-          }
+          onPress: () => {}
         }
       });
-      setIsTimerActive(false); // Stop further alerts
+      setIsTimerActive(false);
     }
 
     return () => {
@@ -98,90 +79,15 @@ export default function NewPassword() {
 
   const handleSuccess = () => {
     setIsTimerActive(false);
-    Alert.alert(
-      "Success",
-      "Your password has been reset successfully!",
-      [
-        {
-          text: "OK",
-          onPress: () => router.push("/auth/login"),
-        },
-      ],
-      { cancelable: false }
-    );
-  };
-
-  const handleSubmit = async () => {
-    const fullCode = code.join('');
-    if (fullCode.length !== 6) {
-      show({
-        type: 'error',
-        title: 'Invalid Code',
-        message: 'Please enter a 6-digit verification code',
-        primaryAction: {
-          label: 'OK',
-          onPress: hide
-        }
-      });
-      return;
-    }
-
-    const passwordValidation = validatePassword(newPassword);
-    const confirmValidation = newPassword !== confirmPassword ? 'Passwords do not match' : null;
-
-    setPasswordError(passwordValidation);
-    setConfirmError(confirmValidation);
-
-    if (!passwordValidation && !confirmValidation) {
-      try {
-        setIsLoading(true);
-        await axiosInstance.post('/api/users/reset-password', {
-          email,
-          code: fullCode,
-          newPassword: confirmPassword,
-        });
-
-        // Stop the timer on success
-        setIsTimerActive(false);
-
-        show({
-          type: 'success',
-          title: 'Password Reset',
-          message: 'Your password has been reset successfully!',
-          primaryAction: {
-            label: 'Go to Login',
-            onPress: () => {
-              hide();
-              router.push('/auth/login');
-            }
-          }
-        });
-      } catch (error: any) {
-        if (error.response?.data?.error) {
-          show({
-            type: 'error',
-            title: 'Reset Failed',
-            message: `Password reset failed: ${error.response.data.error}`,
-            primaryAction: {
-              label: 'Try Again',
-              onPress: hide
-            }
-          });
-        } else {
-          show({
-            type: 'error',
-            title: 'Reset Failed',
-            message: 'Password reset failed. Please try again.',
-            primaryAction: {
-              label: 'OK',
-              onPress: hide
-            }
-          });
-        }
-      } finally {
-        setIsLoading(false);
+    show({
+      type: 'success',
+      title: 'Success',
+      message: 'Your password has been reset successfully!',
+      primaryAction: {
+        label: 'OK',
+        onPress: () => router.push("/auth/login")
       }
-    }
+    });
   };
 
   return (
