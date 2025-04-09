@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Alert,
   TextInput,
   Platform,
   KeyboardAvoidingView,
@@ -13,12 +12,14 @@ import { ThemedText } from "@/components/ThemedText";
 import { Colors } from "@/constants/Colors";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { NewPasswordValidation } from "./newPasswordValidation";
+import { useStatus } from "@/context/StatusContext";
 
 const TIMER_DURATION = 900; // 15 minutes in seconds
 
 export default function NewPassword() {
   const router = useRouter();
   const { email } = useLocalSearchParams<{ email?: string }>();
+  const { show, hide } = useStatus();
 
   const [code, setCode] = useState<string[]>(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState<number>(TIMER_DURATION);
@@ -34,10 +35,15 @@ export default function NewPassword() {
         setTimer((prev) => prev - 1);
       }, 1000);
     } else if (timer <= 0) {
-      Alert.alert(
-        "Expired",
-        "The verification code has expired. Request a new one."
-      );
+      show({
+        type: 'error',
+        title: 'Expired',
+        message: 'The verification code has expired. Request a new one.',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
       setIsTimerActive(false);
     }
 
@@ -73,17 +79,15 @@ export default function NewPassword() {
 
   const handleSuccess = () => {
     setIsTimerActive(false);
-    Alert.alert(
-      "Success",
-      "Your password has been reset successfully!",
-      [
-        {
-          text: "OK",
-          onPress: () => router.push("/auth/login"),
-        },
-      ],
-      { cancelable: false }
-    );
+    show({
+      type: 'success',
+      title: 'Success',
+      message: 'Your password has been reset successfully!',
+      primaryAction: {
+        label: 'OK',
+        onPress: () => router.push("/auth/login")
+      }
+    });
   };
 
   return (

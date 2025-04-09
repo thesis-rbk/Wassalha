@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
   Switch,
 } from "react-native";
@@ -15,6 +14,7 @@ import { ThemedText } from "@/components/ThemedText";
 import ProgressBar from "@/components/ProgressBar";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useSponsorshipProcess } from "@/context/SponsorshipProcessContext";
+import { useStatus } from "@/context/StatusContext";
 import axiosInstance from "@/config";
 import {
   Clock,
@@ -29,6 +29,7 @@ export default function PaymentSponsor() {
   const processId = params.processId;
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
+  const { show, hide } = useStatus();
   const [process, setProcess] = useState<any>(null);
   const [sponsorship, setSponsorship] = useState<any>(null);
   const [buyer, setBuyer] = useState<any>(null);
@@ -65,7 +66,15 @@ export default function PaymentSponsor() {
       setBuyer(buyerResponse.data.data);
     } catch (error) {
       console.error("Error fetching process details:", error);
-      Alert.alert("Error", "Failed to load process details");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to load process details",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setLoading(false);
     }

@@ -6,12 +6,14 @@ import { ThemedText } from '@/components/ThemedText';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Users, ChevronRight, Globe, Award, Shield, FileText, RefreshCw } from 'lucide-react-native';
 import Header from '@/components/navigation/headers';
+import { useStatus } from '@/context/StatusContext';
 
 const { width } = Dimensions.get('window');
 
 export default function SponsorshipScreen() {
   const router = useRouter();
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState<boolean>(false);
+  const { show, hide } = useStatus();
   
   useEffect(() => {
     checkTermsAcceptance();
@@ -44,7 +46,15 @@ export default function SponsorshipScreen() {
     try {
       await AsyncStorage.removeItem('sponsorshipTermsAccepted');
       setHasAcceptedTerms(false);
-      Alert.alert('Reset', 'Terms acceptance has been reset for testing.');
+      show({
+        type: "success",
+        title: "Reset",
+        message: "Terms acceptance has been reset for testing.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } catch (error) {
       console.error('Error resetting terms acceptance:', error);
     }

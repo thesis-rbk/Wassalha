@@ -1,6 +1,6 @@
 // In frontend/app/test/order-details.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Platform, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Platform, SafeAreaView } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import axiosInstance from '@/config';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +14,7 @@ import { CheckCircle, Star, Award, Package } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { BACKEND_URL } from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useStatus } from '@/context/StatusContext';
 // Import Traveler types from types directory
 import { Traveler, TravelerProfile, TravelerReputation, TravelerStats } from '@/types';
 
@@ -25,6 +26,7 @@ export default function OrderDetailsScreen() {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const { show, hide } = useStatus();
 
   const orderId = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -99,7 +101,15 @@ export default function OrderDetailsScreen() {
       setOrder(orderData);
     } catch (error) {
       console.error('Error fetching order details:', error);
-      Alert.alert('Error', 'Failed to load order details');
+      show({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to load order details',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -148,28 +158,41 @@ export default function OrderDetailsScreen() {
 
       if (response.status === 200) {
         if (newStatus === 'CANCELLED') {
-          Alert.alert(
-            'Order Cancelled',
-            'The request is now available for new offers.',
-            [{ 
-              text: 'OK', 
+          show({
+            type: 'success',
+            title: 'Order Cancelled',
+            message: 'The request is now available for new offers.',
+            primaryAction: { 
+              label: 'OK', 
               onPress: () => {
                 // Navigate back to the requests list since this order no longer exists
                 router.back();
               } 
-            }]
-          );
+            }
+          });
         } else {
-          Alert.alert(
-            'Status Updated',
-            'Order status has been updated.',
-            [{ text: 'OK', onPress: () => fetchOrderDetails() }]
-          );
+          show({
+            type: 'success',
+            title: 'Status Updated',
+            message: 'Order status has been updated.',
+            primaryAction: { 
+              label: 'OK', 
+              onPress: () => fetchOrderDetails() 
+            }
+          });
         }
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      Alert.alert('Error', 'Failed to update status. Please try again.');
+      show({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to update status. Please try again.',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
     } finally {
       setUpdating(false);
     }
@@ -177,6 +200,7 @@ export default function OrderDetailsScreen() {
 
   const getNextStatus = (currentStatus: ProcessStatus): ProcessStatus | undefined => {
     const statusFlow: Record<ProcessStatus, ProcessStatus | undefined> = {
+      'PREINITIALIZED': 'INITIALIZED',
       'INITIALIZED': 'CONFIRMED',
       'CONFIRMED': 'PAID',
       'PAID': 'IN_TRANSIT',
@@ -526,21 +550,19 @@ export default function OrderDetailsScreen() {
               <TouchableOpacity 
                 style={styles.cancelButton}
                 onPress={() => {
-                  Alert.alert(
-                    'Cancel Order',
-                    'Are you sure you want to cancel this order? The request will become available for new offers.',
-                    [
-                      {
-                        text: 'No',
-                        style: 'cancel'
-                      },
-                      {
-                        text: 'Yes, Cancel',
-                        style: 'destructive',
-                        onPress: () => updateProcessStatus('CANCELLED')
-                      }
-                    ]
-                  );
+                  show({
+                    type: 'error',
+                    title: 'Cancel Order',
+                    message: 'Are you sure you want to cancel this order? The request will become available for new offers.',
+                    primaryAction: {
+                      label: 'Yes, Cancel',
+                      onPress: () => updateProcessStatus('CANCELLED')
+                    },
+                    secondaryAction: {
+                      label: 'No',
+                      onPress: () => {}
+                    }
+                  });
                 }}
                 disabled={updating}
               >

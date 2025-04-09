@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
@@ -8,9 +8,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import axiosInstance from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useStatus } from '@/context/StatusContext';
 
 const CreditCardPayment: React.FC = () => {
   const params = useLocalSearchParams();
+  const { show, hide } = useStatus();
   const [cardNumber, setCardNumber] = useState<string>('');
   const [expiryDate, setExpiryDate] = useState<string>('');
   const [cvv, setCvv] = useState<string>('');
@@ -64,10 +66,15 @@ const CreditCardPayment: React.FC = () => {
       }
     } catch (error: any) {
       console.error("Error fetching sponsorship details:", error);
-      Alert.alert(
-        "Error",
-        "Failed to load sponsorship details. Please try again."
-      );
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to load sponsorship details. Please try again.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -124,27 +131,67 @@ const CreditCardPayment: React.FC = () => {
 
   const validateForm = (): boolean => {
     if (!validateCardNumber(cardNumber)) {
-      Alert.alert('Error', 'Please enter a valid 16-digit card number');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Please enter a valid 16-digit card number",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return false;
     }
 
     if (!validateExpiryDate(expiryDate)) {
-      Alert.alert('Error', 'Please enter a valid future expiry date');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Please enter a valid future expiry date",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return false;
     }
 
     if (!validateCVV(cvv)) {
-      Alert.alert('Error', 'Please enter a valid 3-digit CVV');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Please enter a valid 3-digit CVV",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return false;
     }
 
     if (cardholderName.trim().length < 3) {
-      Alert.alert('Error', 'Please enter the full cardholder name');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Please enter the full cardholder name",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return false;
     }
 
     if (!sponsorship?.amount || sponsorship.amount <= 0) {
-      Alert.alert('Error', 'Invalid sponsorship price');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Invalid sponsorship price",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return false;
     }
 
@@ -207,33 +254,38 @@ const CreditCardPayment: React.FC = () => {
       });
 
       if (response.data.message === "successfully initiated") {
-        Alert.alert(
-          "Success",
-          "Payment processed successfully!",
-          [
-            {
-              text: "Continue",
-              onPress: () => {
-                router.push({
-                  pathname: "/sponsorshipTrack/deliveryBuyer",
-                  params: {
-                    sponsorshipId: sponsorShipId,
-                    status: 'PAID'
-                  }
-                });
-              }
+        show({
+          type: "success",
+          title: "Success",
+          message: "Payment processed successfully!",
+          primaryAction: {
+            label: "Continue",
+            onPress: () => {
+              hide();
+              router.push({
+                pathname: "/sponsorshipTrack/deliveryBuyer",
+                params: {
+                  sponsorshipId: sponsorShipId,
+                  status: 'PAID'
+                }
+              });
             }
-          ]
-        );
+          }
+        });
       } else {
         throw new Error(response.data.message || "Payment failed");
       }
     } catch (error: any) {
       console.error("Payment error:", error);
-      Alert.alert(
-        "Payment Failed",
-        error.response?.data?.message || error.message || "Failed to process payment"
-      );
+      show({
+        type: "error",
+        title: "Payment Failed",
+        message: error.response?.data?.message || error.message || "Failed to process payment",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setLoading(false);
     }

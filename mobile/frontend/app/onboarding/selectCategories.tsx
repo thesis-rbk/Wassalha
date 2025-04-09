@@ -9,12 +9,14 @@ import { Category } from "@/types";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import axiosInstance from "@/config";
+import { useStatus } from "@/context/StatusContext";
 
 export default function SelectCategoriesScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
+  const { show, hide } = useStatus();
 
   // Get user and token from Redux store
   const { user, token } = useSelector((state: RootState) => state.auth);
@@ -30,9 +32,27 @@ export default function SelectCategoriesScreen() {
           setCategories(data.data);
         } else {
           console.error("Failed to fetch categories:", data.message);
+          show({
+            type: "error",
+            title: "Loading Error",
+            message: "Failed to load categories. Please try again.",
+            primaryAction: {
+              label: "OK",
+              onPress: hide
+            }
+          });
         }
       } catch (error) {
         console.error("Error fetching categories:", error);
+        show({
+          type: "error",
+          title: "Loading Error",
+          message: "Failed to load categories. Please try again.",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
       }
     };
 
@@ -52,7 +72,15 @@ export default function SelectCategoriesScreen() {
     try {
       if (!userId) {
         console.error("User ID is missing");
-        alert("User ID is missing. Please log in again.");
+        show({
+          type: "error",
+          title: "User ID Missing",
+          message: "User ID is missing. Please log in again.",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
         return;
       }
 
@@ -77,11 +105,27 @@ export default function SelectCategoriesScreen() {
         router.push("/onboarding/customScreen");
       } else {
         console.error("Failed to update preferred categories:", data.message);
-        alert("Failed to update preferred categories. Please try again.");
+        show({
+          type: "error",
+          title: "Update Failed",
+          message: "Failed to update preferred categories. Please try again.",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
       }
     } catch (error) {
       console.error("Error updating preferred categories:", error);
-      alert("An error occurred. Please try again.");
+      show({
+        type: "error",
+        title: "Error",
+        message: "An error occurred. Please try again.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 

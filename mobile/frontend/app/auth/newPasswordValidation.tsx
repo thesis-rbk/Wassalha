@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Alert } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { InputFieldPassword } from "@/components/InputFieldPassword";
@@ -7,6 +7,7 @@ import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { Colors } from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import axiosInstance from "../../config";
+import { useStatus } from "@/context/StatusContext";
 
 export function NewPasswordValidation({
   email,
@@ -16,6 +17,7 @@ export function NewPasswordValidation({
   isTimerActive,
 }: NewPasswordValidationProps) {
   const router = useRouter();
+  const { show, hide } = useStatus();
   const [newPassword, setNewPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -31,10 +33,15 @@ export function NewPasswordValidation({
         setTimer((prev) => prev - 1);
       }, 1000);
     } else if (timer <= 0) {
-      Alert.alert(
-        "Expired",
-        "The verification code has expired. Please go back and request a new one."
-      );
+      show({
+        type: 'error',
+        title: 'Expired',
+        message: 'The verification code has expired. Please go back and request a new one.',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
     }
 
     return () => {
@@ -58,7 +65,15 @@ export function NewPasswordValidation({
 
   const handleSubmit = async () => {
     if (timer <= 0) {
-      Alert.alert("Error", "The verification code has expired");
+      show({
+        type: 'error',
+        title: 'Error',
+        message: 'The verification code has expired',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
       return;
     }
 
@@ -80,12 +95,25 @@ export function NewPasswordValidation({
         onSuccess();
       } catch (error: any) {
         if (error.response?.data?.error) {
-          Alert.alert(
-            "Error",
-            `Password reset failed: ${error.response.data.error}`
-          );
+          show({
+            type: 'error',
+            title: 'Error',
+            message: `Password reset failed: ${error.response.data.error}`,
+            primaryAction: {
+              label: 'OK',
+              onPress: () => {}
+            }
+          });
         } else {
-          Alert.alert("Error", "Password reset failed. Please try again.");
+          show({
+            type: 'error',
+            title: 'Error',
+            message: 'Password reset failed. Please try again.',
+            primaryAction: {
+              label: 'OK',
+              onPress: () => {}
+            }
+          });
         }
       } finally {
         setIsLoading(false);

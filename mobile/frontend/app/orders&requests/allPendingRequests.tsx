@@ -14,6 +14,8 @@ import OrderCard from "../../components/cardsForHomePage";
 import { OrderfetchCardProps } from "../../types/Sponsorship";
 import { Search, X, Plus } from "lucide-react-native"; // Assuming you have lucide icons installed
 import { useRouter } from "expo-router";
+import { useStatus } from "@/context/StatusContext";
+
 export default function OrderList() {
     const [orders, setOrders] = useState<OrderfetchCardProps[]>([]);
     const [filteredOrders, setFilteredOrders] = useState<OrderfetchCardProps[]>([]);
@@ -22,6 +24,7 @@ export default function OrderList() {
     const [error, setError] = useState<string>("");
     const [isFocused, setIsFocused] = useState<boolean>(false);
     const router = useRouter();
+    const { show, hide } = useStatus();
     const searchInputRef = useRef<TextInput>(null);
     const fadeAnim = useRef(new Animated.Value(1)).current; // For placeholder animation
 
@@ -35,6 +38,19 @@ export default function OrderList() {
         } catch (err) {
             setError("Failed to fetch orders. Please try again later.");
             console.error("Error fetching orders:", err);
+            
+            show({
+                type: "error",
+                title: "Loading Error",
+                message: "Failed to fetch orders. Please try again later.",
+                primaryAction: {
+                    label: "Retry",
+                    onPress: () => {
+                        hide();
+                        fetchAllOrders();
+                    }
+                }
+            });
         } finally {
             setLoading(false);
         }

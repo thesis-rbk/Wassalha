@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
   TouchableOpacity,
   TextInput,
@@ -16,6 +15,7 @@ import { ThemedText } from "@/components/ThemedText";
 import ProgressBar from "@/components/ProgressBar";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useSponsorshipProcess } from "@/context/SponsorshipProcessContext";
+import { useStatus } from "@/context/StatusContext";
 import axiosInstance from "@/config";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
@@ -33,6 +33,7 @@ export default function DeliverySponsor() {
   const processId = params.processId;
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
+  const { show, hide } = useStatus();
   const [process, setProcess] = useState<any>(null);
   const [sponsorship, setSponsorship] = useState<any>(null);
   const [buyer, setBuyer] = useState<any>(null);
@@ -73,7 +74,15 @@ export default function DeliverySponsor() {
       setBuyer(buyerResponse.data.data);
     } catch (error) {
       console.error("Error fetching process details:", error);
-      Alert.alert("Error", "Failed to load process details");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to load process details",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -83,7 +92,15 @@ export default function DeliverySponsor() {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission Denied", "Camera permission is required to take photos");
+        show({
+          type: "error",
+          title: "Permission Denied",
+          message: "Camera permission is required to take photos",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
         return;
       }
 
@@ -99,7 +116,15 @@ export default function DeliverySponsor() {
       }
     } catch (error) {
       console.error("Error taking photo:", error);
-      Alert.alert("Error", "Failed to take photo");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to take photo",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 
@@ -107,7 +132,15 @@ export default function DeliverySponsor() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission Denied", "Gallery permission is required to select photos");
+        show({
+          type: "error",
+          title: "Permission Denied",
+          message: "Gallery permission is required to select photos",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
         return;
       }
 
@@ -123,18 +156,42 @@ export default function DeliverySponsor() {
       }
     } catch (error) {
       console.error("Error picking image:", error);
-      Alert.alert("Error", "Failed to select image");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to select image",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 
   const handleSubmit = async () => {
     if (!image) {
-      Alert.alert("Missing Image", "Please provide a screenshot or photo of the account");
+      show({
+        type: "error",
+        title: "Missing Image",
+        message: "Please provide a screenshot or photo of the account",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return;
     }
 
     if (!accountDetails.trim()) {
-      Alert.alert("Missing Details", "Please provide account details");
+      show({
+        type: "error",
+        title: "Missing Details",
+        message: "Please provide account details",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return;
     }
 
@@ -156,21 +213,29 @@ export default function DeliverySponsor() {
       await verifySponsorshipDelivery(Number(processId), image);
       
       // Navigate to success screen
-      Alert.alert(
-        "Delivery Submitted",
-        "Your delivery proof has been submitted. The buyer will now verify the account.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              router.push("/screens/NotificationsScreen");
-            },
-          },
-        ]
-      );
+      show({
+        type: "success",
+        title: "Delivery Submitted",
+        message: "Your delivery proof has been submitted. The buyer will now verify the account.",
+        primaryAction: {
+          label: "OK",
+          onPress: () => {
+            hide();
+            router.push("/screens/NotificationsScreen");
+          }
+        }
+      });
     } catch (error) {
       console.error("Error submitting delivery:", error);
-      Alert.alert("Submission Failed", "There was an error submitting your delivery proof");
+      show({
+        type: "error",
+        title: "Submission Failed",
+        message: "There was an error submitting your delivery proof",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setSubmitting(false);
     }

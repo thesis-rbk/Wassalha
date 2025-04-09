@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
@@ -17,6 +16,7 @@ import ProgressBar from "@/components/ProgressBar";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useSponsorshipProcess } from "@/context/SponsorshipProcessContext";
 import { useNotification } from "@/context/NotificationContext";
+import { useStatus } from "@/context/StatusContext";
 import axiosInstance from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
@@ -41,6 +41,7 @@ export default function InitializationBuyer() {
   const processId = params.id;
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
+  const { show, hide } = useStatus();
   const [sponsorship, setSponsorship] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -111,7 +112,15 @@ export default function InitializationBuyer() {
       setProcessing(true);
 
       if (!user?.id) {
-        Alert.alert("Error", "User information not found. Please log in again.");
+        show({
+          type: "error",
+          title: "Error",
+          message: "User information not found. Please log in again.",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
         return;
       }
 
@@ -119,32 +128,49 @@ export default function InitializationBuyer() {
         sponsorshipId: Number(sponsorship.id),
         recipientId: Number(user.id)
       });
+      
       if (response.data.success) {
-        Alert.alert(
-          "Success",
-          "Sponsorship process initiated successfully!",
-          [
-            {
-              text: "Continue",
-              onPress: () => {
-                router.push({
-                  pathname: "/sponsorshipTrack/verificationBuyer",
-                  params: {
-                    orderId: processId,
-                    sponsorshipId: sponsorship.id,
-                    price: sponsorship?.price
-                  }
-                });
-              },
-            },
-          ]
-        );
+        show({
+          type: "success",
+          title: "Success",
+          message: "Sponsorship process initiated successfully!",
+          primaryAction: {
+            label: "Continue",
+            onPress: () => {
+              hide();
+              router.push({
+                pathname: "/sponsorshipTrack/verificationBuyer",
+                params: {
+                  orderId: processId,
+                  sponsorshipId: sponsorship.id,
+                  price: sponsorship?.price
+                }
+              });
+            }
+          }
+        });
       } else {
-        Alert.alert("Error", response.data.message || "Failed to initiate process");
+        show({
+          type: "error",
+          title: "Error",
+          message: response.data.message || "Failed to initiate process",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
       }
     } catch (error: any) {
       console.error('Error initiating process:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to initiate sponsorship process');
+      show({
+        type: "error",
+        title: "Error",
+        message: error.response?.data?.message || 'Failed to initiate sponsorship process',
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setProcessing(false);
     }
