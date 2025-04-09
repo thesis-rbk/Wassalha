@@ -208,7 +208,7 @@ export interface OrderfetchCardProps {
             profile: {
                 image: { url: string }
             }
-            reputation: number | null;
+            reputation: number | 0;
         };
         goods: {
             id: number;

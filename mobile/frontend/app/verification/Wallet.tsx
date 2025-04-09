@@ -16,14 +16,16 @@ import {
     Alert,
     Dimensions,
     Animated,
+    SafeAreaView,
+    StatusBar,
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import axiosInstance from "@/config"
-import { BonusProps, CardInfo } from "../../types/Sponsorship"
-import AsyncStorage from '@react-native-async-storage/async-storage'
-
-const { width } = Dimensions.get("window")
+import type { BonusProps, CardInfo } from "../../types/Sponsorship"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import Header from "@/components/navigation/headers"
+const { width, height } = Dimensions.get("window")
 const cardWidth = width * 0.85
 const cardHeight = cardWidth * 0.6
 
@@ -46,7 +48,7 @@ const BonusTransferComponent: React.FC<BonusProps> = ({ name, currency = "TD" })
     // Function to fetch token from AsyncStorage
     const tokenVerif = async () => {
         try {
-            const tokeny = await AsyncStorage.getItem('jwtToken')
+            const tokeny = await AsyncStorage.getItem("jwtToken")
             console.log("token:", tokeny)
             setToken(tokeny)
             return tokeny // Return token for use in fetchBonusAmount
@@ -228,77 +230,83 @@ const BonusTransferComponent: React.FC<BonusProps> = ({ name, currency = "TD" })
     }
 
     return (
-        <View style={styles.container}>
-            <View style={styles.cardContainer}>
-                <TouchableOpacity activeOpacity={0.9} onPress={flipCard}>
-                    <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
-                        <LinearGradient
-                            colors={["#007BFF", "#0056B3"]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.creditCard}
-                        >
-                            <View style={styles.cardContent}>
-                                <View style={styles.cardHeader}>
-                                    <View style={styles.chip} />
-                                    <Text style={styles.cardType}>PREMIUM BONUS</Text>
-                                </View>
+        <SafeAreaView style={styles.safeArea}>
+            <StatusBar barStyle="dark-content" backgroundColor="#F3F4F6" />
+            <Header title="Bonus Transfer" subtitle="Transfer your bonus to your card" showBackButton={true} />
+            <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+                <View style={styles.container}>
+                    <View style={styles.cardContainer}>
+                        <TouchableOpacity activeOpacity={0.9} onPress={flipCard}>
+                            <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
+                                <LinearGradient
+                                    colors={["#007BFF", "#0056B3"]}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
+                                    style={styles.creditCard}
+                                >
+                                    <View style={styles.cardContent}>
+                                        <View style={styles.cardHeader}>
+                                            <View style={styles.chip} />
+                                            <Text style={styles.cardType}>PREMIUM BONUS</Text>
+                                        </View>
 
-                                <View style={styles.balanceContainer}>
-                                    <Text style={styles.balanceLabel}>Bonus Balance</Text>
-                                    <Text style={styles.balanceAmount}>
-                                        {isLoading ? "Loading..." : `${currency} ${bonusAmount.toFixed(2)}`}
+                                        <View style={styles.balanceContainer}>
+                                            <Text style={styles.balanceLabel}>Bonus Balance</Text>
+                                            <Text style={styles.balanceAmount}>
+                                                {isLoading ? "Loading..." : `${currency} ${bonusAmount.toFixed(2)}`}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.cardFooter}>
+                                            <View>
+                                                <Text style={styles.cardLabel}>CARD HOLDER</Text>
+                                                <Text style={styles.cardValue}>{names}</Text>
+                                            </View>
+                                            <View>
+                                                <Text style={styles.cardLabel}>EXPIRES</Text>
+                                                <Text style={styles.cardValue}>**/**</Text>
+                                            </View>
+                                        </View>
+                                    </View>
+                                </LinearGradient>
+                            </Animated.View>
+
+                            <Animated.View style={[styles.cardFace, styles.cardBack, backAnimatedStyle]}>
+                                <LinearGradient
+                                    colors={["#007BFF", "#0056B3"]}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
+                                    style={styles.creditCard}
+                                >
+                                    <View style={styles.magneticStrip} />
+                                    <View style={styles.signatureContainer}>
+                                        <View style={styles.signature}>
+                                            <Text style={styles.cvvText}>***</Text>
+                                        </View>
+                                    </View>
+                                    <Text style={styles.backInfo}>
+                                        This card can be used to transfer your bonus balance to your bank account. Tap card to flip.
                                     </Text>
-                                </View>
-                                <View style={styles.cardFooter}>
-                                    <View>
-                                        <Text style={styles.cardLabel}>CARD HOLDER</Text>
-                                        <Text style={styles.cardValue}>{names}</Text>
-                                    </View>
-                                    <View>
-                                        <Text style={styles.cardLabel}>EXPIRES</Text>
-                                        <Text style={styles.cardValue}>**/**</Text>
-                                    </View>
-                                </View>
-                            </View>
-                        </LinearGradient>
-                    </Animated.View>
+                                </LinearGradient>
+                            </Animated.View>
+                        </TouchableOpacity>
+                        <Text style={styles.tapHint}>Tap card to view details</Text>
+                    </View>
 
-                    <Animated.View style={[styles.cardFace, styles.cardBack, backAnimatedStyle]}>
-                        <LinearGradient
-                            colors={["#007BFF", "#0056B3"]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.creditCard}
-                        >
-                            <View style={styles.magneticStrip} />
-                            <View style={styles.signatureContainer}>
-                                <View style={styles.signature}>
-                                    <Text style={styles.cvvText}>***</Text>
-                                </View>
-                            </View>
-                            <Text style={styles.backInfo}>
-                                This card can be used to transfer your bonus balance to your bank account. Tap card to flip.
-                            </Text>
-                        </LinearGradient>
-                    </Animated.View>
-                </TouchableOpacity>
-                <Text style={styles.tapHint}>Tap card to view details</Text>
-            </View>
-
-            <View style={styles.transferSection}>
-                <Text style={styles.transferQuestion}>Do you want to transfer Bonus?</Text>
-                <TouchableOpacity style={styles.transferButton} onPress={handleTransfer} activeOpacity={0.8}>
-                    <LinearGradient
-                        colors={["#007BFF", "#0056B3"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.buttonGradient}
-                    >
-                        <Text style={styles.buttonText}>Transfer</Text>
-                    </LinearGradient>
-                </TouchableOpacity>
-            </View>
+                    <View style={styles.transferSection}>
+                        <Text style={styles.transferQuestion}>Do you want to transfer Bonus?</Text>
+                        <TouchableOpacity style={styles.transferButton} onPress={handleTransfer} activeOpacity={0.8}>
+                            <LinearGradient
+                                colors={["#007BFF", "#0056B3"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={styles.buttonGradient}
+                            >
+                                <Text style={styles.buttonText}>Transfer</Text>
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </ScrollView>
 
             <Modal
                 animationType="slide"
@@ -463,11 +471,22 @@ const BonusTransferComponent: React.FC<BonusProps> = ({ name, currency = "TD" })
                     </View>
                 </KeyboardAvoidingView>
             </Modal>
-        </View>
+        </SafeAreaView>
     )
 }
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: "#F3F4F6",
+    },
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        flexGrow: 1,
+        paddingBottom: 30, // Add padding at the bottom for better scrolling
+    },
     container: {
         flex: 1,
         padding: 20,
@@ -475,7 +494,7 @@ const styles = StyleSheet.create({
     },
     cardContainer: {
         alignItems: "center",
-        marginBottom: 30,
+        marginVertical: 20,
     },
     cardFace: {
         width: cardWidth,
@@ -586,13 +605,14 @@ const styles = StyleSheet.create({
     transferSection: {
         alignItems: "center",
         marginTop: 20,
+        marginBottom: 40, // Add more bottom margin to ensure button is visible
     },
     transferQuestion: {
-        fontSize: 14,
+        fontSize: 16,
         color: "#007BFF",
         marginBottom: 20,
         textAlign: "center",
-        fontWeight: "400",
+        fontWeight: "500",
     },
     transferButton: {
         width: cardWidth,
@@ -638,7 +658,7 @@ const styles = StyleSheet.create({
         borderBottomColor: "#E5E7EB",
     },
     modalTitle: {
-        fontSize: 15,
+        fontSize: 18,
         fontWeight: "600",
         color: "#007BFF",
         marginBottom: 4,

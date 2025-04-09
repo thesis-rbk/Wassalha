@@ -4,10 +4,10 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
-    Image,
     Animated,
     AccessibilityInfo,
 } from "react-native";
+import { Image } from "expo-image";
 import type { OrderfetchCardProps } from "../types/Sponsorship";
 import { Plane, Send } from "lucide-react-native";
 import { formatDistanceToNow } from "date-fns";
@@ -79,9 +79,9 @@ const OrderCard: React.FC<OrderfetchCardProps> = ({ order, onPress }) => {
         >
             {/* Image Section (70% of height) */}
             <View style={styles.imageContainer}>
-                {goods?.image?.url ? (
+                {goods?.goodsUrl ? (
                     <Image
-                        source={{ uri: goods.image.url }}
+                        source={{ uri: goods.goodsUrl }}
                         style={styles.goodsImage}
                         resizeMode="cover"
                         accessibilityLabel={`${goods.name} image`}

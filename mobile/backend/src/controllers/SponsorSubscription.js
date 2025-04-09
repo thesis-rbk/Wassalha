@@ -487,8 +487,8 @@ const sponsor = {
     },
     AllPendingRequest: async (req, res) => {
         try {
-            const response = await prisma.request.findMany({
-                where: { status: "PENDING" }, include: {
+            const requests = await prisma.request.findMany({
+                include: {
                     user: {
                         select: {
                             id: true,
@@ -496,13 +496,8 @@ const sponsor = {
                             email: true,
                             profile: {
                                 select: {
-                                    imageId: true,
-                                    image: {
-                                        select: {
-                                            id: true,
-                                            url: true, // or whatever fields you want from media
-                                        }
-                                    }
+                                    image: true,
+                                    isVerified: true
                                 }
                             },
                             reputation: {
@@ -516,20 +511,59 @@ const sponsor = {
                     },
                     goods: {
                         include: {
-                            image: {
-                                select: {
-                                    id: true,
-                                    url: true
-                                }
-                            }
+                            image: true,
+                            category: true
                         }
                     },
                     pickup: true,
+                    order: {
+                        select: {
+                            id: true,
+                            orderStatus: true
+                        }
+                    }
+                },
+                orderBy: {
+                    date: 'desc'
+                },
+                where: {
+                    status: 'PENDING'  // Changed from in: ['PENDING', 'ACCEPTED'] to just 'PENDING'
                 }
-            })
-            res.status(200).send(response)
-        } catch (err) {
-            console.log("err", err)
+            });
+
+            console.log('Backend sending user data:', requests.map(r => ({
+                requestId: r.id,
+                userName: r.user?.name,
+                userId: r.user?.id,
+                userRating: r.user?.reputation?.score
+            })));
+
+            // Transform to include full image URLs
+            const transformedRequests = requests.map(request => ({
+                ...request,
+                goods: {
+                    ...request.goods,
+                    goodsUrl: request.goods.image ? `/api/uploads/${request.goods.image.filename}` : null
+                }
+            }));
+
+            console.log('First request debug:', {
+                goodsId: transformedRequests[0]?.goods?.id,
+                imageData: transformedRequests[0]?.goods?.image,
+                goodsUrl: transformedRequests[0]?.goods?.goodsUrl,
+                filename: transformedRequests[0]?.goods?.image?.filename
+            });
+
+            res.status(200).json({
+                success: true,
+                data: transformedRequests
+            });
+        } catch (error) {
+            console.error('Error in getAllRequests:', error);
+            res.status(400).json({
+                success: false,
+                error: error.message
+            });
         }
     },
     findBalance: async (req, res) => {

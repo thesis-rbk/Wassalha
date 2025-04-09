@@ -21,7 +21,7 @@ import { TabBar } from "@/components/navigation/TabBar"
 import { ThemedView } from "@/components/ThemedView"
 import { ThemedText } from "@/components/ThemedText"
 import OrderCard from "@/components/cardsForHomePage"
-import { Plane, MapPin, Crown, ChevronRight, Globe } from "lucide-react-native"
+import { Plane, MapPin, Crown, ChevronRight, Globe, Sparkles } from "lucide-react-native"
 import { useRouter } from "expo-router"
 import type { Traveler } from "@/types/Traveler"
 import type { Order } from "@/types/Sponsorship"
@@ -30,6 +30,8 @@ import { LinearGradient } from "expo-linear-gradient"
 import type { UserData } from "@/types/UserData"
 import type { UserProfile } from "@/types/UserProfile"
 import CardHome from "@/components/homecard"
+import { BACKEND_URL } from "@/config";
+import { Image as ExpoImage } from "expo-image";
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home")
@@ -60,13 +62,27 @@ export default function HomeScreen() {
   })
 
   const [currentUser, setUser] = useState(user)
-
+  const handlechat = () => {
+    router.push("/chatBot/conversation");
+  };
   const fetchData = async () => {
     try {
       const response = await axiosInstance.get(`/api/allPendingReq`)
-      const newRequests = response.data
+      const newRequests = response.data.data
       console.log("Fetched requests:", newRequests)
-      setRequests(newRequests)
+
+      // Process the requests to ensure image URLs are properly formatted
+      const processedRequests = newRequests.map((request: any) => {
+        if (request.goods && request.goods.goodsUrl) {
+          // Make sure the URL has the proper backend prefix
+          if (!request.goods.goodsUrl.startsWith('http')) {
+            request.goods.goodsUrl = `${BACKEND_URL}${request.goods.goodsUrl}`;
+          }
+        }
+        return request;
+      });
+
+      setRequests(processedRequests)
     } catch (error) {
       console.log("Error fetching requests:", error)
       setHasMore(false)
@@ -99,7 +115,12 @@ export default function HomeScreen() {
               // Update the specific user's image URL
               setRecentUsers((prevUsers) =>
                 prevUsers.map((prevUser) =>
-                  prevUser.id === user.id ? { ...prevUser, imageUrl: imageResponse.data.data.imageUrl } : prevUser,
+                  prevUser.id === user.id ? {
+                    ...prevUser,
+                    imageUrl: imageResponse.data.data.imageUrl.startsWith('http')
+                      ? imageResponse.data.data.imageUrl
+                      : `${BACKEND_URL}${imageResponse.data.data.imageUrl}`
+                  } : prevUser,
                 ),
               )
             }
@@ -270,8 +291,32 @@ export default function HomeScreen() {
     }
   }
 
-  const handleOrderCardPress = (parameters: any) => {
-    router.push({ pathname: `/processTrack/initializationSP`, params: parameters }) // Navigate to request details
+  const handleOrderCardPress = (item: any) => {
+    const navigationParams = {
+      id: item?.id?.toString(),
+      goodsName: item.goods?.name || "Unknown",
+      price: item.goods?.price || 0,
+      location: item.goodsLocation || "Unknown",
+      destination: item.goodsDestination || "Unknown",
+      quantity: item.quantity.toString() || "0",
+      description: item.goods?.description || "",
+      category: item?.goods?.category?.name || "Uncategorized",
+      withBox: item.withBox?.toString() || "false",
+      requesterId: item.userId.toString(),
+      requesterName: item.user?.name || "Anonymous",
+      requesterRating: item.user?.reputation?.score?.toString() || "0",
+      requesterLevel: item.user?.reputation?.level?.toString() || "1",
+      requesterTotalRatings:
+        item.user?.reputation?.totalRatings?.toString() || "0",
+      requesterVerified: item.user?.profile?.isVerified?.toString() || "false",
+      status: item.status,
+      imageUrl: item.goods?.goodsUrl
+        ? item.goods.goodsUrl.startsWith('http')
+          ? item.goods.goodsUrl
+          : `${BACKEND_URL}${item.goods.goodsUrl}`
+        : null,
+    };
+    router.push({ pathname: `/processTrack/initializationSP`, params: navigationParams }) // Navigate to request details
   }
 
   const handleAcceptRequest = (requestId: number) => {
@@ -550,7 +595,9 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-
+      <TouchableOpacity style={styles.fab} onPress={handlechat} activeOpacity={0.8}>
+        <Sparkles size={24} color="white" strokeWidth={2.5} />
+      </TouchableOpacity>
       <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   )
@@ -775,15 +822,30 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   horizontalScrollView: {
-    height: 220, // Adjust this height based on your card size
+    height: 220,
   },
   cardWrapper: {
-    width: width - 10, // Adjust width to show part of next card
+    width: width - 10,
     marginRight: -20,
   },
   horizontalCardsContainer: {
     paddingVertical: -200,
     alignItems: "center",
   },
+  fab: {
+    position: "absolute",
+    bottom: 95, // Adjust to be above TabBar
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#3a86ff",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  }
 })
-

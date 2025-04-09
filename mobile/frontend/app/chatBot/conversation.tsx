@@ -17,7 +17,7 @@ import { ArrowLeft, Send } from "lucide-react-native";
 import { StatusBar } from "expo-status-bar";
 import { MessagesBot } from "@/types/Chat";
 import { GEMINI_API_KEY } from "@/config";
-
+import Header from "@/components/navigation/headers";
 // Wassalha system context to provide to the model
 const WASSALHA_CONTEXT = `
 You are the official AI assistant for Wassalha, a cross-platform app designed for seamless package delivery between countries.
@@ -241,20 +241,7 @@ export default function ChatBotConversation() {
       <StatusBar style={isDark ? "light" : "dark"} />
 
       {/* Header */}
-      <View
-        style={[styles.header, { backgroundColor: Colors[colorScheme].card }]}
-      >
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <ArrowLeft size={24} color={Colors[colorScheme].text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: Colors[colorScheme].text }]}>
-          Wassalha Assistant
-        </Text>
-        <View style={styles.placeholder} />
-      </View>
+      <Header title="AI Assistant" subtitle="Chat with Wassalha" showBackButton={true} />
 
       {/* Messages Area */}
       <ScrollView

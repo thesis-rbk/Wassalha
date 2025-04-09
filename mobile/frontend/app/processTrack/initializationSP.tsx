@@ -63,7 +63,7 @@ export default function InitializationSP() {
   const colorScheme = useColorScheme() ?? "light";
   const { sendNotification } = useNotification();
 
-  console.log("params from initialization SP:", params);
+  console.log("params from initialization SP: heloooooo", params);
 
   // Progress steps
   const progressSteps = [
@@ -96,7 +96,7 @@ export default function InitializationSP() {
         isVerified: params.requesterVerified === "true",
       },
       reputation: {
-        score: Number(params.requesterRating),
+        score: Number(params.requesterRating)
       },
     },
   });
@@ -677,9 +677,8 @@ export default function InitializationSP() {
                         setOfferDetails((prev) => ({
                           ...prev,
                           flightNumber: value,
-                          departureFlightCode: `${
-                            AIRLINE_CODES[prev.airline]
-                          }${value}`,
+                          departureFlightCode: `${AIRLINE_CODES[prev.airline]
+                            }${value}`,
                         }));
                       }}
                     >

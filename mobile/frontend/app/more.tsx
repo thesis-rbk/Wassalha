@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, ScrollView, Image } from 'react-native';
-import { KeyRound, MessageCircleQuestion, LifeBuoy, HelpCircle, Headphones, Coins, PiggyBank, Banknote, Wallet, DollarSign, Users, PenSquare, LogOut, ChevronRight, MessagesSquare, Info, ClipboardList } from 'lucide-react-native';
+import { KeyRound, MessageCircleQuestion, LifeBuoy, HelpCircle, Headphones, Coins, PiggyBank, Banknote, Wallet, DollarSign, Users, PenSquare, LogOut, ChevronRight, MessagesSquare, Info, ClipboardList, Sparkles } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
@@ -100,8 +100,8 @@ export default function MorePage() {
       route: '/reporting-system/MyTicketsPage',
     },
     {
-      icon: <ClipboardList size={24} color={Colors[colorScheme].text} />,
-      label: 'chat',
+      icon: <Sparkles size={24} color={Colors[colorScheme].text} />,
+      label: 'AI Assistant',
       route: '/chatBot/conversation',
     },
   ];

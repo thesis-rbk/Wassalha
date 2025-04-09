@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+import Header from '@/components/navigation/headers';
 import {
   Link,
   Bell,
@@ -24,7 +25,6 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { TitleLarge, BodyMedium } from "@/components/Typography";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useStatus } from '@/context/StatusContext';
-import Header from '@/components/navigation/headers';
 const SCRAPE_URL = `${process.env.EXPO_PUBLIC_API_URL}${process.env.EXPO_PUBLIC_SCRAPE_ENDPOINT}`;
 
 export default function Page() {
@@ -99,11 +99,13 @@ export default function Page() {
 
   return (
     <View style={styles.container}>
+      <Header title="Create Request" subtitle='Create a new request'
+        showBackButton={true}
+      />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Entry Method Selection */}
         <View style={styles.methodSelection}>
           <TouchableOpacity
             style={[
