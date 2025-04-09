@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { View, TextInput, StyleSheet, Alert, ScrollView, SafeAreaView, Text } from "react-native"
+import { View, TextInput, StyleSheet, ScrollView, SafeAreaView, Text } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import axiosInstance from "../../config"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -12,6 +12,8 @@ import { useRouter } from "expo-router"
 import { TabBar } from "@/components/navigation/TabBar"
 import { BodyMedium } from "@/components/Typography"
 import { MaterialIcons } from "@expo/vector-icons"
+import { useStatus } from "@/context/StatusContext"
+
 import Header from "@/components/navigation/headers"
 const ChangePassword = () => {
   const { theme } = useTheme()
@@ -21,6 +23,7 @@ const ChangePassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [activeTab, setActiveTab] = useState("home")
   const router = useRouter()
+  const { show, hide } = useStatus()
 
   const handleTabPress = (tab: string) => {
     setActiveTab(tab)
@@ -33,16 +36,40 @@ const ChangePassword = () => {
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert("Error", "Please fill in all fields")
-      return
+      show({
+        type: "error",
+        title: "Error",
+        message: "Please fill in all fields",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
+      return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert("Error", "New password and confirmation do not match")
-      return
+      show({
+        type: "error",
+        title: "Error",
+        message: "New password and confirmation do not match",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
+      return;
     }
     if (newPassword.length < 8) {
-      Alert.alert("Error", "New password must be at least 8 characters long")
-      return
+      show({
+        type: "error",
+        title: "Error",
+        message: "New password must be at least 8 characters long",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
+      return;
     }
 
     const token = await AsyncStorage.getItem("jwtToken")
@@ -55,10 +82,29 @@ const ChangePassword = () => {
       )
 
       await AsyncStorage.setItem("passwordChanged", "true")
-      Alert.alert("Success", response.data.message || "Password updated successfully")
-      navigation.goBack()
+
+      show({
+        type: "success",
+        title: "Success",
+        message: response.data.message || "Password updated successfully",
+        primaryAction: {
+          label: "OK",
+          onPress: () => {
+            hide();
+            navigation.goBack();
+          }
+        }
+      });
     } catch (error: any) {
-      Alert.alert("Error", error.response?.data?.message || "Something went wrong")
+      show({
+        type: "error",
+        title: "Error",
+        message: error.response?.data?.message || "Something went wrong",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   }
 

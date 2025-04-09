@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
 import axiosInstance from '@/config';
 import { InputField } from '@/components/InputField';
 import { BaseButton } from "../../components/ui/buttons/BaseButton";

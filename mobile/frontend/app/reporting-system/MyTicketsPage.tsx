@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Alert, SafeAreaView, Platform, StatusBar } from 'react-native';
+import { View, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,11 +7,14 @@ import axiosInstance from '@/config';
 import { Colors } from '@/constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ticket } from '@/types/Ticket';
+import { useStatus } from '@/context/StatusContext';
+
 import Header from '@/components/navigation/headers';
 export default function MyTicketsPage() {
   const router = useRouter();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { show, hide } = useStatus();
 
   useEffect(() => {
     fetchTickets();
@@ -28,7 +31,15 @@ export default function MyTicketsPage() {
       setTickets(response.data.data);
     } catch (error) {
       console.error('Error fetching tickets:', error);
-      Alert.alert('Error', 'Failed to load your tickets. Please try again.');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to load your tickets. Please try again.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setIsLoading(false);
     }

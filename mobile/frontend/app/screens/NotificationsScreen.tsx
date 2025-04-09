@@ -5,7 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   RefreshControl,
   SafeAreaView,
 } from "react-native";
@@ -33,6 +32,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { Swipeable } from "react-native-gesture-handler";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useStatus } from '@/context/StatusContext';
 
 const SUCCESS_COLOR = "#4CAF50";
 const ERROR_COLOR = "#F44336";
@@ -56,6 +56,7 @@ export default function NotificationsScreen() {
   const { fetchNotifications, markAsRead, deleteNotification } =
     useNotification();
   const router = useRouter();
+  const { show, hide } = useStatus();
 
   useEffect(() => {
     loadNotifications();
@@ -179,25 +180,35 @@ export default function NotificationsScreen() {
   };
 
   const handleDelete = async (id: number) => {
-    Alert.alert(
-      "Delete Notification",
-      "Are you sure you want to delete this notification?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteNotification(id);
-            } catch (err) {
-              console.error("Error deleting notification:", err);
-              Alert.alert("Error", "Failed to delete notification.");
-            }
-          },
-        },
-      ]
-    );
+    show({
+      type: "error",
+      title: "Delete Notification",
+      message: "Are you sure you want to delete this notification?",
+      primaryAction: {
+        label: "Delete",
+        onPress: async () => {
+          try {
+            await deleteNotification(id);
+            hide();
+          } catch (err) {
+            console.error("Error deleting notification:", err);
+            show({
+              type: "error",
+              title: "Error",
+              message: "Failed to delete notification.",
+              primaryAction: {
+                label: "OK",
+                onPress: hide
+              }
+            });
+          }
+        }
+      },
+      secondaryAction: {
+        label: "Cancel",
+        onPress: hide
+      }
+    });
   };
 
   const renderRightActions = (id: number) => {

@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   ScrollView,
   Image,
-  Alert,
   TouchableOpacity,
   Platform,
   SafeAreaView,
@@ -27,8 +26,10 @@ import { TitleLarge, BodyMedium } from "@/components/Typography"
 import * as ImagePicker from "expo-image-picker"
 import { MaterialIcons, Feather, FontAwesome } from "@expo/vector-icons"
 import { Profile } from "@/types"
+import { useStatus } from "@/context/StatusContext"
 
 export default function EditProfile() {
+  const { show, hide } = useStatus();
   const [activeTab, setActiveTab] = useState("home");
   const { theme } = useTheme();
   const [showPicker, setShowPicker] = useState(false);
@@ -123,7 +124,15 @@ export default function EditProfile() {
       }
     } catch (error) {
       console.error('Error selecting image:', error);
-      Alert.alert('Error', 'Failed to select image');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to select image",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 
@@ -185,8 +194,18 @@ export default function EditProfile() {
           await AsyncStorage.removeItem('imageId'); // Remove if no imageId is returned
         }
 
-        Alert.alert('Success', 'Profile updated successfully');
-        router.back();
+        show({
+          type: "success",
+          title: "Success",
+          message: "Profile updated successfully",
+          primaryAction: {
+            label: "OK",
+            onPress: () => {
+              hide();
+              router.back();
+            }
+          }
+        });
       }
     } catch (error: any) {
       console.error('Network Error Details:', {
@@ -195,10 +214,16 @@ export default function EditProfile() {
         response: error.response?.data,
         config: error.config,
       });
-      Alert.alert(
-        'Error',
-        'Failed to update profile. Please try again.'
-      );
+      
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to update profile. Please try again.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setLoading(false);
     }

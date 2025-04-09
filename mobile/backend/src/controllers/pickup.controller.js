@@ -178,18 +178,30 @@ const getPickupsRequesterByUserId = async (userId) => {
         order: {
           include: {
             request: {
-              select: {
-                userId: true,
+              include: {
+                // Include the Goods model to get the goodsName
+                goods: true,
+                // We no longer need the user relation here since we want the traveler's name
               },
             },
+            // Include the traveler relation to get the travelerName
+            traveler: true,
           },
         },
       },
       orderBy: {
-        scheduledTime: 'desc'
+        scheduledTime: 'desc',
       },
     });
-    return pickups;
+
+    // Transform the response to flatten the goodsName and travelerName
+    const transformedPickups = pickups.map(pickup => ({
+      ...pickup,
+      goodsName: pickup.order?.request?.goods?.name || 'Unknown Item',
+      travelerName: pickup.order?.traveler?.name || 'Unknown Traveler',
+    }));
+
+    return transformedPickups;
   } catch (error) {
     console.error('Error fetching pickups by userId:', error);
     throw new Error('Failed to retrieve pickups');
@@ -234,22 +246,40 @@ const getPickupsTravelerByUserId = async (userId) => {
       },
       include: {
         order: {
-          select: {
-            travelerId: true,
+          include: {
+            request: {
+              include: {
+                // Include the Goods model to get the goodsName
+                goods: true,
+                // Include the User model to get the requesterName
+                user: true,
+              },
+            },
+            // Optionally include the traveler relation if needed
+            traveler: true,
           },
         },
       },
       orderBy: {
-        scheduledTime: 'desc'
+        scheduledTime: 'desc',
       },
     });
-    return pickups;
+
+    // Transform the response to flatten the goodsName and requesterName
+    const transformedPickups = pickups.map(pickup => ({
+      ...pickup,
+      goodsName: pickup.order?.request?.goods?.name || 'Unknown Item',
+      requesterName: pickup.order?.request?.user?.name || 'Unknown User',
+      // Optionally include travelerName if needed
+      travelerName: pickup.order?.traveler?.name || 'Unknown Traveler',
+    }));
+
+    return transformedPickups;
   } catch (error) {
     console.error('Error fetching pickups by userId:', error);
     throw new Error('Failed to retrieve pickups');
   }
 };
-
 const getPickupsTravelerByUserIdHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -262,6 +292,15 @@ const getPickupsTravelerByUserIdHandler = async (req, res) => {
     }
 
     const pickups = await getPickupsTravelerByUserId(userId);
+
+    if (!pickups || pickups.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No pickups found for this traveler',
+        data: [],
+      });
+    }
+
     res.status(200).json({
       success: true,
       data: pickups,

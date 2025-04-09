@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Image, TouchableOpacity, Alert, Platform } from "react-native";
+import { View, StyleSheet, Image, TouchableOpacity, Platform } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
@@ -13,11 +13,14 @@ import { Feather } from "@expo/vector-icons";
 import axiosInstance from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch } from "react-redux";
+import { useStatus } from "@/context/StatusContext";
 
 const ProfilePicture = () => {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
   const { userId, userName } = useLocalSearchParams();
+  
+  const { show, hide } = useStatus();
   
   const [image, setImage] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -57,7 +60,15 @@ const ProfilePicture = () => {
       if (Platform.OS !== 'ios') {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-          Alert.alert("Permission Required", "Please grant camera roll permissions to upload a photo.");
+          show({
+            type: "error",
+            title: "Permission Required",
+            message: "Please grant camera roll permissions to upload a photo.",
+            primaryAction: {
+              label: "OK",
+              onPress: hide
+            }
+          });
           return;
         }
       }
@@ -90,14 +101,30 @@ const ProfilePicture = () => {
       }
     } catch (error) {
       console.error("Error selecting image:", error);
-      Alert.alert("Error", "Failed to select image");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to select image",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 
   // Handle upload profile picture
   const handleUploadProfilePicture = async () => {
     if (!image) {
-      Alert.alert("No Image", "Please select an image first or skip this step");
+      show({
+        type: "error",
+        title: "No Image",
+        message: "Please select an image first or skip this step",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return;
     }
 
@@ -106,11 +133,18 @@ const ProfilePicture = () => {
     const freshUserId = await AsyncStorage.getItem("userId") || String(userId);
     
     if (!freshUserId) {
-      Alert.alert(
-        "Missing User ID",
-        "Could not determine your user ID. Please try logging in again.",
-        [{ text: "Go to Login", onPress: () => router.replace("/auth/login") }]
-      );
+      show({
+        type: "error",
+        title: "Missing User ID",
+        message: "Could not determine your user ID. Please try logging in again.",
+        primaryAction: {
+          label: "Go to Login",
+          onPress: () => {
+            hide();
+            router.replace("/auth/login");
+          }
+        }
+      });
       return;
     }
     
@@ -167,26 +201,48 @@ const ProfilePicture = () => {
           console.error("Error response data:", JSON.stringify(uploadError.response.data));
         }
         
-        Alert.alert(
-          "Upload Failed", 
-          "Could not upload profile picture. Would you like to continue without a profile picture?",
-          [
-            { text: "Try Again", onPress: () => setIsUploading(false) },
-            { text: "Continue", onPress: navigateToHome }
-          ]
-        );
+        show({
+          type: "error",
+          title: "Upload Failed", 
+          message: "Could not upload profile picture. Would you like to continue without a profile picture?",
+          primaryAction: {
+            label: "Continue", 
+            onPress: () => {
+              hide();
+              navigateToHome();
+            }
+          },
+          secondaryAction: {
+            label: "Try Again", 
+            onPress: () => {
+              hide();
+              setIsUploading(false);
+            }
+          }
+        });
       }
     } catch (error: any) {
       console.error("Upload error:", error);
       
-      Alert.alert(
-        "Profile Picture Upload", 
-        "Failed to upload profile picture. You can continue without a profile picture.",
-        [
-          { text: "Try Again", onPress: () => setIsUploading(false) },
-          { text: "Continue", onPress: navigateToHome }
-        ]
-      );
+      show({
+        type: "error",
+        title: "Profile Picture Upload", 
+        message: "Failed to upload profile picture. You can continue without a profile picture.",
+        primaryAction: {
+          label: "Continue", 
+          onPress: () => {
+            hide();
+            navigateToHome();
+          }
+        },
+        secondaryAction: {
+          label: "Try Again", 
+          onPress: () => {
+            hide();
+            setIsUploading(false);
+          }
+        }
+      });
     } finally {
       setIsUploading(false);
     }
@@ -195,11 +251,18 @@ const ProfilePicture = () => {
   // Handle successful upload
   const handleUploadSuccess = () => {
     console.log("Profile picture uploaded successfully");
-    Alert.alert(
-      "Success", 
-      "Profile picture uploaded successfully!",
-      [{ text: "Continue", onPress: navigateToHome }]
-    );
+    show({
+      type: "success",
+      title: "Success", 
+      message: "Profile picture uploaded successfully!",
+      primaryAction: {
+        label: "Continue", 
+        onPress: () => {
+          hide();
+          navigateToHome();
+        }
+      }
+    });
   };
 
   // Navigate to login after completing profile setup

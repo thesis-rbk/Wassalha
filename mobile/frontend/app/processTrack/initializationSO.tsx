@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
   TouchableOpacity,
   Platform,
@@ -226,71 +225,79 @@ export default function InitializationSO() {
   };
 
   const handleCancelOrder = () => {
-    Alert.alert(
-      "Cancel Order",
-      "Are you sure you want to cancel this order? The request will become available for new offers.",
-      [
-        {
-          text: "No",
-          style: "cancel",
-        },
-        {
-          text: "Yes, Cancel",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setProcessing(true);
-
-              // First, update the order status to CANCELLED
-              const orderResponse = await axiosInstance.patch(
-                `/api/orders/${order.id}/status`,
-                {
-                  status: "CANCELLED",
-                  userId: user?.id,
-                }
-              );
-
-              if (orderResponse.status === 200) {
-                // Then, update the associated request directly (not using the status endpoint)
-                const requestId = params.idRequest;
-                if (requestId) {
-                  await axiosInstance.put(`/api/requests/${requestId}`, {
-                    status: "PENDING",
-                  });
-                }
-
-                // Send notification about cancellation
-                sendNotification("order_cancelled", {
-                  travelerId: params.travelerId,
-                  requestDetails: {
-                    requesterId: user?.id,
-                    goodsName: params.goodsName || "this item",
-                    requestId: params.idRequest,
-                    orderId: order.id,
-                  },
-                });
-
-                Alert.alert(
-                  "Order Cancelled",
-                  "The request is now available for new offers.",
-                  [
-                    {
-                      text: "OK",
-                      onPress: () => router.back(),
-                    },
-                  ]
-                );
+    show({
+      type: "error",
+      title: "Cancel Order",
+      message: "Are you sure you want to cancel this order? The request will become available for new offers.",
+      primaryAction: {
+        label: "Yes, Cancel",
+        onPress: async () => {
+          try {
+            setProcessing(true);
+            
+            // First, update the order status to CANCELLED
+            const orderResponse = await axiosInstance.patch(
+              `/api/orders/${order.id}/status`,
+              {
+                status: "CANCELLED",
+                userId: user?.id,
               }
-            } catch (error) {
-              console.error("Error cancelling order:", error);
-              Alert.alert("Error", "Failed to cancel order. Please try again.");
-            } finally {
-              setProcessing(false);
+            );
+
+            if (orderResponse.status === 200) {
+              // Then, update the associated request directly (not using the status endpoint)
+              const requestId = params.idRequest;
+              if (requestId) {
+                await axiosInstance.put(`/api/requests/${requestId}`, {
+                  status: "PENDING",
+                });
+              }
+
+              // Send notification about cancellation
+              sendNotification("order_cancelled", {
+                travelerId: params.travelerId,
+                requestDetails: {
+                  requesterId: user?.id,
+                  goodsName: params.goodsName || "this item",
+                  requestId: params.idRequest,
+                  orderId: order.id,
+                },
+              });
+
+              show({
+                type: "success",
+                title: "Order Cancelled",
+                message: "The request is now available for new offers.",
+                primaryAction: {
+                  label: "OK",
+                  onPress: () => {
+                    hide();
+                    router.back();
+                  }
+                }
+              });
             }
-          },
-        },
-      ]
-    );
+          } catch (error) {
+            console.error("Error cancelling order:", error);
+            show({
+              type: "error",
+              title: "Error",
+              message: "Failed to cancel order. Please try again.",
+              primaryAction: {
+                label: "OK",
+                onPress: hide
+              }
+            });
+          } finally {
+            setProcessing(false);
+          }
+        }
+      },
+      secondaryAction: {
+        label: "No",
+        onPress: hide
+      }
+    });
   };
 
   if (loading) {

@@ -17,6 +17,7 @@ import { CreditCard, IdCard, Shield, CheckCircle } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import Header from '@/components/navigation/headers';
 import { StatusScreen } from '@/app/screens/StatusScreen';
+import { useStatus } from '@/context/StatusContext';
 
 export default function BecomeTraveler() {
   const router = useRouter();
@@ -35,6 +36,8 @@ export default function BecomeTraveler() {
   const [statusMessage, setStatusMessage] = useState('');
   const [primaryAction, setPrimaryAction] = useState<{ label: string, onPress: () => void } | undefined>(undefined);
   const [secondaryAction, setSecondaryAction] = useState<{ label: string, onPress: () => void } | undefined>(undefined);
+
+  const { show, hide } = useStatus();
 
   const closeStatusScreen = () => {
     setStatusVisible(false);

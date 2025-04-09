@@ -9,6 +9,7 @@ import { Bell, Mail, Tag, Truck } from "lucide-react-native";
 import { RootState } from "@/store";
 import { useSelector } from "react-redux";
 import axiosInstance from "@/config";
+import { useStatus } from "@/context/StatusContext";
 
 interface NotificationOption {
   id: string;
@@ -20,6 +21,7 @@ interface NotificationOption {
 export default function CustomScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
+  const { show, hide } = useStatus();
 
   // Get user and token from Redux store
   const { user, token } = useSelector((state: RootState) => state.auth);
@@ -31,6 +33,7 @@ export default function CustomScreen() {
     newsletter: true,
     delivery: true,
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const notificationOptions: NotificationOption[] = [
     {
@@ -60,17 +63,29 @@ export default function CustomScreen() {
   ];
 
   const handleFinish = async () => {
-    try {
-      if (!userId) {
-        console.error("User ID is missing");
-        alert("User ID is missing. Please log in again.");
-        return;
-      }
+    if (!userId) {
+      show({
+        type: "error",
+        title: "User ID Missing",
+        message: "User ID is missing. Please log in again.",
+        primaryAction: {
+          label: "OK",
+          onPress: () => {
+            hide();
+            router.push("/auth/login");
+          }
+        }
+      });
+      return;
+    }
 
-      // Mark onboarding as completed
+    setIsLoading(true);
+    
+    try {
       await axiosInstance.post("/api/users/complete-onboarding",
         {
           userId,
+          preferences
         },
         {
           headers: {
@@ -82,7 +97,17 @@ export default function CustomScreen() {
       router.push("/home"); // Redirect to home after onboarding
     } catch (error) {
       console.error("Error completing onboarding:", error);
-      alert("An error occurred. Please try again.");
+      show({
+        type: "error",
+        title: "Error",
+        message: "An error occurred. Please try again.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 

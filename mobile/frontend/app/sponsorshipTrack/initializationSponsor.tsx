@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
@@ -16,6 +15,7 @@ import ProgressBar from "@/components/ProgressBar";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { useSponsorshipProcess } from "@/context/SponsorshipProcessContext";
 import { useNotification } from "@/context/NotificationContext";
+import { useStatus } from "@/context/StatusContext";
 import axiosInstance from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
@@ -35,6 +35,7 @@ export default function InitializationSponsor() {
   const processId = params.processId;
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
+  const { show, hide } = useStatus();
   const [process, setProcess] = useState<any>(null);
   const [sponsorship, setSponsorship] = useState<any>(null);
   const [buyer, setBuyer] = useState<any>(null);
@@ -107,11 +108,20 @@ export default function InitializationSponsor() {
       setBuyer(buyerResponse.data.data);
     } catch (error) {
       console.error("Error fetching process details:", error);
-      Alert.alert("Error", "Failed to load process details");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to load process details",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setLoading(false);
     }
   };
+  
   const handleAccept = async () => {
     try {
       setProcessing(true);
@@ -126,24 +136,40 @@ export default function InitializationSponsor() {
           sponsorshipId: process.sponsorshipId
         });
         
-        Alert.alert(
-          "Success", 
-          "You've accepted the sponsorship request. The buyer will now proceed to payment.",
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                router.replace("/sponsorshipTrack/verificationSponsor");
-              },
-            },
-          ]
-        );
+        show({
+          type: "success",
+          title: "Success",
+          message: "You've accepted the sponsorship request. The buyer will now proceed to payment.",
+          primaryAction: {
+            label: "OK",
+            onPress: () => {
+              hide();
+              router.replace("/sponsorshipTrack/verificationSponsor");
+            }
+          }
+        });
       } else {
-        Alert.alert("Error", result.message || "Failed to accept process");
+        show({
+          type: "error",
+          title: "Error",
+          message: result.message || "Failed to accept process",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
       }
     } catch (error) {
       console.error("Error accepting sponsorship process:", error);
-      Alert.alert("Error", "Failed to accept sponsorship process");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to accept sponsorship process",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setProcessing(false);
     }
@@ -163,24 +189,40 @@ export default function InitializationSponsor() {
           sponsorshipId: process.sponsorshipId
         });
         
-        Alert.alert(
-          "Success", 
-          "You've rejected the sponsorship request.",
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                router.replace("/");
-              },
-            },
-          ]
-        );
+        show({
+          type: "success",
+          title: "Success",
+          message: "You've rejected the sponsorship request.",
+          primaryAction: {
+            label: "OK",
+            onPress: () => {
+              hide();
+              router.replace("/");
+            }
+          }
+        });
       } else {
-        Alert.alert("Error", result.message || "Failed to reject process");
+        show({
+          type: "error",
+          title: "Error",
+          message: result.message || "Failed to reject process",
+          primaryAction: {
+            label: "OK",
+            onPress: hide
+          }
+        });
       }
     } catch (error) {
       console.error("Error rejecting sponsorship process:", error);
-      Alert.alert("Error", "Failed to reject sponsorship process");
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to reject sponsorship process",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setProcessing(false);
     }

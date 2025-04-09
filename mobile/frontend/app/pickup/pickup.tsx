@@ -5,7 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
-  Alert,
+  
   TextInput,
   FlatList,
 } from "react-native";
@@ -288,7 +288,12 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
         };
         break;
       default:
-        Alert.alert("Error", "Invalid pickup type");
+        setStatusMessage({
+          type: 'error',
+          title: 'Error',
+          message: 'Invalid pickup type'
+        });
+        setStatusVisible(true);
         return;
     }
 
@@ -641,19 +646,20 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   onChangeText={handleAirportInputChange}
                 />
                 {airportSuggestions.length > 0 && (
-                  <FlatList
-                    data={airportSuggestions}
-                    renderItem={({ item }) => (
+                  <ScrollView 
+                    nestedScrollEnabled={true}
+                    style={styles.suggestionContainer}
+                  >
+                    {airportSuggestions.map((item) => (
                       <TouchableOpacity
+                        key={item}
                         style={styles.suggestionItem}
                         onPress={() => handleSuggestionSelect(item)}
                       >
                         <ThemedText style={styles.suggestionText}>{item}</ThemedText>
                       </TouchableOpacity>
-                    )}
-                    keyExtractor={(item) => item}
-                    style={styles.suggestionContainer}
-                  />
+                    ))}
+                  </ScrollView>
                 )}
               </>
             )}

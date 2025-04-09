@@ -54,13 +54,29 @@ const ReportIssuePage: React.FC<TicketFormProps> = ({ onSuccess }) => {
       }
     } catch (error) {
       console.error('Error picking file:', error);
-      Alert.alert('Error', 'Failed to pick file. Please try again.');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to pick file. Please try again.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 
   const handleSubmitTicket = async () => {
     if (!title.trim() || !description.trim() || !category) {
-      Alert.alert('Error', 'Please fill in all fields');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Please fill in all fields",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return;
     }
 
@@ -121,7 +137,15 @@ const ReportIssuePage: React.FC<TicketFormProps> = ({ onSuccess }) => {
       setFile(null); // Clear file after submission
     } catch (error) {
       console.error('Error creating ticket:', error);
-      Alert.alert('Error', 'Failed to create ticket. Please try again.');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to create ticket. Please try again.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setIsLoading(false);
     }

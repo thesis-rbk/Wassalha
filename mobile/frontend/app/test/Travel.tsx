@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { MessageCircle } from "lucide-react-native";
@@ -7,15 +7,25 @@ import { useRouter } from "expo-router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { navigateToChat } from "@/services/chatService";
+import { useStatus } from "@/context/StatusContext";
 
 export default function Travel() {
   const router = useRouter();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { show, hide } = useStatus();
 
   // Function to open a test chat with the provided IDs
   const openTestChat = async () => {
     if (!user?.id) {
-      Alert.alert("Error", "You need to be logged in to chat");
+      show({
+        type: 'error',
+        title: 'Error',
+        message: 'You need to be logged in to chat',
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
       return;
     }
 
@@ -37,11 +47,16 @@ export default function Travel() {
       });
     } catch (error) {
       console.error("Error opening test chat:", error);
-      Alert.alert(
-        "Chat Error",
-        "Failed to open chat. Error: " +
-        (error instanceof Error ? error.message : String(error))
-      );
+      show({
+        type: 'error',
+        title: 'Chat Error',
+        message: 'Failed to open chat. Error: ' + 
+          (error instanceof Error ? error.message : String(error)),
+        primaryAction: {
+          label: 'OK',
+          onPress: () => {}
+        }
+      });
     }
   };
 

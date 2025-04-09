@@ -19,8 +19,11 @@ import { TabBar } from "@/components/navigation/TabBar";
 import { useRouter } from "expo-router";
 import { navigateToChatFromMessages } from "@/services/chatService";
 import { useFocusEffect } from "@react-navigation/native";
+import { useStatus } from "@/context/StatusContext";
+
 export default function MessagesScreen() {
   const { user } = useSelector((state: RootState) => state.auth);
+  const { show, hide } = useStatus();
   const [conversations, setConversations] = useState<
     { user: User; lastMessage: Message; unreadCount: number }[]
   >([]);
@@ -87,6 +90,19 @@ export default function MessagesScreen() {
     } catch (err) {
       console.error("Error fetching data:", err);
       setError("Failed to load messages. Please try again.");
+      
+      show({
+        type: "error",
+        title: "Loading Error",
+        message: "Failed to load messages. Please try again.",
+        primaryAction: {
+          label: "Retry",
+          onPress: () => {
+            hide();
+            fetchData();
+          }
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -140,8 +156,20 @@ export default function MessagesScreen() {
       <TouchableOpacity
         style={styles.conversationItem}
         onPress={() => {
-          // Navigate to the chat screen
-          navigateToChatFromMessages(parseInt(chatId?.toString() || "0"));
+          try {
+            navigateToChatFromMessages(parseInt(chatId?.toString() || "0"));
+          } catch (error) {
+            console.error("Error navigating to chat:", error);
+            show({
+              type: "error",
+              title: "Navigation Error",
+              message: "Could not open the chat. Please try again.",
+              primaryAction: {
+                label: "OK",
+                onPress: hide
+              }
+            });
+          }
         }}
       >
         <View style={styles.avatarContainer}>

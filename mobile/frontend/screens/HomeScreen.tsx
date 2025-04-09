@@ -11,7 +11,6 @@ import {
   type NativeSyntheticEvent,
   type NativeScrollEvent,
   TouchableOpacity,
-  Alert,
   Image,
   SafeAreaView,
 } from "react-native"
@@ -32,6 +31,9 @@ import type { UserProfile } from "@/types/UserProfile"
 import CardHome from "@/components/homecard"
 import { BACKEND_URL } from "@/config";
 import { Image as ExpoImage } from "expo-image";
+import { useStatus } from '@/context/StatusContext'
+import { BackHandler } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("Home")
@@ -65,6 +67,9 @@ export default function HomeScreen() {
   const handlechat = () => {
     router.push("/chatBot/conversation");
   };
+
+  const { show, hide } = useStatus()
+
   const fetchData = async () => {
     try {
       const response = await axiosInstance.get(`/api/allPendingReq`)
@@ -163,6 +168,32 @@ export default function HomeScreen() {
     }
   }
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        show({
+          type: 'error',
+          title: 'Exit App',
+          message: 'Are you sure you want to exit Wassalha?',
+          primaryAction: {
+            label: 'Exit',
+            onPress: () => BackHandler.exitApp()
+          },
+          secondaryAction: {
+            label: 'Cancel',
+            onPress: hide
+          }
+        });
+        return true; // Prevent default behavior
+      };
+
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => {
+        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+      };
+    }, [show, hide])
+  );
   useEffect(() => {
     fetchRecentUsers()
     fetchCurrentUser()
@@ -335,17 +366,15 @@ export default function HomeScreen() {
 
   // New function to handle clicking on a traveler or sponsor card
   const handleUserCardPress = (name: string, role: "Traveler" | "Sponsor") => {
-    Alert.alert(
-      "Premium Feature",
-      `You need to be a premium member to contact ${role}s like ${name}. Upgrade your account to unlock this feature!`,
-      [
-        {
-          text: "OK",
-          style: "default",
-        },
-      ],
-      { cancelable: true },
-    )
+    show({
+      type: "error",
+      title: "Premium Feature",
+      message: `You need to be a premium member to contact ${role}s like ${name}. Upgrade your account to unlock this feature!`,
+      primaryAction: {
+        label: "OK",
+        onPress: hide
+      }
+    })
   }
 
   const handleTabPress = (tabName: string) => {

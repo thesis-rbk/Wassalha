@@ -4,7 +4,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   FlatList,
   TextInput,
 } from 'react-native';
@@ -17,6 +16,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Send } from 'lucide-react-native';
 import { Ticket } from '@/types/Ticket';
 import { TicketMessage } from '@/types/TicketMessage';
+import { useStatus } from '@/context/StatusContext';
+
+import { Ticket } from '@/types/Ticket';
+import { TicketMessage } from '@/types/TicketMessage';
 import Header from '@/components/navigation/headers';
 export default function TicketDetailsPage() {
   const router = useRouter();
@@ -26,6 +29,7 @@ export default function TicketDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { show, hide } = useStatus();
 
   useEffect(() => {
     if (id) {
@@ -45,7 +49,15 @@ export default function TicketDetailsPage() {
       setTicket(response.data.data);
     } catch (error) {
       console.error('Error fetching ticket details:', error);
-      Alert.alert('Error', 'Failed to load ticket details.');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to load ticket details.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     }
   };
 
@@ -60,7 +72,15 @@ export default function TicketDetailsPage() {
       setMessages(response.data.data);
     } catch (error) {
       console.error('Error fetching ticket messages:', error);
-      Alert.alert('Error', 'Failed to load ticket messages.');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to load ticket messages.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +88,15 @@ export default function TicketDetailsPage() {
 
   const handleSubmitMessage = async () => {
     if (!newMessage.trim()) {
-      Alert.alert('Error', 'Message cannot be empty');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Message cannot be empty",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
       return;
     }
 
@@ -88,10 +116,26 @@ export default function TicketDetailsPage() {
       const newMsg = response.data.data;
       setMessages((prevMessages) => [...prevMessages, newMsg]);
       setNewMessage('');
-      Alert.alert('Success', 'Message sent successfully');
+      show({
+        type: "success",
+        title: "Success",
+        message: "Message sent successfully",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } catch (error) {
       console.error('Error submitting message:', error);
-      Alert.alert('Error', 'Failed to send message. Please try again.');
+      show({
+        type: "error",
+        title: "Error",
+        message: "Failed to send message. Please try again.",
+        primaryAction: {
+          label: "OK",
+          onPress: hide
+        }
+      });
     } finally {
       setIsSubmitting(false);
     }

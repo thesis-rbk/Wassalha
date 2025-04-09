@@ -179,7 +179,7 @@ export default function ReviewScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.card}>
-          <Text style={styles.title}>Rate your delivery of {params.goodsName} order #{params.idOrder}</Text>
+          <Text style={styles.title}>Rate your delivery of {params.goodsName} </Text>
 
           <View style={styles.ratingSection}>
             <Text style={styles.ratingLabel}>{reviewLabel}: {reviewedName}</Text>

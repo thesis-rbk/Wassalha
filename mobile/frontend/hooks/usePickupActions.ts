@@ -8,6 +8,7 @@ import io from "socket.io-client";
 export const usePickupActions = (pickups: Pickup[], setPickups: (pickups: Pickup[]) => void, userId?: number) => {
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeData, setQRCodeData] = useState<string>("");
+  const [currentPickup, setCurrentPickup] = useState<Pickup | null>(null);
 
   const handleAccept = async (pickupId: number): Promise<void> => {
     try {
@@ -16,6 +17,8 @@ export const usePickupActions = (pickups: Pickup[], setPickups: (pickups: Pickup
 
       const pickup = pickups.find((p) => p.id === pickupId);
       if (!pickup) throw new Error("Pickup not found");
+
+      console.log(`Accepting pickup: ${pickupId}, pickup found:`, pickup);
 
       let qrCode = "";
       if ((pickup.userconfirmed && !pickup.travelerconfirmed) || (!pickup.userconfirmed && pickup.travelerconfirmed)) {
@@ -47,10 +50,11 @@ export const usePickupActions = (pickups: Pickup[], setPickups: (pickups: Pickup
         )
       );
 
-      // Show QR code if applicable
+      // Store pickup data but don't show QR code automatically
       if ((pickup.userconfirmed || pickup.travelerconfirmed) && updatedPickup.qrCode) {
+        setCurrentPickup(updatedPickup);
         setQRCodeData(updatedPickup.qrCode);
-        setShowQRCode(true);
+        // Removed setShowQRCode(true) to prevent automatic display
       }
 
       alert("Pickup accepted!");
@@ -62,13 +66,20 @@ export const usePickupActions = (pickups: Pickup[], setPickups: (pickups: Pickup
 
   const showStoredQRCode = async (pickup: Pickup): Promise<void> => {
     try {
+      console.log("Showing QR code for pickup:", pickup.id);
+      setCurrentPickup(pickup);
+      
       if (pickup.qrCode) {
+        console.log("Using existing QR code from pickup");
         setQRCodeData(pickup.qrCode);
         setShowQRCode(true);
         return;
       }
 
+      console.log("Generating new QR code for pickup:", pickup.id);
       const qrCode = await generateQRCodeData(pickup, userId!);
+      console.log("Generated QR code data:", qrCode);
+      
       const token = await AsyncStorage.getItem("jwtToken");
       if (token) {
         await axiosInstance.put(
@@ -129,6 +140,7 @@ export const usePickupActions = (pickups: Pickup[], setPickups: (pickups: Pickup
     showQRCode,
     setShowQRCode,
     qrCodeData,
-    handleCancel, // Added to the return object
+    handleCancel,
+    currentPickup,
   };
 };

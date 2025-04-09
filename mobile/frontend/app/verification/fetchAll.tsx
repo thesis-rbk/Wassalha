@@ -8,8 +8,8 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Animated,
-    Alert,
     SafeAreaView,
+    BackHandler,
 } from "react-native";
 import Icon from 'react-native-vector-icons/Feather';
 import { Plus } from "lucide-react-native"
@@ -95,7 +95,7 @@ const SponsorshipsScreen: React.FC = () => {
             setLoading(false);
         }
     };
-
+    
     useEffect(() => {
         tokenVerif();
     }, []);
@@ -108,6 +108,21 @@ const SponsorshipsScreen: React.FC = () => {
         useCallback(() => {
             if (view === "all") fetchSponsorships();
         }, [searchQuery, view])
+    );
+
+    useFocusEffect(
+        React.useCallback(() => {
+            const onBackPress = () => {
+                navigation.navigate("home");
+                return true;
+            };
+
+            BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+            return () => {
+                BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+            };
+        }, [navigation])
     );
 
     const handleBuyPress = async (serviceProviderId: number, sponsorshipId: number, amount: number, status: string) => {

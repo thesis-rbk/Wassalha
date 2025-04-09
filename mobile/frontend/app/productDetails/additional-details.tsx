@@ -7,7 +7,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Image as RNImage,
   TextInput,
 } from "react-native";
@@ -303,31 +302,40 @@ const AdditionalDetails: React.FC = () => {
           }
         } catch (error) {
           console.error("❌ Image download error:", error);
-          Alert.alert(
-            "Image Download Failed",
-            "We couldn't download the web image. Would you like to continue without an image or go back and select a local image?",
-            [
-              {
-                text: "Continue Without Image",
-                onPress: () => {
-                  setProductDetails((prev) => ({
-                    ...prev,
-                    imageUri: undefined,
-                  }));
-                  // Continue with submission
-                  if (jwtToken) {
-                    submitForm(jwtToken);
-                  } else {
-                    Alert.alert("Error", "Authentication token is missing");
-                  }
-                },
-              },
-              {
-                text: "Go Back",
-                style: "cancel",
-              },
-            ]
-          );
+          show({
+            type: 'error',
+            title: 'Image Download Failed',
+            message: 'We couldn\'t download the web image. Would you like to continue without an image or go back and select a local image?',
+            primaryAction: {
+              label: 'Continue Without Image',
+              onPress: () => {
+                hide();
+                setProductDetails((prev) => ({
+                  ...prev,
+                  imageUri: undefined,
+                }));
+                // Continue with submission
+                if (jwtToken) {
+                  submitForm(jwtToken);
+                }
+                else {
+                  show({
+                    type: 'error',
+                    title: 'Error',
+                    message: 'Authentication token is missing',
+                    primaryAction: {
+                      label: 'OK',
+                      onPress: hide
+                    }
+                  });
+                }
+              }
+            },
+            secondaryAction: {
+              label: 'Go Back',
+              onPress: hide
+            }
+          });
           return;
         } finally {
           setImageLoading(false);
@@ -337,7 +345,8 @@ const AdditionalDetails: React.FC = () => {
       // Continue with form submission
       if (jwtToken) {
         submitForm(jwtToken);
-      } else {
+      }
+      else {
         show({
           type: 'error',
           title: 'Error',

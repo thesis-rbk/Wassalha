@@ -13,7 +13,6 @@ import {
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
-    Alert,
     Dimensions,
     Animated,
     SafeAreaView,
@@ -154,15 +153,39 @@ const BonusTransferComponent: React.FC<BonusProps> = ({ name, currency = "TD" })
     const validateAmount = () => {
         const amount = Number(transferAmount)
         if (!transferAmount || isNaN(amount)) {
-            Alert.alert("Invalid Amount", "Please enter a valid amount")
+            show({
+                type: 'error',
+                title: 'Invalid Amount',
+                message: 'Please enter a valid amount',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             return false
         }
         if (amount <= 0) {
-            Alert.alert("Invalid Amount", "Amount must be greater than zero")
+            show({
+                type: 'error',
+                title: 'Invalid Amount',
+                message: 'Amount must be greater than zero',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             return false
         }
         if (amount > bonusAmount) {
-            Alert.alert("Insufficient Funds", `Amount cannot exceed your bonus balance of ${currency} ${bonusAmount}`)
+            show({
+                type: 'error',
+                title: 'Insufficient Funds',
+                message: `Amount cannot exceed your bonus balance of ${currency} ${bonusAmount}`,
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             return false
         }
         return true
@@ -172,22 +195,54 @@ const BonusTransferComponent: React.FC<BonusProps> = ({ name, currency = "TD" })
         const { cardNumber, cardHolder, expiryDate, cvv } = cardInfo
 
         if (!cardNumber || cardNumber.replace(/\s/g, "").length !== 16) {
-            Alert.alert("Invalid Card", "Please enter a valid 16-digit card number")
+            show({
+                type: 'error',
+                title: 'Invalid Card',
+                message: 'Please enter a valid 16-digit card number',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             return false
         }
 
         if (!cardHolder) {
-            Alert.alert("Invalid Name", "Please enter the card holder name")
+            show({
+                type: 'error',
+                title: 'Invalid Name',
+                message: 'Please enter the card holder name',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             return false
         }
 
         if (!expiryDate || !/^\d{2}\/\d{2}$/.test(expiryDate)) {
-            Alert.alert("Invalid Date", "Please enter a valid expiry date (MM/YY)")
+            show({
+                type: 'error',
+                title: 'Invalid Date',
+                message: 'Please enter a valid expiry date (MM/YY)',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             return false
         }
 
         if (!cvv || cvv.length !== 3) {
-            Alert.alert("Invalid CVV", "Please enter a valid 3-digit CVV")
+            show({
+                type: 'error',
+                title: 'Invalid CVV',
+                message: 'Please enter a valid 3-digit CVV',
+                primaryAction: {
+                    label: 'OK',
+                    onPress: () => hide()
+                }
+            });
             return false
         }
 
