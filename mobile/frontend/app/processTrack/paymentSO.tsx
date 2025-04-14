@@ -5,7 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  
+
 } from "react-native";
 import { CreditCard, Lock, CheckCircle } from "lucide-react-native";
 import ProgressBar from "../../components/ProgressBar";
@@ -251,24 +251,24 @@ export default function PaymentScreen() {
 
             <View style={styles.orderRow}>
               <Text style={styles.orderLabel}>Price:</Text>
-              <Text style={styles.priceValue}>${totalPrice.toFixed(2)}</Text>
+              <Text style={styles.priceValue}>{totalPrice.toFixed(2)} TND</Text>
             </View>
 
             <View style={styles.orderRow}>
               <Text style={styles.orderLabel}>Traveler Fee:</Text>
-              <Text style={styles.orderValue}>${travelerFee.toFixed(2)}</Text>
+              <Text style={styles.orderValue}>{travelerFee.toFixed(2)} TND</Text>
             </View>
 
             <View style={styles.orderRow}>
               <Text style={styles.orderLabel}>Service Fee:</Text>
-              <Text style={styles.orderValue}>${serviceFee.toFixed(2)}</Text>
+              <Text style={styles.orderValue}>{serviceFee.toFixed(2)} TND</Text>
             </View>
 
             <View style={styles.divider} />
 
             <View style={styles.orderRow}>
               <Text style={styles.totalLabel}>Total:</Text>
-              <Text style={styles.totalValue}>${totalAmount.toFixed(2)}</Text>
+              <Text style={styles.totalValue}>{totalAmount.toFixed(2)} TND</Text>
             </View>
           </Card>
 
@@ -277,13 +277,13 @@ export default function PaymentScreen() {
             <Text style={styles.feeText}>
               A <Text style={{ fontWeight: "bold" }}>10% traveler fee</Text> (
               <Text style={{ fontStyle: "italic" }}>
-                ${travelerFee.toFixed(2)}
+                {travelerFee.toFixed(2)} TND
               </Text>
               ) and a{" "}
               <Text style={{ fontWeight: "bold" }}>
                 fixed and non-refundable service fee
               </Text>{" "}
-              (<Text style={{ fontStyle: "italic" }}>$1.00</Text>) are included
+              (<Text style={{ fontStyle: "italic" }}>1.00 TND</Text>) are included
               in your total.
             </Text>
           </View>
@@ -307,7 +307,7 @@ export default function PaymentScreen() {
                   style={[
                     styles.paymentOptionText,
                     paymentMethod === "card" &&
-                      styles.selectedPaymentOptionText,
+                    styles.selectedPaymentOptionText,
                   ]}
                 >
                   Credit Card
@@ -325,7 +325,7 @@ export default function PaymentScreen() {
                   style={[
                     styles.paypalText,
                     paymentMethod === "paypal" &&
-                      styles.selectedPaymentOptionText,
+                    styles.selectedPaymentOptionText,
                   ]}
                 >
                   PayPal

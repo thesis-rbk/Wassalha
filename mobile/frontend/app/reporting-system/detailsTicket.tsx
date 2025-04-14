@@ -14,10 +14,11 @@ import axiosInstance from '@/config';
 import { Colors } from '@/constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Send } from 'lucide-react-native';
-import {Ticket} from '@/types/Ticket';
-import {TicketMessage} from '@/types/TicketMessage';
+import { Ticket } from '@/types/Ticket';
+import { TicketMessage } from '@/types/TicketMessage';
 import { useStatus } from '@/context/StatusContext';
 
+import Header from '@/components/navigation/headers';
 export default function TicketDetailsPage() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -172,6 +173,7 @@ export default function TicketDetailsPage() {
 
   return (
     <ThemedView style={styles.container}>
+      <Header title='Ticket Details' subtitle='View and respond to ticket messages' showBackButton={true} />
       <Stack.Screen options={{ title: `Ticket #${ticket.id}` }} />
       <FlatList
         ListHeaderComponent={
@@ -187,12 +189,6 @@ export default function TicketDetailsPage() {
             <ThemedText style={styles.ticketInfo}>
               Created: {new Date(ticket.createdAt).toLocaleDateString()}
             </ThemedText>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.push('/reporting-system/create-ticket')} // Fixed route
-            >
-              <ThemedText style={styles.backButtonText}>Back to My Tickets</ThemedText>
-            </TouchableOpacity>
           </View>
         }
         data={messages}

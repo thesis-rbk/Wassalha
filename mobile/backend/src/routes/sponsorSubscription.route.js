@@ -27,4 +27,6 @@ router.delete("/ordersSponsor/:id", sponsor.deleteOrder)
 router.get("/getOneSponsorSip/:id", sponsor.findOneSponsorShip)
 router.post("/flousy", sponsor.flousiPayment)
 router.get("/allPendingReq", sponsor.AllPendingRequest)
+router.get("/Bonus", authenticateUser, sponsor.findBalance)
+router.put("/update", sponsor.updateProfileBonus)
 module.exports = router;

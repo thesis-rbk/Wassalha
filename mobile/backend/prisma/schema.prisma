@@ -177,6 +177,9 @@ enum SponsorshipPlatform {
   YOUTUBE
   TWITTER
   TIKTOK
+  DISNEYPLUS
+  AMAZON
+  NETFLIX
   OTHER
 }
 
@@ -351,10 +354,10 @@ model Profile {
   bio         String?
   country     Country? // Optional field for country
   phoneNumber String?
-
+  balance     Float?   @default(0) // Optional field for balance
   // Profile image stored as Media
-  imageId Int?   @unique
-  image   Media? @relation("ProfileImage", fields: [imageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  imageId     Int?     @unique
+  image       Media?   @relation("ProfileImage", fields: [imageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   gender Gender?
 
@@ -619,8 +622,8 @@ model ExperienceReview {
   rating     Int
   createdAt  DateTime @default(now())
 
-  reviewer   User   @relation("ExperienceReviewReviewer", fields: [reviewerId], references: [id])
-  order      Order  @relation("ExperienceReviewOrder", fields: [orderId], references: [id], onDelete: Cascade)
+  reviewer User  @relation("ExperienceReviewReviewer", fields: [reviewerId], references: [id])
+  order    Order @relation("ExperienceReviewOrder", fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 // ========== CHAT ==========

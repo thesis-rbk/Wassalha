@@ -20,7 +20,7 @@ import { TabBar } from "@/components/navigation/TabBar"
 import { ThemedView } from "@/components/ThemedView"
 import { ThemedText } from "@/components/ThemedText"
 import OrderCard from "@/components/cardsForHomePage"
-import { Plane, MapPin, Crown, ChevronRight, Globe } from "lucide-react-native"
+import { Plane, MapPin, Crown, ChevronRight, Globe, Sparkles } from "lucide-react-native"
 import { useRouter } from "expo-router"
 import type { Traveler } from "@/types/Traveler"
 import type { Order } from "@/types/Sponsorship"
@@ -29,6 +29,8 @@ import { LinearGradient } from "expo-linear-gradient"
 import type { UserData } from "@/types/UserData"
 import type { UserProfile } from "@/types/UserProfile"
 import CardHome from "@/components/homecard"
+import { BACKEND_URL } from "@/config";
+import { Image as ExpoImage } from "expo-image";
 import { useStatus } from '@/context/StatusContext'
 import { BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -62,20 +64,54 @@ export default function HomeScreen() {
   })
 
   const [currentUser, setUser] = useState(user)
+  const handlechat = () => {
+    router.push("/chatBot/conversation");
+  };
 
   const { show, hide } = useStatus()
 
   const fetchData = async () => {
     try {
-      const response = await axiosInstance.get(`/api/allPendingReq`)
-      const newRequests = response.data
-      console.log("Fetched requests:", newRequests)
-      setRequests(newRequests)
+      const response = await axiosInstance.get(`/api/allPendingReq`);
+      const newRequests = response.data.data;
+      console.log("Fetched requests:", newRequests);
+
+      // Process the requests to ensure image URLs are properly formatted
+      const processedRequests = newRequests.map((request: any) => {
+        if (request.goods) {
+          let imageUrl = request.goods.goodsUrl; // Default to goodsUrl
+
+          // If goods.image.url exists and starts with http/https, use it
+          if (
+            request.goods.image?.url &&
+            (request.goods.image.url.startsWith('http') || request.goods.image.url.startsWith('https'))
+          ) {
+            imageUrl = request.goods.image.url;
+          }
+          // If the URL doesn't start with http or https, prepend BACKEND_URL
+          else {
+            imageUrl = `${BACKEND_URL}${imageUrl}`;
+          }
+
+          // Assign the processed URL back to goods.goodsUrl
+          request.goods.goodsUrl = imageUrl;
+          console.log("Processed request image URL:", request.goods.goodsUrl);
+        }
+        return request;
+      });
+
+      // Sort requests by createdAt in descending order (newest to oldest)
+      const sortedRequests = processedRequests.sort((a: any, b: any) => {
+        return b.index - a.index;
+      });
+
+      // Replace the state with the sorted requests (no appending)
+      setRequests(sortedRequests);
     } catch (error) {
-      console.log("Error fetching requests:", error)
-      setHasMore(false)
+      console.log("Error fetching requests:", error);
+      setHasMore(false);
     }
-  }
+  };
 
   // Update fetchRecentUsers function
   const fetchRecentUsers = async () => {
@@ -103,7 +139,12 @@ export default function HomeScreen() {
               // Update the specific user's image URL
               setRecentUsers((prevUsers) =>
                 prevUsers.map((prevUser) =>
-                  prevUser.id === user.id ? { ...prevUser, imageUrl: imageResponse.data.data.imageUrl } : prevUser,
+                  prevUser.id === user.id ? {
+                    ...prevUser,
+                    imageUrl: imageResponse.data.data.imageUrl.startsWith('http')
+                      ? imageResponse.data.data.imageUrl
+                      : `${BACKEND_URL}${imageResponse.data.data.imageUrl}`
+                  } : prevUser,
                 ),
               )
             }
@@ -164,9 +205,9 @@ export default function HomeScreen() {
         });
         return true; // Prevent default behavior
       };
-  
+
       BackHandler.addEventListener('hardwareBackPress', onBackPress);
-  
+
       return () => {
         BackHandler.removeEventListener('hardwareBackPress', onBackPress);
       };
@@ -300,8 +341,32 @@ export default function HomeScreen() {
     }
   }
 
-  const handleOrderCardPress = (parameters: any) => {
-    router.push({ pathname: `/processTrack/initializationSP`, params: parameters }) // Navigate to request details
+  const handleOrderCardPress = (item: any) => {
+    const navigationParams = {
+      id: item?.id?.toString(),
+      goodsName: item.goods?.name || "Unknown",
+      price: item.goods?.price || 0,
+      location: item.goodsLocation || "Unknown",
+      destination: item.goodsDestination || "Unknown",
+      quantity: item.quantity.toString() || "0",
+      description: item.goods?.description || "",
+      category: item?.goods?.category?.name || "Uncategorized",
+      withBox: item.withBox?.toString() || "false",
+      requesterId: item.userId.toString(),
+      requesterName: item.user?.name || "Anonymous",
+      requesterRating: item.user?.reputation?.score?.toString() || "0",
+      requesterLevel: item.user?.reputation?.level?.toString() || "1",
+      requesterTotalRatings:
+        item.user?.reputation?.totalRatings?.toString() || "0",
+      requesterVerified: item.user?.profile?.isVerified?.toString() || "false",
+      status: item.status,
+      imageUrl: item.goods?.goodsUrl
+        ? item.goods.goodsUrl.startsWith('http')
+          ? item.goods.goodsUrl
+          : `${BACKEND_URL}${item.goods.goodsUrl}`
+        : null,
+    };
+    router.push({ pathname: `/processTrack/initializationSP`, params: navigationParams }) // Navigate to request details
   }
 
   const handleAcceptRequest = (requestId: number) => {
@@ -388,7 +453,7 @@ export default function HomeScreen() {
           >
             <View style={styles.cardWrapper}>
               <CardHome
-                title="welcome to Wasssalha"
+                title="Welcome to Wasssalha"
                 description=""
                 imageUrl="https://freerangestock.com/thumbnail/51436/world-map-indicates-backgrounds-globalization-and-globalise.jpg"
                 showButton={false}
@@ -578,13 +643,16 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-
+      <TouchableOpacity style={styles.fab} onPress={handlechat} activeOpacity={0.8}>
+        <Sparkles size={24} color="white" strokeWidth={2.5} />
+      </TouchableOpacity>
       <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ThemedView>
   )
 }
 
 const { width } = Dimensions.get("window")
+const { height } = Dimensions.get("window")
 const cardSize = (width - 48) / 2
 
 const styles = StyleSheet.create({
@@ -797,20 +865,35 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
   },
   cardHomeContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     paddingVertical: 10,
-    gap: 16,
+    gap: 10,
   },
   horizontalScrollView: {
-    height: 220, // Adjust this height based on your card size
+    height: 220,
   },
   cardWrapper: {
-    width: width, // Adjust width to show part of next card
-    marginRight: 16,
+    width: width - 10,
+    marginRight: -20,
   },
   horizontalCardsContainer: {
-    paddingVertical: 10,
+    paddingVertical: -200,
     alignItems: "center",
   },
+  fab: {
+    position: "absolute",
+    bottom: 95, // Adjust to be above TabBar
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#3a86ff",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  }
 })
-

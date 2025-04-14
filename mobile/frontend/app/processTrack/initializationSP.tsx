@@ -65,7 +65,7 @@ export default function InitializationSP() {
   const { sendNotification } = useNotification();
   const { show, hide } = useStatus();
 
-  console.log("params from initialization SP:", params);
+  console.log("params from initialization SP: heloooooo", params);
 
   // Progress steps
   const progressSteps = [
@@ -98,7 +98,7 @@ export default function InitializationSP() {
         isVerified: params.requesterVerified === "true",
       },
       reputation: {
-        score: Number(params.requesterRating),
+        score: Number(params.requesterRating)
       },
     },
   });
@@ -130,7 +130,7 @@ export default function InitializationSP() {
     message: '',
     primaryAction: {
       label: 'OK',
-      onPress: () => {}
+      onPress: () => { }
     }
   });
 
@@ -187,7 +187,7 @@ export default function InitializationSP() {
         message: 'Failed to load request details',
         primaryAction: {
           label: 'OK',
-          onPress: () => {}
+          onPress: () => { }
         }
       });
       setLoading(false);
@@ -312,7 +312,7 @@ export default function InitializationSP() {
         message: 'This request is not available for offers at the moment. Please try another request.',
         primaryAction: {
           label: 'OK',
-          onPress: () => {}
+          onPress: () => { }
         }
       });
     } finally {
@@ -440,7 +440,7 @@ export default function InitializationSP() {
         message: 'Failed to fetch airport suggestions',
         primaryAction: {
           label: 'OK',
-          onPress: () => {}
+          onPress: () => { }
         }
       });
     } finally {
@@ -515,7 +515,7 @@ export default function InitializationSP() {
             <View style={styles.priceContainer}>
               <Wallet size={20} color={Colors[colorScheme].primary} />
               <BodyMedium style={styles.price}>
-                ${requestDetails.goods.price.toFixed(2)}
+                {requestDetails.goods.price.toFixed(2)} TND
               </BodyMedium>
             </View>
             <BodyMedium style={styles.category}>
@@ -714,9 +714,8 @@ export default function InitializationSP() {
                         setOfferDetails((prev) => ({
                           ...prev,
                           flightNumber: value,
-                          departureFlightCode: `${
-                            AIRLINE_CODES[prev.airline]
-                          }${value}`,
+                          departureFlightCode: `${AIRLINE_CODES[prev.airline]
+                            }${value}`,
                         }));
                       }}
                     >

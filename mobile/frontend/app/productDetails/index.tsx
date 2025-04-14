@@ -25,7 +25,7 @@ import { useRouter } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import { useStatus } from '@/context/StatusContext';
-
+import Header from "@/components/navigation/headers";
 console.log("API URL:", process.env.EXPO_PUBLIC_API_URL);
 console.log("Upload URL:", process.env.EXPO_PUBLIC_MEDIA_UPLOAD_URL);
 
@@ -261,11 +261,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
 
   return (
     <ScrollView style={styles.container}>
+      <Header title="Create Request" subtitle="Enter Your Request details" showBackButton={true} />
       <View style={styles.card}>
-        <TitleLarge style={styles.mainTitle}>1. Product Details</TitleLarge>
-
         {renderScrapedDataBanner()}
-
         <InputField
           label="Product name"
           value={productName}

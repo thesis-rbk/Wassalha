@@ -199,7 +199,8 @@ export interface OrderfetchCardProps {
         goodsLocation: string;
         goodsDestination: string;
         pickupId: number;
-        date: string;
+        createdAt: string;
+        updatedAt: string;
         withBox: boolean;
         user: {
             id: number;
@@ -208,7 +209,7 @@ export interface OrderfetchCardProps {
             profile: {
                 image: { url: string }
             }
-            reputation: number | null;
+            reputation: number | 0;
         };
         goods: {
             id: number;

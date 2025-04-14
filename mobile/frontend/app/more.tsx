@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, ScrollView, Image } from 'react-native';
-import { KeyRound, MessageCircleQuestion, LifeBuoy, HelpCircle, Headphones, Coins, PiggyBank, Banknote, Wallet, DollarSign, Users, PenSquare, LogOut, ChevronRight, Bot } from 'lucide-react-native';
+import { KeyRound, MessageCircleQuestion, LifeBuoy, HelpCircle, Headphones, Coins, PiggyBank, Banknote, Wallet, DollarSign, Users, PenSquare, LogOut, ChevronRight, MessagesSquare, Info, ClipboardList, Sparkles } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
@@ -79,44 +79,29 @@ export default function MorePage() {
       route: '/verification/Wallet',
     },
     {
-      icon: <DollarSign size={24} color={Colors[colorScheme].text} />,
-      label: 'Payouts History',
-      route: '/screens/NotificationsScreen',
-      badge: unreadCount > 0 ? unreadCount : undefined,
-    },
-    {
       icon: <KeyRound size={24} color={Colors[colorScheme].text} />,
       label: 'Change Password',
       route: '/profile/change',
-      badge: unreadCount > 0 ? unreadCount : undefined,
-    },
-    {
-      icon: <Bot size={24} color={Colors[colorScheme].text} />,
-      label: 'AI Assistance',
-      route: '/chatBot',
-    },
-    {
-      icon: isSponsor ? (
-        <Coins size={24} color={Colors[colorScheme].text} />
-      ) : (
-        <Users size={24} color={Colors[colorScheme].text} />
-      ),
-      label: isSponsor ? 'Create Subscription' : 'Be Sponsor',
-      route: isSponsor ? '/verification/CreateSponsorPost' : '/screens/SponsorshipScreen',
-    },
-    {
-      icon: !isSponsor ? (
-        <Banknote size={24} color={Colors[colorScheme].text} />
-      ) : (
-        <Users size={24} color={Colors[colorScheme].text} />
-      ),
-      label: !isSponsor ? 'Create Ticket' : 'Be traveler',
-      route: !isSponsor ? '/verification/CreateSponsorPost' : '/traveler/becomeTraveler',
     },
     {
       icon: <MessageCircleQuestion size={24} color={Colors[colorScheme].text} />,
-      label: 'Make a report',
+      label: 'Questions & Answers',
+      route: '/reporting-system/Question&Answer',
+    },
+    {
+      icon: <MessagesSquare size={24} color={Colors[colorScheme].text} />,
+      label: 'Help center',
       route: '/reporting-system/create-ticket',
+    },
+    {
+      icon: <ClipboardList size={24} color={Colors[colorScheme].text} />,
+      label: 'Previous Tickets',
+      route: '/reporting-system/MyTicketsPage',
+    },
+    {
+      icon: <Sparkles size={24} color={Colors[colorScheme].text} />,
+      label: 'AI Assistant',
+      route: '/chatBot/conversation',
     },
   ];
 
