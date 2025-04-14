@@ -18,8 +18,6 @@ import { Ticket } from '@/types/Ticket';
 import { TicketMessage } from '@/types/TicketMessage';
 import { useStatus } from '@/context/StatusContext';
 
-import { Ticket } from '@/types/Ticket';
-import { TicketMessage } from '@/types/TicketMessage';
 import Header from '@/components/navigation/headers';
 export default function TicketDetailsPage() {
   const router = useRouter();

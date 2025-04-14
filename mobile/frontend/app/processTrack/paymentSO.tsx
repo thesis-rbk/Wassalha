@@ -15,7 +15,7 @@ import { useSelector } from "react-redux";
 import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { router, useLocalSearchParams } from "expo-router";
-import axiosInstance, { BACKEND_URL } from "@/config";
+import { BACKEND_URL } from "@/config";
 import { useNotification } from "@/context/NotificationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode as atob } from "base-64";
@@ -34,31 +34,16 @@ export default function PaymentScreen() {
   const socket = io(`${BACKEND_URL}/processTrack`);
   const { show, hide } = useStatus();
 
-  const [bonus, setBonus] = useState(0)
   const totalPrice =
     parseInt(params.quantity.toString()) * parseInt(params.price.toString());
   const travelerFee = totalPrice * 0.1;
   const serviceFee = 1;
   const totalAmount = totalPrice + travelerFee + serviceFee;
-  const getBalance = async () => {
-    try {
-      const res = await axiosInstance.get("/api/Bonus")
-      setBonus(res.data.balance)
-    } catch (err) {
-      console.log("err", err)
-    }
-  }
-  const handleUpdate = async (id, bonus) => {
-    try {
-      await axiosInstance.put("/api/update", { id, bonus })
-      console.log("update successfully")
-    } catch (err) {
-      console.log(err)
-    }
-  }
+
+  console.log(params, "paraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaamss");
+
   // Add user data loading effect
   useEffect(() => {
-    getBalance()
     const loadUserData = async () => {
       try {
         const userData = await AsyncStorage.getItem("user");
@@ -126,6 +111,7 @@ export default function PaymentScreen() {
           }),
         }
       );
+
       if (!response.ok) {
         throw new Error("Failed to create payment intent");
       }
@@ -149,8 +135,7 @@ export default function PaymentScreen() {
       }
 
       if (paymentIntent) {
-        console.log("PaymentIntent:", bonus + travelerFee);
-        handleUpdate(params.travelerId, (bonus + travelerFee));
+        // Send payment completed notification
         if (userData?.id) {
           sendNotification("payment_completed", {
             travelerId: params.travelerId,
@@ -183,13 +168,6 @@ export default function PaymentScreen() {
           }
         });
         console.log("Payment successful:", paymentIntent);
-        Alert.alert("Success", "Payment successful!");
-        console.log("Payment successful:", paymentIntent);
-        router.replace({
-          pathname: "/pickup/pickup",
-          params: params,
-        });
-
       }
     } catch (error: Error | any) {
       console.error("Payment error:", error);
@@ -273,24 +251,24 @@ export default function PaymentScreen() {
 
             <View style={styles.orderRow}>
               <Text style={styles.orderLabel}>Price:</Text>
-              <Text style={styles.priceValue}>${totalPrice.toFixed(2)}</Text>
+              <Text style={styles.priceValue}>{totalPrice.toFixed(2)} TND</Text>
             </View>
 
             <View style={styles.orderRow}>
               <Text style={styles.orderLabel}>Traveler Fee:</Text>
-              <Text style={styles.orderValue}>${travelerFee.toFixed(2)}</Text>
+              <Text style={styles.orderValue}>{travelerFee.toFixed(2)} TND</Text>
             </View>
 
             <View style={styles.orderRow}>
               <Text style={styles.orderLabel}>Service Fee:</Text>
-              <Text style={styles.orderValue}>${serviceFee.toFixed(2)}</Text>
+              <Text style={styles.orderValue}>{serviceFee.toFixed(2)} TND</Text>
             </View>
 
             <View style={styles.divider} />
 
             <View style={styles.orderRow}>
               <Text style={styles.totalLabel}>Total:</Text>
-              <Text style={styles.totalValue}>${totalAmount.toFixed(2)}</Text>
+              <Text style={styles.totalValue}>{totalAmount.toFixed(2)} TND</Text>
             </View>
           </Card>
 
@@ -299,13 +277,13 @@ export default function PaymentScreen() {
             <Text style={styles.feeText}>
               A <Text style={{ fontWeight: "bold" }}>10% traveler fee</Text> (
               <Text style={{ fontStyle: "italic" }}>
-                ${travelerFee.toFixed(2)}
+                {travelerFee.toFixed(2)} TND
               </Text>
               ) and a{" "}
               <Text style={{ fontWeight: "bold" }}>
                 fixed and non-refundable service fee
               </Text>{" "}
-              (<Text style={{ fontStyle: "italic" }}>$1.00</Text>) are included
+              (<Text style={{ fontStyle: "italic" }}>1.00 TND</Text>) are included
               in your total.
             </Text>
           </View>

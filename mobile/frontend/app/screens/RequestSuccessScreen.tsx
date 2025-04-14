@@ -54,7 +54,7 @@ export default function RequestSuccessScreen() {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.homeButton}
-            onPress={() => router.replace("/")}
+            onPress={() => router.replace("/home")}
           >
             <Home size={20} color="#fff" />
             <ThemedText style={styles.buttonText}>Home</ThemedText>

@@ -27,7 +27,7 @@ import Header from "@/components/navigation/headers"
 const { width, height } = Dimensions.get("window")
 const cardWidth = width * 0.85
 const cardHeight = cardWidth * 0.6
-
+import { useStatus } from '@/context/StatusContext';
 const BonusTransferComponent: React.FC<BonusProps> = ({ name, currency = "TD" }) => {
     const [modalVisible, setModalVisible] = useState(false)
     const [transferAmount, setTransferAmount] = useState("")
@@ -44,6 +44,7 @@ const BonusTransferComponent: React.FC<BonusProps> = ({ name, currency = "TD" })
     const [bonusAmount, setBonusAmount] = useState<number>(0)
     const [token, setToken] = useState<string | null>(null)
     const [names, setName] = useState("")
+    const { show, hide } = useStatus();
     // Function to fetch token from AsyncStorage
     const tokenVerif = async () => {
         try {

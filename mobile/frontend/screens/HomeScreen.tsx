@@ -72,27 +72,46 @@ export default function HomeScreen() {
 
   const fetchData = async () => {
     try {
-      const response = await axiosInstance.get(`/api/allPendingReq`)
-      const newRequests = response.data.data
-      console.log("Fetched requests:", newRequests)
+      const response = await axiosInstance.get(`/api/allPendingReq`);
+      const newRequests = response.data.data;
+      console.log("Fetched requests:", newRequests);
 
       // Process the requests to ensure image URLs are properly formatted
       const processedRequests = newRequests.map((request: any) => {
-        if (request.goods && request.goods.goodsUrl) {
-          // Make sure the URL has the proper backend prefix
-          if (!request.goods.goodsUrl.startsWith('http')) {
-            request.goods.goodsUrl = `${BACKEND_URL}${request.goods.goodsUrl}`;
+        if (request.goods) {
+          let imageUrl = request.goods.goodsUrl; // Default to goodsUrl
+
+          // If goods.image.url exists and starts with http/https, use it
+          if (
+            request.goods.image?.url &&
+            (request.goods.image.url.startsWith('http') || request.goods.image.url.startsWith('https'))
+          ) {
+            imageUrl = request.goods.image.url;
           }
+          // If the URL doesn't start with http or https, prepend BACKEND_URL
+          else {
+            imageUrl = `${BACKEND_URL}${imageUrl}`;
+          }
+
+          // Assign the processed URL back to goods.goodsUrl
+          request.goods.goodsUrl = imageUrl;
+          console.log("Processed request image URL:", request.goods.goodsUrl);
         }
         return request;
       });
 
-      setRequests(processedRequests)
+      // Sort requests by createdAt in descending order (newest to oldest)
+      const sortedRequests = processedRequests.sort((a: any, b: any) => {
+        return b.index - a.index;
+      });
+
+      // Replace the state with the sorted requests (no appending)
+      setRequests(sortedRequests);
     } catch (error) {
-      console.log("Error fetching requests:", error)
-      setHasMore(false)
+      console.log("Error fetching requests:", error);
+      setHasMore(false);
     }
-  }
+  };
 
   // Update fetchRecentUsers function
   const fetchRecentUsers = async () => {

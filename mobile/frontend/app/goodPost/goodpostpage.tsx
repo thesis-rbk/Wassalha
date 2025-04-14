@@ -31,7 +31,6 @@ import { useAuth } from "@/context/AuthContext";
 const { width } = Dimensions.get("window");
 
 export default function GoodPostPage() {
-  // All state variables remain the same
   const [isLoading, setIsLoading] = useState(false);
   const [goodsPosts, setGoodsPosts] = useState<GoodsPost[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<GoodsPost[]>([]);
@@ -44,12 +43,12 @@ export default function GoodPostPage() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [activeTab, setActiveTab] = useState("travel");
 
-  // Filter states
+  // New filter states
   const [minKg, setMinKg] = useState("");
   const [maxKg, setMaxKg] = useState("");
   const [selectedGender, setSelectedGender] = useState("");
 
-  // View mode state
+  // New state for view mode: "all" or "yours"
   const [viewMode, setViewMode] = useState<"all" | "yours">("all");
   const [userGoodsPosts, setUserGoodsPosts] = useState<GoodsPost[]>([]);
 
@@ -58,12 +57,12 @@ export default function GoodPostPage() {
   const router = useRouter();
   const { user } = useAuth();
 
-  // All useEffect hooks and functions remain the same
   useEffect(() => {
     fetchGoodsPosts();
     fetchCategories();
   }, []);
 
+  // New effect to fetch user posts when viewMode changes to "yours"
   useEffect(() => {
     if (viewMode === "yours" && user?.id) {
       fetchUserGoodsPosts();
@@ -89,14 +88,18 @@ export default function GoodPostPage() {
       setIsLoading(true);
       const response = await axiosInstance.get("/api/goods-posts");
 
+      // Log the entire first post to see its structure
       if (response.data.data && response.data.data.length > 0) {
         console.log("First post data:", JSON.stringify(response.data.data[0], null, 2));
       }
 
+      // Process the data to ensure traveler info is properly structured
       const processedPosts = (response.data.data || []).map((post: any) => {
         console.log("Processing post:", post.id, "Traveler:", post.traveler);
 
+        // Ensure traveler object has the expected structure
         if (post.traveler) {
+          // Make sure firstName and lastName are accessible
           const traveler = {
             ...post.traveler,
             firstName: post.traveler.firstName || '',
@@ -124,6 +127,7 @@ export default function GoodPostPage() {
     }
   };
 
+  // New function to fetch user's goods posts
   const fetchUserGoodsPosts = async () => {
     if (!user?.id) {
       console.log("No user ID available");
@@ -136,7 +140,9 @@ export default function GoodPostPage() {
 
       const response = await axiosInstance.get(`/api/goods-posts/user/${user.id}`);
 
+      // Process the data similarly to fetchGoodsPosts
       const processedPosts = (response.data.data || []).map((post: any) => {
+        // Ensure traveler object has the expected structure
         if (post.traveler) {
           const traveler = {
             ...post.traveler,
@@ -176,13 +182,16 @@ export default function GoodPostPage() {
   };
 
   const applyFilters = () => {
+    // Select the appropriate source posts based on viewMode
     let sourcePosts = viewMode === "all" ? goodsPosts : userGoodsPosts;
     let filtered = [...sourcePosts];
 
+    // Filter by search query (title or content or traveler name)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         post => {
+          // Debug log to see what we're working with
           if (post.traveler) {
             console.log("Filtering traveler:",
               post.traveler.firstName,
@@ -200,13 +209,16 @@ export default function GoodPostPage() {
       );
     }
 
+    // Filter by category
     if (selectedCategory) {
       filtered = filtered.filter(post => post.category?.id.toString() === selectedCategory);
     }
 
+    // Filter by date
     if (selectedDate) {
       const dateString = selectedDate.toISOString().split('T')[0];
       filtered = filtered.filter(post => {
+        // Filter based on dateFilterType
         if (dateFilterType === 'departure') {
           if (!post.departureDate) return false;
           const depDate = new Date(post.departureDate).toISOString().split('T')[0];
@@ -217,7 +229,8 @@ export default function GoodPostPage() {
           const arrDate = new Date(post.arrivalDate).toISOString().split('T')[0];
           return arrDate === dateString;
         }
-        else {
+        else { // 'any'
+          // Try to match either departure or arrival date
           if (!post.departureDate && !post.arrivalDate) return false;
 
           let matches = false;
@@ -236,6 +249,7 @@ export default function GoodPostPage() {
       });
     }
 
+    // Filter by available kg
     if (minKg) {
       const min = parseFloat(minKg);
       filtered = filtered.filter(post => {
@@ -256,6 +270,7 @@ export default function GoodPostPage() {
       });
     }
 
+    // Filter by traveler gender
     if (selectedGender) {
       filtered = filtered.filter(post =>
         post.traveler?.gender === selectedGender
@@ -319,6 +334,7 @@ export default function GoodPostPage() {
     console.log("Rendering item:", item.id);
     console.log("Traveler data:", item.traveler);
 
+    // Extract firstName and lastName safely with more detailed logging
     const firstName = item.traveler?.firstName || '';
     const lastName = item.traveler?.lastName || '';
     console.log(`Name parts: "${firstName}" "${lastName}"`);
@@ -328,6 +344,7 @@ export default function GoodPostPage() {
 
     const displayName = travelerName || 'Unknown Traveler';
 
+    // Check if this post belongs to the current user to determine if contact button should be shown
     const isCurrentUserPost = viewMode === "yours";
 
     return (
@@ -335,7 +352,7 @@ export default function GoodPostPage() {
         <View style={styles.card}>
           {/* Top perforated edge */}
           <View style={styles.perforatedEdge}>
-            {Array.from({ length: 12 }).map((_, i) => (
+            {Array.from({ length: 15 }).map((_, i) => (
               <View key={i} style={styles.perforation} />
             ))}
           </View>
@@ -405,7 +422,7 @@ export default function GoodPostPage() {
 
           {/* Perforated divider */}
           <View style={styles.perforatedDivider}>
-            {Array.from({ length: 12 }).map((_, i) => (
+            {Array.from({ length: 15 }).map((_, i) => (
               <View key={i} style={styles.perforation} />
             ))}
           </View>
@@ -748,14 +765,14 @@ export default function GoodPostPage() {
         >
           <View style={styles.premiumModalOverlay}>
             <View style={styles.premiumModalContent}>
-              <View style={styles.premiumModalHeader}>
-                <ThemedText style={styles.premiumModalTitle}>Premium Features</ThemedText>
-                <TouchableOpacity onPress={() => setShowPremiumModal(false)}>
-                  <X size={20} color="#333" />
-                </TouchableOpacity>
-              </View>
-
               <View style={styles.premiumModalBody}>
+                <TouchableOpacity
+                  style={styles.closeModalButton}
+                  onPress={() => setShowPremiumModal(false)}
+                >
+                  <X size={18} color="#333" />
+                </TouchableOpacity>
+
                 <View style={styles.premiumIcon}>
                   <Text style={styles.premiumIconText}>👑</Text>
                 </View>
@@ -920,11 +937,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f4f8",
   },
   cardContainer: {
-    marginBottom: 20, // Reduced from 24
+    marginBottom: 20,
     alignItems: "center",
   },
   card: {
-    width: width * 0.85, // Reduced from 0.9
+    width: width * 0.85,
     borderRadius: 12,
     backgroundColor: "#fff",
     shadowColor: "#000",
@@ -938,120 +955,120 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 10,
-    height: 8, // Reduced from 10
+    height: 10,
     backgroundColor: "#f8f9fa",
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
   },
   perforation: {
-    width: 5, // Reduced from 6
-    height: 5, // Reduced from 6
+    width: 6,
+    height: 6,
     borderRadius: 3,
     backgroundColor: "#f0f4f8",
-    marginTop: 1, // Reduced from 2
+    marginTop: 2,
   },
   ticketHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    padding: 10, // Reduced from 12
-    paddingBottom: 6, // Reduced from 8
+    padding: 12,
+    paddingBottom: 8,
     backgroundColor: "#f8f9fa",
   },
   dateInfo: {
     alignItems: "center",
   },
   dateLabel: {
-    fontSize: 8, // Reduced from 9
+    fontSize: 9,
     color: "#999",
     fontWeight: "bold",
   },
   dateValue: {
-    fontSize: 12, // Reduced from 14
+    fontSize: 14,
     fontWeight: "bold",
     color: "#333",
   },
   travelerSection: {
     flexDirection: "row",
-    padding: 12, // Reduced from 16
+    padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
     backgroundColor: "#ffffff",
   },
   travelerImage: {
-    width: 50, // Reduced from 60
-    height: 50, // Reduced from 60
-    borderRadius: 25, // Reduced from 30
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     borderWidth: 2,
     borderColor: "#3a86ff",
   },
   initialsContainer: {
-    width: 50, // Reduced from 60
-    height: 50, // Reduced from 60
-    borderRadius: 25, // Reduced from 30
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: "#3a86ff",
     justifyContent: "center",
     alignItems: "center",
   },
   initialsText: {
     color: "#fff",
-    fontSize: 20, // Reduced from 24
+    fontSize: 20,
     fontWeight: "bold",
   },
   travelerInfo: {
-    marginLeft: 12, // Reduced from 16
+    marginLeft: 12,
     justifyContent: "center",
   },
   passengerLabel: {
-    fontSize: 9, // Reduced from 10
+    fontSize: 10,
     color: "#999",
     fontWeight: "bold",
-    marginBottom: 3, // Reduced from 4
+    marginBottom: 4,
   },
   travelerName: {
-    fontSize: 16, // Reduced from 18
+    fontSize: 18,
     fontWeight: "bold",
     color: "#333",
-    marginBottom: 3, // Reduced from 4
+    marginBottom: 4,
   },
   travelerGender: {
-    fontSize: 12, // Reduced from 14
+    fontSize: 14,
     color: "#666",
   },
   contentSection: {
-    padding: 12, // Reduced from 16
+    padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
     backgroundColor: "#ffffff",
   },
   titleText: {
-    fontSize: 16, // Reduced from 18
+    fontSize: 16,
     fontWeight: "bold",
     color: "#3a86ff",
-    marginBottom: 6, // Reduced from 8
+    marginBottom: 6,
   },
   descriptionText: {
-    fontSize: 13, // Reduced from 14
+    fontSize: 13,
     color: "#666",
-    lineHeight: 18, // Reduced from 20
+    lineHeight: 18,
   },
   journeySection: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12, // Reduced from 16
+    padding: 12,
     backgroundColor: "#f8f9fa",
   },
   journeyPoint: {
     alignItems: "center",
-    width: 90, // Reduced from 100
+    width: 90,
   },
   journeyCity: {
-    fontSize: 9, // Reduced from 10
+    fontSize: 10,
     color: "#999",
     fontWeight: "bold",
-    marginBottom: 3, // Reduced from 4
+    marginBottom: 4,
   },
   journeyAirport: {
-    fontSize: 14, // Reduced from 16
+    fontSize: 16,
     fontWeight: "bold",
     color: "#333",
   },
@@ -1071,13 +1088,13 @@ const styles = StyleSheet.create({
   },
   journeyIcon: {
     position: "absolute",
-    fontSize: 14, // Reduced from 16
+    fontSize: 16,
   },
   perforatedDivider: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 10,
-    height: 8, // Reduced from 10
+    height: 10,
     backgroundColor: "#ffffff",
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
@@ -1086,20 +1103,20 @@ const styles = StyleSheet.create({
   },
   ticketDetails: {
     flexDirection: "row",
-    padding: 12, // Reduced from 16
+    padding: 12,
     backgroundColor: "#ffffff",
   },
   detailColumn: {
     flex: 1,
   },
   detailLabel: {
-    fontSize: 9, // Reduced from 10
+    fontSize: 10,
     color: "#999",
     fontWeight: "bold",
-    marginBottom: 3, // Reduced from 4
+    marginBottom: 4,
   },
   detailValue: {
-    fontSize: 14, // Reduced from 16
+    fontSize: 16,
     fontWeight: "bold",
     color: "#333",
   },
@@ -1252,7 +1269,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  // Weight range filter styles
+  // New styles for weight range filter
   weightRangeContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -1280,9 +1297,9 @@ const styles = StyleSheet.create({
   },
   contactButton: {
     backgroundColor: "#3a86ff",
-    marginHorizontal: 12, // Reduced from 16
-    marginVertical: 10, // Reduced from 12
-    paddingVertical: 12, // Reduced from 14
+    marginHorizontal: 16,
+    marginVertical: 10,
+    paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
     shadowColor: "#000",
@@ -1298,8 +1315,8 @@ const styles = StyleSheet.create({
   contactButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 14, // Reduced from 16
-    marginLeft: 6 // Reduced from 8
+    fontSize: 14,
+    marginLeft: 6
   },
 
   // Premium Modal Styles - REDUCED SIZE
@@ -1321,32 +1338,25 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  premiumModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16, // Reduced from 20
-    paddingTop: 16, // Reduced from 20
-    paddingBottom: 12, // Reduced from 15
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  premiumModalTitle: {
-    fontSize: 18, // Reduced from 20
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  premiumModalTitle2: {
-    fontSize: 18, // Reduced from 22
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8, // Reduced from 10
-  },
   premiumModalBody: {
-    padding: 16, // Reduced from 24
+    padding: 20, // Increased to give more space around content
+    paddingTop: 30, // Added extra padding at top since we removed the header
     alignItems: 'center',
+    position: 'relative', // Needed for absolute positioning of close button
+  },
+  closeModalButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   premiumIcon: {
+    marginTop: 5, // Added margin to position the crown icon better
     width: 60, // Reduced from 80
     height: 60, // Reduced from 80
     borderRadius: 30, // Reduced from 40
@@ -1364,6 +1374,13 @@ const styles = StyleSheet.create({
   },
   premiumIconText: {
     fontSize: 30, // Reduced from 40
+  },
+  premiumModalTitle2: {
+    fontSize: 20, // Increased from 18 to be more prominent
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+    marginTop: 8, // Added to give some space between crown and title
   },
   premiumModalText: {
     fontSize: 14, // Reduced from 16

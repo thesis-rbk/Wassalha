@@ -17,6 +17,7 @@ import axiosInstance from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
 import Header from '@/components/navigation/headers';
+import { useStatus } from '@/context/StatusContext';
 interface TicketFormProps {
   onSuccess: () => void;
 }
@@ -32,7 +33,7 @@ const ReportIssuePage: React.FC<TicketFormProps> = ({ onSuccess }) => {
   const [description, setDescription] = useState<string>('');
   const [category, setCategory] = useState<string>('');
   const [file, setFile] = useState<DocumentPicker.DocumentPickerResult | null>(null);
-
+  const { show, hide } = useStatus();
   const categories: Category[] = [
     { id: 'REQUEST_ISSUE', label: 'Request Issue' },
     { id: 'OFFER_ISSUE', label: 'Offer Issue' },

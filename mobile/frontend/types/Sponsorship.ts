@@ -199,7 +199,8 @@ export interface OrderfetchCardProps {
         goodsLocation: string;
         goodsDestination: string;
         pickupId: number;
-        date: string;
+        createdAt: string;
+        updatedAt: string;
         withBox: boolean;
         user: {
             id: number;

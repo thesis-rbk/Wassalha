@@ -177,6 +177,9 @@ enum SponsorshipPlatform {
   YOUTUBE
   TWITTER
   TIKTOK
+  DISNEYPLUS
+  AMAZON
+  NETFLIX
   OTHER
 }
 
@@ -619,8 +622,8 @@ model ExperienceReview {
   rating     Int
   createdAt  DateTime @default(now())
 
-  reviewer   User   @relation("ExperienceReviewReviewer", fields: [reviewerId], references: [id])
-  order      Order  @relation("ExperienceReviewOrder", fields: [orderId], references: [id], onDelete: Cascade)
+  reviewer User  @relation("ExperienceReviewReviewer", fields: [reviewerId], references: [id])
+  order    Order @relation("ExperienceReviewOrder", fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 // ========== CHAT ==========

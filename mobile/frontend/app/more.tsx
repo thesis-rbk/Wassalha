@@ -82,7 +82,6 @@ export default function MorePage() {
       icon: <KeyRound size={24} color={Colors[colorScheme].text} />,
       label: 'Change Password',
       route: '/profile/change',
-      badge: unreadCount > 0 ? unreadCount : undefined,
     },
     {
       icon: <MessageCircleQuestion size={24} color={Colors[colorScheme].text} />,

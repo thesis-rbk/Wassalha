@@ -10,13 +10,11 @@ import {
 import { Image } from "expo-image";
 import type { OrderfetchCardProps } from "../types/Sponsorship";
 import { Plane, Send } from "lucide-react-native";
-import { formatDistanceToNow } from "date-fns";
 import * as Haptics from "expo-haptics";
 
 const OrderCard: React.FC<OrderfetchCardProps> = ({ order, onPress }) => {
     const {
         userName = order.user?.name || "Unknown User",
-        requestTime = order.date,
         goods = order.goods,
         origin = order.goodsDestination || "Unknown Origin",
         destination = order.goodsLocation || "Unknown Destination",
@@ -28,26 +26,16 @@ const OrderCard: React.FC<OrderfetchCardProps> = ({ order, onPress }) => {
     const slideAnim = React.useRef(new Animated.Value(30)).current;
     const [isLoading, setIsLoading] = React.useState(false);
 
-    const timeAgo = React.useMemo(() => {
-        if (!requestTime) return "N/A";
-        try {
-            const dateObj = typeof requestTime === "string" ? new Date(requestTime) : requestTime;
-            return formatDistanceToNow(dateObj, { addSuffix: true });
-        } catch {
-            return "N/A";
-        }
-    }, [requestTime]);
-
     React.useEffect(() => {
         Animated.parallel([
             Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
             Animated.spring(slideAnim, { toValue: 0, friction: 7, useNativeDriver: true }),
         ]).start(() => {
             AccessibilityInfo.announceForAccessibility(
-                `${userName} requested ${goods?.name || "an item"} from ${origin} to ${destination} forTND ${goods?.price || "N/A"}, ${timeAgo}`
+                `${userName} requested ${goods?.name || "an item"} from ${origin} to ${destination} for TND ${goods?.price || "N/A"}`
             );
         });
-    }, [userName, goods?.name, origin, destination, goods?.price, timeAgo]);
+    }, [userName, goods?.name, origin, destination, goods?.price]);
 
     const handlePressIn = () => {
         Animated.spring(scaleAnim, { toValue: 0.92, friction: 6, useNativeDriver: true }).start();
@@ -75,18 +63,22 @@ const OrderCard: React.FC<OrderfetchCardProps> = ({ order, onPress }) => {
                 },
             ]}
             accessible={true}
-            accessibilityLabel={`${userName} requested ${goods?.name || "an item"} from ${origin} to ${destination}, ${timeAgo}, priced at TND${goods?.price || "N/A"}`}
+            accessibilityLabel={`${userName} requested ${goods?.name || "an item"} from ${origin} to ${destination}, priced at TND${goods?.price || "N/A"}`}
         >
             {/* Image Section (70% of height) */}
             <View style={styles.imageContainer}>
                 {goods?.goodsUrl ? (
-                    <Image
-                        source={{ uri: goods.goodsUrl }}
-                        style={styles.goodsImage}
-                        resizeMode="cover"
-                        accessibilityLabel={`${goods.name} image`}
-                        onError={() => console.log("Image failed to load")}
-                    />
+                    <>
+                        {console.log("Rendering image URL:", goods.goodsUrl)}
+                        <Image
+                            source={{ uri: goods.goodsUrl }}
+                            style={styles.goodsImage}
+                            resizeMode="cover"
+                            accessibilityLabel={`${goods.name} image`}
+                            onLoad={() => console.log("Image loaded:", goods.goodsUrl)}
+                            onError={(e) => console.log(`Image failed: ${goods.goodsUrl}`, e.nativeEvent)}
+                        />
+                    </>
                 ) : (
                     <View style={styles.placeholderImage}>
                         <Text style={styles.placeholderText}>No Image</Text>
@@ -111,7 +103,6 @@ const OrderCard: React.FC<OrderfetchCardProps> = ({ order, onPress }) => {
                     )}
                     <View style={styles.userInfo}>
                         <Text style={styles.userName}>{userName}</Text>
-                        <Text style={styles.requestTime}>{timeAgo}</Text>
                     </View>
                 </View>
                 {/* Send Button at Bottom-Right of Image */}
@@ -236,11 +227,6 @@ const styles = StyleSheet.create({
         fontWeight: "500",
         color: "#fff",
     },
-    requestTime: {
-        fontSize: 14,
-        color: "#D1D5DB",
-        marginTop: 4,
-    },
     infoContainer: {
         width: "100%",
         height: "30%",
@@ -270,9 +256,9 @@ const styles = StyleSheet.create({
         transform: [{ rotate: "45deg" }],
     },
     price: {
-        fontSize: 18, // Reduced from 22
-        fontWeight: "600", // Slightly lighter than 700
-        color: "#000000", // Changed from #4A90E2 to black
+        fontSize: 18,
+        fontWeight: "600",
+        color: "#000000",
     },
     sendButton: {
         borderRadius: 12,
