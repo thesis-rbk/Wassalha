@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, Image, Platform, KeyboardAvoidingView, Keyboard } from "react-native";
+import {
+  StyleSheet,
+  ScrollView,
+  Image,
+  Platform,
+  KeyboardAvoidingView,
+} from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { InputField } from "@/components/InputField";
@@ -11,13 +17,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch, useSelector } from "react-redux";
 import { loginStart, loginSuccess, loginFailure } from "../../store/authSlice";
 import { RootState } from "../../store";
-import axiosInstance from "../../config";
+import axiosInstance, {
+  BACKEND_URL,
+  GOOGLE_AUTH_KEY,
+  REDIRECT_URL,
+} from "../../config";
 import { InputFieldPassword } from "@/components/InputFieldPassword";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useAuth } from "@/context/AuthContext";
-import { useStatus } from '@/context/StatusContext';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -28,15 +37,13 @@ export default function Login() {
   const { loading, error } = useSelector((state: RootState) => state.auth);
   const { setUser } = useAuth();
 
-
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const redirect = process.env.EXPO_PUBLIC_REDIRECT
+  const redirect = REDIRECT_URL;
   const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId:
-      process.env.EXPO_PUBLIC_GOOGLE_AUTH,
+    clientId: GOOGLE_AUTH_KEY,
     scopes: ["profile", "email"],
     redirectUri: redirect,
   });
@@ -50,7 +57,6 @@ export default function Login() {
       }
     }
   }, [response]);
-  console.log("redirecturi", redirect);
 
   useEffect(() => {
     console.log("Auth URL:", request?.url);
@@ -75,7 +81,7 @@ export default function Login() {
 
     dispatch(loginStart());
     try {
-      console.log("Logging in...", process.env.EXPO_PUBLIC_API_URL);
+      console.log("Logging in...", BACKEND_URL);
       const res = await axiosInstance.post("/api/users/login", {
         email,
         password,
@@ -84,8 +90,12 @@ export default function Login() {
 
       if (res.status === 200) {
         // Clear any existing data
-        await AsyncStorage.multiRemove(["jwtToken", "userId", "hasCompletedOnboarding"]);
-        
+        await AsyncStorage.multiRemove([
+          "jwtToken",
+          "userId",
+          "hasCompletedOnboarding",
+        ]);
+
         // Save token and user data
         await AsyncStorage.setItem("jwtToken", data.token);
         await AsyncStorage.setItem("userId", data.user.id.toString());
@@ -95,17 +105,23 @@ export default function Login() {
           email: data.user.email,
         });
         console.log("user iddddddddddddddddddddddddddddddd", data.user.id);
-        
+
         console.log("Login successful");
         console.log("Token stored:", data.token.substring(0, 10) + "...");
         console.log("User ID stored:", data.user.id);
-        
+
         // Store onboarding status if provided
         if (data.user.hasCompletedOnboarding !== undefined) {
-          await AsyncStorage.setItem("hasCompletedOnboarding", String(!!data.user.hasCompletedOnboarding));
-          console.log("Onboarding status stored:", !!data.user.hasCompletedOnboarding);
+          await AsyncStorage.setItem(
+            "hasCompletedOnboarding",
+            String(!!data.user.hasCompletedOnboarding)
+          );
+          console.log(
+            "Onboarding status stored:",
+            !!data.user.hasCompletedOnboarding
+          );
         }
-        
+
         dispatch(
           loginSuccess({
             token: data.token,
@@ -252,7 +268,7 @@ export default function Login() {
         >
           {/* Logo or Header Image */}
           <Image
-            source={require("../../assets/images/globe.png")} // Use your logo
+            source={require("../../assets/images/loginPage/globe.png")}
             style={styles.logo}
             resizeMode="contain"
           />

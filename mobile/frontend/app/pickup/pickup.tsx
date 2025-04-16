@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
-  
   TextInput,
   FlatList,
 } from "react-native";
@@ -21,19 +20,23 @@ import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import PickupMap from "./pickupMap";
-import axiosInstance from "@/config";
+import axiosInstance, { GOOGLE_MAPS_API_KEY, SOCKET_URL } from "@/config";
 import io from "socket.io-client";
 import { PickupProps } from "@/types/PickupsProps";
-import { StatusScreen } from '@/app/screens/StatusScreen';
+import { StatusScreen } from "@/app/screens/StatusScreen";
 
-const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL
-
-export default function Pickups({ pickupId, orderId: initialOrderId, pickups, setPickups,setShowPickup,paramsData }: PickupProps)
- {  
-  console.log("paramsDataaaaaaaaaaaaaaaaaaaaaaa" ,paramsData)
+export default function Pickups({
+  pickupId,
+  orderId: initialOrderId,
+  pickups,
+  setPickups,
+  setShowPickup,
+  paramsData,
+}: PickupProps) {
+  console.log("paramsDataaaaaaaaaaaaaaaaaaaaaaa", paramsData);
   const router = useRouter();
-  const params=useLocalSearchParams();
-  console.log("paraams",params);
+  const params = useLocalSearchParams();
+  console.log("paraams", params);
   const colorScheme = useColorScheme() ?? "light";
   const [location, setLocation] = useState<string>("");
   const [address, setAddress] = useState<string>("");
@@ -60,12 +63,11 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
   const [selectedOptionInfo, setSelectedOptionInfo] = useState<string>("");
   const [airportSuggestions, setAirportSuggestions] = useState<string[]>([]);
   const [isFetchingAirports, setIsFetchingAirports] = useState<boolean>(false);
-  const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   const [statusVisible, setStatusVisible] = useState(false);
   const [statusMessage, setStatusMessage] = useState({
-    type: 'error' as 'success' | 'error',
-    title: '',
-    message: ''
+    type: "error" as "success" | "error",
+    title: "",
+    message: "",
   });
 
   // Socket.IO setup
@@ -85,7 +87,6 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
     socket.on("connect_error", (error) => {
       console.error("❌ Socket.IO connection error:", error.message);
     });
-        
 
     return () => {
       socket.disconnect();
@@ -107,9 +108,10 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
         languageCode: "en",
       };
       const requestHeaders = {
-        "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY,
+        "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
         "Content-Type": "application/json",
-        "X-Goog-FieldMask": "places.displayName,places.types,places.formattedAddress",
+        "X-Goog-FieldMask":
+          "places.displayName,places.types,places.formattedAddress",
       };
 
       const response = await axios.post(
@@ -125,9 +127,9 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
     } catch (error) {
       console.error("Error fetching airports from Google Places:", error);
       setStatusMessage({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to fetch airport suggestions'
+        type: "error",
+        title: "Error",
+        message: "Failed to fetch airport suggestions",
       });
       setStatusVisible(true);
     } finally {
@@ -150,9 +152,9 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         setStatusMessage({
-          type: 'error',
-          title: 'Permission Denied',
-          message: 'Permission to access location was denied'
+          type: "error",
+          title: "Permission Denied",
+          message: "Permission to access location was denied",
         });
         setStatusVisible(true);
         return;
@@ -166,14 +168,15 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       setCoordinates({ latitude, longitude });
 
       let address = await Location.reverseGeocodeAsync({ latitude, longitude });
-      const displayAddress = address[0]?.name || address[0]?.street || "Current Location";
+      const displayAddress =
+        address[0]?.name || address[0]?.street || "Current Location";
       setManualAddress(displayAddress);
     } catch (error) {
       console.error("Error getting location:", error);
       setStatusMessage({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to get location'
+        type: "error",
+        title: "Error",
+        message: "Failed to get location",
       });
       setStatusVisible(true);
     }
@@ -218,9 +221,9 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
     const token = await AsyncStorage.getItem("jwtToken");
     if (!token) {
       setStatusMessage({
-        type: 'error',
-        title: 'Authentication Error',
-        message: 'User is not authenticated.'
+        type: "error",
+        title: "Authentication Error",
+        message: "User is not authenticated.",
       });
       setStatusVisible(true);
       return;
@@ -228,9 +231,9 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
 
     if (!pickupId && !orderId) {
       setStatusMessage({
-        type: 'error',
-        title: 'Error',
-        message: 'Order ID is required to create a new pickup.'
+        type: "error",
+        title: "Error",
+        message: "Order ID is required to create a new pickup.",
       });
       setStatusVisible(true);
       return;
@@ -238,9 +241,9 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
 
     if (!pickupType) {
       setStatusMessage({
-        type: 'error',
-        title: 'Error',
-        message: 'Please select a valid pickup type'
+        type: "error",
+        title: "Error",
+        message: "Please select a valid pickup type",
       });
       setStatusVisible(true);
       return;
@@ -256,14 +259,20 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       pickupType,
       contactPhoneNumber: contact || null,
       scheduledTime: scheduledTime || new Date().toISOString(),
-      coordinates: coordinates ? `${coordinates.latitude},${coordinates.longitude}` : null,
+      coordinates: coordinates
+        ? `${coordinates.latitude},${coordinates.longitude}`
+        : null,
       qrCode: null,
     };
 
     let payload;
     switch (pickupType) {
       case "AIRPORT":
-        payload = { ...basePayload, location: airportName || null, address: "Airport Pickup Zone" };
+        payload = {
+          ...basePayload,
+          location: airportName || null,
+          address: "Airport Pickup Zone",
+        };
         break;
       case "DELIVERY":
         payload = {
@@ -289,33 +298,38 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
         break;
       default:
         setStatusMessage({
-          type: 'error',
-          title: 'Error',
-          message: 'Invalid pickup type'
+          type: "error",
+          title: "Error",
+          message: "Invalid pickup type",
         });
         setStatusVisible(true);
         return;
     }
 
     try {
-      const response = await axiosInstance.post("/api/pickup/handle-confirm", payload, { headers });
+      const response = await axiosInstance.post(
+        "/api/pickup/handle-confirm",
+        payload,
+        { headers }
+      );
       console.log("Pickup response aaaaaaaaaaaaaaaaaaaaaaa:", response.data);
       const pickupData = response.data; // Backend returns { message, pickup }
 
-      const socket = io(`${SOCKET_URL}/pickup`, { // Fixed namespace
+      const socket = io(`${SOCKET_URL}/pickup`, {
+        // Fixed namespace
         transports: ["websocket"],
       });
       const room = `pickup:${pickupData.id}`;
       socket.emit("joinPickupRoom", pickupData.id);
       socket.emit("suggestionUpdate", pickupData); // Match backend event name
       console.log(`✅ Emitted suggestionUpdate to room ${room}:`, pickupData);
-    
+
       setStatusMessage({
-        type: 'success',
-        title: 'Success',
+        type: "success",
+        title: "Success",
         message: pickupId
-          ? 'Pickup updated successfully!'
-          : 'Pickup scheduled successfully! Awaiting traveler confirmation.'
+          ? "Pickup updated successfully!"
+          : "Pickup scheduled successfully! Awaiting traveler confirmation.",
       });
       setStatusVisible(true);
 
@@ -337,9 +351,11 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
     } catch (error) {
       console.error("Pickup error:", error);
       setStatusMessage({
-        type: 'error',
-        title: 'Error',
-        message: pickupId ? 'Failed to update pickup' : 'Failed to schedule pickup'
+        type: "error",
+        title: "Error",
+        message: pickupId
+          ? "Failed to update pickup"
+          : "Failed to schedule pickup",
       });
       setStatusVisible(true);
     }
@@ -507,17 +523,20 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
 
   return (
     <ThemedView style={styles.container}>
-    
-      
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {step === "select" ? (
           <>
             <ThemedText style={styles.headerText}>Schedule Pickup</ThemedText>
-            <ThemedText style={styles.subText}>Choose your pickup method</ThemedText>
+            <ThemedText style={styles.subText}>
+              Choose your pickup method
+            </ThemedText>
 
             <View style={styles.pickupOptionsContainer}>
               <TouchableOpacity
-                style={[styles.pickupOption, pickupType === "AIRPORT" && styles.selectedOption]}
+                style={[
+                  styles.pickupOption,
+                  pickupType === "AIRPORT" && styles.selectedOption,
+                ]}
                 onPress={() => handlePickupSelection("AIRPORT")}
               >
                 <View style={styles.optionHeader}>
@@ -533,7 +552,11 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   <ThemedText style={styles.optionText}>
                     Airport Pickup Point
                     {pickupType === "AIRPORT" && (
-                      <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />
+                      <FontAwesome5
+                        name="check"
+                        size={16}
+                        style={{ marginLeft: 8 }}
+                      />
                     )}
                   </ThemedText>
                 </View>
@@ -543,7 +566,10 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.pickupOption, pickupType === "DELIVERY" && styles.selectedOption]}
+                style={[
+                  styles.pickupOption,
+                  pickupType === "DELIVERY" && styles.selectedOption,
+                ]}
                 onPress={() => handlePickupSelection("DELIVERY")}
               >
                 <View style={styles.optionHeader}>
@@ -559,7 +585,11 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   <ThemedText style={styles.optionText}>
                     Home Delivery
                     {pickupType === "DELIVERY" && (
-                      <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />
+                      <FontAwesome5
+                        name="check"
+                        size={16}
+                        style={{ marginLeft: 8 }}
+                      />
                     )}
                   </ThemedText>
                 </View>
@@ -569,7 +599,10 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.pickupOption, pickupType === "IN_PERSON" && styles.selectedOption]}
+                style={[
+                  styles.pickupOption,
+                  pickupType === "IN_PERSON" && styles.selectedOption,
+                ]}
                 onPress={() => handlePickupSelection("IN_PERSON")}
               >
                 <View style={styles.optionHeader}>
@@ -585,7 +618,11 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   <ThemedText style={styles.optionText}>
                     In-Person Pickup
                     {pickupType === "IN_PERSON" && (
-                      <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />
+                      <FontAwesome5
+                        name="check"
+                        size={16}
+                        style={{ marginLeft: 8 }}
+                      />
                     )}
                   </ThemedText>
                 </View>
@@ -595,7 +632,10 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.pickupOption, pickupType === "PICKUPPOINT" && styles.selectedOption]}
+                style={[
+                  styles.pickupOption,
+                  pickupType === "PICKUPPOINT" && styles.selectedOption,
+                ]}
                 onPress={() => handlePickupSelection("PICKUPPOINT")}
               >
                 <View style={styles.optionHeader}>
@@ -611,7 +651,11 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   <ThemedText style={styles.optionText}>
                     Designated Pickup Point
                     {pickupType === "PICKUPPOINT" && (
-                      <FontAwesome5 name="check" size={16} style={{ marginLeft: 8 }} />
+                      <FontAwesome5
+                        name="check"
+                        size={16}
+                        style={{ marginLeft: 8 }}
+                      />
                     )}
                   </ThemedText>
                 </View>
@@ -632,12 +676,13 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
             {pickupType === "AIRPORT" && (
               <>
                 <ThemedText style={styles.modalText}>
-                  Airport Pickup Process: Our airport employee receives your package from the
-                  traveler. Visit the pickup zone with your QR code to collect it. Requires
-                  traveler confirmation.
+                  Airport Pickup Process: Our airport employee receives your
+                  package from the traveler. Visit the pickup zone with your QR
+                  code to collect it. Requires traveler confirmation.
                 </ThemedText>
                 <ThemedText style={styles.importantTextSafe}>
-                  IMPORTANT: This process is managed by our team for your convenience and safety.
+                  IMPORTANT: This process is managed by our team for your
+                  convenience and safety.
                 </ThemedText>
                 <TextInput
                   style={styles.airportInput}
@@ -646,7 +691,7 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   onChangeText={handleAirportInputChange}
                 />
                 {airportSuggestions.length > 0 && (
-                  <ScrollView 
+                  <ScrollView
                     nestedScrollEnabled={true}
                     style={styles.suggestionContainer}
                   >
@@ -656,7 +701,9 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                         style={styles.suggestionItem}
                         onPress={() => handleSuggestionSelect(item)}
                       >
-                        <ThemedText style={styles.suggestionText}>{item}</ThemedText>
+                        <ThemedText style={styles.suggestionText}>
+                          {item}
+                        </ThemedText>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -667,11 +714,13 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
             {pickupType === "DELIVERY" && (
               <>
                 <ThemedText style={styles.modalText}>
-                  Home Delivery Process: We deliver to your door. Provide your address or use
-                  current location. Requires traveler confirmation.
+                  Home Delivery Process: We deliver to your door. Provide your
+                  address or use current location. Requires traveler
+                  confirmation.
                 </ThemedText>
                 <ThemedText style={styles.importantTextSafe}>
-                  IMPORTANT: This process is fully managed and guaranteed by us - no risk to you!
+                  IMPORTANT: This process is fully managed and guaranteed by us
+                  - no risk to you!
                 </ThemedText>
                 <InputField
                   label="Manual Address"
@@ -685,7 +734,9 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   style={styles.locationButton}
                 >
                   <FontAwesome5 name="location-arrow" size={16} />
-                  <ThemedText style={styles.buttonText}>Use Current Location</ThemedText>
+                  <ThemedText style={styles.buttonText}>
+                    Use Current Location
+                  </ThemedText>
                 </BaseButton>
               </>
             )}
@@ -693,13 +744,13 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
             {pickupType === "PICKUPPOINT" && (
               <>
                 <ThemedText style={styles.modalText}>
-                  Designated Pickup Point Process: Specify a location for traveler drop-off.
-                  Collect with QR code. Requires traveler confirmation. Provide clear
-                  instructions for smooth pickup.
+                  Designated Pickup Point Process: Specify a location for
+                  traveler drop-off. Collect with QR code. Requires traveler
+                  confirmation. Provide clear instructions for smooth pickup.
                 </ThemedText>
                 <ThemedText style={styles.importantTextSafe}>
-                  IMPORTANT: This process is managed by us once the package reaches the point -
-                  safe process!
+                  IMPORTANT: This process is managed by us once the package
+                  reaches the point - safe process!
                 </ThemedText>
                 <InputField
                   label="Address"
@@ -714,7 +765,10 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
                   onChangeText={setPickupDescription}
                   multiline
                 />
-                <PickupMap setCoordinates={setCoordinates} setManualAddress={setManualAddress} />
+                <PickupMap
+                  setCoordinates={setCoordinates}
+                  setManualAddress={setManualAddress}
+                />
               </>
             )}
 
@@ -766,7 +820,9 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
       >
         <View style={styles.modalView}>
           <View style={styles.modalContent}>
-            <ThemedText style={styles.modalTitle}>{pickupType} Information</ThemedText>
+            <ThemedText style={styles.modalTitle}>
+              {pickupType} Information
+            </ThemedText>
             <ScrollView>
               <ThemedText style={styles.modalText}>
                 {selectedOptionInfo.split("\n\n")[0]}
@@ -816,7 +872,7 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
           </View>
         </View>
       </Modal>
-      
+
       <StatusScreen
         visible={statusVisible}
         type={statusMessage.type}
@@ -824,7 +880,7 @@ export default function Pickups({ pickupId, orderId: initialOrderId, pickups, se
         message={statusMessage.message}
         primaryAction={{
           label: "OK",
-          onPress: () => setStatusVisible(false)
+          onPress: () => setStatusVisible(false),
         }}
         onClose={() => setStatusVisible(false)}
       />

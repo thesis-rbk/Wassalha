@@ -18,17 +18,15 @@ import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Category } from "@/types/Category";
-import axiosInstance from "@/config";
+import axiosInstance, { GOOGLE_MAPS_API_KEY } from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import * as DocumentPicker from "expo-document-picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "@/config";
-import { useStatus } from '@/context/StatusContext';
-import Header from '@/components/navigation/headers';
-import { StatusScreen } from '@/app/screens/StatusScreen';
-const EXPO_PUBLIC_GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+import { useStatus } from "@/context/StatusContext";
+import Header from "@/components/navigation/headers";
 
 const AdditionalDetails: React.FC = () => {
   const colorScheme = useColorScheme() ?? "light";
@@ -78,17 +76,17 @@ const AdditionalDetails: React.FC = () => {
   const [showDeliverySearch, setShowDeliverySearch] = useState(false);
 
   // Add these states for handling location search
-  const [pickupSearchText, setPickupSearchText] = useState('');
-  const [deliverySearchText, setDeliverySearchText] = useState('');
+  const [pickupSearchText, setPickupSearchText] = useState("");
+  const [deliverySearchText, setDeliverySearchText] = useState("");
   const [pickupPredictions, setPickupPredictions] = useState([]);
   const [deliveryPredictions, setDeliveryPredictions] = useState([]);
 
   // Add these states for different validation messages
   const [statusVisible, setStatusVisible] = useState(false);
   const [statusMessage, setStatusMessage] = useState({
-    type: 'error' as 'success' | 'error',
-    title: '',
-    message: ''
+    type: "error" as "success" | "error",
+    title: "",
+    message: "",
   });
 
   useEffect(() => {
@@ -148,20 +146,20 @@ const AdditionalDetails: React.FC = () => {
     } catch (error) {
       console.error("❌ Error picking document:", error);
       show({
-        type: 'error',
-        title: 'Document Error',
-        message: 'Failed to pick document',
+        type: "error",
+        title: "Document Error",
+        message: "Failed to pick document",
         primaryAction: {
-          label: 'Try Again',
+          label: "Try Again",
           onPress: () => {
             hide();
             pickDocument();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: hide
-        }
+          label: "Cancel",
+          onPress: hide,
+        },
       });
     } finally {
       setImageLoading(false);
@@ -197,16 +195,16 @@ const AdditionalDetails: React.FC = () => {
       // Make sure we have a token
       if (!jwtToken) {
         show({
-          type: 'error',
-          title: 'Authentication Required',
-          message: 'You need to be logged in to create a request',
+          type: "error",
+          title: "Authentication Required",
+          message: "You need to be logged in to create a request",
           primaryAction: {
-            label: 'Login',
+            label: "Login",
             onPress: () => {
               hide();
               router.replace("../login");
-            }
-          }
+            },
+          },
         });
         return;
       }
@@ -241,32 +239,32 @@ const AdditionalDetails: React.FC = () => {
             } else {
               // If refresh fails, redirect to login
               show({
-                type: 'error',
-                title: 'Session Expired',
-                message: 'Please log in again',
+                type: "error",
+                title: "Session Expired",
+                message: "Please log in again",
                 primaryAction: {
-                  label: 'OK',
+                  label: "OK",
                   onPress: () => {
                     hide();
                     router.replace("../login");
-                  }
-                }
+                  },
+                },
               });
               return;
             }
           } catch (refreshError) {
             console.error("❌ Token refresh failed:", refreshError);
             show({
-              type: 'error',
-              title: 'Session Expired',
-              message: 'Please log in again',
+              type: "error",
+              title: "Session Expired",
+              message: "Please log in again",
               primaryAction: {
-                label: 'OK',
+                label: "OK",
                 onPress: () => {
                   hide();
                   router.replace("../login");
-                }
-              }
+                },
+              },
             });
             return;
           }
@@ -303,11 +301,12 @@ const AdditionalDetails: React.FC = () => {
         } catch (error) {
           console.error("❌ Image download error:", error);
           show({
-            type: 'error',
-            title: 'Image Download Failed',
-            message: 'We couldn\'t download the web image. Would you like to continue without an image or go back and select a local image?',
+            type: "error",
+            title: "Image Download Failed",
+            message:
+              "We couldn't download the web image. Would you like to continue without an image or go back and select a local image?",
             primaryAction: {
-              label: 'Continue Without Image',
+              label: "Continue Without Image",
               onPress: () => {
                 hide();
                 setProductDetails((prev) => ({
@@ -317,24 +316,23 @@ const AdditionalDetails: React.FC = () => {
                 // Continue with submission
                 if (jwtToken) {
                   submitForm(jwtToken);
-                }
-                else {
+                } else {
                   show({
-                    type: 'error',
-                    title: 'Error',
-                    message: 'Authentication token is missing',
+                    type: "error",
+                    title: "Error",
+                    message: "Authentication token is missing",
                     primaryAction: {
-                      label: 'OK',
-                      onPress: hide
-                    }
+                      label: "OK",
+                      onPress: hide,
+                    },
                   });
                 }
-              }
+              },
             },
             secondaryAction: {
-              label: 'Go Back',
-              onPress: hide
-            }
+              label: "Go Back",
+              onPress: hide,
+            },
           });
           return;
         } finally {
@@ -345,35 +343,34 @@ const AdditionalDetails: React.FC = () => {
       // Continue with form submission
       if (jwtToken) {
         submitForm(jwtToken);
-      }
-      else {
+      } else {
         show({
-          type: 'error',
-          title: 'Error',
-          message: 'Authentication token is missing',
+          type: "error",
+          title: "Error",
+          message: "Authentication token is missing",
           primaryAction: {
-            label: 'OK',
-            onPress: hide
-          }
+            label: "OK",
+            onPress: hide,
+          },
         });
       }
     } catch (error) {
       console.error("❌ Outer error:", error);
       show({
-        type: 'error',
-        title: 'Error',
+        type: "error",
+        title: "Error",
         message: (error as Error).message || "An unknown error occurred",
         primaryAction: {
-          label: 'Try Again',
+          label: "Try Again",
           onPress: () => {
             hide();
             handleSubmit();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: hide
-        }
+          label: "Cancel",
+          onPress: hide,
+        },
       });
     }
   };
@@ -512,9 +509,9 @@ const AdditionalDetails: React.FC = () => {
           if (requestResponse.data.success) {
             console.log("Emitting socket event for new request...");
             const socket = io(`${BACKEND_URL}/processTrack`);
-            
+
             socket.emit("requestCreated", {
-              requestId: requestResponse.data.data.id
+              requestId: requestResponse.data.data.id,
             });
 
             router.replace({
@@ -540,22 +537,24 @@ const AdditionalDetails: React.FC = () => {
             ? "Request was made but no response received"
             : "Request setup failed",
         });
-        
+
         show({
-          type: 'error',
-          title: 'Submission Error',
-          message: error.message || "An unknown error occurred while submitting the form",
+          type: "error",
+          title: "Submission Error",
+          message:
+            error.message ||
+            "An unknown error occurred while submitting the form",
           primaryAction: {
-            label: 'Try Again',
+            label: "Try Again",
             onPress: () => {
               hide();
               submitForm(jwtToken);
-            }
+            },
           },
           secondaryAction: {
-            label: 'Cancel',
-            onPress: hide
-          }
+            label: "Cancel",
+            onPress: hide,
+          },
         });
       }
     } catch (error: any) {
@@ -572,22 +571,24 @@ const AdditionalDetails: React.FC = () => {
           ? "Request was made but no response received"
           : "Request setup failed",
       });
-      
+
       show({
-        type: 'error',
-        title: 'Submission Error',
-        message: error.message || "An unknown error occurred while submitting the form",
+        type: "error",
+        title: "Submission Error",
+        message:
+          error.message ||
+          "An unknown error occurred while submitting the form",
         primaryAction: {
-          label: 'Try Again',
+          label: "Try Again",
           onPress: () => {
             hide();
             handleSubmit();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: hide
-        }
+          label: "Cancel",
+          onPress: hide,
+        },
       });
     }
   }
@@ -603,7 +604,7 @@ const AdditionalDetails: React.FC = () => {
           backButtonTitle: "Back",
           showNextButton: true,
           nextButtonTitle: "Next",
-          onBackPress: () => router.back()
+          onBackPress: () => router.back(),
         };
       case 1:
         return {
@@ -611,12 +612,12 @@ const AdditionalDetails: React.FC = () => {
           subtitle: "Set delivery preferences and requirements",
           showBackButton: true,
           backButtonTitle: "Back",
-          showNextButton: false
+          showNextButton: false,
         };
       default:
         return {
           title: "Product Details",
-          subtitle: "Complete your product information"
+          subtitle: "Complete your product information",
         };
     }
   };
@@ -625,7 +626,7 @@ const AdditionalDetails: React.FC = () => {
   const fetchPredictions = async (text: string, forPickup: boolean) => {
     try {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${text}&key=${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}&language=en`
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${text}&key=${GOOGLE_MAPS_API_KEY}&language=en`
       );
       const data = await response.json();
       if (forPickup) {
@@ -634,7 +635,7 @@ const AdditionalDetails: React.FC = () => {
         setDeliveryPredictions(data.predictions);
       }
     } catch (error) {
-      console.error('Error fetching predictions:', error);
+      console.error("Error fetching predictions:", error);
     }
   };
 
@@ -642,59 +643,59 @@ const AdditionalDetails: React.FC = () => {
   const validateFinalSubmission = () => {
     if (!categoryId) {
       show({
-        type: 'error',
-        title: 'Required Field',
-        message: 'Please go back and select a category',
+        type: "error",
+        title: "Required Field",
+        message: "Please go back and select a category",
         primaryAction: {
-          label: 'Go Back',
+          label: "Go Back",
           onPress: () => {
             hide();
             setCurrentStep(0); // Go back to category selection
-          }
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: hide
-        }
+          label: "Cancel",
+          onPress: hide,
+        },
       });
       return false;
     }
 
     if (!quantity) {
       show({
-        type: 'error',
-        title: 'Required Field',
-        message: 'Please enter quantity',
+        type: "error",
+        title: "Required Field",
+        message: "Please enter quantity",
         primaryAction: {
-          label: 'OK',
-          onPress: hide
-        }
+          label: "OK",
+          onPress: hide,
+        },
       });
       return false;
     }
 
     if (!goodsLocation) {
       show({
-        type: 'error',
-        title: 'Required Field',
-        message: 'Please enter pickup location',
+        type: "error",
+        title: "Required Field",
+        message: "Please enter pickup location",
         primaryAction: {
-          label: 'OK',
-          onPress: hide
-        }
+          label: "OK",
+          onPress: hide,
+        },
       });
       return false;
     }
 
     if (!goodsDestination) {
       show({
-        type: 'error',
-        title: 'Required Field',
-        message: 'Please enter delivery location',
+        type: "error",
+        title: "Required Field",
+        message: "Please enter delivery location",
         primaryAction: {
-          label: 'OK',
-          onPress: hide
-        }
+          label: "OK",
+          onPress: hide,
+        },
       });
       return false;
     }
@@ -720,20 +721,26 @@ const AdditionalDetails: React.FC = () => {
       />
 
       <ScrollView style={styles.scrollView} scrollEnabled={!dropdownVisible}>
-        <View style={[
-          styles.card,
-          // Only apply margin bottom when on delivery details step
-          currentStep === 1 && { marginBottom: '15%' }
-        ]}>
+        <View
+          style={[
+            styles.card,
+            // Only apply margin bottom when on delivery details step
+            currentStep === 1 && { marginBottom: "15%" },
+          ]}
+        >
           {currentStep === 0 ? (
             <>
               {/* Basic Details Section */}
               <View style={styles.section}>
-                <TitleSection style={styles.sectionTitle}>Basic Details</TitleSection>
-                
+                <TitleSection style={styles.sectionTitle}>
+                  Basic Details
+                </TitleSection>
+
                 {/* Image Selection Section */}
                 <View style={styles.imageSection}>
-                  <TitleSection style={styles.subSectionTitle}>Product Image</TitleSection>
+                  <TitleSection style={styles.subSectionTitle}>
+                    Product Image
+                  </TitleSection>
                   {productDetails.imageUri ? (
                     <View style={styles.selectedImageContainer}>
                       <RNImage
@@ -763,7 +770,10 @@ const AdditionalDetails: React.FC = () => {
                         </BodyMedium>
                       ) : (
                         <>
-                          <ImageIcon size={24} color={Colors[colorScheme].primary} />
+                          <ImageIcon
+                            size={24}
+                            color={Colors[colorScheme].primary}
+                          />
                           <BodyMedium style={styles.pickDocumentText}>
                             Select Product Image
                           </BodyMedium>
@@ -790,7 +800,9 @@ const AdditionalDetails: React.FC = () => {
                     >
                       <BodyMedium
                         style={
-                          categoryId ? styles.selectedText : styles.placeholderText
+                          categoryId
+                            ? styles.selectedText
+                            : styles.placeholderText
                         }
                       >
                         {categories.find((c) => c.id === categoryId)?.name ||
@@ -808,7 +820,9 @@ const AdditionalDetails: React.FC = () => {
 
                     {/* Error message */}
                     {categoryError ? (
-                      <BodyMedium style={styles.errorText}>{categoryError}</BodyMedium>
+                      <BodyMedium style={styles.errorText}>
+                        {categoryError}
+                      </BodyMedium>
                     ) : null}
                   </TouchableOpacity>
 
@@ -823,7 +837,8 @@ const AdditionalDetails: React.FC = () => {
                             key={category.id}
                             style={[
                               styles.dropdownItem,
-                              categoryId === category.id && styles.dropdownItemSelected,
+                              categoryId === category.id &&
+                                styles.dropdownItemSelected,
                             ]}
                             onPress={() => {
                               handleCategorySelect(category.id);
@@ -851,15 +866,19 @@ const AdditionalDetails: React.FC = () => {
               {/* Divider */}
               <View style={styles.sectionDivider}>
                 <View style={styles.dividerLine} />
-                <BodyMedium style={styles.dividerText}>Optional Specifications</BodyMedium>
+                <BodyMedium style={styles.dividerText}>
+                  Optional Specifications
+                </BodyMedium>
                 <View style={styles.dividerLine} />
               </View>
 
               {/* Product Specifications Section */}
               <View style={styles.section}>
                 <View style={styles.specificationHeader}>
-                  <TitleSection style={styles.sectionTitle}>Product Specifications</TitleSection>
-                  <TouchableOpacity 
+                  <TitleSection style={styles.sectionTitle}>
+                    Product Specifications
+                  </TitleSection>
+                  <TouchableOpacity
                     style={styles.skipButton}
                     onPress={() => setCurrentStep(1)}
                   >
@@ -899,7 +918,9 @@ const AdditionalDetails: React.FC = () => {
                   onPress={() => setCurrentStep(1)}
                   style={styles.nextButton}
                 >
-                  <BodyMedium style={styles.buttonText}>Continue to Delivery Details</BodyMedium>
+                  <BodyMedium style={styles.buttonText}>
+                    Continue to Delivery Details
+                  </BodyMedium>
                 </BaseButton>
               </View>
             </>
@@ -952,7 +973,9 @@ const AdditionalDetails: React.FC = () => {
 
               {/* Delivery Location */}
               <View style={styles.locationContainer}>
-                <BodyMedium style={styles.label}>Delivery Location *</BodyMedium>
+                <BodyMedium style={styles.label}>
+                  Delivery Location *
+                </BodyMedium>
                 <TextInput
                   style={styles.locationInput}
                   value={deliverySearchText}
@@ -1015,7 +1038,9 @@ const AdditionalDetails: React.FC = () => {
                 }}
                 style={styles.submitButton}
               >
-                <BodyMedium style={styles.buttonText}>Create Product & Request</BodyMedium>
+                <BodyMedium style={styles.buttonText}>
+                  Create Product & Request
+                </BodyMedium>
               </BaseButton>
             </>
           )}
@@ -1049,45 +1074,45 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionDivider: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: 24,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
   },
   dividerText: {
     marginHorizontal: 12,
-    color: '#666',
+    color: "#666",
     fontSize: 14,
   },
   specificationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   skipButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: Colors.light.primary + '10',
+    backgroundColor: Colors.light.primary + "10",
   },
   skipButtonText: {
     color: Colors.light.primary,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   subSectionTitle: {
     fontSize: 14,
     marginBottom: 8,
-    color: '#666',
+    color: "#666",
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 16,
     color: Colors.light.text,
   },
@@ -1173,7 +1198,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   buttonContainer: {
-    width: '100%',
+    width: "100%",
     marginTop: 20,
   },
   buttonText: {
@@ -1256,11 +1281,11 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: 20,
-    width: '100%',
+    width: "100%",
   },
   nextButton: {
     marginTop: 24,
-    width: '100%',
+    width: "100%",
   },
   locationContainer: {
     marginBottom: 24,
@@ -1276,9 +1301,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   predictionsContainer: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: "#e2e8f0",
     borderRadius: 8,
     marginTop: 4,
     maxHeight: 200,
@@ -1286,8 +1311,8 @@ const styles = StyleSheet.create({
   predictionItem: {
     padding: 13,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  }
+    borderBottomColor: "#e2e8f0",
+  },
 });
 
 export default AdditionalDetails;

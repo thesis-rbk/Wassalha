@@ -10,36 +10,77 @@ import MapViewDirections from "react-native-maps-directions";
 import * as Location from "expo-location";
 import { SafeLocation } from "@/types/Pickup";
 import { PickupMapProps } from "@/types/Pickup";
-import { useStatus } from '@/context/StatusContext';
+import { useStatus } from "@/context/StatusContext";
+import { GOOGLE_MAPS_API_KEY } from "@/config";
 
 // Custom Map Style mimicking Facebook's color scheme
 const facebookMapStyle = [
   { elementType: "geometry", stylers: [{ color: "#F0F2F5" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#1C2526" }] },
   { elementType: "labels.text.stroke", stylers: [{ color: "#FFFFFF" }] },
-  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#E4E6EB" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#E4E6EB" }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#1877F2" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#A3BFFA" }] },
-  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#D9DCE1" }] },
-  { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#F0F2F5" }] },
+  {
+    featureType: "administrative",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#E4E6EB" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#E4E6EB" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: "#1877F2" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#A3BFFA" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "geometry",
+    stylers: [{ color: "#D9DCE1" }],
+  },
+  {
+    featureType: "landscape",
+    elementType: "geometry",
+    stylers: [{ color: "#F0F2F5" }],
+  },
 ];
 
-export default function PickupMap({ setCoordinates, setManualAddress }: PickupMapProps) {
+export default function PickupMap({
+  setCoordinates,
+  setManualAddress,
+}: PickupMapProps) {
   const colorScheme = useColorScheme() ?? "light";
   const [mapModalVisible, setMapModalVisible] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<SafeLocation | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<SafeLocation | null>(
+    null
+  );
   const [currentPosition, setCurrentPosition] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
-  const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   const { show, hide } = useStatus();
 
   const safeLocations: SafeLocation[] = [
-    { name: "Tunis-Carthage International Airport", latitude: 36.851, longitude: 10.2272 },
-    { name: "Sousse Central Post Office", latitude: 35.8256, longitude: 10.6412 },
-    { name: "Djerba Midoun Police Station", latitude: 33.8076, longitude: 10.9975 },
+    {
+      name: "Tunis-Carthage International Airport",
+      latitude: 36.851,
+      longitude: 10.2272,
+    },
+    {
+      name: "Sousse Central Post Office",
+      latitude: 35.8256,
+      longitude: 10.6412,
+    },
+    {
+      name: "Djerba Midoun Police Station",
+      latitude: 33.8076,
+      longitude: 10.9975,
+    },
     { name: "Hammamet Bus Station", latitude: 36.4, longitude: 10.6167 },
     { name: "Sfax City Center Mall", latitude: 34.7406, longitude: 10.7603 },
   ];
@@ -114,8 +155,8 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
           message: "Permission to access location was denied",
           primaryAction: {
             label: "OK",
-            onPress: hide
-          }
+            onPress: hide,
+          },
         });
         return;
       }
@@ -134,8 +175,8 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
         message: "Failed to get current location",
         primaryAction: {
           label: "OK",
-          onPress: hide
-        }
+          onPress: hide,
+        },
       });
     }
   };
@@ -162,15 +203,19 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
         message: "Please select a location before confirming",
         primaryAction: {
           label: "OK",
-          onPress: hide
-        }
+          onPress: hide,
+        },
       });
     }
   };
 
   return (
     <>
-      <BaseButton variant="secondary" onPress={handlePickOnMap} style={styles.mapButton}>
+      <BaseButton
+        variant="secondary"
+        onPress={handlePickOnMap}
+        style={styles.mapButton}
+      >
         <FontAwesome5 name="map-marked-alt" size={16} />
         <ThemedText style={styles.buttonText}>Pick on Map</ThemedText>
       </BaseButton>
@@ -194,32 +239,56 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
               customMapStyle={facebookMapStyle}
             >
               {currentPosition && (
-                <Marker coordinate={currentPosition} title="Your Location" pinColor="#1877F2" />
+                <Marker
+                  coordinate={currentPosition}
+                  title="Your Location"
+                  pinColor="#1877F2"
+                />
               )}
               {safeLocations.map((location) => (
                 <Marker
                   key={location.name}
-                  coordinate={{ latitude: location.latitude, longitude: location.longitude }}
+                  coordinate={{
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                  }}
                   title={location.name}
                   onPress={() => handleMarkerPress(location)}
-                  pinColor={selectedLocation?.name === location.name ? "#1877F2" : "#E4E6EB"}
+                  pinColor={
+                    selectedLocation?.name === location.name
+                      ? "#1877F2"
+                      : "#E4E6EB"
+                  }
                 />
               ))}
               {currentPosition && selectedLocation && (
                 <MapViewDirections
                   origin={currentPosition}
-                  destination={{ latitude: selectedLocation.latitude, longitude: selectedLocation.longitude }}
-                  apikey={GOOGLE_KEY || ""}
+                  destination={{
+                    latitude: selectedLocation.latitude,
+                    longitude: selectedLocation.longitude,
+                  }}
+                  apikey={GOOGLE_MAPS_API_KEY || ""}
                   strokeWidth={3}
                   strokeColor="#1877F2"
                   mode="DRIVING"
-                  onError={(error: Error) => console.error("Directions error:", error)}
+                  onError={(error: Error) =>
+                    console.error("Directions error:", error)
+                  }
                 />
               )}
             </MapView>
             <View style={styles.buttonRow}>
-              <BaseButton variant="primary" onPress={handleConfirm} style={styles.confirmButton}>
-                <FontAwesome5 name="check" size={14} color={Colors[colorScheme].text} />
+              <BaseButton
+                variant="primary"
+                onPress={handleConfirm}
+                style={styles.confirmButton}
+              >
+                <FontAwesome5
+                  name="check"
+                  size={14}
+                  color={Colors[colorScheme].text}
+                />
                 <ThemedText style={styles.buttonTextSmall}>Confirm</ThemedText>
               </BaseButton>
               <BaseButton
@@ -227,7 +296,11 @@ export default function PickupMap({ setCoordinates, setManualAddress }: PickupMa
                 onPress={() => setMapModalVisible(false)}
                 style={styles.cancelButton}
               >
-                <FontAwesome5 name="times" size={14} color={Colors[colorScheme].text} />
+                <FontAwesome5
+                  name="times"
+                  size={14}
+                  color={Colors[colorScheme].text}
+                />
                 <ThemedText style={styles.buttonTextSmall}>Cancel</ThemedText>
               </BaseButton>
             </View>

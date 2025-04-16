@@ -1,22 +1,26 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image, ScrollView, Dimensions } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { Colors } from '@/constants/Colors';
-import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
-import { Camera, Shield, Upload, RefreshCw } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import axiosInstance from '@/config';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { jwtDecode } from 'jwt-decode';
-import { verificationStyles as globalStyles } from '@/styles/verification';
-import { VerificationCard } from '@/components/verification/VerificationCard';
-import { FileText } from 'lucide-react-native';
+import React, { useState } from "react";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  Dimensions,
+} from "react-native";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { Colors } from "@/constants/Colors";
+import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import { Camera, Shield, Upload, RefreshCw } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import axiosInstance from "@/config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { jwtDecode } from "jwt-decode";
 import { TabBar } from "@/components/navigation/TabBar";
-import { useStatus } from '@/context/StatusContext';
+import { useStatus } from "@/context/StatusContext";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 const CARD_ASPECT_RATIO = 1.586; // Standard ID card aspect ratio
 
 const IdCard = () => {
@@ -35,84 +39,83 @@ const IdCard = () => {
   const handleDocumentReadable = async () => {
     if (!image) {
       show({
-        type: 'error',
-        title: 'Missing Photo',
-        message: 'Please take a photo first',
+        type: "error",
+        title: "Missing Photo",
+        message: "Please take a photo first",
         primaryAction: {
-          label: 'Take Photo',
+          label: "Take Photo",
           onPress: () => {
             hide();
             pickImage();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
+          label: "Cancel",
+          onPress: () => hide(),
+        },
       });
       return;
     }
 
     try {
-      const token = await AsyncStorage.getItem('jwtToken');
-      if (!token) throw new Error('No token found');
-
+      const token = await AsyncStorage.getItem("jwtToken");
+      if (!token) throw new Error("No token found");
       const decoded: any = jwtDecode(token);
       const formData = new FormData();
 
       // Create file object from image URI
       const imageFile = {
         uri: image,
-        type: 'image/jpeg',
-        name: 'id-card.jpg',
+        type: "image/jpeg",
+        name: "id-card.jpg",
       };
 
-      formData.append('idCard', imageFile as any);
+      formData.append("idCard", imageFile as any);
 
       const response = await axiosInstance.post(
         `/api/users/verify-id/${decoded.id}`,
         formData,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
 
       if (response.data.success) {
         show({
-          type: 'success',
-          title: 'ID Card Verified',
-          message: 'Your ID card has been verified successfully',
+          type: "success",
+          title: "ID Card Verified",
+          message: "Your ID card has been verified successfully",
           primaryAction: {
-            label: 'Continue',
+            label: "Continue",
             onPress: () => {
               hide();
-              router.push('/verification/TakeSelfie');
-            }
-          }
+              router.push("/verification/TakeSelfie");
+            },
+          },
         });
       }
     } catch (error: any) {
       show({
-        type: 'error',
-        title: 'Verification Failed',
-        message: error.response?.data?.message || 'Failed to verify ID Card',
+        type: "error",
+        title: "Verification Failed",
+        message: error.response?.data?.message || "Failed to verify ID Card",
         primaryAction: {
-          label: 'Try Again',
+          label: "Try Again",
           onPress: () => {
             hide();
             handleDocumentReadable();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Take New Photo',
+          label: "Take New Photo",
           onPress: () => {
             hide();
             pickImage();
-          }
-        }
+          },
+        },
       });
     }
   };
@@ -129,13 +132,13 @@ const IdCard = () => {
 
     if (permissionResult.granted === false) {
       show({
-        type: 'error',
-        title: 'Permission Required',
-        message: 'Permission to access camera is required!',
+        type: "error",
+        title: "Permission Required",
+        message: "Permission to access camera is required!",
         primaryAction: {
-          label: 'OK',
-          onPress: () => hide()
-        }
+          label: "OK",
+          onPress: () => hide(),
+        },
       });
       return;
     }
@@ -155,10 +158,7 @@ const IdCard = () => {
 
   return (
     <ThemedView style={styles.container}>
-      <LinearGradient
-        colors={['#4F46E5', '#7C3AED']}
-        style={styles.header}
-      >
+      <LinearGradient colors={["#4F46E5", "#7C3AED"]} style={styles.header}>
         <Shield size={32} color="#FFF" />
         <ThemedText style={styles.headerTitle}>ID Verification</ThemedText>
         <ThemedText style={styles.headerSubtitle}>
@@ -183,7 +183,7 @@ const IdCard = () => {
             <>
               <Image source={{ uri: image }} style={styles.cardImage} />
               <LinearGradient
-                colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.3)']}
+                colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.3)"]}
                 style={styles.cardOverlay}
               >
                 <TouchableOpacity
@@ -208,9 +208,7 @@ const IdCard = () => {
           onPress={handleDocumentReadable}
           disabled={!image}
         >
-          <ThemedText style={styles.submitButtonText}>
-            Continue
-          </ThemedText>
+          <ThemedText style={styles.submitButtonText}>Continue</ThemedText>
         </TouchableOpacity>
 
         <ThemedText style={styles.securityNote}>
@@ -233,37 +231,37 @@ const BulletPoint = ({ text }: { text: string }) => (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: "#F8FAFC",
   },
   header: {
     padding: 24,
-    alignItems: 'center',
+    alignItems: "center",
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#FFF',
+    fontWeight: "700",
+    color: "#FFF",
     marginTop: 12,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
+    color: "rgba(255,255,255,0.8)",
     marginTop: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   content: {
     flex: 1,
     padding: 20,
   },
   guideCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -271,18 +269,18 @@ const styles = StyleSheet.create({
   },
   guideTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginTop: 12,
     marginBottom: 16,
-    color: '#1E293B',
+    color: "#1E293B",
   },
   bulletPoints: {
-    width: '100%',
+    width: "100%",
     gap: 12,
   },
   bulletPoint: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   bullet: {
     width: 8,
@@ -293,53 +291,53 @@ const styles = StyleSheet.create({
   },
   bulletText: {
     fontSize: 15,
-    color: '#64748B',
+    color: "#64748B",
   },
   cardContainer: {
     width: width - 40,
     height: (width - 40) / CARD_ASPECT_RATIO,
     borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: '#FFF',
+    overflow: "hidden",
+    backgroundColor: "#FFF",
     marginBottom: 24,
     borderWidth: 2,
     borderColor: Colors.light.primary,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
   },
   cardImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   cardOverlay: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
   },
   uploadButton: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   uploadText: {
     fontSize: 16,
     color: Colors.light.primary,
     marginTop: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   retakeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
     padding: 8,
     borderRadius: 8,
   },
   retakeText: {
-    color: '#FFF',
+    color: "#FFF",
     marginLeft: 8,
     fontSize: 14,
   },
@@ -347,21 +345,21 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.primary,
     padding: 16,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 16,
   },
   submitButtonDisabled: {
     opacity: 0.5,
   },
   submitButtonText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   securityNote: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 14,
-    color: '#64748B',
+    color: "#64748B",
     marginBottom: 20,
   },
 });
