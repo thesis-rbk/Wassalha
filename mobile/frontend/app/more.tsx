@@ -110,7 +110,7 @@ export default function MorePage() {
     {
       icon: <Bot size={24} color={Colors[colorScheme].text} />,
       label: "AI Assistance",
-      route: "/chatBot",
+      route: "/chatBot/conversation",
     },
     {
       icon: isSponsor ? (

@@ -25,17 +25,13 @@ import { decode as atob } from "base-64";
 import { GoodsProcess, ProcessStatus } from "@/types/GoodsProcess";
 import { LinearGradient } from "expo-linear-gradient";
 import { io } from "socket.io-client";
-import { useFocusEffect } from '@react-navigation/native';
-import { jwtDecode } from 'jwt-decode'
+import { useFocusEffect } from "@react-navigation/native";
+
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
 import { TabBar } from "@/components/navigation/TabBar";
 import { TopNavigation } from "@/components/navigation/TopNavigation";
-type DecodedToken = {
-  id: string;
-  email?: string;
-  exp?: number;
-};
+
 // Custom hook to ensure having user data
 const useReliableAuth = () => {
   const { user: authUser, loading: authLoading } = useAuth();
@@ -286,45 +282,29 @@ export default function OrderPage() {
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
-
-      // Get the token from AsyncStorage
-      const token = await AsyncStorage.getItem('jwtToken');
-      if (!token) {
-        console.error("No token found in AsyncStorage");
-        setRequests([]);
-        return;
-      }
-
-      console.log("Token:", token);
-
-      // Decode the token to get the user ID
-      let userId: string;
-      try {
-        console.log("Decoding token...", token);
-        const decodedToken = jwtDecode<DecodedToken>(token);
-        userId = decodedToken.id;
-      } catch (decodeError) {
-        console.error("Error decoding token:", decodeError);
-        setRequests([]);
-        return;
-      }
-
-      // Fetch requests from API
       const response = await axiosInstance.get("/api/requests");
-      const requests: Request[] = response.data.data || [];
 
-      // Filter requests for this user and pending/cancelled orders
-      const filteredRequests = requests.filter((request) => {
-        const matchesUser = request.userId === userId;
-        const isPending = request.order === null && request.status === "PENDING";
-        const hasNoActiveOrder =
-          request.order && request.order.orderStatus === "CANCELLED";
+      // Filter the requests to only show those that are in "PENDING" status
+      // AND either don't have an associated order OR have a cancelled order
+      const filteredRequests = (response.data.data || []).filter(
+        (request: Request) => {
+          // Check if the request is in PENDING status and has no order
+          const isPending =
+            request.order === null && request.status === "PENDING";
 
-        return matchesUser && (isPending || hasNoActiveOrder);
-      });
+          // Check if the request has an order and this order is cancelled
+          const hasNoActiveOrder =
+            request.order && request.order.orderStatus === "CANCELLED";
+
+          // Only include requests that meet one of these two conditions
+          return isPending || hasNoActiveOrder;
+        }
+      );
 
       console.log(
-        `Filtered from ${requests.length} to ${filteredRequests.length} requests for user ${userId}`
+        `Filtered from ${response.data.data?.length || 0} to ${
+          filteredRequests.length
+        } requests`
       );
 
       setRequests(filteredRequests);
@@ -460,7 +440,7 @@ export default function OrderPage() {
 
             <View style={styles.priceRow}>
               <ThemedText style={styles.price}>
-                {parameters.price.toFixed(2)} TND
+                ${parameters.price.toFixed(2)}
               </ThemedText>
               <View style={styles.quantityContainer}>
                 <Package size={16} color="#fff" />
@@ -732,7 +712,7 @@ export default function OrderPage() {
 
             <View style={styles.priceRow}>
               <ThemedText style={styles.price}>
-                {parameters.price.toFixed(2)} TND
+                ${parameters.price.toFixed(2)}
               </ThemedText>
               <View style={styles.quantityContainer}>
                 <Package size={16} color="#fff" />
@@ -769,14 +749,14 @@ export default function OrderPage() {
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => {
-        router.push("/home");  // This will navigate to home
-        return true;  // Prevents default back behavior
+        router.push("/home"); // This will navigate to home
+        return true; // Prevents default back behavior
       };
 
-      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      BackHandler.addEventListener("hardwareBackPress", onBackPress);
 
       return () => {
-        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
       };
     }, [router])
   );
@@ -870,8 +850,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
-  }
-  ,
+  },
   listContainer: {
     padding: 16,
     paddingRight: width - CARD_WIDTH + 16,
