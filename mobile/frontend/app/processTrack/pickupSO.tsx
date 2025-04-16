@@ -11,7 +11,7 @@ import {
   Animated,
 } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
-import axiosInstance from "../../config";
+import axiosInstance, { SOCKET_URL } from "../../config";
 import Pickups from "../pickup/pickup";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSelector } from "react-redux";
@@ -32,9 +32,7 @@ import { QRCodeModal } from "../pickup/QRCodeModal";
 import io, { Socket } from "socket.io-client";
 import { navigateToChat } from "@/services/chatService";
 import { LinearGradient } from "expo-linear-gradient";
-import { StatusScreen } from '@/app/screens/StatusScreen';
-
-const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL;
+import { StatusScreen } from "@/app/screens/StatusScreen";
 
 export default function PickupOwner() {
   const params = useLocalSearchParams();
@@ -49,9 +47,9 @@ export default function PickupOwner() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [statusVisible, setStatusVisible] = useState(false);
   const [statusMessage, setStatusMessage] = useState({
-    type: 'error' as 'success' | 'error',
-    title: '',
-    message: ''
+    type: "error" as "success" | "error",
+    title: "",
+    message: "",
   });
 
   const {
@@ -127,9 +125,9 @@ export default function PickupOwner() {
   const openChat = async () => {
     if (!user?.id) {
       setStatusMessage({
-        type: 'error',
-        title: 'Error',
-        message: 'You need to be logged in to chat'
+        type: "error",
+        title: "Error",
+        message: "You need to be logged in to chat",
       });
       setStatusVisible(true);
       return;
@@ -137,11 +135,16 @@ export default function PickupOwner() {
 
     try {
       // Check if required parameters exist
-      if (!params.requesterId || !params.travelerId || !params.idGood || !params.idOrder) {
+      if (
+        !params.requesterId ||
+        !params.travelerId ||
+        !params.idGood ||
+        !params.idOrder
+      ) {
         setStatusMessage({
-          type: 'error',
-          title: 'Error',
-          message: 'Missing required parameters for chat'
+          type: "error",
+          title: "Error",
+          message: "Missing required parameters for chat",
         });
         setStatusVisible(true);
         return;
@@ -158,9 +161,9 @@ export default function PickupOwner() {
     } catch (error) {
       console.error("Error opening chat:", error);
       setStatusMessage({
-        type: 'error',
-        title: 'Chat Error',
-        message: 'Failed to open chat.'
+        type: "error",
+        title: "Chat Error",
+        message: "Failed to open chat.",
       });
       setStatusVisible(true);
     }
@@ -182,9 +185,9 @@ export default function PickupOwner() {
     } catch (error) {
       console.error("Error fetching pickups:", error);
       setStatusMessage({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to fetch pickups. Please try again.'
+        type: "error",
+        title: "Error",
+        message: "Failed to fetch pickups. Please try again.",
       });
       setStatusVisible(true);
     } finally {
@@ -213,18 +216,18 @@ export default function PickupOwner() {
         setShowSuggestions(true);
       } else {
         setStatusMessage({
-          type: 'error',
-          title: 'Info',
-          message: 'No suggestions found for this pickup.'
+          type: "error",
+          title: "Info",
+          message: "No suggestions found for this pickup.",
         });
         setStatusVisible(true);
       }
     } catch (error) {
       console.error("Error fetching suggestions:", error);
       setStatusMessage({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to fetch suggestions. Please try again.'
+        type: "error",
+        title: "Error",
+        message: "Failed to fetch suggestions. Please try again.",
       });
       setStatusVisible(true);
     } finally {
@@ -331,7 +334,9 @@ export default function PickupOwner() {
             {item.status === "CANCELLED" ? (
               <>
                 <XCircle size={16} color="#ef4444" />
-                <Text style={styles.cancelledText}>This pickup was cancelled</Text>
+                <Text style={styles.cancelledText}>
+                  This pickup was cancelled
+                </Text>
               </>
             ) : (
               <Text style={styles.orderValue}>
@@ -351,15 +356,25 @@ export default function PickupOwner() {
                     style={[styles.button, styles.primaryButton]}
                     onPress={() => handleAccept(item.id)}
                   >
-                    <CheckCircle size={18} color="#fff" style={styles.buttonIcon} />
+                    <CheckCircle
+                      size={18}
+                      color="#fff"
+                      style={styles.buttonIcon}
+                    />
                     <Text style={styles.buttonText}>Accept</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.button, styles.secondaryButton]}
                     onPress={() => handleSuggest(item.id)}
                   >
-                    <MapPin size={18} color="#3b82f6" style={styles.buttonIcon} />
-                    <Text style={[styles.buttonText, styles.secondaryButtonText]}>
+                    <MapPin
+                      size={18}
+                      color="#3b82f6"
+                      style={styles.buttonIcon}
+                    />
+                    <Text
+                      style={[styles.buttonText, styles.secondaryButtonText]}
+                    >
                       Suggest
                     </Text>
                   </TouchableOpacity>
@@ -375,7 +390,11 @@ export default function PickupOwner() {
             )}
           {item.status === "CANCELLED" && (
             <TouchableOpacity
-              style={[styles.button, styles.primaryButton, styles.fullWidthButton]}
+              style={[
+                styles.button,
+                styles.primaryButton,
+                styles.fullWidthButton,
+              ]}
               onPress={() => handleSuggest(item.id)}
             >
               <MapPin size={18} color="#fff" style={styles.buttonIcon} />
@@ -384,7 +403,11 @@ export default function PickupOwner() {
           )}
           {item.userconfirmed && item.travelerconfirmed && (
             <TouchableOpacity
-              style={[styles.button, styles.primaryButton, styles.fullWidthButton]}
+              style={[
+                styles.button,
+                styles.primaryButton,
+                styles.fullWidthButton,
+              ]}
               onPress={() => showStoredQRCode(item)}
             >
               <CheckCircle size={18} color="#fff" style={styles.buttonIcon} />
@@ -465,7 +488,7 @@ export default function PickupOwner() {
             goodsName: params.goodsName?.toString() || "Item",
             status: params.status?.toString() || "PENDING",
             reviewLabel: params.reviewLabel?.toString() || "",
-            isTraveler: params.isTraveler?.toString() || "false"
+            isTraveler: params.isTraveler?.toString() || "false",
           }}
         />
       ) : (
@@ -498,7 +521,11 @@ export default function PickupOwner() {
                   You don't have any active pickup requests yet
                 </Text>
                 <TouchableOpacity
-                  style={[styles.button, styles.primaryButton, styles.refreshButton]}
+                  style={[
+                    styles.button,
+                    styles.primaryButton,
+                    styles.refreshButton,
+                  ]}
                   onPress={fetchPickups}
                 >
                   <Text style={styles.buttonText}>Refresh</Text>
@@ -528,7 +555,7 @@ export default function PickupOwner() {
         message={statusMessage.message}
         primaryAction={{
           label: "OK",
-          onPress: () => setStatusVisible(false)
+          onPress: () => setStatusVisible(false),
         }}
         onClose={() => setStatusVisible(false)}
       />
@@ -538,65 +565,248 @@ export default function PickupOwner() {
 
 const getStatusColor = (status: string): string => {
   switch (status) {
-    case "PENDING": return "#f59e0b";
-    case "IN_PROGRESS": return "#3b82f6";
-    case "CANCELLED": return "#ef4444";
-    case "COMPLETED": return "#10b981";
-    default: return "#6b7280";
+    case "PENDING":
+      return "#f59e0b";
+    case "IN_PROGRESS":
+      return "#3b82f6";
+    case "CANCELLED":
+      return "#ef4444";
+    case "COMPLETED":
+      return "#10b981";
+    default:
+      return "#6b7280";
   }
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8fafc" },
   header: { padding: 24, paddingBottom: 16 },
-  title: { fontFamily: "Poppins-Bold", fontSize: 28, color: "#1e293b", marginBottom: 4 },
-  subtitle: { fontFamily: "Inter-Regular", fontSize: 16, color: "#64748b", lineHeight: 24 },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24 },
-  loadingText: { fontFamily: "Inter-Medium", fontSize: 16, color: "#64748b", marginTop: 16 },
+  title: {
+    fontFamily: "Poppins-Bold",
+    fontSize: 28,
+    color: "#1e293b",
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontFamily: "Inter-Regular",
+    fontSize: 16,
+    color: "#64748b",
+    lineHeight: 24,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  loadingText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 16,
+    color: "#64748b",
+    marginTop: 16,
+  },
   listContainer: { paddingHorizontal: 16, paddingBottom: 24 },
-  card: { borderRadius: 16, marginBottom: 16, overflow: "hidden", elevation: 3 },
+  card: {
+    borderRadius: 16,
+    marginBottom: 16,
+    overflow: "hidden",
+    elevation: 3,
+  },
   cardGradient: { padding: 20 },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
   orderTitleContainer: { flex: 1 },
-  sectionTitle: { fontFamily: "Poppins-SemiBold", fontSize: 18, color: "#1e293b", marginBottom: 4 },
+  sectionTitle: {
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 18,
+    color: "#1e293b",
+    marginBottom: 4,
+  },
   travelerName: { fontFamily: "Inter-Medium", fontSize: 14, color: "#64748b" },
   suggestionsLink: { flexDirection: "row", alignItems: "center", padding: 8 },
-  suggestionsText: { fontFamily: "Inter-Medium", fontSize: 14, color: "#007AFF", marginRight: 4 },
+  suggestionsText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 14,
+    color: "#007AFF",
+    marginRight: 4,
+  },
   detailsContainer: { marginBottom: 16 },
-  detailRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 12 },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 12,
+  },
   iconWrapper: { marginRight: 12 },
   detailContent: { flex: 1 },
-  detailLabel: { fontFamily: "Inter-Medium", fontSize: 13, color: "#64748b", marginBottom: 2 },
-  detailValue: { fontFamily: "Inter-SemiBold", fontSize: 15, color: "#1e293b", lineHeight: 22 },
-  statusBadge: { alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, marginTop: 4 },
-  badgeText: { fontFamily: "Inter-SemiBold", fontSize: 12, color: "white", textTransform: "capitalize" },
-  statusMessage: { flexDirection: "row", alignItems: "center", backgroundColor: "#f1f5f9", padding: 12, borderRadius: 8, marginBottom: 16 },
+  detailLabel: {
+    fontFamily: "Inter-Medium",
+    fontSize: 13,
+    color: "#64748b",
+    marginBottom: 2,
+  },
+  detailValue: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 15,
+    color: "#1e293b",
+    lineHeight: 22,
+  },
+  statusBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  badgeText: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 12,
+    color: "white",
+    textTransform: "capitalize",
+  },
+  statusMessage: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f1f5f9",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
   successMessage: { backgroundColor: "#ecfdf5" },
-  waitingText: { fontFamily: "Inter-Medium", fontSize: 14, color: "#3b82f6", marginLeft: 8 },
-  successText: { fontFamily: "Inter-Medium", fontSize: 14, color: "#10b981", marginLeft: 8 },
-  cancelledText: { fontFamily: "Inter-Medium", fontSize: 14, color: "#ef4444", marginLeft: 8 },
+  waitingText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 14,
+    color: "#3b82f6",
+    marginLeft: 8,
+  },
+  successText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 14,
+    color: "#10b981",
+    marginLeft: 8,
+  },
+  cancelledText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 14,
+    color: "#ef4444",
+    marginLeft: 8,
+  },
   actionContainer: { marginTop: 16, width: "100%" },
-  buttonRow: { flexDirection: "row", justifyContent: "space-between", gap: 12, marginBottom: 12, width: "100%" },
-  button: { flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 10, paddingVertical: 12, paddingHorizontal: 16, elevation: 3, minWidth: 100 },
-  primaryButton: { backgroundColor: "#3b82f6", borderWidth: 1, borderColor: "#2563eb" },
-  secondaryButton: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#3b82f6" },
-  dangerButton: { backgroundColor: "#ef4444", borderWidth: 1, borderColor: "#dc2626" },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 12,
+    width: "100%",
+  },
+  button: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    elevation: 3,
+    minWidth: 100,
+  },
+  primaryButton: {
+    backgroundColor: "#3b82f6",
+    borderWidth: 1,
+    borderColor: "#2563eb",
+  },
+  secondaryButton: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#3b82f6",
+  },
+  dangerButton: {
+    backgroundColor: "#ef4444",
+    borderWidth: 1,
+    borderColor: "#dc2626",
+  },
   fullWidthButton: { width: "100%" },
-  buttonText: { fontFamily: "Inter-SemiBold", fontSize: 15, color: "#fff", marginLeft: 8 },
+  buttonText: {
+    fontFamily: "Inter-SemiBold",
+    fontSize: 15,
+    color: "#fff",
+    marginLeft: 8,
+  },
   secondaryButtonText: { color: "#3b82f6" },
   buttonIcon: { marginRight: 6 },
-  emptyState: { alignItems: "center", justifyContent: "center", padding: 40, marginTop: 40 },
-  emptyTitle: { fontFamily: "Poppins-SemiBold", fontSize: 18, color: "#1e293b", marginTop: 16, marginBottom: 8 },
-  emptyText: { fontFamily: "Inter-Regular", fontSize: 14, color: "#64748b", textAlign: "center", marginBottom: 24, maxWidth: 300 },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+    marginTop: 40,
+  },
+  emptyTitle: {
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 18,
+    color: "#1e293b",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "#64748b",
+    textAlign: "center",
+    marginBottom: 24,
+    maxWidth: 300,
+  },
   refreshButton: { paddingHorizontal: 24, paddingVertical: 12 },
-  messageBubble: { position: "absolute", bottom: 24, right: 24, width: 56, height: 56, borderRadius: 28, backgroundColor: "#3b82f6", justifyContent: "center", alignItems: "center", elevation: 4 },
+  messageBubble: {
+    position: "absolute",
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#3b82f6",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+  },
   orderValue: { fontFamily: "Inter-Medium", fontSize: 14, color: "#1e293b" },
   suggestionsHeader: { padding: 16 },
-  suggestionsTitle: { fontFamily: "Poppins-Bold", fontSize: 20, color: "#1e293b", marginBottom: 16 },
+  suggestionsTitle: {
+    fontFamily: "Poppins-Bold",
+    fontSize: 20,
+    color: "#1e293b",
+    marginBottom: 16,
+  },
   suggestionsList: { paddingHorizontal: 16, paddingBottom: 24 },
-  suggestionItem: { backgroundColor: "white", borderRadius: 8, padding: 12, marginBottom: 12, elevation: 2 },
-  suggestionText: { fontFamily: "Inter-Medium", fontSize: 16, color: "#1e293b", marginBottom: 4 },
-  suggestionDetail: { fontFamily: "Inter-Regular", fontSize: 14, color: "#64748b" },
-  backButton: { marginVertical: 16, alignSelf: "center", paddingHorizontal: 24 },
-  noSuggestionsText: { fontFamily: "Inter-Regular", fontSize: 16, color: "#64748b", textAlign: "center", marginTop: 20 },
+  suggestionItem: {
+    backgroundColor: "white",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    elevation: 2,
+  },
+  suggestionText: {
+    fontFamily: "Inter-Medium",
+    fontSize: 16,
+    color: "#1e293b",
+    marginBottom: 4,
+  },
+  suggestionDetail: {
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: "#64748b",
+  },
+  backButton: {
+    marginVertical: 16,
+    alignSelf: "center",
+    paddingHorizontal: 24,
+  },
+  noSuggestionsText: {
+    fontFamily: "Inter-Regular",
+    fontSize: 16,
+    color: "#64748b",
+    textAlign: "center",
+    marginTop: 20,
+  },
 });

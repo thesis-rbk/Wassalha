@@ -15,8 +15,8 @@ import { TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthProvider } from "@/context/AuthContext";
 import { SponsorshipProcessProvider } from "@/context/SponsorshipProcessContext";
-import { OnboardingContainer } from '@/components/onboarding';
-import { OnboardingService } from '@/services/onboardingService';
+import { OnboardingContainer } from "@/components/onboarding";
+import { OnboardingService } from "@/services/onboardingService";
 import { ProcessSocketProvider } from "@/context/ProcessSocketContext";
 import { StatusProvider } from "@/context/StatusContext";
 SplashScreen.preventAutoHideAsync();
@@ -25,7 +25,9 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({});
   const [animationComplete, setAnimationComplete] = useState(false);
   const [loadingComplete, setLoadingComplete] = useState(false);
-  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean | null>(null);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean | null>(
+    null
+  );
   const router = useRouter();
 
   useEffect(() => {
@@ -58,7 +60,6 @@ export default function RootLayout() {
           <ThemeProvider>
             <ProcessSocketProvider>
               <StatusProvider>
-
                 <SponsorshipProcessProvider>
                   <StripeProvider
                     publishableKey={STRIPE_PUBLISHABLE_KEY}
@@ -143,7 +144,10 @@ export default function RootLayout() {
                         />
                         <Stack.Screen
                           name="test/Terms&&Conditions"
-                          options={{ title: "terms n conditions", headerShown: false }}
+                          options={{
+                            title: "terms n conditions",
+                            headerShown: false,
+                          }}
                         />
                         <Stack.Screen
                           name="test/Travel"
@@ -152,10 +156,6 @@ export default function RootLayout() {
                         <Stack.Screen
                           name="test/Pickup"
                           options={{ title: "Pickup" }}
-                        />
-                        <Stack.Screen
-                          name="test/chat"
-                          options={{ title: "Chat" }}
                         />
                         <Stack.Screen
                           name="verification/start"
@@ -271,7 +271,7 @@ export default function RootLayout() {
                         <Stack.Screen
                           name="screens/NotificationsScreen"
                           options={{
-                            headerShown: false
+                            headerShown: false,
                           }}
                         />
                         <Stack.Screen
@@ -315,17 +315,12 @@ export default function RootLayout() {
                           name="pickup/PickupDashboard"
                           options={{ title: "Pickup" }}
                         />
-                        <Stack.Screen
-                          name="reporting-system/MyTicketsPage"
-
-                        />
+                        <Stack.Screen name="reporting-system/MyTicketsPage" />
                         <Stack.Screen
                           name="reporting-system/detailsTicket/[id]"
                           options={{ title: "Ticket " }}
-
                         />
                       </Stack>
-
                     )}
                   </StripeProvider>
                 </SponsorshipProcessProvider>
@@ -333,7 +328,6 @@ export default function RootLayout() {
             </ProcessSocketProvider>
           </ThemeProvider>
         </AuthProvider>
-
       </NotificationProvider>
     </Provider>
   );

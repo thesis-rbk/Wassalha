@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   TextInput,
@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import Header from '@/components/navigation/headers';
+import Header from "@/components/navigation/headers";
 import {
   Link,
   Bell,
@@ -22,10 +22,11 @@ import {
 import { useRouter } from "expo-router";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { TitleLarge, BodyMedium } from "@/components/Typography";
+import { BodyMedium } from "@/components/Typography";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
-import { useStatus } from '@/context/StatusContext';
-const SCRAPE_URL = `${process.env.EXPO_PUBLIC_API_URL}${process.env.EXPO_PUBLIC_SCRAPE_ENDPOINT}`;
+import { useStatus } from "@/context/StatusContext";
+import { BACKEND_URL, SCRAPE_ENDPOINT } from "@/config";
+const SCRAPE_URL = `${BACKEND_URL}${SCRAPE_ENDPOINT}`;
 
 export default function Page() {
   const colorScheme = useColorScheme() ?? "light";
@@ -37,41 +38,41 @@ export default function Page() {
   const { show, hide } = useStatus();
 
   const handleCreateOrder = async () => {
-    console.log('🎯 Starting order creation process...');
-    console.log('📝 Entry method:', entryMethod);
+    console.log("🎯 Starting order creation process...");
+    console.log("📝 Entry method:", entryMethod);
 
     if (entryMethod === "manual") {
-      console.log('👉 Navigating to manual entry...');
+      console.log("👉 Navigating to manual entry...");
       router.push("/productDetails");
       return;
     }
 
     if (entryMethod === "url" && !productUrl) {
       show({
-        type: 'error',
-        title: 'No URL Provided',
-        message: 'Would you like to proceed with manual entry?',
+        type: "error",
+        title: "No URL Provided",
+        message: "Would you like to proceed with manual entry?",
         primaryAction: {
-          label: 'Yes, proceed manually',
+          label: "Yes, proceed manually",
           onPress: () => {
             hide();
-            router.push('/productDetails');
-          }
+            router.push("/productDetails");
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
+          label: "Cancel",
+          onPress: () => hide(),
+        },
       });
       return;
     }
 
     // Only try to scrape if URL method is selected and URL is provided
     if (entryMethod === "url" && productUrl) {
-      console.log('🔗 Processing URL:', productUrl);
+      console.log("🔗 Processing URL:", productUrl);
       setIsLoading(true);
       try {
-        console.log('📡 Making scrape request to:', SCRAPE_URL);
+        console.log("📡 Making scrape request to:", SCRAPE_URL);
         const response = await fetch(SCRAPE_URL, {
           method: "POST",
           headers: {
@@ -79,7 +80,7 @@ export default function Page() {
           },
           body: JSON.stringify({ url: productUrl }),
         });
-        console.log('✅ Scrape response received');
+        console.log("✅ Scrape response received");
         const data = await response.json();
         if (data.success) {
           console.log("URL success - navigating...");
@@ -99,7 +100,9 @@ export default function Page() {
 
   return (
     <View style={styles.container}>
-      <Header title="Create Request" subtitle='Create a new request'
+      <Header
+        title="Create Request"
+        subtitle="Create a new request"
         showBackButton={true}
       />
       <ScrollView
@@ -259,7 +262,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
-
   },
   headerTitle: { fontSize: 20, color: Colors.light.primary },
   headerIcons: { flexDirection: "row", gap: 16 },

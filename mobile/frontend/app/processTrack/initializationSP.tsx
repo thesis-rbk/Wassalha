@@ -21,7 +21,7 @@ import {
   Wallet,
   Clock,
 } from "lucide-react-native";
-import { BACKEND_URL } from "@/config";
+import { BACKEND_URL, GOOGLE_MAPS_API_KEY } from "@/config";
 import axiosInstance from "@/config";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
@@ -39,7 +39,7 @@ import { useNotification } from "@/context/NotificationContext";
 import { io } from "socket.io-client";
 import Header from "@/components/navigation/headers";
 import { useStatus } from "@/context/StatusContext";
-import { StatusScreen } from '@/app/screens/StatusScreen';
+import { StatusScreen } from "@/app/screens/StatusScreen";
 
 const AIRLINE_CODES: { [key: string]: string } = {
   "Turkish Airlines": "TK",
@@ -98,7 +98,7 @@ export default function InitializationSP() {
         isVerified: params.requesterVerified === "true",
       },
       reputation: {
-        score: Number(params.requesterRating)
+        score: Number(params.requesterRating),
       },
     },
   });
@@ -122,16 +122,15 @@ export default function InitializationSP() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   const [statusVisible, setStatusVisible] = useState(false);
   const [statusMessage, setStatusMessage] = useState({
-    type: 'error' as 'success' | 'error',
-    title: '',
-    message: '',
+    type: "error" as "success" | "error",
+    title: "",
+    message: "",
     primaryAction: {
-      label: 'OK',
-      onPress: () => { }
-    }
+      label: "OK",
+      onPress: () => {},
+    },
   });
 
   useEffect(() => {
@@ -182,13 +181,13 @@ export default function InitializationSP() {
     } catch (error) {
       console.error("Error fetching request details:", error);
       show({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to load request details',
+        type: "error",
+        title: "Error",
+        message: "Failed to load request details",
         primaryAction: {
-          label: 'OK',
-          onPress: () => { }
-        }
+          label: "OK",
+          onPress: () => {},
+        },
       });
       setLoading(false);
     }
@@ -237,13 +236,14 @@ export default function InitializationSP() {
 
       if (request.status !== "PENDING" || request.order) {
         show({
-          type: 'error',
-          title: 'Request Not Available',
-          message: 'This request already has an active order or is not accepting offers.',
+          type: "error",
+          title: "Request Not Available",
+          message:
+            "This request already has an active order or is not accepting offers.",
           primaryAction: {
-            label: 'Back to Requests',
-            onPress: () => router.back()
-          }
+            label: "Back to Requests",
+            onPress: () => router.back(),
+          },
         });
         return;
       }
@@ -307,13 +307,14 @@ export default function InitializationSP() {
     } catch (error: any) {
       console.error("Error submitting offer:", error);
       show({
-        type: 'error',
-        title: 'Error',
-        message: 'This request is not available for offers at the moment. Please try another request.',
+        type: "error",
+        title: "Error",
+        message:
+          "This request is not available for offers at the moment. Please try another request.",
         primaryAction: {
-          label: 'OK',
-          onPress: () => { }
-        }
+          label: "OK",
+          onPress: () => {},
+        },
       });
     } finally {
       setIsSubmitting(false);
@@ -399,7 +400,7 @@ export default function InitializationSP() {
     setSuggestions: Function
   ) => {
     console.log("Fetching airports with query:", query);
-    console.log("Using API key:", GOOGLE_PLACES_API_KEY);
+    console.log("Using API key:", GOOGLE_MAPS_API_KEY);
     if (!query || query.length < 2) {
       setSuggestions([]);
       return;
@@ -413,7 +414,7 @@ export default function InitializationSP() {
         languageCode: "en",
       };
       const requestHeaders = {
-        "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY,
+        "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
         "Content-Type": "application/json",
         "X-Goog-FieldMask":
           "places.displayName,places.types,places.formattedAddress",
@@ -432,16 +433,16 @@ export default function InitializationSP() {
       setSuggestions(results);
     } catch (error) {
       console.log("erooooooooooooooor", error);
-      console.log("API Key being used:", GOOGLE_PLACES_API_KEY);
+      console.log("API Key being used:", GOOGLE_MAPS_API_KEY);
       console.error("Error fetching airports from Google Places:", error);
       show({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to fetch airport suggestions',
+        type: "error",
+        title: "Error",
+        message: "Failed to fetch airport suggestions",
         primaryAction: {
-          label: 'OK',
-          onPress: () => { }
-        }
+          label: "OK",
+          onPress: () => {},
+        },
       });
     } finally {
       setIsFetchingAirports(false);
@@ -714,8 +715,9 @@ export default function InitializationSP() {
                         setOfferDetails((prev) => ({
                           ...prev,
                           flightNumber: value,
-                          departureFlightCode: `${AIRLINE_CODES[prev.airline]
-                            }${value}`,
+                          departureFlightCode: `${
+                            AIRLINE_CODES[prev.airline]
+                          }${value}`,
                         }));
                       }}
                     >

@@ -5,18 +5,12 @@ import {
   StyleSheet,
   Switch,
   ScrollView,
-  Alert,
   TouchableOpacity,
 } from "react-native";
 import { Camera, Globe, Edit2 } from "lucide-react-native";
 import { InputField } from "@/components/InputField";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
-import {
-  TitleLarge,
-  TitleSection,
-  TitleSub,
-  BodyMedium,
-} from "@/components/Typography";
+import { TitleSection, TitleSub, BodyMedium } from "@/components/Typography";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useLocalSearchParams } from "expo-router";
@@ -24,9 +18,10 @@ import { ProductDetailsProps } from "@/types/ProductDetails";
 import { useRouter } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
-import { useStatus } from '@/context/StatusContext';
+import { useStatus } from "@/context/StatusContext";
 import Header from "@/components/navigation/headers";
-console.log("API URL:", process.env.EXPO_PUBLIC_API_URL);
+import { BACKEND_URL } from "@/config";
+console.log("API URL:", BACKEND_URL);
 console.log("Upload URL:", process.env.EXPO_PUBLIC_MEDIA_UPLOAD_URL);
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
@@ -90,20 +85,20 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
     } catch (error) {
       console.error("❌ Error picking document:", error);
       show({
-        type: 'error',
-        title: 'Document Error',
-        message: 'Failed to pick document. Please try again.',
+        type: "error",
+        title: "Document Error",
+        message: "Failed to pick document. Please try again.",
         primaryAction: {
-          label: 'Try Again',
+          label: "Try Again",
           onPress: () => {
             hide();
             pickImage();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
+          label: "Cancel",
+          onPress: () => hide(),
+        },
       });
     }
   };
@@ -144,20 +139,20 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
     } catch (error) {
       console.error("Navigation error:", error);
       show({
-        type: 'error',
-        title: 'Navigation Error',
-        message: 'Failed to proceed to next step. Please try again.',
+        type: "error",
+        title: "Navigation Error",
+        message: "Failed to proceed to next step. Please try again.",
         primaryAction: {
-          label: 'Try Again',
+          label: "Try Again",
           onPress: () => {
             hide();
             handleNext();
-          }
+          },
         },
         secondaryAction: {
-          label: 'Cancel',
-          onPress: () => hide()
-        }
+          label: "Cancel",
+          onPress: () => hide(),
+        },
       });
     }
   };
@@ -261,7 +256,11 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
 
   return (
     <ScrollView style={styles.container}>
-      <Header title="Create Request" subtitle="Enter Your Request details" showBackButton={true} />
+      <Header
+        title="Create Request"
+        subtitle="Enter Your Request details"
+        showBackButton={true}
+      />
       <View style={styles.card}>
         {renderScrapedDataBanner()}
         <InputField
@@ -282,23 +281,24 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
                 onError={(e) => {
                   console.error("Image loading error:", e.nativeEvent.error);
                   show({
-                    type: 'error',
-                    title: 'Image Error',
-                    message: 'Failed to load image. Please try selecting another image.',
+                    type: "error",
+                    title: "Image Error",
+                    message:
+                      "Failed to load image. Please try selecting another image.",
                     primaryAction: {
-                      label: 'Select New Image',
+                      label: "Select New Image",
                       onPress: () => {
                         hide();
                         pickImage();
-                      }
+                      },
                     },
                     secondaryAction: {
-                      label: 'Cancel',
+                      label: "Cancel",
                       onPress: () => {
                         hide();
                         setProductImage("");
-                      }
-                    }
+                      },
+                    },
                   });
                 }}
               />
