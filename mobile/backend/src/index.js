@@ -16,7 +16,7 @@ const scrapeRoutes = require("./routes/scrapeRoutes");
 const categoryRoutes = require("./routes/category.route");
 const profileRoutes = require("./routes/profileRoutes");
 const mediaRoutes = require("./routes/media.route");
-const all = require("./routes/alltravNpost");
+
 const mobileRequestRoutes = require("./routes/mobileRequestRoutes");
 const mobileGoodsRoutes = require("./routes/mobileGoodsRoutes");
 const orderRoutes = require("./routes/orderRoutes");
@@ -91,7 +91,6 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/stripe", stripeRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/chats", chatRoutes);
-app.use("/api", all); // I kept this last since it may include mixed routes
 app.use("/api/payment-process", paymentProcessRoutes);
 app.use("/api/tickets", ticketRoutes);
 app.use('/api/travelers', travelerRoutes);
