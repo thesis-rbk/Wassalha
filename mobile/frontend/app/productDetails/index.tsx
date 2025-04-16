@@ -22,7 +22,6 @@ import { useStatus } from "@/context/StatusContext";
 import Header from "@/components/navigation/headers";
 import { BACKEND_URL } from "@/config";
 console.log("API URL:", BACKEND_URL);
-console.log("Upload URL:", process.env.EXPO_PUBLIC_MEDIA_UPLOAD_URL);
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const colorScheme = useColorScheme() ?? "light";
@@ -42,7 +41,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
       ? `${process.env.EXPO_PUBLIC_MEDIA_VIEW_URL}/${parsedData.imageId}`
       : ""
   );
-  const [productImageId, setProductImageId] = useState(null);
   const [price, setPrice] = useState(
     parsedData ? parsedData.price.toString() : ""
   );
@@ -50,12 +48,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
     parsedData ? parsedData.description : ""
   );
   const [withBox, setWithBox] = useState(false);
-  const [goodsId, setGoodsId] = useState(parsedData ? parsedData.goodsId : "");
   const [dataSource, setDataSource] = useState("scraped");
   const [imageLoading, setImageLoading] = useState(false);
   const [imageSource, setImageSource] = useState<"local" | "remote">("local");
-
-  const clearProductImage = () => setProductImage("");
 
   const pickImage = async () => {
     try {
