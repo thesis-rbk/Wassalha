@@ -111,10 +111,6 @@ export default function RootLayout() {
                           }}
                         />
                         <Stack.Screen
-                          name="test/Subscription"
-                          options={{ title: "Subscription" }}
-                        />
-                        <Stack.Screen
                           name="onboarding/howYouHeard"
                           options={{ title: "How You Heard" }}
                         />
@@ -148,10 +144,6 @@ export default function RootLayout() {
                             title: "terms n conditions",
                             headerShown: false,
                           }}
-                        />
-                        <Stack.Screen
-                          name="test/Travel"
-                          options={{ title: "Travel" }}
                         />
                         <Stack.Screen
                           name="test/Pickup"
@@ -213,7 +205,6 @@ export default function RootLayout() {
                           name="processTrack/pickupSP"
                           options={{ title: "Pickup" }}
                         />
-                        <Stack.Screen name="test/order-details" />
                         <Stack.Screen
                           name="processTrack/makeOffer"
                           options={{ title: "Make Offer" }}
