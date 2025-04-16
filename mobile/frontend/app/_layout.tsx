@@ -11,7 +11,6 @@ import MainLoading from "@/components/MainLoading";
 import { StripeProvider } from "@stripe/stripe-react-native";
 import { STRIPE_PUBLISHABLE_KEY } from "@/config";
 import { NotificationProvider } from "@/context/NotificationContext";
-import { TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthProvider } from "@/context/AuthContext";
 import { SponsorshipProcessProvider } from "@/context/SponsorshipProcessContext";
@@ -309,6 +308,10 @@ export default function RootLayout() {
                         <Stack.Screen name="reporting-system/MyTicketsPage" />
                         <Stack.Screen
                           name="reporting-system/detailsTicket/[id]"
+                          options={{ title: "Ticket " }}
+                        />
+                        <Stack.Screen
+                          name="chatBot/conversation"
                           options={{ title: "Ticket " }}
                         />
                       </Stack>

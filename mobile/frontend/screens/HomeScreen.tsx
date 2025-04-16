@@ -1,15 +1,9 @@
-"use client";
-
-import React from "react";
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Dimensions,
   View,
   StyleSheet,
   ScrollView,
-  type LayoutChangeEvent,
-  type NativeSyntheticEvent,
-  type NativeScrollEvent,
   TouchableOpacity,
   Image,
   SafeAreaView,
@@ -37,7 +31,6 @@ import type { UserData } from "@/types/UserData";
 import type { UserProfile } from "@/types/UserProfile";
 import CardHome from "@/components/homecard";
 import { BACKEND_URL } from "@/config";
-import { Image as ExpoImage } from "expo-image";
 import { useStatus } from "@/context/StatusContext";
 import { BackHandler } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
@@ -47,7 +40,6 @@ export default function HomeScreen() {
   const [travelers, setTravelers] = useState<Traveler[]>([]);
   const [sponsors, setSponsors] = useState<Traveler[]>([]);
   const [requests, setRequests] = useState<Order[]>([]);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [recentUsers, setRecentUsers] = useState<UserProfile[]>([]);
   const router = useRouter();
@@ -86,22 +78,18 @@ export default function HomeScreen() {
       // Process the requests to ensure image URLs are properly formatted
       const processedRequests = newRequests.map((request: any) => {
         if (request.goods) {
-          let imageUrl = request.goods.goodsUrl; // Default to goodsUrl
+          let imageUrl = request.goods.goodsUrl;
 
-          // If goods.image.url exists and starts with http/https, use it
           if (
             request.goods.image?.url &&
             (request.goods.image.url.startsWith("http") ||
               request.goods.image.url.startsWith("https"))
           ) {
             imageUrl = request.goods.image.url;
-          }
-          // If the URL doesn't start with http or https, prepend BACKEND_URL
-          else {
+          } else {
             imageUrl = `${BACKEND_URL}${imageUrl}`;
           }
 
-          // Assign the processed URL back to goods.goodsUrl
           request.goods.goodsUrl = imageUrl;
           console.log("Processed request image URL:", request.goods.goodsUrl);
         }
@@ -113,7 +101,6 @@ export default function HomeScreen() {
         return b.index - a.index;
       });
 
-      // Replace the state with the sorted requests (no appending)
       setRequests(sortedRequests);
     } catch (error) {
       console.log("Error fetching requests:", error);
@@ -121,13 +108,11 @@ export default function HomeScreen() {
     }
   };
 
-  // Update fetchRecentUsers function
   const fetchRecentUsers = async () => {
     try {
       const usersResponse = await axiosInstance.get("/api/users");
       const users = (usersResponse.data.data || []) as UserData[];
 
-      // Create initial profiles
       const profiles: UserProfile[] = users.map(
         (user: UserData): UserProfile => ({
           id: user.id,
@@ -138,7 +123,6 @@ export default function HomeScreen() {
 
       setRecentUsers(profiles);
 
-      // After setting initial data, fetch images for users that need them
       users.forEach(async (user) => {
         if (user.id) {
           try {
@@ -149,7 +133,6 @@ export default function HomeScreen() {
               imageResponse.data.success &&
               imageResponse.data.data?.imageUrl
             ) {
-              // Update the specific user's image URL
               setRecentUsers((prevUsers) =>
                 prevUsers.map((prevUser) =>
                   prevUser.id === user.id
@@ -178,7 +161,6 @@ export default function HomeScreen() {
     }
   };
 
-  // New function to fetch current user profile
   const fetchCurrentUser = async () => {
     try {
       if (!user || !user.id) return;
@@ -191,7 +173,6 @@ export default function HomeScreen() {
 
       if (response.data) {
         console.log("Fetched current user data:", response.data);
-        // Update local state with fresh user data
         setUser({
           ...user,
           profile: response.data.profile,
@@ -220,7 +201,7 @@ export default function HomeScreen() {
             onPress: hide,
           },
         });
-        return true; // Prevent default behavior
+        return true;
       };
 
       BackHandler.addEventListener("hardwareBackPress", onBackPress);
@@ -295,47 +276,6 @@ export default function HomeScreen() {
     }
   };
 
-  const handleUserScrollBegin = () => {
-    setUserScrolling(true);
-    stopAutoScroll();
-  };
-
-  const handleUserScrollEnd = () => {
-    setUserScrolling(false);
-  };
-
-  const handleTravelersScroll = (
-    event: NativeSyntheticEvent<NativeScrollEvent>
-  ) => {
-    const { x } = event.nativeEvent.contentOffset;
-    setScrollPositions((prev) => ({ ...prev, travelers: x }));
-  };
-
-  const handleSponsorsScroll = (
-    event: NativeSyntheticEvent<NativeScrollEvent>
-  ) => {
-    const { x } = event.nativeEvent.contentOffset;
-    setScrollPositions((prev) => ({ ...prev, sponsors: x }));
-  };
-
-  const onTravelersLayout = (event: LayoutChangeEvent) => {
-    const { width } = event.nativeEvent.layout;
-    setContainerWidths((prev) => ({ ...prev, travelers: width }));
-  };
-
-  const onSponsorsLayout = (event: LayoutChangeEvent) => {
-    const { width } = event.nativeEvent.layout;
-    setContainerWidths((prev) => ({ ...prev, sponsors: width }));
-  };
-
-  const onTravelersContentSizeChange = (width: number) => {
-    setContentWidths((prev) => ({ ...prev, travelers: width }));
-  };
-
-  const onSponsorsContentSizeChange = (width: number) => {
-    setContentWidths((prev) => ({ ...prev, sponsors: width }));
-  };
-
   const services = [
     {
       title: "Travel",
@@ -404,34 +344,11 @@ export default function HomeScreen() {
     router.push({
       pathname: `/processTrack/initializationSP`,
       params: navigationParams,
-    }); // Navigate to request details
-  };
-
-  const handleAcceptRequest = (requestId: number) => {
-    console.log(`Accepted request ${requestId}`);
-    // Add your accept logic here (e.g., API call)
-  };
-
-  const handleRejectRequest = (requestId: number) => {
-    console.log(`Rejected request ${requestId}`);
-    // Add your reject logic here (e.g., API call)
+    });
   };
 
   const handleSeeMoreRequests = () => {
     fetchData();
-  };
-
-  // New function to handle clicking on a traveler or sponsor card
-  const handleUserCardPress = (name: string, role: "Traveler" | "Sponsor") => {
-    show({
-      type: "error",
-      title: "Premium Feature",
-      message: `You need to be a premium member to contact ${role}s like ${name}. Upgrade your account to unlock this feature!`,
-      primaryAction: {
-        label: "OK",
-        onPress: hide,
-      },
-    });
   };
 
   const handleTabPress = (tabName: string) => {
@@ -544,7 +461,6 @@ export default function HomeScreen() {
         </View>
 
         {/* Services Section */}
-
         <View style={styles.section}>
           <View style={styles.servicesSection}>
             <ThemedText style={styles.servicesTitle}>Our Services</ThemedText>
@@ -585,80 +501,6 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
-
-        {/* Best Travelers Section */}
-        {/* <View style={styles.section}>
-          <View style={styles.separator}>
-            <ThemedText style={styles.separatorText}>Best Travelers</ThemedText>
-          </View>
-          <View style={styles.travelersSection} onLayout={onTravelersLayout}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              ref={travelersScrollRef}
-              onContentSizeChange={onTravelersContentSizeChange}
-              onScrollBeginDrag={handleUserScrollBegin}
-              onScrollEndDrag={handleUserScrollEnd}
-              onScroll={handleTravelersScroll}
-              scrollEventThrottle={16}
-            >
-              <View style={styles.listContainer}>
-                {travelers.map((traveler, index) => (
-                  <UserCard
-                    key={`traveler-${index}`}
-                    name={traveler.user.profile.firstName}
-                    score={traveler.score}
-                    gender={traveler.user.profile.gender}
-                    img={
-                      traveler.user.profile.image?.url ||
-                      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCZlf5lc5tX-0gY-y94pGS0mQdL-D0lCH2OQ&s"
-                    }
-                    isVerified={true}
-                    role="Traveler"
-                    onPress={() => handleUserCardPress(traveler.user.profile.firstName, "Traveler")} // Add onPress handler
-                  />
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-        
-        {/* Best Sponsors Section */}
-        {/* <View style={styles.section}>
-          <View style={styles.separator}>
-            <ThemedText style={styles.separatorText}>Best Sponsors</ThemedText>
-          </View>
-          <View style={styles.sponsorsSection} onLayout={onSponsorsLayout}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              ref={sponsorsScrollRef}
-              onContentSizeChange={onSponsorsContentSizeChange}
-              onScrollBeginDrag={handleUserScrollBegin}
-              onScrollEndDrag={handleUserScrollEnd}
-              onScroll={handleSponsorsScroll}
-              scrollEventThrottle={16}
-            >
-              <View style={styles.listContainer}>
-                {sponsors.map((sponsor, index) => (
-                  <UserCard
-                    key={`sponsor-${index}`}
-                    name={sponsor.user.profile.firstName}
-                    score={sponsor.score}
-                    gender={sponsor.user.profile.gender}
-                    img={
-                      sponsor.user.profile.image?.url ||
-                      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCZlf5lc5tX-0gY-y94pGS0mQdL-D0lCH2OQ&s"
-                    }
-                    isVerified={true}
-                    role="Sponsor"
-                    onPress={() => handleUserCardPress(sponsor.user.profile.firstName, "Sponsor")} // Add onPress handler
-                  />
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-        </View>  */}
 
         {/* Requests Section */}
         <SafeAreaView style={styles.containerHomeCard}>
@@ -720,13 +562,11 @@ export default function HomeScreen() {
 }
 
 const { width } = Dimensions.get("window");
-const { height } = Dimensions.get("window");
-const cardSize = (width - 48) / 2;
 
 const styles = StyleSheet.create({
   scrollView: {
-    flexGrow: 0, // Prevents ScrollView from taking full screen height
-    height: 100, // Set a fixed height for the scroll area
+    flexGrow: 0,
+    height: 100,
   },
   container: {
     flex: 1,
@@ -950,7 +790,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: "absolute",
-    bottom: 95, // Adjust to be above TabBar
+    bottom: 95,
     right: 20,
     width: 56,
     height: 56,
