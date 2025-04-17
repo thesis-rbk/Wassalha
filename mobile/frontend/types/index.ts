@@ -3,7 +3,6 @@ export * from "./Profile";
 export * from "./Request";
 export * from "./Goods";
 export * from "./Order";
-export * from "./Notification";
 export * from "./Review";
 export * from "./Chat";
 export * from "./Subscription";
