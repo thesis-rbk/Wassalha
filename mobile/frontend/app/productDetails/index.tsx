@@ -20,8 +20,6 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import { useStatus } from "@/context/StatusContext";
 import Header from "@/components/navigation/headers";
-import { BACKEND_URL } from "@/config";
-console.log("API URL:", BACKEND_URL);
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const colorScheme = useColorScheme() ?? "light";
@@ -36,11 +34,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
   const [productName, setProductName] = useState(
     parsedData ? parsedData.name : ""
   );
-  const [productImage, setProductImage] = useState(
-    parsedData && parsedData.imageId
-      ? `${process.env.EXPO_PUBLIC_MEDIA_VIEW_URL}/${parsedData.imageId}`
-      : ""
-  );
+  const [productImage, setProductImage] = useState("");
   const [price, setPrice] = useState(
     parsedData ? parsedData.price.toString() : ""
   );
@@ -173,7 +167,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
         .then((result) => {
           if (result.status === 200) {
             console.log("✅ Scraped image downloaded to local storage");
-            // Only update if we're still using the same remote image
             if (productImage === parsedData.imageUrl) {
               setProductImage(fileUri);
               setImageSource("local");
@@ -183,7 +176,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ onNext }) => {
         })
         .catch((error) => {
           console.error("❌ Background download failed:", error);
-          // We already have the remote URL displayed, so no need for an alert
         });
     } catch (error) {
       console.error("❌ Error handling scraped image:", error);
