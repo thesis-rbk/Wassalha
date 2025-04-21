@@ -1,38 +1,45 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { View, TextInput, StyleSheet, ScrollView, SafeAreaView, Text } from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import axiosInstance from "../../config"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import { Colors } from "@/constants/Colors"
-import { useTheme } from "@/context/ThemeContext"
-import { BaseButton } from "@/components/ui/buttons/BaseButton"
-import { useRouter } from "expo-router"
-import { TabBar } from "@/components/navigation/TabBar"
-import { BodyMedium } from "@/components/Typography"
-import { MaterialIcons } from "@expo/vector-icons"
-import { useStatus } from "@/context/StatusContext"
+import { useState } from "react";
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  Text,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import axiosInstance from "../../config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Colors } from "@/constants/Colors";
+import { useTheme } from "@/context/ThemeContext";
+import { BaseButton } from "@/components/ui/buttons/BaseButton";
+import { useRouter } from "expo-router";
+import { TabBar } from "@/components/navigation/TabBar";
+import { BodyMedium } from "@/components/Typography";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useStatus } from "@/context/StatusContext";
 
-import Header from "@/components/navigation/headers"
+import Header from "@/components/navigation/headers";
 const ChangePassword = () => {
-  const { theme } = useTheme()
-  const navigation = useNavigation()
-  const [currentPassword, setCurrentPassword] = useState("")
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [activeTab, setActiveTab] = useState("home")
-  const router = useRouter()
-  const { show, hide } = useStatus()
+  const { theme } = useTheme();
+  const navigation = useNavigation();
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [activeTab, setActiveTab] = useState("home");
+  const router = useRouter();
+  const { show, hide } = useStatus();
 
   const handleTabPress = (tab: string) => {
-    setActiveTab(tab)
+    setActiveTab(tab);
     if (tab === "create") {
-      router.push("/verification/CreateSponsorPost")
+      router.push("/verification/CreateSponsorPost");
     } else {
-      router.push(tab)
+      router.push(tab as any);
     }
-  }
+  };
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -42,8 +49,8 @@ const ChangePassword = () => {
         message: "Please fill in all fields",
         primaryAction: {
           label: "OK",
-          onPress: hide
-        }
+          onPress: hide,
+        },
       });
       return;
     }
@@ -54,8 +61,8 @@ const ChangePassword = () => {
         message: "New password and confirmation do not match",
         primaryAction: {
           label: "OK",
-          onPress: hide
-        }
+          onPress: hide,
+        },
       });
       return;
     }
@@ -66,22 +73,22 @@ const ChangePassword = () => {
         message: "New password must be at least 8 characters long",
         primaryAction: {
           label: "OK",
-          onPress: hide
-        }
+          onPress: hide,
+        },
       });
       return;
     }
 
-    const token = await AsyncStorage.getItem("jwtToken")
+    const token = await AsyncStorage.getItem("jwtToken");
 
     try {
       const response = await axiosInstance.put(
         `/api/users/change-password`,
         { currentPassword, newPassword },
-        { headers: { Authorization: `Bearer ${token}` } },
-      )
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      await AsyncStorage.setItem("passwordChanged", "true")
+      await AsyncStorage.setItem("passwordChanged", "true");
 
       show({
         type: "success",
@@ -92,8 +99,8 @@ const ChangePassword = () => {
           onPress: () => {
             hide();
             navigation.goBack();
-          }
-        }
+          },
+        },
       });
     } catch (error: any) {
       show({
@@ -102,30 +109,54 @@ const ChangePassword = () => {
         message: error.response?.data?.message || "Something went wrong",
         primaryAction: {
           label: "OK",
-          onPress: hide
-        }
+          onPress: hide,
+        },
       });
     }
-  }
+  };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
-      <Header title="Change Password" subtitle="Strong password, Secure acccount" showBackButton={true} />
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: Colors[theme].background }}
+    >
+      <Header
+        title="Change Password"
+        subtitle="Strong password, Secure acccount"
+        showBackButton={true}
+      />
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View
+          style={[
+            styles.container,
+            { backgroundColor: Colors[theme].background },
+          ]}
+        >
           {/* Form Section */}
           <View style={styles.formSection}>
             <View style={styles.inputGroup}>
               <View style={styles.inputLabel}>
-                <MaterialIcons name="lock-outline" size={18} color={Colors[theme].primary} />
-                <BodyMedium style={[styles.labelText, { color: Colors[theme].text }]}>Current Password</BodyMedium>
+                <MaterialIcons
+                  name="lock-outline"
+                  size={18}
+                  color={Colors[theme].primary}
+                />
+                <BodyMedium
+                  style={[styles.labelText, { color: Colors[theme].text }]}
+                >
+                  Current Password
+                </BodyMedium>
               </View>
               <TextInput
                 style={[
                   styles.input,
                   {
-                    borderColor: currentPassword ? Colors[theme].primary : Colors[theme].border,
+                    borderColor: currentPassword
+                      ? Colors[theme].primary
+                      : Colors[theme].border,
                     backgroundColor: Colors[theme].card,
                     color: Colors[theme].text,
                     height: 56, // Fixed height for all inputs
@@ -143,14 +174,24 @@ const ChangePassword = () => {
 
             <View style={styles.inputGroup}>
               <View style={styles.inputLabel}>
-                <MaterialIcons name="lock-outline" size={18} color={Colors[theme].primary} />
-                <BodyMedium style={[styles.labelText, { color: Colors[theme].text }]}>New Password</BodyMedium>
+                <MaterialIcons
+                  name="lock-outline"
+                  size={18}
+                  color={Colors[theme].primary}
+                />
+                <BodyMedium
+                  style={[styles.labelText, { color: Colors[theme].text }]}
+                >
+                  New Password
+                </BodyMedium>
               </View>
               <TextInput
                 style={[
                   styles.input,
                   {
-                    borderColor: newPassword ? Colors[theme].primary : Colors[theme].border,
+                    borderColor: newPassword
+                      ? Colors[theme].primary
+                      : Colors[theme].border,
                     backgroundColor: Colors[theme].card,
                     color: Colors[theme].text,
                     height: 56, // Fixed height for all inputs
@@ -168,14 +209,24 @@ const ChangePassword = () => {
 
             <View style={styles.inputGroup}>
               <View style={styles.inputLabel}>
-                <MaterialIcons name="lock-outline" size={18} color={Colors[theme].primary} />
-                <BodyMedium style={[styles.labelText, { color: Colors[theme].text }]}>Confirm New Password</BodyMedium>
+                <MaterialIcons
+                  name="lock-outline"
+                  size={18}
+                  color={Colors[theme].primary}
+                />
+                <BodyMedium
+                  style={[styles.labelText, { color: Colors[theme].text }]}
+                >
+                  Confirm New Password
+                </BodyMedium>
               </View>
               <TextInput
                 style={[
                   styles.input,
                   {
-                    borderColor: confirmPassword ? Colors[theme].primary : Colors[theme].border,
+                    borderColor: confirmPassword
+                      ? Colors[theme].primary
+                      : Colors[theme].border,
                     backgroundColor: Colors[theme].card,
                     color: Colors[theme].text,
                     height: 56, // Fixed height for all inputs
@@ -198,7 +249,10 @@ const ChangePassword = () => {
               variant="primary"
               size="login"
               onPress={handleChangePassword}
-              style={[styles.changeButton, { backgroundColor: Colors[theme].primary }]}
+              style={[
+                styles.changeButton,
+                { backgroundColor: Colors[theme].primary },
+              ]}
               disabled={!currentPassword || !newPassword || !confirmPassword}
             >
               <Text style={styles.buttonText}>Update Password</Text>
@@ -208,8 +262,8 @@ const ChangePassword = () => {
       </ScrollView>
       <TabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </SafeAreaView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -282,7 +336,6 @@ const styles = StyleSheet.create({
     includeFontPadding: false, // Prevents extra padding in text
     textAlignVertical: "center", // Centers text vertically (Android)
   },
-})
+});
 
-export default ChangePassword
-
+export default ChangePassword;
