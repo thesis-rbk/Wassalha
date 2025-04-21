@@ -88,6 +88,7 @@ enum PaymentStatus {
   ON_HOLD
   PAYED
   REFUNDED
+  // CANCELLED
 }
 
 enum PaymentCurrency {
@@ -189,14 +190,11 @@ enum Gender {
   FEMALE
 }
 
-// ------------------ NEW ENUMS ------------------ //
-
 // Distinguish sponsor vs. subscriber, etc.
 enum ServiceProviderType {
   PENDING_SPONSOR
   SPONSOR
   SUBSCRIBER
-  // Add other types if needed
 }
 
 // Commonly used file extensions
@@ -317,7 +315,7 @@ model User {
   goodsPosts GoodsPost[]
   promoPosts PromoPost[]
 
-  // If you want to track who changed the process state
+  // To track who changed the process state
   processEvents   ProcessEvent[]   @relation("UserChangedProcessState")
   serviceProvider ServiceProvider?
   profile         Profile?
