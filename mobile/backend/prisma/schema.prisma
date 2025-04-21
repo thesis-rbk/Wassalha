@@ -61,7 +61,6 @@ enum Country {
   OTHER // Optional for unspecified countries
 }
 
-// Existing enums
 enum RequestStatus {
   PENDING
   ACCEPTED
@@ -88,20 +87,13 @@ enum PaymentStatus {
   ON_HOLD
   PAYED
   REFUNDED
+  CANCELLED
 }
 
 enum PaymentCurrency {
   USD
   EUR
   TND
-}
-
-enum PaymentState {
-  PENDING
-  COMPLETED
-  REFUND
-  FAILED
-  PROCCESSING
 }
 
 enum PaymentMethod {
@@ -189,14 +181,11 @@ enum Gender {
   FEMALE
 }
 
-// ------------------ NEW ENUMS ------------------ //
-
 // Distinguish sponsor vs. subscriber, etc.
 enum ServiceProviderType {
   PENDING_SPONSOR
   SPONSOR
   SUBSCRIBER
-  // Add other types if needed
 }
 
 // Commonly used file extensions
@@ -317,7 +306,7 @@ model User {
   goodsPosts GoodsPost[]
   promoPosts PromoPost[]
 
-  // If you want to track who changed the process state
+  // To track who changed the process state
   processEvents   ProcessEvent[]   @relation("UserChangedProcessState")
   serviceProvider ServiceProvider?
   profile         Profile?
@@ -438,7 +427,7 @@ model SponsorCheckout {
   qrCode         String? // Optional: QR code for payment
   paymentUrl     String? // Optional: Payment URL
   currency       PaymentCurrency // Currency of the payment (using the enum)
-  status         PaymentState // Payment status
+  status         PaymentStatus // Payment status
   paymentMethod  PaymentMethod // Payment method (relating to the enum)
 
   transactionId String? // Transaction ID (nullable)
@@ -477,7 +466,7 @@ model Goods {
 model Request {
   id        Int    @id @default(autoincrement())
   status    String @default("PENDING")
-  sponsorId Int? // Add this field
+  sponsorId Int?
   userId    Int
   user      User   @relation(fields: [userId], references: [id])
 
@@ -490,8 +479,10 @@ model Request {
   pickupId         Int?
   pickup           Pickup? @relation(fields: [pickupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  date    DateTime
-  withBox Boolean  @default(false)
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  withBox   Boolean  @default(false)
 
   order         Order?         @relation
   notifications Notification[]
@@ -538,7 +529,7 @@ model Payment {
 
   amount        Float
   currency      PaymentCurrency
-  status        PaymentState
+  status        PaymentStatus
   paymentMethod PaymentMethod
   transactionId String?
   qrCode        String?

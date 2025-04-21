@@ -33,6 +33,7 @@ export const Colors = {
       android: "rgba(0, 0, 0, 0.15)",
     }),
     googleButton: "#F5F5F5",
+    muted: "#9ca3af",
   },
   dark: {
     text: "#FFFFFF",
@@ -60,5 +61,7 @@ export const Colors = {
     }),
     shadow: "rgba(0, 0, 0, 0.3)",
     googleButton: "#2D2D2D",
+
+    muted: "#9ca3af",
   },
 };
