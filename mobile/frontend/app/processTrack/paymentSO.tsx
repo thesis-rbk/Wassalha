@@ -94,7 +94,7 @@ export default function PaymentScreen() {
 
       // Step 1: Create a payment intent
       const response = await fetch(
-        `${BACKEND_URL}/api/payment-process/create-payment-intent`,
+        `${BACKEND_URL}/api/payment-process/create-payment`,
         {
           method: "POST",
           headers: {
@@ -102,7 +102,7 @@ export default function PaymentScreen() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            amount: totalAmount * 100, // Convert to cents
+            amount: totalAmount, // Convert to cents
             currency: "usd",
             orderId: parseInt(params.idOrder.toString()),
             requesterId: userData?.id,
