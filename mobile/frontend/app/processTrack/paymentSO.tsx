@@ -5,13 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
+  Linking,
 } from "react-native";
 import { CreditCard, Lock, CheckCircle } from "lucide-react-native";
 import ProgressBar from "../../components/ProgressBar";
 import Card from "../../components/cards/ProcessCard";
 import { RootState } from "@/store";
 import { useSelector } from "react-redux";
-import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { router, useLocalSearchParams } from "expo-router";
 import { BACKEND_URL } from "@/config";
@@ -21,17 +22,21 @@ import { decode as atob } from "base-64";
 import { io } from "socket.io-client";
 import Header from "@/components/navigation/headers";
 import { useStatus } from "@/context/StatusContext";
+import * as WebBrowser from "expo-web-browser";
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"flouci">("flouci"); // Only Flouci now
   const [isProcessing, setIsProcessing] = useState(false);
   const { user, token } = useSelector((state: RootState) => state.auth);
-  const { confirmPayment, loading } = useConfirmPayment();
   const [userData, setUserData] = useState<any>(null);
   const { sendNotification } = useNotification();
   const socket = io(`${BACKEND_URL}/processTrack`);
   const { show, hide } = useStatus();
+
+  // Flouci credentials (should be moved to environment variables in production)
+  const FLUOCI_APP_TOKEN = "b56b17d7-dd54-4818-b76a-7f9a5a759ee6";
+  const FLUOCI_APP_SECRET = "65455f6c-565b-4830-b277-9ee1bc0b8ae6";
 
   const totalPrice =
     parseInt(params.quantity.toString()) * parseInt(params.price.toString());
@@ -39,9 +44,7 @@ export default function PaymentScreen() {
   const serviceFee = 1;
   const totalAmount = totalPrice + travelerFee + serviceFee;
 
-  console.log(params, "paraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaamss");
-
-  // Add user data loading effect
+  // Load user data
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -73,7 +76,7 @@ export default function PaymentScreen() {
     loadUserData();
   }, []);
 
-  // Handle payment submission
+  // Handle Flouci payment
   const handlePayment = async () => {
     setIsProcessing(true);
 
@@ -92,82 +95,20 @@ export default function PaymentScreen() {
         });
       }
 
-      // Step 1: Create a payment intent
-      const response = await fetch(
-        `${BACKEND_URL}/api/payment-process/create-payment`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            amount: totalAmount, // Convert to cents
-            currency: "usd",
-            orderId: parseInt(params.idOrder.toString()),
-            requesterId: userData?.id,
-            travelerId: params.travelerId,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to create payment intent");
+      // Generate Flouci payment link
+      const paymentLink = await generateFlouciPaymentLink();
+      if (!paymentLink) {
+        throw new Error("Failed to generate payment link");
       }
 
-      const { clientSecret, error } = await response.json();
+      // Open Flouci payment page
+      await WebBrowser.openBrowserAsync(paymentLink);
 
-      if (error) {
-        throw new Error(error);
-      }
+      // Listen for payment result
+      const subscription = Linking.addEventListener("url", handlePaymentResult);
 
-      // Step 2: Confirm the payment
-      const { paymentIntent, error: confirmError } = await confirmPayment(
-        clientSecret,
-        {
-          paymentMethodType: "Card",
-        }
-      );
-
-      if (confirmError) {
-        throw new Error(confirmError.message);
-      }
-
-      if (paymentIntent) {
-        // Send payment completed notification
-        if (userData?.id) {
-          sendNotification("payment_completed", {
-            travelerId: params.travelerId,
-            requesterId: userData.id,
-            requestDetails: {
-              goodsName: params.goodsName || "your ordered item",
-              requestId: params.idRequest,
-              orderId: params.idOrder,
-              processId: params.idProcess,
-              amount: totalAmount.toFixed(2),
-            },
-          });
-        }
-        socket.emit("confirmPayment", {
-          processId: params.idProcess,
-        });
-        show({
-          type: "success",
-          title: "Success",
-          message: "Payment successful!",
-          primaryAction: {
-            label: "Continue",
-            onPress: () => {
-              hide();
-              router.replace({
-                pathname: "/pickup/pickup",
-                params: params,
-              });
-            },
-          },
-        });
-        console.log("Payment successful:", paymentIntent);
-      }
+      // Cleanup after 20 minutes (Flouci's session timeout)
+      setTimeout(() => subscription.remove(), 1200000);
     } catch (error: Error | any) {
       console.error("Payment error:", error);
 
@@ -197,6 +138,93 @@ export default function PaymentScreen() {
       });
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const generateFlouciPaymentLink = async (): Promise<string | null> => {
+    try {
+      const response = await fetch(
+        "https://developers.flouci.com/api/generate_payment",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            app_token: FLUOCI_APP_TOKEN,
+            app_secret: FLUOCI_APP_SECRET,
+            amount: Math.round(totalAmount * 1000).toString(), // Convert to millimes
+            accept_card: "true",
+            success_link: "https://www.google.com", // "https://yourdomain.com/success",
+            fail_link: "https://www.youtube.com", // "https://yourdomain.com/fail",
+            developer_tracking_id: `order_${params.idOrder}_${Date.now()}`,
+            session_timeout_secs: "1200",
+          }),
+        }
+      );
+
+      const data = await response.json();
+      console.log("Flouci API Response:", data);
+
+      if (!data?.result?.link) {
+        throw new Error("Missing payment link in response");
+      }
+
+      return data.result.link;
+    } catch (error) {
+      console.error("Payment link generation failed:", error);
+      throw error;
+    }
+  };
+
+  const handlePaymentResult = ({ url }: { url: string }) => {
+    if (url.includes("/payment/success")) {
+      // Payment succeeded
+      if (userData?.id) {
+        sendNotification("payment_completed", {
+          travelerId: params.travelerId,
+          requesterId: userData.id,
+          requestDetails: {
+            goodsName: params.goodsName || "your ordered item",
+            requestId: params.idRequest,
+            orderId: params.idOrder,
+            processId: params.idProcess,
+            amount: totalAmount.toFixed(2),
+          },
+        });
+      }
+
+      socket.emit("confirmPayment", {
+        processId: params.idProcess,
+      });
+
+      show({
+        type: "success",
+        title: "Success",
+        message: "Payment successful!",
+        primaryAction: {
+          label: "Continue",
+          onPress: () => {
+            hide();
+            router.replace({
+              pathname: "/pickup/pickup",
+              params: params,
+            });
+          },
+        },
+      });
+    } else if (url.includes("/payment/fail")) {
+      // Payment failed
+      show({
+        type: "error",
+        title: "Payment Failed",
+        message: "The transaction was not completed",
+        primaryAction: {
+          label: "OK",
+          onPress: hide,
+        },
+      });
     }
   };
 
@@ -296,69 +324,33 @@ export default function PaymentScreen() {
 
             <View style={styles.paymentOptions}>
               <TouchableOpacity
-                style={[
-                  styles.paymentOption,
-                  paymentMethod === "card" && styles.selectedPaymentOption,
-                ]}
-                onPress={() => setPaymentMethod("card")}
+                style={[styles.paymentOption, styles.selectedPaymentOption]}
               >
-                <CreditCard
-                  size={24}
-                  color={paymentMethod === "card" ? "#3b82f6" : "#64748b"}
-                />
+                <CreditCard size={24} color="#3b82f6" />
                 <Text
                   style={[
                     styles.paymentOptionText,
-                    paymentMethod === "card" &&
-                      styles.selectedPaymentOptionText,
+                    styles.selectedPaymentOptionText,
                   ]}
                 >
-                  Credit Card
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.paymentOption,
-                  paymentMethod === "paypal" && styles.selectedPaymentOption,
-                ]}
-                onPress={() => setPaymentMethod("paypal")}
-              >
-                <Text
-                  style={[
-                    styles.paypalText,
-                    paymentMethod === "paypal" &&
-                      styles.selectedPaymentOptionText,
-                  ]}
-                >
-                  PayPal
+                  Flouci Payment
                 </Text>
               </TouchableOpacity>
             </View>
 
-            {paymentMethod === "card" && (
-              <View style={styles.cardForm}>
-                <CardField
-                  postalCodeEnabled={false}
-                  placeholders={{
-                    number: "4242 4242 4242 4242",
-                  }}
-                  cardStyle={styles.card}
-                  style={styles.cardContainer}
-                />
-              </View>
-            )}
-
-            {paymentMethod === "paypal" && (
-              <View style={styles.paypalContainer}>
-                <Text style={styles.paypalInstructions}>
-                  {/* You will be redirected to PayPal to complete your payment
-                securely. */}
-                  Sorry but this feature is not available yet. Hope to add it
-                  soon...
-                </Text>
-              </View>
-            )}
+            <View style={styles.flouciContainer}>
+              <Text style={styles.flouciInstructions}>
+                You will be redirected to Flouci to complete your payment
+                securely.
+                {isProcessing && (
+                  <ActivityIndicator
+                    size="small"
+                    color="#0000ff"
+                    style={{ marginTop: 10 }}
+                  />
+                )}
+              </Text>
+            </View>
           </Card>
 
           <View style={styles.securityNote}>
@@ -380,10 +372,10 @@ export default function PaymentScreen() {
             onPress={handlePayment}
             size="large"
             variant="primary"
-            disabled={isProcessing || loading}
+            disabled={isProcessing}
           >
             <Text style={styles.payButtonText}>
-              {isProcessing || loading ? "Processing..." : "Complete Payment"}
+              {isProcessing ? "Processing..." : "Pay with Flouci"}
             </Text>
           </BaseButton>
         </View>
@@ -497,33 +489,17 @@ const styles = StyleSheet.create({
     color: "#64748b",
     marginLeft: 8,
   },
-  paypalText: {
-    fontFamily: "Inter-Bold",
-    fontSize: 16,
-    color: "#64748b",
-  },
   selectedPaymentOptionText: {
     color: "#3b82f6",
   },
-  cardForm: {
-    marginTop: 8,
-  },
-  card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 8,
-  },
-  cardContainer: {
-    height: 50,
-    marginVertical: 10,
-  },
-  paypalContainer: {
+  flouciContainer: {
     padding: 16,
     backgroundColor: "#f8fafc",
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#e2e8f0",
   },
-  paypalInstructions: {
+  flouciInstructions: {
     fontFamily: "Inter-Regular",
     fontSize: 14,
     color: "#64748b",

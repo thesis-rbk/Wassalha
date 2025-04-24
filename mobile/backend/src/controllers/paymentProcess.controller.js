@@ -1,5 +1,6 @@
 require("dotenv").config();
 const prisma = require("../../prisma");
+const axios = require("axios");
 // const Stripe = require("stripe");
 // const stripeService = require("../services/stripe.service");
 
@@ -204,19 +205,21 @@ const prisma = require("../../prisma");
 // };
 
 /**
- * Create a payment intent for regular payments
+ * Create a payment intent for regular payments with Flouci
  */
 const payWithFlouci = async (req, res) => {
   try {
-    console.log("api secreet", process.env.FLOUCI_API_KEY);
-    console.log("api secreet", process.env.FLOUCI_API_SECRET);
+    const FLOUCI_PUBLIC_KEY = process.env.FLOUCI_PUBLIC_KEY;
+    const FLOUCI_SECRET_KEY = process.env.FLOUCI_SECRET_KEY;
+    console.log("Flouci public key:", FLOUCI_PUBLIC_KEY);
+    console.log("Flouci secret key:", FLOUCI_SECRET_KEY);
 
     const { amount, currency, customer_email } = req.body;
     const payload = {
-      app_token: FLOUCI_API_KEY,
-      app_secret: FLOUCI_API_SECRET,
+      app_token: FLOUCI_PUBLIC_KEY,
+      app_secret: FLOUCI_SECRET_KEY,
       accept_card: true,
-      amount: amount,
+      amount: 111111,
       success_link: "https://example.website.com/success",
       fail_link: "https://example.website.com/fail",
       session_timeout_secs: 1200,
@@ -229,14 +232,14 @@ const payWithFlouci = async (req, res) => {
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer "${FLOUCI_API_KEY}":${FLOUCI_API_SECRET}`,
+          Authorization: `Bearer "${FLOUCI_PUBLIC_KEY}":${FLOUCI_SECRET_KEY}`,
         },
       }
     );
 
     res.json(response.data);
   } catch (error) {
-    console.error("Error creating payment session:", error);
+    console.error("Error creating payment session:", error.message);
     res.status(500).json({ error: "Failed to create payment session" });
   }
 };

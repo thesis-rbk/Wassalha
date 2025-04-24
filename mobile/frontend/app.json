@@ -1,28 +1,29 @@
 {
   "expo": {
     "name": "frontend",
+    "scheme": "wassalha",
     "permissions": ["camera"],
     "slug": "wassalha",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "com.wassalha.yourapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.yourapp",
+      "bundleIdentifier": "com.yourcompany.wassalha",
       "infoPlist": {
         "NSCameraUsageDescription": "This app needs camera access to scan QR codes.",
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show your position on the map.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location to show your position on the map even when the app is in the background."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location to show your position on the map even when the app is in the background.",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["wassalha"]
+          }
+        ]
       }
     },
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "platforms": ["ios", "android", "web"],
     "redirectUri": "https://auth.expo.io/@mrsadok/wassalha",
     "android": {
       "adaptiveIcon": {
@@ -34,6 +35,17 @@
         "android.permission.CAMERA",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "wassalha"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
       ]
     },
     "extra": {
@@ -72,10 +84,7 @@
     "experiments": {
       "typedRoutes": true
     },
-    "assetBundlePatterns": [
-      "**/*",
-      "assets/fonts/*"
-    ],
+    "assetBundlePatterns": ["**/*", "assets/fonts/*"],
     "fonts": [
       {
         "asset": "assets/fonts/android/inter/Inter_28pt-Light.ttf",

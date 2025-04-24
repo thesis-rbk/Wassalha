@@ -1,7 +1,6 @@
 const express = require("express");
-const { payWithFlouci } = require("../controllers/paymentProcess.controller");
 const router = express.Router();
-// const stripeController = require("../controllers/paymentProcess.controller");
+const stripeController = require("../controllers/paymentProcess.controller");
 
 /**
  * @route POST /api/payment/create-payment-intent
@@ -34,6 +33,6 @@ const router = express.Router();
  */
 // router.post("/cancel-escrow-payment", stripeController.cancelEscrowPayment);
 
-router.post("/create-payment", payWithFlouci);
+router.post("/create-payment", stripeController.payWithFlouci);
 
 module.exports = router;
