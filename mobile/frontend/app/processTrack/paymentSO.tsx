@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Linking,
 } from "react-native";
 import { CreditCard, Lock, CheckCircle } from "lucide-react-native";
 import ProgressBar from "../../components/ProgressBar";
@@ -15,28 +14,23 @@ import { RootState } from "@/store";
 import { useSelector } from "react-redux";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { router, useLocalSearchParams } from "expo-router";
-import { BACKEND_URL } from "@/config";
+import axiosInstance, { BACKEND_URL } from "@/config";
 import { useNotification } from "@/context/NotificationContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { decode as atob } from "base-64";
-import { io } from "socket.io-client";
-import Header from "@/components/navigation/headers";
 import { useStatus } from "@/context/StatusContext";
 import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
+import Header from "@/components/navigation/headers";
+import { io } from "socket.io-client";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
-  const [paymentMethod, setPaymentMethod] = useState<"flouci">("flouci"); // Only Flouci now
   const [isProcessing, setIsProcessing] = useState(false);
   const { user, token } = useSelector((state: RootState) => state.auth);
   const [userData, setUserData] = useState<any>(null);
   const { sendNotification } = useNotification();
-  const socket = io(`${BACKEND_URL}/processTrack`);
   const { show, hide } = useStatus();
-
-  // Flouci credentials (should be moved to environment variables in production)
-  const FLUOCI_APP_TOKEN = "b56b17d7-dd54-4818-b76a-7f9a5a759ee6";
-  const FLUOCI_APP_SECRET = "65455f6c-565b-4830-b277-9ee1bc0b8ae6";
+  const socket = io(`${BACKEND_URL}/processTrack`);
 
   const totalPrice =
     parseInt(params.quantity.toString()) * parseInt(params.price.toString());
@@ -44,7 +38,6 @@ export default function PaymentScreen() {
   const serviceFee = 1;
   const totalAmount = totalPrice + travelerFee + serviceFee;
 
-  // Load user data
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -76,61 +69,260 @@ export default function PaymentScreen() {
     loadUserData();
   }, []);
 
-  // Handle Flouci payment
+  useEffect(() => {
+    // Listen for socket events
+    socket.on("connect", () => {
+      console.log("🔌 Payment page socket connected");
+      if (params.idProcess) {
+        socket.emit("joinProcessRoom", params.idProcess);
+        console.log(`🔌 Joined process room: ${params.idProcess}`);
+      }
+    });
+
+    socket.on("confirmPayment", (data) => {
+      console.log("🔄 Payment confirmed:", data);
+      if (data.processId.toString() === params.idProcess?.toString()) {
+        sendNotification("payment_completed", {
+          travelerId: params.travelerId?.toString(),
+          requesterId: user?.id,
+          requestDetails: {
+            goodsName: params.goodsName?.toString() || "your ordered item",
+            requestId: params.idRequest?.toString(),
+            orderId: params.idOrder?.toString(),
+            processId: params.idProcess?.toString(),
+            amount: totalAmount.toFixed(2),
+          },
+        });
+
+        show({
+          type: "success",
+          title: "Payment Successful",
+          message: "Your payment has been processed!",
+          primaryAction: {
+            label: "Continue",
+            onPress: () => {
+              hide();
+              router.replace({
+                pathname: "/pickup/pickup",
+                params: params,
+              });
+            },
+          },
+        });
+      }
+    });
+
+    socket.on("paymentFailed", (data) => {
+      console.log("🔄 Payment failed:", data);
+      if (data.processId.toString() === params.idProcess?.toString()) {
+        show({
+          type: "error",
+          title: "Payment Failed",
+          message: "The payment could not be completed.",
+          primaryAction: {
+            label: "Try Again",
+            onPress: () => {
+              hide();
+            },
+          },
+        });
+      }
+    });
+
+    return () => {
+      socket.off("confirmPayment");
+      socket.off("paymentFailed");
+    };
+  }, [params.idProcess]);
+
   const handlePayment = async () => {
     setIsProcessing(true);
 
     try {
+      // Validate all required params exist
+      if (!params.idOrder || !params.travelerId || !params.idProcess) {
+        throw new Error("Missing required order parameters");
+      }
+
+      // Prepare the request payload with proper types
+      const payload = {
+        amount: totalAmount,
+        orderId: params.idOrder.toString(),
+        travelerId: params.travelerId.toString(),
+        travelerFee: travelerFee,
+        processId: params.idProcess.toString(),
+      };
+
+      console.log("Sending payment request with payload:", payload);
+
+      // 1. Initiate payment with Flouci
+      const response = await axiosInstance.post(
+        "api/payment-process/create-payment",
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("Response status:", response.status);
+      console.log("Response data:", response.data);
+
+      const responseData = response.data;
+
+      if (response.status >= 400) {
+        console.error("Backend error response:", responseData);
+        throw new Error(
+          responseData.message ||
+            `Payment failed with status ${response.status}`
+        );
+      }
+
+      if (!responseData?.paymentLink || !responseData?.flouciPaymentId) {
+        throw new Error("Invalid payment response from server");
+      }
+
       // Send payment initiated notification
-      if (userData?.id) {
+      if (user?.id) {
         sendNotification("payment_initiated", {
-          travelerId: params.travelerId,
-          requesterId: userData.id,
+          travelerId: params.travelerId.toString(),
+          requesterId: user.id,
           requestDetails: {
-            goodsName: params.goodsName || "your ordered item",
-            requestId: params.idRequest,
-            orderId: params.idOrder,
-            processId: params.idProcess,
+            goodsName: params.goodsName?.toString() || "your ordered item",
+            requestId: params.idRequest.toString(),
+            orderId: params.idOrder.toString(),
+            processId: params.idProcess.toString(),
           },
         });
       }
 
-      // Generate Flouci payment link
-      const paymentLink = await generateFlouciPaymentLink();
-      if (!paymentLink) {
-        throw new Error("Failed to generate payment link");
-      }
+      // Open payment page
+      const result = await WebBrowser.openBrowserAsync(
+        responseData.paymentLink
+      );
 
-      // Open Flouci payment page
-      await WebBrowser.openBrowserAsync(paymentLink);
+      console.log("WebBrowser result:", result);
 
-      // Listen for payment result
-      const subscription = Linking.addEventListener("url", handlePaymentResult);
+      // Set up deep link listener for payment result
+      const subscription = Linking.addEventListener(
+        "url",
+        async (event: any) => {
+          const url = new URL(event.url);
 
-      // Cleanup after 20 minutes (Flouci's session timeout)
-      setTimeout(() => subscription.remove(), 1200000);
-    } catch (error: Error | any) {
-      console.error("Payment error:", error);
+          console.log("Deep link event:", url);
+
+          if (
+            url.pathname.includes("/payment/success") ||
+            url.pathname.includes("google")
+          ) {
+            try {
+              // Verify payment with backend using flouciPaymentId
+              const verification = await axiosInstance.get(
+                `api/payment-process/verify/${responseData.flouciPaymentId}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              );
+
+              if (verification.data.success) {
+                // Payment verified successfully
+                sendNotification("payment_completed", {
+                  travelerId: params.travelerId.toString(),
+                  requesterId: user?.id,
+                  requestDetails: {
+                    goodsName:
+                      params.goodsName?.toString() || "your ordered item",
+                    requestId: params.idRequest.toString(),
+                    orderId: params.idOrder.toString(),
+                    processId: params.idProcess.toString(),
+                    amount: totalAmount.toFixed(2),
+                  },
+                });
+
+                show({
+                  type: "success",
+                  title: "Payment Successful",
+                  message: "Your payment has been processed!",
+                  primaryAction: {
+                    label: "Continue",
+                    onPress: () => {
+                      hide();
+                      router.replace({
+                        pathname: "/pickup/pickup",
+                        params: params,
+                      });
+                    },
+                  },
+                });
+              } else {
+                throw new Error("Payment verification failed");
+              }
+            } catch (error) {
+              console.error("Payment verification error:", error);
+              show({
+                type: "error",
+                title: "Verification Failed",
+                message: "Payment verification failed. Please contact support.",
+                primaryAction: {
+                  label: "OK",
+                  onPress: hide,
+                },
+              });
+            }
+          } else if (
+            url.pathname.includes("/payment/fail") ||
+            url.pathname.includes("youtube")
+          ) {
+            show({
+              type: "error",
+              title: "Payment Failed",
+              message: "The payment could not be completed.",
+              primaryAction: {
+                label: "OK",
+                onPress: hide,
+              },
+            });
+          }
+
+          subscription.remove(); // Clean up listener
+        }
+      );
+
+      // Set timeout for payment completion (20 minutes - Flouci's session timeout)
+      setTimeout(() => {
+        subscription.remove();
+      }, 1200000);
+    } catch (error: any) {
+      console.error("Full payment error:", error);
 
       // Send payment failed notification
-      if (userData?.id) {
+      if (user?.id) {
         sendNotification("payment_failed", {
-          travelerId: params.travelerId,
-          requesterId: userData.id,
+          travelerId: params.travelerId.toString(),
+          requesterId: user.id,
           requestDetails: {
-            goodsName: params.goodsName || "your ordered item",
-            requestId: params.idRequest,
-            orderId: params.idOrder,
-            processId: params.idProcess,
+            goodsName: params.goodsName?.toString() || "your ordered item",
+            requestId: params.idRequest.toString(),
+            orderId: params.idOrder.toString(),
+            processId: params.idProcess.toString(),
             errorMessage: error.message || "Payment processing failed",
           },
         });
       }
 
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to process payment";
+
       show({
         type: "error",
-        title: "Error",
-        message: error.message || "Something went wrong",
+        title: "Payment Error",
+        message: errorMessage,
         primaryAction: {
           label: "OK",
           onPress: hide,
@@ -138,93 +330,6 @@ export default function PaymentScreen() {
       });
     } finally {
       setIsProcessing(false);
-    }
-  };
-
-  const generateFlouciPaymentLink = async (): Promise<string | null> => {
-    try {
-      const response = await fetch(
-        "https://developers.flouci.com/api/generate_payment",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
-            app_token: FLUOCI_APP_TOKEN,
-            app_secret: FLUOCI_APP_SECRET,
-            amount: Math.round(totalAmount * 1000).toString(), // Convert to millimes
-            accept_card: "true",
-            success_link: "https://www.google.com", // "https://yourdomain.com/success",
-            fail_link: "https://www.youtube.com", // "https://yourdomain.com/fail",
-            developer_tracking_id: `order_${params.idOrder}_${Date.now()}`,
-            session_timeout_secs: "1200",
-          }),
-        }
-      );
-
-      const data = await response.json();
-      console.log("Flouci API Response:", data);
-
-      if (!data?.result?.link) {
-        throw new Error("Missing payment link in response");
-      }
-
-      return data.result.link;
-    } catch (error) {
-      console.error("Payment link generation failed:", error);
-      throw error;
-    }
-  };
-
-  const handlePaymentResult = ({ url }: { url: string }) => {
-    if (url.includes("/payment/success")) {
-      // Payment succeeded
-      if (userData?.id) {
-        sendNotification("payment_completed", {
-          travelerId: params.travelerId,
-          requesterId: userData.id,
-          requestDetails: {
-            goodsName: params.goodsName || "your ordered item",
-            requestId: params.idRequest,
-            orderId: params.idOrder,
-            processId: params.idProcess,
-            amount: totalAmount.toFixed(2),
-          },
-        });
-      }
-
-      socket.emit("confirmPayment", {
-        processId: params.idProcess,
-      });
-
-      show({
-        type: "success",
-        title: "Success",
-        message: "Payment successful!",
-        primaryAction: {
-          label: "Continue",
-          onPress: () => {
-            hide();
-            router.replace({
-              pathname: "/pickup/pickup",
-              params: params,
-            });
-          },
-        },
-      });
-    } else if (url.includes("/payment/fail")) {
-      // Payment failed
-      show({
-        type: "error",
-        title: "Payment Failed",
-        message: "The transaction was not completed",
-        primaryAction: {
-          label: "OK",
-          onPress: hide,
-        },
-      });
     }
   };
 

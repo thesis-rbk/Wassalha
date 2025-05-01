@@ -84,8 +84,9 @@ enum OrderSponsorStatus {
 }
 
 enum PaymentStatus {
+  PROCESSING
   ON_HOLD
-  PAYED
+  PAID
   REFUNDED
   CANCELLED
 }
@@ -98,6 +99,7 @@ enum PaymentCurrency {
 
 enum PaymentMethod {
   CARD
+  FLOUCI
   D17
   STRIPE
   PAYPAL
@@ -526,7 +528,9 @@ model Payment {
   id      Int   @id @default(autoincrement())
   orderId Int
   order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
+  travelerId Int?
+  travelerFee Float?
+  processId   Int?
   amount        Float
   currency      PaymentCurrency
   status        PaymentStatus
