@@ -5,32 +5,33 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from "react-native";
 import { CreditCard, Lock, CheckCircle } from "lucide-react-native";
 import ProgressBar from "../../components/ProgressBar";
 import Card from "../../components/cards/ProcessCard";
 import { RootState } from "@/store";
 import { useSelector } from "react-redux";
+import { CardField, useConfirmPayment } from "@stripe/stripe-react-native";
 import { BaseButton } from "@/components/ui/buttons/BaseButton";
 import { router, useLocalSearchParams } from "expo-router";
-import axiosInstance, { BACKEND_URL } from "@/config";
+import { BACKEND_URL } from "@/config";
 import { useNotification } from "@/context/NotificationContext";
-import { useStatus } from "@/context/StatusContext";
-import * as WebBrowser from "expo-web-browser";
-import * as Linking from "expo-linking";
-import Header from "@/components/navigation/headers";
-import { io } from "socket.io-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { decode as atob } from "base-64";
+import { io } from "socket.io-client";
+import Header from "@/components/navigation/headers";
+import { useStatus } from "@/context/StatusContext";
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal">("card");
   const [isProcessing, setIsProcessing] = useState(false);
   const { user, token } = useSelector((state: RootState) => state.auth);
+  const { confirmPayment, loading } = useConfirmPayment();
   const [userData, setUserData] = useState<any>(null);
   const { sendNotification } = useNotification();
-  const { show, hide } = useStatus();
   const socket = io(`${BACKEND_URL}/processTrack`);
+  const { show, hide } = useStatus();
 
   const totalPrice =
     parseInt(params.quantity.toString()) * parseInt(params.price.toString());
@@ -38,6 +39,9 @@ export default function PaymentScreen() {
   const serviceFee = 1;
   const totalAmount = totalPrice + travelerFee + serviceFee;
 
+  console.log(params, "paraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaamss");
+
+  // Add user data loading effect
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -69,35 +73,88 @@ export default function PaymentScreen() {
     loadUserData();
   }, []);
 
-  useEffect(() => {
-    // Listen for socket events
-    socket.on("connect", () => {
-      console.log("🔌 Payment page socket connected");
-      if (params.idProcess) {
-        socket.emit("joinProcessRoom", params.idProcess);
-        console.log(`🔌 Joined process room: ${params.idProcess}`);
-      }
-    });
+  // Handle payment submission
+  const handlePayment = async () => {
+    setIsProcessing(true);
 
-    socket.on("confirmPayment", (data) => {
-      console.log("🔄 Payment confirmed:", data);
-      if (data.processId.toString() === params.idProcess?.toString()) {
-        sendNotification("payment_completed", {
-          travelerId: params.travelerId?.toString(),
-          requesterId: user?.id,
+    try {
+      // Send payment initiated notification
+      if (userData?.id) {
+        sendNotification("payment_initiated", {
+          travelerId: params.travelerId,
+          requesterId: userData.id,
           requestDetails: {
-            goodsName: params.goodsName?.toString() || "your ordered item",
-            requestId: params.idRequest?.toString(),
-            orderId: params.idOrder?.toString(),
-            processId: params.idProcess?.toString(),
-            amount: totalAmount.toFixed(2),
+            goodsName: params.goodsName || "your ordered item",
+            requestId: params.idRequest,
+            orderId: params.idOrder,
+            processId: params.idProcess,
           },
         });
+      }
 
+      // Step 1: Create a payment intent
+      const response = await fetch(
+        `${BACKEND_URL}/api/payment-process/create-payment-intent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            amount: totalAmount * 100, // Convert to cents
+            currency: "usd",
+            orderId: parseInt(params.idOrder.toString()),
+            requesterId: userData?.id,
+            travelerId: params.travelerId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to create payment intent");
+      }
+
+      const { clientSecret, error } = await response.json();
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      // Step 2: Confirm the payment
+      const { paymentIntent, error: confirmError } = await confirmPayment(
+        clientSecret,
+        {
+          paymentMethodType: "Card",
+        }
+      );
+
+      if (confirmError) {
+        throw new Error(confirmError.message);
+      }
+
+      if (paymentIntent) {
+        // Send payment completed notification
+        if (userData?.id) {
+          sendNotification("payment_completed", {
+            travelerId: params.travelerId,
+            requesterId: userData.id,
+            requestDetails: {
+              goodsName: params.goodsName || "your ordered item",
+              requestId: params.idRequest,
+              orderId: params.idOrder,
+              processId: params.idProcess,
+              amount: totalAmount.toFixed(2),
+            },
+          });
+        }
+        socket.emit("confirmPayment", {
+          processId: params.idProcess,
+        });
         show({
           type: "success",
-          title: "Payment Successful",
-          message: "Your payment has been processed!",
+          title: "Success",
+          message: "Payment successful!",
           primaryAction: {
             label: "Continue",
             onPress: () => {
@@ -109,220 +166,30 @@ export default function PaymentScreen() {
             },
           },
         });
+        console.log("Payment successful:", paymentIntent);
       }
-    });
-
-    socket.on("paymentFailed", (data) => {
-      console.log("🔄 Payment failed:", data);
-      if (data.processId.toString() === params.idProcess?.toString()) {
-        show({
-          type: "error",
-          title: "Payment Failed",
-          message: "The payment could not be completed.",
-          primaryAction: {
-            label: "Try Again",
-            onPress: () => {
-              hide();
-            },
-          },
-        });
-      }
-    });
-
-    return () => {
-      socket.off("confirmPayment");
-      socket.off("paymentFailed");
-    };
-  }, [params.idProcess]);
-
-  const handlePayment = async () => {
-    setIsProcessing(true);
-
-    try {
-      // Validate all required params exist
-      if (!params.idOrder || !params.travelerId || !params.idProcess) {
-        throw new Error("Missing required order parameters");
-      }
-
-      // Prepare the request payload with proper types
-      const payload = {
-        amount: totalAmount,
-        orderId: params.idOrder.toString(),
-        travelerId: params.travelerId.toString(),
-        travelerFee: travelerFee,
-        processId: params.idProcess.toString(),
-      };
-
-      console.log("Sending payment request with payload:", payload);
-
-      // 1. Initiate payment with Flouci
-      const response = await axiosInstance.post(
-        "api/payment-process/create-payment",
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      console.log("Response status:", response.status);
-      console.log("Response data:", response.data);
-
-      const responseData = response.data;
-
-      if (response.status >= 400) {
-        console.error("Backend error response:", responseData);
-        throw new Error(
-          responseData.message ||
-            `Payment failed with status ${response.status}`
-        );
-      }
-
-      if (!responseData?.paymentLink || !responseData?.flouciPaymentId) {
-        throw new Error("Invalid payment response from server");
-      }
-
-      // Send payment initiated notification
-      if (user?.id) {
-        sendNotification("payment_initiated", {
-          travelerId: params.travelerId.toString(),
-          requesterId: user.id,
-          requestDetails: {
-            goodsName: params.goodsName?.toString() || "your ordered item",
-            requestId: params.idRequest.toString(),
-            orderId: params.idOrder.toString(),
-            processId: params.idProcess.toString(),
-          },
-        });
-      }
-
-      // Open payment page
-      const result = await WebBrowser.openBrowserAsync(
-        responseData.paymentLink
-      );
-
-      console.log("WebBrowser result:", result);
-
-      // Set up deep link listener for payment result
-      const subscription = Linking.addEventListener(
-        "url",
-        async (event: any) => {
-          const url = new URL(event.url);
-
-          console.log("Deep link event:", url);
-
-          if (
-            url.pathname.includes("/payment/success") ||
-            url.pathname.includes("google")
-          ) {
-            try {
-              // Verify payment with backend using flouciPaymentId
-              const verification = await axiosInstance.get(
-                `api/payment-process/verify/${responseData.flouciPaymentId}`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
-                }
-              );
-
-              if (verification.data.success) {
-                // Payment verified successfully
-                sendNotification("payment_completed", {
-                  travelerId: params.travelerId.toString(),
-                  requesterId: user?.id,
-                  requestDetails: {
-                    goodsName:
-                      params.goodsName?.toString() || "your ordered item",
-                    requestId: params.idRequest.toString(),
-                    orderId: params.idOrder.toString(),
-                    processId: params.idProcess.toString(),
-                    amount: totalAmount.toFixed(2),
-                  },
-                });
-
-                show({
-                  type: "success",
-                  title: "Payment Successful",
-                  message: "Your payment has been processed!",
-                  primaryAction: {
-                    label: "Continue",
-                    onPress: () => {
-                      hide();
-                      router.replace({
-                        pathname: "/pickup/pickup",
-                        params: params,
-                      });
-                    },
-                  },
-                });
-              } else {
-                throw new Error("Payment verification failed");
-              }
-            } catch (error) {
-              console.error("Payment verification error:", error);
-              show({
-                type: "error",
-                title: "Verification Failed",
-                message: "Payment verification failed. Please contact support.",
-                primaryAction: {
-                  label: "OK",
-                  onPress: hide,
-                },
-              });
-            }
-          } else if (
-            url.pathname.includes("/payment/fail") ||
-            url.pathname.includes("youtube")
-          ) {
-            show({
-              type: "error",
-              title: "Payment Failed",
-              message: "The payment could not be completed.",
-              primaryAction: {
-                label: "OK",
-                onPress: hide,
-              },
-            });
-          }
-
-          subscription.remove(); // Clean up listener
-        }
-      );
-
-      // Set timeout for payment completion (20 minutes - Flouci's session timeout)
-      setTimeout(() => {
-        subscription.remove();
-      }, 1200000);
-    } catch (error: any) {
-      console.error("Full payment error:", error);
+    } catch (error: Error | any) {
+      console.error("Payment error:", error);
 
       // Send payment failed notification
-      if (user?.id) {
+      if (userData?.id) {
         sendNotification("payment_failed", {
-          travelerId: params.travelerId.toString(),
-          requesterId: user.id,
+          travelerId: params.travelerId,
+          requesterId: userData.id,
           requestDetails: {
-            goodsName: params.goodsName?.toString() || "your ordered item",
-            requestId: params.idRequest.toString(),
-            orderId: params.idOrder.toString(),
-            processId: params.idProcess.toString(),
+            goodsName: params.goodsName || "your ordered item",
+            requestId: params.idRequest,
+            orderId: params.idOrder,
+            processId: params.idProcess,
             errorMessage: error.message || "Payment processing failed",
           },
         });
       }
 
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to process payment";
-
       show({
         type: "error",
-        title: "Payment Error",
-        message: errorMessage,
+        title: "Error",
+        message: error.message || "Something went wrong",
         primaryAction: {
           label: "OK",
           onPress: hide,
@@ -429,33 +296,69 @@ export default function PaymentScreen() {
 
             <View style={styles.paymentOptions}>
               <TouchableOpacity
-                style={[styles.paymentOption, styles.selectedPaymentOption]}
+                style={[
+                  styles.paymentOption,
+                  paymentMethod === "card" && styles.selectedPaymentOption,
+                ]}
+                onPress={() => setPaymentMethod("card")}
               >
-                <CreditCard size={24} color="#3b82f6" />
+                <CreditCard
+                  size={24}
+                  color={paymentMethod === "card" ? "#3b82f6" : "#64748b"}
+                />
                 <Text
                   style={[
                     styles.paymentOptionText,
-                    styles.selectedPaymentOptionText,
+                    paymentMethod === "card" &&
+                      styles.selectedPaymentOptionText,
                   ]}
                 >
-                  Flouci Payment
+                  Credit Card
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.paymentOption,
+                  paymentMethod === "paypal" && styles.selectedPaymentOption,
+                ]}
+                onPress={() => setPaymentMethod("paypal")}
+              >
+                <Text
+                  style={[
+                    styles.paypalText,
+                    paymentMethod === "paypal" &&
+                      styles.selectedPaymentOptionText,
+                  ]}
+                >
+                  PayPal
                 </Text>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.flouciContainer}>
-              <Text style={styles.flouciInstructions}>
-                You will be redirected to Flouci to complete your payment
-                securely.
-                {isProcessing && (
-                  <ActivityIndicator
-                    size="small"
-                    color="#0000ff"
-                    style={{ marginTop: 10 }}
-                  />
-                )}
-              </Text>
-            </View>
+            {paymentMethod === "card" && (
+              <View style={styles.cardForm}>
+                <CardField
+                  postalCodeEnabled={false}
+                  placeholders={{
+                    number: "4242 4242 4242 4242",
+                  }}
+                  cardStyle={styles.card}
+                  style={styles.cardContainer}
+                />
+              </View>
+            )}
+
+            {paymentMethod === "paypal" && (
+              <View style={styles.paypalContainer}>
+                <Text style={styles.paypalInstructions}>
+                  {/* You will be redirected to PayPal to complete your payment
+                securely. */}
+                  Sorry but this feature is not available yet. Hope to add it
+                  soon...
+                </Text>
+              </View>
+            )}
           </Card>
 
           <View style={styles.securityNote}>
@@ -477,10 +380,10 @@ export default function PaymentScreen() {
             onPress={handlePayment}
             size="large"
             variant="primary"
-            disabled={isProcessing}
+            disabled={isProcessing || loading}
           >
             <Text style={styles.payButtonText}>
-              {isProcessing ? "Processing..." : "Pay with Flouci"}
+              {isProcessing || loading ? "Processing..." : "Complete Payment"}
             </Text>
           </BaseButton>
         </View>
@@ -594,17 +497,33 @@ const styles = StyleSheet.create({
     color: "#64748b",
     marginLeft: 8,
   },
+  paypalText: {
+    fontFamily: "Inter-Bold",
+    fontSize: 16,
+    color: "#64748b",
+  },
   selectedPaymentOptionText: {
     color: "#3b82f6",
   },
-  flouciContainer: {
+  cardForm: {
+    marginTop: 8,
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+  },
+  cardContainer: {
+    height: 50,
+    marginVertical: 10,
+  },
+  paypalContainer: {
     padding: 16,
     backgroundColor: "#f8fafc",
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#e2e8f0",
   },
-  flouciInstructions: {
+  paypalInstructions: {
     fontFamily: "Inter-Regular",
     fontSize: 14,
     color: "#64748b",
